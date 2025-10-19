@@ -186,12 +186,19 @@ export default function EventDetailPage() {
                         {format(new Date(phase.startDate), 'PPP', { locale: es })} - {format(new Date(phase.endDate), 'PPP', { locale: es })}
                       </div>
                       <div className="grid gap-2">
-                        {phase.prices.map((price) => (
+                        {phase.prices?.map((price) => (
                           <div key={price.zoneId} className="flex justify-between text-sm">
                             <span>{price.zoneName}</span>
                             <span className="font-medium">${price.price.toLocaleString()} {event.currency}</span>
                           </div>
-                        ))}
+                        )) || phase.zonesPricing?.map((zonePricing) => (
+                          <div key={zonePricing.zoneId} className="flex justify-between text-sm">
+                            <span>{event.zones?.find(z => z.id === zonePricing.zoneId)?.name || 'Zona desconocida'}</span>
+                            <span className="font-medium">${zonePricing.price.toLocaleString()} {event.currency}</span>
+                          </div>
+                        )) || (
+                          <p className="text-sm text-muted-foreground">No hay precios configurados</p>
+                        )}
                       </div>
                     </div>
                   ))}
