@@ -1,6 +1,13 @@
 import { MetadataRoute } from 'next';
 import { blogCollection, blogCategoriesCollection, blogTagsCollection } from '@/lib/firebase/collections';
 
+function toValidDate(dateValue: any): Date | undefined {
+  if (!dateValue) return undefined;
+
+  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  return Number.isNaN(date.valueOf()) ? undefined : date;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ravehub.cl';
 
@@ -28,9 +35,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
 
     posts.forEach((post: any) => {
+      const lastModified = toValidDate(post.updatedDate || post.updatedAt);
       sitemap.push({
         url: `${baseUrl}/blog/${post.slug}`,
-        lastModified: new Date(post.updatedDate || post.updatedAt),
+        lastModified,
         changeFrequency: 'weekly',
         priority: 0.8,
       });
@@ -42,9 +50,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
 
     categories.forEach((category: any) => {
+      const lastModified = toValidDate(category.updatedAt);
       sitemap.push({
         url: `${baseUrl}/blog?category=${category.slug}`,
-        lastModified: new Date(category.updatedAt),
+        lastModified,
         changeFrequency: 'weekly',
         priority: 0.6,
       });
@@ -56,9 +65,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
 
     tags.forEach((tag: any) => {
+      const lastModified = toValidDate(tag.updatedAt);
       sitemap.push({
         url: `${baseUrl}/blog?tag=${tag.slug}`,
-        lastModified: new Date(tag.updatedAt),
+        lastModified,
         changeFrequency: 'weekly',
         priority: 0.5,
       });
