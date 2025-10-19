@@ -1,0 +1,31 @@
+{
+  "projects": {
+    "development": {
+      "project_id": "ravehub-dev",
+      "project_number": "123456789012",
+      "display_name": "Ravehub Development",
+      "name": "projects/ravehub-dev",
+      "state": "ACTIVE"
+    },
+    "staging": {
+      "project_id": "ravehub-staging",
+      "project_number": "123456789013",
+      "display_name": "Ravehub Staging",
+      "name": "projects/ravehub-staging",
+      "state": "ACTIVE"
+    },
+    "production": {
+      "project_id": "ravehub-prod",
+      "project_number": "123456789014",
+      "display_name": "Ravehub Production",
+      "name": "projects/ravehub-prod",
+      "state": "ACTIVE"
+    }
+  },
+  "client": {
+    "api_key": {
+      "current_key": "AIzaSyDUMMY_API_KEY_FOR_DEVELOPMENT"
+    }
+  },
+  "configuration_version": "1"
+}

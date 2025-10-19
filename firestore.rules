@@ -1,0 +1,194 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Admins can read all users
+    match /users/{userId} {
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Config collection - read only for authenticated users
+    match /config/{configId} {
+      allow read: if request.auth != null;
+    }
+
+    // Countries collection - read only for all users
+    match /countries/{countryId} {
+      allow read: if true;
+    }
+
+    // Events - read for all authenticated users, write for admins
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Event CTAs - same as events
+    match /eventCTAs/{ctaId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Event DJs - read for all, write for admins
+    match /eventDjs/{djId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // DJ suggestions - read for admins, write for authenticated users
+    match /djSuggestions/{suggestionId} {
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+      allow write: if request.auth != null;
+    }
+
+    // DJs collection - read for all, write for admins
+    match /djs/{djId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Blog collections - read for all, write for admins
+    match /blog/{postId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    match /blogCategories/{categoryId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    match /blogTags/{tagId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Blog comments and reactions - read for all, write for authenticated users
+    match /blogComments/{commentId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /blogRatings/{ratingId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /blogReactions/{reactionId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /commentReactions/{reactionId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Products and commerce - read for all, write for admins
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    match /productCategories/{categoryId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    match /productVariants/{variantId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    match /productReviews/{reviewId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /storeBanners/{bannerId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Orders and transactions - users can read/write their own, admins can read all
+    match /orders/{orderId} {
+      allow read, write: if request.auth != null && request.auth.uid ==
+        resource.data.userId;
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    match /ticketTransactions/{transactionId} {
+      allow read, write: if request.auth != null && request.auth.uid ==
+        resource.data.userId;
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    match /paymentInstallments/{installmentId} {
+      allow read, write: if request.auth != null && request.auth.uid ==
+        get(/databases/$(database)/documents/ticketTransactions/$(resource.data.transactionId)).data.userId;
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Gallery collections - read for all, write for admins
+    match /albums/{albumId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    match /galleryImages/{imageId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Communication collections
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    match /newsletter_subscribers/{subscriberId} {
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+      allow write: if true; // Allow anonymous subscriptions
+    }
+
+    match /newsletter_fingerprints/{fingerprintId} {
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Slug redirects - read for all
+    match /slugRedirects/{redirectId} {
+      allow read: if true;
+    }
+
+    // Visitor profiles - read/write for admins only
+    match /visitorProfiles/{profileId} {
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+  }
+}
