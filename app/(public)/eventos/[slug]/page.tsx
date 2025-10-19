@@ -78,7 +78,7 @@ export default function EventDetailPage() {
           <p className="text-muted-foreground mb-6">
             El evento que buscas no existe o ha sido eliminado.
           </p>
-          <Link href="/events">
+          <Link href="/eventos">
             <Button>
               <ChevronLeft className="mr-2 h-4 w-4" />
               Ver todos los eventos
@@ -350,7 +350,7 @@ export default function EventDetailPage() {
                       )}
                     </div>
 
-                    <Link href={`/events/${event.slug}/buy`} className="block">
+                    <Link href={`/eventos/${event.slug}/comprar`} className="block">
                       <Button className="w-full" size="lg">
                         <Users className="mr-2 h-4 w-4" />
                         Comprar Entradas

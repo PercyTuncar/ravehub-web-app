@@ -116,10 +116,17 @@ export interface Event {
     name: string;
     startDate: string;
     endDate: string;
-    prices: Array<{
+    prices?: Array<{
       zoneId: string;
       zoneName: string;
       price: number;
+    }>;
+    zonesPricing?: Array<{
+      zoneId: string;
+      price: number;
+      available: number;
+      sold: number;
+      phaseId: string;
     }>;
   }>;
 

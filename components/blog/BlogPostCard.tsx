@@ -17,26 +17,27 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
   const estimatedReadTime = post.readTime || Math.ceil(post.content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
 
   return (
-    <article className={`bg-card rounded-lg border overflow-hidden hover:shadow-lg transition-shadow ${featured ? 'md:col-span-2' : ''}`}>
-      {/* Featured Image */}
-      {post.featuredImageUrl && (
-        <div className="relative aspect-video overflow-hidden">
-          <Image
-            src={post.featuredImageUrl}
-            alt={post.imageAltTexts?.[post.featuredImageUrl] || post.title}
-            fill
-            className="object-cover hover:scale-105 transition-transform duration-300"
-            sizes={featured ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 33vw"}
-          />
-          {post.featured && (
-            <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground">
-              Destacado
-            </Badge>
-          )}
-        </div>
-      )}
+    <Link href={`/blog/${post.slug}`} className="block">
+      <article className={`bg-card rounded-lg border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${featured ? 'md:col-span-2' : ''}`}>
+        {/* Featured Image */}
+        {post.featuredImageUrl && (
+          <div className="relative aspect-video overflow-hidden">
+            <Image
+              src={post.featuredImageUrl}
+              alt={post.imageAltTexts?.[post.featuredImageUrl] || post.title}
+              fill
+              className="object-cover hover:scale-105 transition-transform duration-300"
+              sizes={featured ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 33vw"}
+            />
+            {post.featured && (
+              <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground">
+                Destacado
+              </Badge>
+            )}
+          </div>
+        )}
 
-      <div className="p-6">
+        <div className="p-6">
         {/* Categories */}
         {post.categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
@@ -53,13 +54,8 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
         )}
 
         {/* Title */}
-        <h2 className="text-xl font-bold mb-3 line-clamp-2">
-          <Link
-            href={`/blog/${post.slug}`}
-            className="hover:text-primary transition-colors"
-          >
-            {post.title}
-          </Link>
+        <h2 className="text-xl font-bold mb-3 line-clamp-2 hover:text-primary transition-colors">
+          {post.title}
         </h2>
 
         {/* Excerpt */}
@@ -98,7 +94,8 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
             })}
           </div>
         )}
-      </div>
-    </article>
+        </div>
+      </article>
+    </Link>
   );
 }

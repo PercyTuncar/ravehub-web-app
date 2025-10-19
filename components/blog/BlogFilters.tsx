@@ -39,7 +39,7 @@ export function BlogFilters({ selectedCategory, selectedTag }: BlogFiltersProps)
                 </Badge>
               </Link>
               {categories.map((category) => (
-                <Link key={category.id} href={`/blog?category=${category.slug}`}>
+                <Link key={category.id} href={`/blog/categoria/${category.slug}`}>
                   <Badge
                     variant={selectedCategory === category.slug ? "default" : "secondary"}
                     className="cursor-pointer hover:bg-primary/80"

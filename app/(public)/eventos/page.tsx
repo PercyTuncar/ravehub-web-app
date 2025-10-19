@@ -217,13 +217,13 @@ export default function EventsPage() {
                 </div>
 
                 <div className="flex gap-2 mt-4">
-                  <Link href={`/events/${event.slug}`} className="flex-1">
+                  <Link href={`/eventos/${event.slug}`} className="flex-1">
                     <Button variant="outline" className="w-full">
                       Ver Detalles
                     </Button>
                   </Link>
                   {event.sellTicketsOnPlatform && (
-                    <Link href={`/events/${event.slug}/buy`}>
+                    <Link href={`/eventos/${event.slug}/comprar`}>
                       <Button className="whitespace-nowrap">
                         Comprar Entradas
                       </Button>

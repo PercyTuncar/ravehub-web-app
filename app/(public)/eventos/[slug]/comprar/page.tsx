@@ -64,16 +64,16 @@ export default function BuyTicketsPage() {
         if (activePhase) {
           setSelectedPhase(activePhase.id);
           // Initialize ticket selections
-          const initialSelections = activePhase.prices.map(price => {
-            const zone = eventData.zones?.find(z => z.id === price.zoneId);
+          const initialSelections = activePhase.zonesPricing?.map(zonePricing => {
+            const zone = eventData.zones?.find(z => z.id === zonePricing.zoneId);
             return {
-              zoneId: price.zoneId,
-              zoneName: price.zoneName,
+              zoneId: zonePricing.zoneId,
+              zoneName: zone?.name || 'Zona desconocida',
               quantity: 0,
-              price: price.price,
+              price: zonePricing.price,
               maxPerTransaction: zone?.capacity || 10, // Default max
             };
-          });
+          }) || [];
           setTicketSelections(initialSelections);
         }
       }
@@ -171,7 +171,7 @@ export default function BuyTicketsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Evento no encontrado</h1>
-          <Link href="/events">
+          <Link href="/eventos">
             <Button>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Ver eventos disponibles
@@ -191,7 +191,7 @@ export default function BuyTicketsPage() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Link href={`/events/${event.slug}`}>
+        <Link href={`/eventos/${event.slug}`}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver al evento
@@ -239,7 +239,7 @@ export default function BuyTicketsPage() {
           )}
 
           {/* Ticket Selection */}
-          {selectedPhaseData && (
+          {selectedPhaseData && ticketSelections.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Seleccionar Entradas - {selectedPhaseData.name}</CardTitle>
@@ -249,38 +249,37 @@ export default function BuyTicketsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {selectedPhaseData.prices.map((price) => {
-                    const selection = ticketSelections.find(s => s.zoneId === price.zoneId);
-                    const zone = event.zones?.find(z => z.id === price.zoneId);
+                  {ticketSelections.map((selection) => {
+                    const zone = event.zones?.find(z => z.id === selection.zoneId);
 
                     return (
-                      <div key={price.zoneId} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={selection.zoneId} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex-1">
-                          <h4 className="font-medium">{price.zoneName}</h4>
+                          <h4 className="font-medium">{selection.zoneName}</h4>
                           {zone?.description && (
                             <p className="text-sm text-muted-foreground">{zone.description}</p>
                           )}
                           <p className="text-lg font-bold text-primary">
-                            ${price.price.toLocaleString()} {event.currency}
+                            ${selection.price.toLocaleString()} {event.currency}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => updateTicketQuantity(price.zoneId, (selection?.quantity || 0) - 1)}
-                            disabled={!selection || selection.quantity <= 0}
+                            onClick={() => updateTicketQuantity(selection.zoneId, selection.quantity - 1)}
+                            disabled={selection.quantity <= 0}
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
                           <span className="w-8 text-center font-medium">
-                            {selection?.quantity || 0}
+                            {selection.quantity}
                           </span>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => updateTicketQuantity(price.zoneId, (selection?.quantity || 0) + 1)}
-                            disabled={!selection || selection.quantity >= selection.maxPerTransaction || totalTickets >= 10}
+                            onClick={() => updateTicketQuantity(selection.zoneId, selection.quantity + 1)}
+                            disabled={selection.quantity >= selection.maxPerTransaction || totalTickets >= 10}
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
