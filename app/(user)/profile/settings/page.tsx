@@ -13,7 +13,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTheme } from '@/lib/contexts/ThemeContext';
 
 export default function SettingsPage() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -37,7 +37,7 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      await updateProfile(formData);
+      await updateUserProfile(formData);
       alert('Perfil actualizado exitosamente');
     } catch (error) {
       console.error('Error updating profile:', error);
