@@ -1,36 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
-import { blogCollection } from '@/lib/firebase/collections';
+import { blogCollection, eventsCollection } from '@/lib/firebase/collections';
 
 export async function POST(request: NextRequest) {
   try {
-    const { type, postId } = await request.json();
+    const { type, id } = await request.json();
 
-    if (!type || !postId) {
+    if (!type || !id) {
       return NextResponse.json(
-        { error: 'Missing required fields: type and postId' },
+        { error: 'Missing required fields: type and id' },
         { status: 400 }
       );
     }
 
-    // Fetch the post data
-    const posts = await blogCollection.query(
-      [{ field: 'id', operator: '==', value: postId }]
-    );
+    let data: any = null;
 
-    if (posts.length === 0) {
+    // Fetch data based on type
+    if (type === 'blog' || type === 'news') {
+      const posts = await blogCollection.query(
+        [{ field: 'id', operator: '==', value: id }]
+      );
+      if (posts.length === 0) {
+        return NextResponse.json(
+          { error: 'Post not found' },
+          { status: 404 }
+        );
+      }
+      data = posts[0];
+    } else if (type === 'festival' || type === 'concert') {
+      const events = await eventsCollection.query(
+        [{ field: 'id', operator: '==', value: id }]
+      );
+      if (events.length === 0) {
+        return NextResponse.json(
+          { error: 'Event not found' },
+          { status: 404 }
+        );
+      }
+      data = events[0];
+    } else {
       return NextResponse.json(
-        { error: 'Post not found' },
-        { status: 404 }
+        { error: 'Invalid type. Supported types: blog, news, festival, concert' },
+        { status: 400 }
       );
     }
-
-    const post = posts[0] as any;
 
     // Generate schema based on type
     const schema = SchemaGenerator.generate({
       type: type as 'blog' | 'news' | 'festival' | 'concert',
-      data: post,
+      data,
     });
 
     return NextResponse.json({ schema });
@@ -46,34 +64,52 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type');
-  const postId = searchParams.get('postId');
+  const id = searchParams.get('id');
 
-  if (!type || !postId) {
+  if (!type || !id) {
     return NextResponse.json(
-      { error: 'Missing required query parameters: type and postId' },
+      { error: 'Missing required query parameters: type and id' },
       { status: 400 }
     );
   }
 
   try {
-    // Fetch the post data
-    const posts = await blogCollection.query(
-      [{ field: 'id', operator: '==', value: postId }]
-    );
+    let data: any = null;
 
-    if (posts.length === 0) {
+    // Fetch data based on type
+    if (type === 'blog' || type === 'news') {
+      const posts = await blogCollection.query(
+        [{ field: 'id', operator: '==', value: id }]
+      );
+      if (posts.length === 0) {
+        return NextResponse.json(
+          { error: 'Post not found' },
+          { status: 404 }
+        );
+      }
+      data = posts[0];
+    } else if (type === 'festival' || type === 'concert') {
+      const events = await eventsCollection.query(
+        [{ field: 'id', operator: '==', value: id }]
+      );
+      if (events.length === 0) {
+        return NextResponse.json(
+          { error: 'Event not found' },
+          { status: 404 }
+        );
+      }
+      data = events[0];
+    } else {
       return NextResponse.json(
-        { error: 'Post not found' },
-        { status: 404 }
+        { error: 'Invalid type. Supported types: blog, news, festival, concert' },
+        { status: 400 }
       );
     }
-
-    const post = posts[0] as any;
 
     // Generate schema based on type
     const schema = SchemaGenerator.generate({
       type: type as 'blog' | 'news' | 'festival' | 'concert',
-      data: post,
+      data,
     });
 
     return NextResponse.json({ schema });

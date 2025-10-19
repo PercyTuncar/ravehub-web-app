@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['firebasestorage.googleapis.com', 'cdn.ravehub.cl'],
+    domains: ['firebasestorage.googleapis.com', 'cdn.ravehublatam.com'],
     remotePatterns: [
       {
         protocol: 'https',

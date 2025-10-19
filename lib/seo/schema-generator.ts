@@ -100,7 +100,7 @@ interface BlogPostingNode {
 }
 
 export class SchemaGenerator {
-  private static readonly BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://ravehub.cl';
+  private static readonly BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
 
   static generateBlogPosting(post: BlogPost): BlogPostingSchema {
     const webpageId = `${this.BASE_URL}/blog/${post.slug}/#webpage`;
@@ -116,7 +116,7 @@ export class SchemaGenerator {
           '@id': websiteId,
           url: this.BASE_URL,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'ravehub.cl'],
+          alternateName: ['Ravehub', 'www.ravehublatam.com'],
         },
         {
           '@type': 'Organization',
@@ -242,13 +242,239 @@ export class SchemaGenerator {
   }
 
   static generateFestival(event: any): any {
-    // Implementation for festival schema
-    return {};
+    const baseUrl = this.BASE_URL;
+    const eventUrl = `${baseUrl}/eventos/${event.slug}`;
+    const websiteId = `${baseUrl}/#website`;
+    const organizationId = `${baseUrl}/#organization`;
+    const venueId = `${baseUrl}/#venue`;
+
+    const schema = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          '@id': websiteId,
+          url: baseUrl,
+          name: 'Ravehub',
+          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+        },
+        {
+          '@type': 'Organization',
+          '@id': organizationId,
+          name: 'Ravehub',
+          url: baseUrl,
+          logo: {
+            '@type': 'ImageObject',
+            '@id': `${baseUrl}/#logo`,
+            url: `${baseUrl}/logo.png`,
+            width: 600,
+            height: 60,
+          },
+          sameAs: [
+            'https://www.instagram.com/ravehub',
+            'https://www.facebook.com/ravehub',
+            'https://twitter.com/ravehub',
+          ],
+        },
+        {
+          '@type': 'Place',
+          '@id': venueId,
+          name: event.location.venue,
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: event.location.address || '',
+            addressLocality: event.location.city,
+            addressRegion: event.location.region,
+            postalCode: event.location.postalCode || '',
+            addressCountry: event.country,
+          },
+        },
+        {
+          '@type': 'MusicFestival',
+          '@id': `${eventUrl}/#festival`,
+          name: event.name,
+          description: event.description,
+          image: [
+            event.mainImageUrl,
+            event.bannerImageUrl,
+          ].filter(Boolean).map(url => ({
+            '@type': 'ImageObject',
+            url,
+            width: 1200,
+            height: 675,
+          })),
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          startDate: event.startDate,
+          endDate: event.endDate,
+          doorTime: event.doorTime,
+          location: { '@id': venueId },
+          organizer: { '@id': organizationId },
+          maximumAttendeeCapacity: event.zones?.reduce((total: number, zone: any) => total + zone.capacity, 0) || 0,
+          isAccessibleForFree: event.isAccessibleForFree,
+          offers: this.generateEventOffers(event),
+          subEvent: this.generateSubEvents(event, eventUrl),
+        },
+      ],
+    };
+
+    return schema;
   }
 
   static generateConcert(event: any): any {
-    // Implementation for concert schema
-    return {};
+    const baseUrl = this.BASE_URL;
+    const eventUrl = `${baseUrl}/eventos/${event.slug}`;
+    const websiteId = `${baseUrl}/#website`;
+    const organizationId = `${baseUrl}/#organization`;
+    const venueId = `${baseUrl}/#venue`;
+
+    const schema = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          '@id': websiteId,
+          url: baseUrl,
+          name: 'Ravehub',
+          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+        },
+        {
+          '@type': 'Organization',
+          '@id': organizationId,
+          name: 'Ravehub',
+          url: baseUrl,
+          logo: {
+            '@type': 'ImageObject',
+            '@id': `${baseUrl}/#logo`,
+            url: `${baseUrl}/logo.png`,
+            width: 600,
+            height: 60,
+          },
+          sameAs: [
+            'https://www.instagram.com/ravehub',
+            'https://www.facebook.com/ravehub',
+            'https://twitter.com/ravehub',
+          ],
+        },
+        {
+          '@type': 'Place',
+          '@id': venueId,
+          name: event.location.venue,
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: event.location.address || '',
+            addressLocality: event.location.city,
+            addressRegion: event.location.region,
+            postalCode: event.location.postalCode || '',
+            addressCountry: event.country,
+          },
+        },
+        {
+          '@type': 'MusicEvent',
+          '@id': `${eventUrl}/#event`,
+          name: event.name,
+          description: event.description,
+          image: [
+            event.mainImageUrl,
+            event.bannerImageUrl,
+          ].filter(Boolean).map(url => ({
+            '@type': 'ImageObject',
+            url,
+            width: 1200,
+            height: 675,
+          })),
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          startDate: event.startDate,
+          endDate: event.endDate,
+          doorTime: event.doorTime,
+          location: { '@id': venueId },
+          organizer: { '@id': organizationId },
+          performer: this.generatePerformers(event),
+          maximumAttendeeCapacity: event.zones?.reduce((total: number, zone: any) => total + zone.capacity, 0) || 0,
+          isAccessibleForFree: event.isAccessibleForFree,
+          offers: this.generateEventOffers(event),
+          subEvent: this.generateSubEvents(event, eventUrl),
+        },
+      ],
+    };
+
+    return schema;
+  }
+
+  private static generateEventOffers(event: any): any[] {
+    const offers: any[] = [];
+
+    event.salesPhases?.forEach((phase: any) => {
+      phase.zonesPricing?.forEach((zonePricing: any) => {
+        const zone = event.zones?.find((z: any) => z.id === zonePricing.zoneId);
+        if (zone) {
+          offers.push({
+            '@type': 'Offer',
+            name: `${zone.name} - ${phase.name}`,
+            category: zone.name,
+            price: zonePricing.price,
+            priceCurrency: event.currency,
+            availability: 'https://schema.org/InStock',
+            availabilityStarts: phase.startDate,
+            availabilityEnds: phase.endDate,
+            validFrom: phase.startDate,
+            validThrough: phase.endDate,
+            inventoryLevel: {
+              '@type': 'QuantitativeValue',
+              value: zone.capacity,
+            },
+            url: `${this.BASE_URL}/eventos/${event.slug}/comprar`,
+          });
+        }
+      });
+    });
+
+    return offers;
+  }
+
+  private static generatePerformers(event: any): any[] {
+    return event.artistLineup?.map((artist: any) => ({
+      '@type': 'Person',
+      name: artist.name,
+      sameAs: [], // Could be populated from DJ profiles
+    })) || [];
+  }
+
+  private static generateSubEvents(event: any, eventUrl: string): any[] {
+    const subEvents: any[] = [];
+
+    // Generate sub-events for each day if multi-day
+    if (event.isMultiDay && event.endDate) {
+      const startDate = new Date(event.startDate);
+      const endDate = new Date(event.endDate);
+      let currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        const dayArtists = event.artistLineup?.filter((artist: any) =>
+          !artist.performanceDate || artist.performanceDate === currentDate.toISOString().split('T')[0]
+        ) || [];
+
+        if (dayArtists.length > 0) {
+          subEvents.push({
+            '@type': 'MusicEvent',
+            '@id': `${eventUrl}/dia-${currentDate.toISOString().split('T')[0]}/#event`,
+            name: `${event.name} - Día ${currentDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}`,
+            startDate: currentDate.toISOString().split('T')[0],
+            location: { '@id': `${this.BASE_URL}/#venue` },
+            superEvent: { '@id': `${eventUrl}/#${event.eventType === 'festival' ? 'festival' : 'event'}` },
+            performer: dayArtists.map((artist: any) => ({
+              '@type': 'Person',
+              name: artist.name,
+            })),
+          });
+        }
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    }
+
+    return subEvents;
   }
 
   static generate(input: SchemaInput): any {

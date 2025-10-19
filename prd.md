@@ -1974,6 +1974,9 @@ El formulario ajusta campos segun el tipo:
   - Autenticacion email/Google con vinculacion (seccion 8) y reglas Firestore minimas.
   - Configuracion inicial de monedas y seeds de configuracion (colecciones `config`, `countries`).
   - **Navbar basico**: Componente `MainNavbar` con logo, enlaces a rutas existentes (home, login/register), toggle de tema y estado de autenticacion basico. Implementar en `components/layout/MainNavbar.tsx` y agregar a `app/layout.tsx`. Incluye menu desplegable de usuario con acceso condicional al panel admin para roles 'admin' o 'moderator'.
+  - Implementacion inicial de contextos globales (AuthContext, CartContext, ThemeContext) con hooks especializados.
+  - Configuracion de Firebase client-side con validaciones de entorno.
+  - Seeds de datos iniciales para testing (usuarios de prueba, configuraciones basicas).
 - **Dependencias**: outputs de Fase 0, diseno UI base.
 - **Validacion**: pruebas unitarias de AuthContext, smoke manual de registro/login, navegacion basica entre paginas existentes y revisión de reglas de seguridad.
 
@@ -1985,6 +1988,10 @@ El formulario ajusta campos segun el tipo:
   - Generador JSON-LD dinámico para `BlogPosting` y `NewsArticle` con UI de previsualizacion (seccion 10).
   - Sitemap dinamico, metadata API, Open Graph/Twitter y manejo de `slugRedirects`.
   - **Expansion del navbar**: Agregar enlaces al blog (`/blog`) y categorias del blog. Implementar dropdown para categorias de blog y enlace directo a pagina principal de blog. Actualizar `MainNavbar` para incluir seccion de contenido editorial.
+  - Implementacion de `lib/data-fetching.ts` con funciones de fetching para SEO (getBlogPosts, getBlogCategories).
+  - Componentes de blog: BlogPostCard, BlogFilters, BlogHeader, BlogComments, BlogReactions.
+  - Panel administrativo de blog con editor enriquecido y previsualizacion de schemas.
+  - Moderacion de comentarios y reacciones con colas de aprobacion.
 - **Dependencias**: librerias UI de Fase 1, navbar basico de Fase 1, contenido de ejemplo para pruebas.
 - **Validacion**: tests funcionales del editor, navegacion completa al blog desde navbar, validaciones SEO (Google Rich Results test, Lighthouse >= 80 en paginas de blog), verificacion de SSR en `/blog` con datos iniciales renderizados en servidor.
 
@@ -1996,9 +2003,13 @@ El formulario ajusta campos segun el tipo:
   - Modelos `ticketTransactions` y `paymentInstallments` con estados de aprobacion y sincronizacion de `eventDjs` (seccion 4.8).
   - Dashboard de entrega manual de tickets y generacion automatica (seccion 9.1).
   - Integraciones pasarelas (Webpay/MercadoPago/Flow), colas de aprobacion y notificaciones por Resend.
+  - **Generador JSON-LD para eventos**: Implementar generador de schemas `MusicFestival` y `MusicEvent` con UI de previsualizacion en formularios de eventos (seccion 10.4). Incluir validaciones de imagenes en proporciones 1:1, 4:3, 16:9 y direcciones completas de recinto.
   - **Navbar completo para usuarios**: Expandir `MainNavbar` con secciones principales (Eventos, Blog, DJs, Tienda), menu de usuario autenticado (perfil, tickets, ordenes, logout), indicadores de estado (carrito, notificaciones) y navegacion responsive. Implementar en contextos publico y admin separados. El menu desplegable incluye acceso condicional al panel admin para usuarios con rol 'admin' o 'moderator'.
+  - Componentes de eventos: EventCard, EventDetail, TicketSelector, PhaseSelector, CheckoutForm, PaymentProofUpload, TicketDownload.
+  - Sincronizacion automatica de `eventDjs` con eventos publicados (upcomingEvents, pastEvents).
+  - APIs de eventos: `/api/eventos`, `/api/tickets/purchase`, `/api/tickets/generate-pdf`.
 - **Dependencias**: Fases 1-2, navbar de fases anteriores, definicion de medios de pago.
-- **Validacion**: suites E2E (Cypress/Playwright) para compra/entrega, navegacion completa entre todas las secciones implementadas, pruebas unitarias de Cloud Functions y QA de montos/cuotas.
+- **Validacion**: suites E2E (Cypress/Playwright) para compra/entrega, navegacion completa entre todas las secciones implementadas, pruebas unitarias de Cloud Functions y QA de montos/cuotas, validacion de schemas JSON-LD para eventos (Google Rich Results test).
 
 ### Fase 4 - E-commerce y perfiles (4 semanas)
 - **Objetivo**: Completar tienda, perfiles de usuario y sistema de DJs.
@@ -2008,6 +2019,12 @@ El formulario ajusta campos segun el tipo:
   - Perfil de usuario con historial de tickets/ordenes, descargas segun `ticketDeliveryStatus`, configuraciones y vinculacion Google (seccion 7.6).
   - Modulo de DJs publico/administrativo basado en `eventDjs`, `djSuggestions`, `djs` (seccion 7.5).
   - **Navbar con tienda y perfiles**: Agregar seccion de tienda al navbar (`/tienda`), indicadores de carrito con contador de items, menu desplegable de usuario con accesos rapidos a perfil, tickets y ordenes. Implementar estado de carrito global y notificaciones de items agregados. El menu desplegable incluye acceso condicional al panel admin para usuarios con rol 'admin' o 'moderator'.
+  - Componentes de tienda: ProductCard, ProductDetail, VariantSelector, Cart, CheckoutForm, OrderTracking.
+  - Componentes de perfil: ProfilePage, TicketsPage, OrdersPage, FavoritesPage, SettingsPage.
+  - Componentes de DJs: DJCard, DJProfile, VoteButton, RankingList, SuggestionForm.
+  - APIs de tienda: `/api/products`, `/api/orders`, `/api/currencies/convert`.
+  - APIs de DJs: `/api/djs`, `/api/djSuggestions`.
+  - Integracion de carrito persistente con IndexedDB/SWR para offline.
 - **Dependencias**: Fase 3 (tickets, navbar completo), disenos tienda y flujos de perfil.
 - **Validacion**: pruebas funcionales de carrito/checkout, navegacion a tienda desde navbar, indicadores de carrito funcionales, regresión de perfil, analitica de conversión inicial.
 
@@ -2018,6 +2035,12 @@ El formulario ajusta campos segun el tipo:
   - Integracion Sentry, GA4, dashboards en panel admin para KPIs (seccion 7.6).
   - Endurecimiento de seguridad: reglas Firestore finales, rate limiting, WAF, auditoria `activityLogs` (seccion 13).
   - **Navbar PWA-ready**: Optimizar navbar para PWA con indicadores offline/online, notificaciones push, badges de actualizaciones y navegacion offline. Implementar cache inteligente de rutas y estados de navbar. El menu desplegable incluye acceso condicional al panel admin para usuarios con rol 'admin' o 'moderator'.
+  - Implementacion de `lib/pwa/service-worker.ts` con precache, cache dinamico y background sync.
+  - IndexedDB para carrito y colas offline (`useOfflineQueue`).
+  - Push notifications con Firebase Cloud Messaging.
+  - Dashboard administrativo con KPIs en tiempo real y filtros.
+  - Reglas Firestore finales con auditoria completa.
+  - Headers de seguridad y rate limiting en APIs.
 - **Dependencias**: features de fases anteriores estabilizadas, navbar completo de Fase 4.
 - **Validacion**: pruebas de carga, pentest basico, Lighthouse >= 90 en vistas criticas, funcionalidad offline del navbar, verificacion de eventos GA.
 
@@ -2028,6 +2051,10 @@ El formulario ajusta campos segun el tipo:
   - Monitoreo intensivo post release + plan de hotfix.
   - Documentacion final (playbooks, runbooks, guias de panel) y transferencia a equipo de operaciones.
   - **Navbar final y documentacion**: Testing completo de navbar en produccion, documentacion de componentes de navegacion, guia de UX para futuras expansiones y checklist de navegacion validada. El menu desplegable incluye acceso condicional al panel admin para usuarios con rol 'admin' o 'moderator'.
+  - Configuracion de entornos production (Vercel, Firebase prod).
+  - Seeds de datos de produccion y backups finales.
+  - Documentacion tecnica completa y guias de usuario.
+  - Plan de soporte post-lanzamiento y monitoreo 24/7 inicial.
 - **Dependencias**: Resultado de QA final, navbar PWA-ready de Fase 5, aprobacion de stakeholders.
 - **Validacion**: reunion GO/NO-GO, navegacion completa funcional en produccion, analisis de metricas primeras 48h y cierre formal de proyecto.
 
@@ -2089,7 +2116,7 @@ Cada fase cierra con revista de diseno, QA formal y gate de aprobacion. Para ava
 - **Frontend**: [Nombre]
 - **Backend**: [Nombre]
 - **UI/UX**: [Nombre]
-- **Soporte**: soporte@ravehub.cl
+- **Soporte**: soporte@ravehublatam.com
 - **Canal Discord**: [Enlace]
 - **Documentacion**: [Enlace interno Notion/Confluence]
 
