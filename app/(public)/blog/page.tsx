@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
-import { useBlogPosts, useBlogCategories, useBlogTags } from '@/lib/hooks/useBlog';
-import { BlogPostCard } from '@/components/blog/BlogPostCard';
 import { BlogFilters } from '@/components/blog/BlogFilters';
 import { BlogHeader } from '@/components/blog/BlogHeader';
+import { BlogContent } from './BlogContent';
+import { getBlogPosts } from '@/lib/data-fetching';
 
 export const metadata: Metadata = {
   title: 'Blog | Ravehub',
@@ -26,6 +26,14 @@ interface BlogPageProps {
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { category, tag } = await searchParams;
 
+  // Fetch data on the server
+  const initialPosts = await getBlogPosts({
+    category,
+    tag,
+    status: 'published',
+    limit: 12,
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <BlogHeader />
@@ -43,68 +51,13 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           {/* Main content */}
           <main className="lg:col-span-3">
             <BlogContent
+              initialPosts={initialPosts}
               category={category}
               tag={tag}
             />
           </main>
         </div>
       </div>
-    </div>
-  );
-}
-
-function BlogContent({ category, tag }: { category?: string; tag?: string }) {
-  const { posts, loading, error } = useBlogPosts({
-    category,
-    tag,
-    status: 'published',
-    limit: 12,
-  });
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="bg-muted h-48 rounded-lg mb-4"></div>
-            <div className="space-y-2">
-              <div className="bg-muted h-4 rounded w-3/4"></div>
-              <div className="bg-muted h-4 rounded w-1/2"></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-destructive text-lg mb-4">Error al cargar los artículos</p>
-        <p className="text-muted-foreground">{error}</p>
-      </div>
-    );
-  }
-
-  if (posts.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground text-lg">
-          {category || tag ? 'No se encontraron artículos con los filtros seleccionados.' : 'No hay artículos publicados aún.'}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {posts.map((post) => (
-          <BlogPostCard key={post.id} post={post} />
-        ))}
-      </div>
-
-      {/* Pagination would go here */}
     </div>
   );
 }

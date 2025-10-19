@@ -40,11 +40,15 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
         {/* Categories */}
         {post.categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
-            {post.categories.slice(0, 2).map((category) => (
-              <Badge key={category} variant="secondary" className="text-xs">
-                {category}
-              </Badge>
-            ))}
+            {post.categories.slice(0, 2).map((category, index) => {
+              const categoryName = typeof category === 'string' ? category : (category as any).name;
+              const categoryKey = typeof category === 'string' ? category : (category as any).id;
+              return (
+                <Badge key={categoryKey || index} variant="secondary" className="text-xs">
+                  {categoryName}
+                </Badge>
+              );
+            })}
           </div>
         )}
 
@@ -83,11 +87,15 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
         {/* Tags */}
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-4">
-            {post.tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs">
-                #{tag}
-              </Badge>
-            ))}
+            {post.tags.slice(0, 3).map((tag, index) => {
+              const tagName = typeof tag === 'string' ? tag : (tag as any).name;
+              const tagKey = typeof tag === 'string' ? tag : (tag as any).id;
+              return (
+                <Badge key={tagKey || index} variant="outline" className="text-xs">
+                  #{tagName}
+                </Badge>
+              );
+            })}
           </div>
         )}
       </div>

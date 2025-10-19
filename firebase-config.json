@@ -1,10 +1,10 @@
 {
   "projects": {
     "development": {
-      "project_id": "ravehub-dev",
-      "project_number": "123456789012",
-      "display_name": "Ravehub Development",
-      "name": "projects/ravehub-dev",
+      "project_id": "event-ticket-website-6b541",
+      "project_number": "423743096823",
+      "display_name": "Event Ticket Website Development",
+      "name": "projects/event-ticket-website-6b541",
       "state": "ACTIVE"
     },
     "staging": {
@@ -24,7 +24,7 @@
   },
   "client": {
     "api_key": {
-      "current_key": "AIzaSyDUMMY_API_KEY_FOR_DEVELOPMENT"
+      "current_key": "AIzaSyBzSPow2dSdqKOX79Vi7VvsZXg_M8lc730"
     }
   },
   "configuration_version": "1"

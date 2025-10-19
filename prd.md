@@ -316,7 +316,7 @@ Relaciones: `eventCTAs`, `ticketTransactions`, `albums`, `galleryImages`, `blog`
 ```
 Notas: `upcomingEvents` y `pastEvents` se agregan para soportar el historial automatico al publicar o finalizar eventos.
 
-Relaciones: `events.artistLineup`, `djSuggestions`.
+Relaciones: `eventos.artistLineup`, `djSuggestions`.
 
 ### 4.4 Coleccion `eventCTAs`
 ```typescript
@@ -855,7 +855,7 @@ ravehub/
 |   |   \-- link-account/page.tsx
 |   |-- (admin)/
 |   |   |-- dashboard/page.tsx
-|   |   |-- events/
+|   |   |-- eventos/
 |   |   |   |-- page.tsx
 |   |   |   |-- new/page.tsx
 |   |   |   \-- [id]/
@@ -884,24 +884,24 @@ ravehub/
 |   |       \-- general/page.tsx
 |   |-- (public)/
 |   |   |-- page.tsx
-|   |   |-- events/
+|   |   |-- eventos/
 |   |   |   |-- page.tsx
 |   |   |   \-- [slug]/
 |   |   |       |-- page.tsx
-|   |   |       \-- buy/page.tsx
+|   |   |       \-- comprar/page.tsx
 |   |   |-- blog/
 |   |   |   |-- page.tsx
 |   |   |   |-- [slug]/page.tsx
-|   |   |   \-- category/[slug]/page.tsx
-|   |   |-- shop/
+|   |   |   \-- categoria/[slug]/page.tsx
+|   |   |-- tienda/
 |   |   |   |-- page.tsx
 |   |   |   |-- [slug]/page.tsx
-|   |   |   \-- cart/page.tsx
+|   |   |   \-- carrito/page.tsx
 |   |   |-- djs/
 |   |   |   |-- page.tsx
 |   |   |   \-- [slug]/page.tsx
-|   |   |-- gallery/[eventSlug]/page.tsx
-|   |   \-- about/page.tsx
+|   |   |-- galeria/[eventoSlug]/page.tsx
+|   |   \-- acerca/page.tsx
 |   |-- (user)/
 |   |   \-- profile/
 |   |       |-- page.tsx
@@ -915,8 +915,8 @@ ravehub/
 |   |   |   |-- login/route.ts
 |   |   |   |-- google-callback/route.ts
 |   |   |   \-- link-google/route.ts
-|   |   |-- events/route.ts
-|   |   |-- events/[id]/route.ts
+|   |   |-- eventos/route.ts
+|   |   |-- eventos/[id]/route.ts
 |   |   |-- tickets/purchase/route.ts
 |   |   |-- tickets/generate-pdf/route.ts
 |   |   |-- blog/route.ts
@@ -939,7 +939,7 @@ ravehub/
 |   |-- layout/
 |   |-- ui/
 |   |-- auth/
-|   |-- events/
+|   |-- eventos/
 |   |-- blog/
 |   |-- shop/
 |   |-- admin/
@@ -1130,7 +1130,9 @@ Cada funcionalidad describe que se construye, como se usa y cuales son las inter
 
 ### 7.3 Blog editorial avanzado
 
-**Componentes**: `PostEditor`, `RichTextEditor`, `SchemaPreview`, `SEOPreview`, `ReactionBar`, `CommentSection`.
+**Componentes**: `PostEditor`, `RichTextEditor`, `SchemaPreview`, `SEOPreview`, `ReactionBar`, `CommentSection`, `BlogContent`, `BlogPostCard`.
+
+**Arquitectura SEO-friendly**: La pagina principal del blog (`/blog`) implementa Server-Side Rendering (SSR) para optimizar el SEO. Los datos se obtienen en el servidor y se pasan como props al componente cliente, permitiendo que los motores de busqueda indexen el contenido completo desde el HTML inicial.
 
 **Interacciones del usuario**
 - Lee articulos con experiencia optimizada (modo lector, sticky TOC, dark mode).
@@ -1144,6 +1146,13 @@ Cada funcionalidad describe que se construye, como se usa y cuales son las inter
 - Visualizan en vivo el schema JSON-LD y la previsualizacion SEO antes de publicar.
 - Asocian articulos con eventos o posts relacionados para potenciar SEO interno.
 - Agendan publicaciones y reciben recordatorios cuando se acerca la fecha.
+
+**Implementacion tecnica para SEO**:
+- **Server Component**: `app/(public)/blog/page.tsx` ejecuta `getBlogPosts()` en el servidor para obtener datos iniciales.
+- **Client Component**: `BlogContent.tsx` recibe `initialPosts` como props y maneja interacciones del usuario.
+- **Funcion de fetching**: `lib/data-fetching.ts` contiene `getBlogPosts()` que puede ejecutarse en servidor, evitando hooks en componentes server-side.
+- **Componente BlogPostCard**: Maneja renderizado de categorias y tags con logica flexible para strings u objetos, evitando errores de renderizado de objetos complejos.
+- **Beneficios SEO**: HTML completo con contenido desde la primera carga, mejor indexacion por Googlebot, tiempos de carga inicial optimizados.
 
 ### 7.4 Galeria de eventos
 
@@ -1299,7 +1308,7 @@ Los hooks emiten eventos personalizados (`show-link-modal`) para que los modales
 
 ### 9.2 Flujo completo de compra de entradas (usuario)
 
-1. **Seleccion de evento**: usuario ingresa a `events/[slug]`, revisa informacion, lineup y CTA "Comprar entradas".
+1. **Seleccion de evento**: usuario ingresa a `eventos/[slug]`, revisa informacion, lineup y CTA "Comprar entradas".
 2. **Selector de tickets**:
    - El sistema determina la fase activa comparando fecha y `soldOut`.
    - Tabla de zonas muestra precio, disponibilidad y selector de cantidad.
@@ -1325,7 +1334,7 @@ Los hooks emiten eventos personalizados (`show-link-modal`) para que los modales
 
 ### 9.3 Flujo de publicacion de evento (admin)
 
-1. Admin accede a `/admin/events/new`.
+1. Admin accede a `/admin/eventos/new`.
 2. Se muestran pasos organizados con progress bar:
    - **Informacion basica**: nombre, slug, tipo de evento, descripcion. Al seleccionar tipo ("Festival", "Concierto", "Club") se preselecciona `schemaType`.
    - **Fechas y ubicacion**: pickers validados; mapa interactivo para coordenadas.
@@ -1391,6 +1400,13 @@ El sistema genera JSON-LD en el momento de la publicacion utilizando plantillas 
 - Combina plantillas base (`schemas/*.ts`) con datos provenientes de los formularios administrativos.
 - Expone helpers para vista previa (`SchemaPreview`) y la API `/api/seo/generate-schema`.
 - Registra auditoria de cambios (version, autor, fecha) antes de publicar.
+
+### 10.1.1 Funciones de fetching para SEO (`lib/data-fetching.ts`)
+
+- `getBlogPosts()`: Funcion async que obtiene posts del blog desde Firestore para uso en Server Components.
+- Permite filtrado por categoria, tag, status y limite.
+- Ejecutable en servidor para SSR, evitando hooks en componentes server-side.
+- Retorna `BlogPost[]` tipado para integracion con generador de schemas.
 
 ---
 
@@ -1956,17 +1972,20 @@ El formulario ajusta campos segun el tipo:
   - Componentes UI core y librerias compartidas (`lib/utils`, `lib/hooks`).
   - Autenticacion email/Google con vinculacion (seccion 8) y reglas Firestore minimas.
   - Configuracion inicial de monedas y seeds de configuracion (colecciones `config`, `countries`).
+  - **Navbar basico**: Componente `MainNavbar` con logo, enlaces a rutas existentes (home, login/register), toggle de tema y estado de autenticacion basico. Implementar en `components/layout/MainNavbar.tsx` y agregar a `app/layout.tsx`.
 - **Dependencias**: outputs de Fase 0, diseno UI base.
-- **Validacion**: pruebas unitarias de AuthContext, smoke manual de registro/login y revisión de reglas de seguridad.
+- **Validacion**: pruebas unitarias de AuthContext, smoke manual de registro/login, navegacion basica entre paginas existentes y revisión de reglas de seguridad.
 
 ### Fase 2 - Contenido y SEO (4 semanas)
 - **Objetivo**: Completar el ecosistema editorial y la capa SEO.
 - **Entregables clave**:
   - Modulo blog completo (editor, comentarios, reacciones) mapeado a colecciones `blog`, `blogComments`, `blogReactions`, etc. (seccion 4.6 y 7.3).
+  - Arquitectura SEO-friendly implementada: Server-Side Rendering para pagina principal del blog con `getBlogPosts()` en servidor y `BlogContent` cliente.
   - Generador JSON-LD dinámico para `BlogPosting` y `NewsArticle` con UI de previsualizacion (seccion 10).
   - Sitemap dinamico, metadata API, Open Graph/Twitter y manejo de `slugRedirects`.
-- **Dependencias**: librerias UI de Fase 1, contenido de ejemplo para pruebas.
-- **Validacion**: tests funcionales del editor y validaciones SEO (Google Rich Results test, Lighthouse >= 80 en paginas de blog).
+  - **Expansion del navbar**: Agregar enlaces al blog (`/blog`) y categorias del blog. Implementar dropdown para categorias de blog y enlace directo a pagina principal de blog. Actualizar `MainNavbar` para incluir seccion de contenido editorial.
+- **Dependencias**: librerias UI de Fase 1, navbar basico de Fase 1, contenido de ejemplo para pruebas.
+- **Validacion**: tests funcionales del editor, navegacion completa al blog desde navbar, validaciones SEO (Google Rich Results test, Lighthouse >= 80 en paginas de blog), verificacion de SSR en `/blog` con datos iniciales renderizados en servidor.
 
 ### Fase 3 - Eventos y tickets (6 semanas)
 - **Objetivo**: Implementar la experiencia completa de eventos y ticketing.
@@ -1976,8 +1995,9 @@ El formulario ajusta campos segun el tipo:
   - Modelos `ticketTransactions` y `paymentInstallments` con estados de aprobacion y sincronizacion de `eventDjs` (seccion 4.8).
   - Dashboard de entrega manual de tickets y generacion automatica (seccion 9.1).
   - Integraciones pasarelas (Webpay/MercadoPago/Flow), colas de aprobacion y notificaciones por Resend.
-- **Dependencias**: Fases 1-2, definicion de medios de pago.
-- **Validacion**: suites E2E (Cypress/Playwright) para compra/entrega, pruebas unitarias de Cloud Functions y QA de montos/cuotas.
+  - **Navbar completo para usuarios**: Expandir `MainNavbar` con secciones principales (Eventos, Blog, DJs, Tienda), menu de usuario autenticado (perfil, tickets, ordenes, logout), indicadores de estado (carrito, notificaciones) y navegacion responsive. Implementar en contextos publico y admin separados.
+- **Dependencias**: Fases 1-2, navbar de fases anteriores, definicion de medios de pago.
+- **Validacion**: suites E2E (Cypress/Playwright) para compra/entrega, navegacion completa entre todas las secciones implementadas, pruebas unitarias de Cloud Functions y QA de montos/cuotas.
 
 ### Fase 4 - E-commerce y perfiles (4 semanas)
 - **Objetivo**: Completar tienda, perfiles de usuario y sistema de DJs.
@@ -1986,8 +2006,9 @@ El formulario ajusta campos segun el tipo:
   - Panel de ordenes y aprobaciones offline.
   - Perfil de usuario con historial de tickets/ordenes, descargas segun `ticketDeliveryStatus`, configuraciones y vinculacion Google (seccion 7.6).
   - Modulo de DJs publico/administrativo basado en `eventDjs`, `djSuggestions`, `djs` (seccion 7.5).
-- **Dependencias**: Fase 3 (tickets), disenos tienda y flujos de perfil.
-- **Validacion**: pruebas funcionales de carrito/checkout, regresión de perfil, analitica de conversión inicial.
+  - **Navbar con tienda y perfiles**: Agregar seccion de tienda al navbar (`/tienda`), indicadores de carrito con contador de items, menu desplegable de usuario con accesos rapidos a perfil, tickets y ordenes. Implementar estado de carrito global y notificaciones de items agregados.
+- **Dependencias**: Fase 3 (tickets, navbar completo), disenos tienda y flujos de perfil.
+- **Validacion**: pruebas funcionales de carrito/checkout, navegacion a tienda desde navbar, indicadores de carrito funcionales, regresión de perfil, analitica de conversión inicial.
 
 ### Fase 5 - PWA, analitica y hardening (3 semanas)
 - **Objetivo**: Optimizar la plataforma para uso offline, monitoreo y seguridad.
@@ -1995,8 +2016,9 @@ El formulario ajusta campos segun el tipo:
   - PWA completa: service worker, offline queue, push notifications (seccion 11).
   - Integracion Sentry, GA4, dashboards en panel admin para KPIs (seccion 7.6).
   - Endurecimiento de seguridad: reglas Firestore finales, rate limiting, WAF, auditoria `activityLogs` (seccion 13).
-- **Dependencias**: features de fases anteriores estabilizadas.
-- **Validacion**: pruebas de carga, pentest basico, Lighthouse >= 90 en vistas criticas, verificacion de eventos GA.
+  - **Navbar PWA-ready**: Optimizar navbar para PWA con indicadores offline/online, notificaciones push, badges de actualizaciones y navegacion offline. Implementar cache inteligente de rutas y estados de navbar.
+- **Dependencias**: features de fases anteriores estabilizadas, navbar completo de Fase 4.
+- **Validacion**: pruebas de carga, pentest basico, Lighthouse >= 90 en vistas criticas, funcionalidad offline del navbar, verificacion de eventos GA.
 
 ### Fase 6 - Go-live y soporte (2 semanas)
 - **Objetivo**: Ejecutar lanzamiento controlado y handoff operativo.
@@ -2004,8 +2026,9 @@ El formulario ajusta campos segun el tipo:
   - Migracion de datos finales, checklist de lanzamiento, toggles, smoke tests production ready.
   - Monitoreo intensivo post release + plan de hotfix.
   - Documentacion final (playbooks, runbooks, guias de panel) y transferencia a equipo de operaciones.
-- **Dependencias**: Resultado de QA final, aprobacion de stakeholders.
-- **Validacion**: reunion GO/NO-GO, analisis de metricas primeras 48h y cierre formal de proyecto.
+  - **Navbar final y documentacion**: Testing completo de navbar en produccion, documentacion de componentes de navegacion, guia de UX para futuras expansiones y checklist de navegacion validada.
+- **Dependencias**: Resultado de QA final, navbar PWA-ready de Fase 5, aprobacion de stakeholders.
+- **Validacion**: reunion GO/NO-GO, navegacion completa funcional en produccion, analisis de metricas primeras 48h y cierre formal de proyecto.
 
 Cada fase cierra con revista de diseno, QA formal y gate de aprobacion. Para avanzar es obligatorio cumplir los entregables, las dependencias y los criterios de validacion descritos.
 
