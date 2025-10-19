@@ -21,12 +21,45 @@ import {
 export class FirestoreCollection<T extends DocumentData> {
   constructor(private collectionName: string) {}
 
+  private serializeTimestamps(data: DocumentData): DocumentData {
+    const serialized: DocumentData = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      if (value && typeof value === 'object' && 'toDate' in value) {
+        // Convert Firestore Timestamp to plain object
+        serialized[key] = {
+          seconds: value.seconds,
+          nanoseconds: value.nanoseconds,
+        };
+      } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+        // Recursively serialize nested objects
+        serialized[key] = this.serializeTimestamps(value);
+      } else if (Array.isArray(value)) {
+        // Handle arrays
+        serialized[key] = value.map(item =>
+          item && typeof item === 'object' && 'toDate' in item
+            ? { seconds: item.seconds, nanoseconds: item.nanoseconds }
+            : item && typeof item === 'object' && !Array.isArray(item)
+            ? this.serializeTimestamps(item)
+            : item
+        );
+      } else {
+        serialized[key] = value;
+      }
+    }
+
+    return serialized;
+  }
+
   async get(id: string): Promise<T | null> {
     try {
       const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as unknown as T;
+        const data = docSnap.data();
+        // Convert Firestore Timestamps to plain objects for client components
+        const serializedData = this.serializeTimestamps(data);
+        return { id: docSnap.id, ...serializedData } as unknown as T;
       }
       return null;
     } catch (error) {
@@ -38,7 +71,11 @@ export class FirestoreCollection<T extends DocumentData> {
   async getAll(): Promise<T[]> {
     try {
       const querySnapshot = await getDocs(collection(db, this.collectionName));
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as T));
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        const serializedData = this.serializeTimestamps(data);
+        return { id: doc.id, ...serializedData } as unknown as T;
+      });
     } catch (error) {
       console.error(`Error getting all ${this.collectionName} documents:`, error);
       throw error;
@@ -98,7 +135,11 @@ export class FirestoreCollection<T extends DocumentData> {
       }
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as T));
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        const serializedData = this.serializeTimestamps(data);
+        return { id: doc.id, ...serializedData } as unknown as T;
+      });
     } catch (error) {
       console.error(`Error querying ${this.collectionName}:`, error);
       throw error;
@@ -126,7 +167,11 @@ export class FirestoreCollection<T extends DocumentData> {
       const querySnapshot = await getDocs(q);
       const docs = querySnapshot.docs;
       const hasMore = docs.length > pageSize;
-      const data = docs.slice(0, pageSize).map(doc => ({ id: doc.id, ...doc.data() } as unknown as T));
+      const data = docs.slice(0, pageSize).map(doc => {
+        const docData = doc.data();
+        const serializedData = this.serializeTimestamps(docData);
+        return { id: doc.id, ...serializedData } as unknown as T;
+      });
       const lastDoc = docs.length > 0 ? docs[docs.length - 1] : undefined;
 
       return { data, hasMore, lastDoc };

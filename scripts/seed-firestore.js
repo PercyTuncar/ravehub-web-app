@@ -83,7 +83,7 @@ const seedData = {
 
   eventDjs: [
     {
-      id: 'dj-1',
+      id: 'david-guetta',
       name: 'David Guetta',
       alternateName: 'Guetta',
       description: 'World-renowned DJ and producer',
@@ -98,6 +98,90 @@ const seedData = {
       socialLinks: {
         instagram: 'https://instagram.com/davidguetta',
         youtube: 'https://youtube.com/davidguetta'
+      },
+      approved: true,
+      createdAt: admin.firestore.Timestamp.now(),
+      updatedAt: admin.firestore.Timestamp.now()
+    },
+    {
+      id: 'tiesto',
+      name: 'Tiësto',
+      alternateName: 'Tiesto',
+      description: 'Dutch DJ and record producer',
+      bio: 'Tijs Michiel Verwest, known professionally as Tiësto, is a Dutch DJ and record producer.',
+      performerType: 'Person',
+      country: 'NL',
+      genres: ['EDM', 'Trance', 'House'],
+      jobTitle: ['DJ', 'Producer'],
+      famousTracks: ['Adagio for Strings', 'Traffic'],
+      imageUrl: 'https://example.com/tiesto.jpg',
+      instagramHandle: 'tiesto',
+      socialLinks: {
+        instagram: 'https://instagram.com/tiesto',
+        youtube: 'https://youtube.com/tiesto'
+      },
+      approved: true,
+      createdAt: admin.firestore.Timestamp.now(),
+      updatedAt: admin.firestore.Timestamp.now()
+    },
+    {
+      id: 'avicii',
+      name: 'Avicii',
+      alternateName: 'Tim Bergling',
+      description: 'Swedish DJ and producer',
+      bio: 'Tim Bergling, known professionally as Avicii, was a Swedish DJ, remixer and record producer.',
+      performerType: 'Person',
+      country: 'SE',
+      genres: ['EDM', 'House', 'Pop'],
+      jobTitle: ['DJ', 'Producer'],
+      famousTracks: ['Wake Me Up', 'Levels'],
+      imageUrl: 'https://example.com/avicii.jpg',
+      instagramHandle: 'avicii',
+      socialLinks: {
+        instagram: 'https://instagram.com/avicii',
+        youtube: 'https://youtube.com/avicii'
+      },
+      approved: true,
+      createdAt: admin.firestore.Timestamp.now(),
+      updatedAt: admin.firestore.Timestamp.now()
+    },
+    {
+      id: 'calvin-harris',
+      name: 'Calvin Harris',
+      alternateName: 'Harris',
+      description: 'Scottish DJ and producer',
+      bio: 'Adam Richard Wiles, known professionally as Calvin Harris, is a Scottish DJ, record producer, singer, and songwriter.',
+      performerType: 'Person',
+      country: 'GB',
+      genres: ['EDM', 'Pop', 'House'],
+      jobTitle: ['DJ', 'Producer', 'Singer'],
+      famousTracks: ['Summer', 'Feel So Close'],
+      imageUrl: 'https://example.com/calvin-harris.jpg',
+      instagramHandle: 'calvinharris',
+      socialLinks: {
+        instagram: 'https://instagram.com/calvinharris',
+        youtube: 'https://youtube.com/calvinharris'
+      },
+      approved: true,
+      createdAt: admin.firestore.Timestamp.now(),
+      updatedAt: admin.firestore.Timestamp.now()
+    },
+    {
+      id: 'hardwell',
+      name: 'Hardwell',
+      alternateName: 'Robbert van de Corput',
+      description: 'Dutch DJ and producer',
+      bio: 'Robbert van de Corput, known professionally as Hardwell, is a Dutch DJ and electronic music producer and entrepreneur.',
+      performerType: 'Person',
+      country: 'NL',
+      genres: ['EDM', 'Hardstyle', 'House'],
+      jobTitle: ['DJ', 'Producer'],
+      famousTracks: ['Spaceman', 'Apollo'],
+      imageUrl: 'https://example.com/hardwell.jpg',
+      instagramHandle: 'hardwell',
+      socialLinks: {
+        instagram: 'https://instagram.com/hardwell',
+        youtube: 'https://youtube.com/hardwell'
       },
       approved: true,
       createdAt: admin.firestore.Timestamp.now(),

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Eye, Copy, Archive, Calendar, MapPin, Users } from 'lucide-react';
+import { Plus, Edit, Eye, Copy, Archive, Calendar, MapPin, Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AuthGuard } from '@/components/admin/AuthGuard';
 import { eventsCollection } from '@/lib/firebase/collections';
 import { Event } from '@/lib/types';
 import { format } from 'date-fns';
@@ -32,6 +33,21 @@ export default function EventsAdminPage() {
       console.error('Error loading events:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string, eventName: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar el evento "${eventName}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      await eventsCollection.delete(eventId);
+      setEvents(prev => prev.filter(event => event.id !== eventId));
+      alert('Evento eliminado exitosamente');
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Error al eliminar el evento');
     }
   };
 
@@ -73,19 +89,20 @@ export default function EventsAdminPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Gestión de Eventos</h1>
-          <p className="text-muted-foreground">Administra todos los eventos de la plataforma</p>
+    <AuthGuard>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Gestión de Eventos</h1>
+            <p className="text-muted-foreground">Administra todos los eventos de la plataforma</p>
+          </div>
+          <Link href="/admin/events/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Crear Evento
+            </Button>
+          </Link>
         </div>
-        <Link href="/admin/events/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Crear Evento
-          </Button>
-        </Link>
-      </div>
 
       {/* Filters */}
       <div className="flex gap-4 mb-6">
@@ -177,9 +194,14 @@ export default function EventsAdminPage() {
                     Editar
                   </Button>
                 </Link>
-                <Button variant="outline" size="sm">
-                  <Copy className="mr-2 h-4 w-4" />
-                  Duplicar
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteEvent(event.id, event.name)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar
                 </Button>
               </div>
             </CardContent>
@@ -202,6 +224,7 @@ export default function EventsAdminPage() {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

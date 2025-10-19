@@ -853,24 +853,25 @@ ravehub/
 |   |   |-- forgot-password/page.tsx
 |   |   |-- verify-email/page.tsx
 |   |   \-- link-account/page.tsx
-|   |-- (admin)/
-|   |   |-- dashboard/page.tsx
-|   |   |-- eventos/
+|   |-- admin/
+|   |   |-- layout.tsx
+|   |   |-- page.tsx
+|   |   |-- events/
 |   |   |   |-- page.tsx
 |   |   |   |-- new/page.tsx
-|   |   |   \-- [id]/
+|   |   |   \-- [slug]/
 |   |   |       |-- page.tsx
 |   |   |       \-- edit/page.tsx
 |   |   |-- blog/
 |   |   |   |-- page.tsx
 |   |   |   |-- new/page.tsx
-|   |   |   \-- [id]/
+|   |   |   \-- [slug]/
 |   |   |       |-- page.tsx
 |   |   |       \-- edit/page.tsx
 |   |   |-- products/
 |   |   |   |-- page.tsx
 |   |   |   |-- new/page.tsx
-|   |   |   \-- [id]/edit/page.tsx
+|   |   |   \-- [slug]/edit/page.tsx
 |   |   |-- tickets/
 |   |   |   |-- transactions/page.tsx
 |   |   |   \-- installments/page.tsx
@@ -1972,7 +1973,7 @@ El formulario ajusta campos segun el tipo:
   - Componentes UI core y librerias compartidas (`lib/utils`, `lib/hooks`).
   - Autenticacion email/Google con vinculacion (seccion 8) y reglas Firestore minimas.
   - Configuracion inicial de monedas y seeds de configuracion (colecciones `config`, `countries`).
-  - **Navbar basico**: Componente `MainNavbar` con logo, enlaces a rutas existentes (home, login/register), toggle de tema y estado de autenticacion basico. Implementar en `components/layout/MainNavbar.tsx` y agregar a `app/layout.tsx`.
+  - **Navbar basico**: Componente `MainNavbar` con logo, enlaces a rutas existentes (home, login/register), toggle de tema y estado de autenticacion basico. Implementar en `components/layout/MainNavbar.tsx` y agregar a `app/layout.tsx`. Incluye menu desplegable de usuario con acceso condicional al panel admin para roles 'admin' o 'moderator'.
 - **Dependencias**: outputs de Fase 0, diseno UI base.
 - **Validacion**: pruebas unitarias de AuthContext, smoke manual de registro/login, navegacion basica entre paginas existentes y revisión de reglas de seguridad.
 
@@ -1995,7 +1996,7 @@ El formulario ajusta campos segun el tipo:
   - Modelos `ticketTransactions` y `paymentInstallments` con estados de aprobacion y sincronizacion de `eventDjs` (seccion 4.8).
   - Dashboard de entrega manual de tickets y generacion automatica (seccion 9.1).
   - Integraciones pasarelas (Webpay/MercadoPago/Flow), colas de aprobacion y notificaciones por Resend.
-  - **Navbar completo para usuarios**: Expandir `MainNavbar` con secciones principales (Eventos, Blog, DJs, Tienda), menu de usuario autenticado (perfil, tickets, ordenes, logout), indicadores de estado (carrito, notificaciones) y navegacion responsive. Implementar en contextos publico y admin separados.
+  - **Navbar completo para usuarios**: Expandir `MainNavbar` con secciones principales (Eventos, Blog, DJs, Tienda), menu de usuario autenticado (perfil, tickets, ordenes, logout), indicadores de estado (carrito, notificaciones) y navegacion responsive. Implementar en contextos publico y admin separados. El menu desplegable incluye acceso condicional al panel admin para usuarios con rol 'admin' o 'moderator'.
 - **Dependencias**: Fases 1-2, navbar de fases anteriores, definicion de medios de pago.
 - **Validacion**: suites E2E (Cypress/Playwright) para compra/entrega, navegacion completa entre todas las secciones implementadas, pruebas unitarias de Cloud Functions y QA de montos/cuotas.
 
@@ -2006,7 +2007,7 @@ El formulario ajusta campos segun el tipo:
   - Panel de ordenes y aprobaciones offline.
   - Perfil de usuario con historial de tickets/ordenes, descargas segun `ticketDeliveryStatus`, configuraciones y vinculacion Google (seccion 7.6).
   - Modulo de DJs publico/administrativo basado en `eventDjs`, `djSuggestions`, `djs` (seccion 7.5).
-  - **Navbar con tienda y perfiles**: Agregar seccion de tienda al navbar (`/tienda`), indicadores de carrito con contador de items, menu desplegable de usuario con accesos rapidos a perfil, tickets y ordenes. Implementar estado de carrito global y notificaciones de items agregados.
+  - **Navbar con tienda y perfiles**: Agregar seccion de tienda al navbar (`/tienda`), indicadores de carrito con contador de items, menu desplegable de usuario con accesos rapidos a perfil, tickets y ordenes. Implementar estado de carrito global y notificaciones de items agregados. El menu desplegable incluye acceso condicional al panel admin para usuarios con rol 'admin' o 'moderator'.
 - **Dependencias**: Fase 3 (tickets, navbar completo), disenos tienda y flujos de perfil.
 - **Validacion**: pruebas funcionales de carrito/checkout, navegacion a tienda desde navbar, indicadores de carrito funcionales, regresión de perfil, analitica de conversión inicial.
 
@@ -2016,7 +2017,7 @@ El formulario ajusta campos segun el tipo:
   - PWA completa: service worker, offline queue, push notifications (seccion 11).
   - Integracion Sentry, GA4, dashboards en panel admin para KPIs (seccion 7.6).
   - Endurecimiento de seguridad: reglas Firestore finales, rate limiting, WAF, auditoria `activityLogs` (seccion 13).
-  - **Navbar PWA-ready**: Optimizar navbar para PWA con indicadores offline/online, notificaciones push, badges de actualizaciones y navegacion offline. Implementar cache inteligente de rutas y estados de navbar.
+  - **Navbar PWA-ready**: Optimizar navbar para PWA con indicadores offline/online, notificaciones push, badges de actualizaciones y navegacion offline. Implementar cache inteligente de rutas y estados de navbar. El menu desplegable incluye acceso condicional al panel admin para usuarios con rol 'admin' o 'moderator'.
 - **Dependencias**: features de fases anteriores estabilizadas, navbar completo de Fase 4.
 - **Validacion**: pruebas de carga, pentest basico, Lighthouse >= 90 en vistas criticas, funcionalidad offline del navbar, verificacion de eventos GA.
 
@@ -2026,7 +2027,7 @@ El formulario ajusta campos segun el tipo:
   - Migracion de datos finales, checklist de lanzamiento, toggles, smoke tests production ready.
   - Monitoreo intensivo post release + plan de hotfix.
   - Documentacion final (playbooks, runbooks, guias de panel) y transferencia a equipo de operaciones.
-  - **Navbar final y documentacion**: Testing completo de navbar en produccion, documentacion de componentes de navegacion, guia de UX para futuras expansiones y checklist de navegacion validada.
+  - **Navbar final y documentacion**: Testing completo de navbar en produccion, documentacion de componentes de navegacion, guia de UX para futuras expansiones y checklist de navegacion validada. El menu desplegable incluye acceso condicional al panel admin para usuarios con rol 'admin' o 'moderator'.
 - **Dependencias**: Resultado de QA final, navbar PWA-ready de Fase 5, aprobacion de stakeholders.
 - **Validacion**: reunion GO/NO-GO, navegacion completa funcional en produccion, analisis de metricas primeras 48h y cierre formal de proyecto.
 

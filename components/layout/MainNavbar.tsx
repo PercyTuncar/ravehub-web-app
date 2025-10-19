@@ -2,14 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Music, User, LogIn, LogOut, Moon, Sun } from 'lucide-react';
+import { Music, User, LogIn, LogOut, Moon, Sun, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTheme } from '@/lib/contexts/ThemeContext';
+import { useCart } from '@/lib/contexts/CartContext';
 
 export function MainNavbar() {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { getTotalItems } = useCart();
   const pathname = usePathname();
 
   const isActive = (path: string) => pathname === path;
@@ -113,11 +116,16 @@ export function MainNavbar() {
 
                 <Link
                   href="/tienda"
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                  className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 ${
                     pathname.startsWith('/tienda') ? 'text-primary' : 'text-muted-foreground'
                   }`}
                 >
                   Tienda
+                  {getTotalItems() > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {getTotalItems()}
+                    </Badge>
+                  )}
                 </Link>
               </>
             ) : (
@@ -181,6 +189,14 @@ export function MainNavbar() {
                     >
                       Configuración
                     </Link>
+                    {(user.role === 'admin' || user.role === 'moderator') && (
+                      <Link
+                        href="/admin"
+                        className="block px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                      >
+                        Panel Admin
+                      </Link>
+                    )}
                     <hr className="my-1" />
                     <button
                       onClick={handleLogout}

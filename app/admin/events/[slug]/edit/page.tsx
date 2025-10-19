@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { AuthGuard } from '@/components/admin/AuthGuard';
 import { eventsCollection } from '@/lib/firebase/collections';
 import { Event } from '@/lib/types';
 import { LineupSelector } from '@/components/admin/LineupSelector';
@@ -28,44 +29,34 @@ const STEPS = [
   { id: 'review', title: 'Revisión', description: 'Validación final' },
 ];
 
-export default function NewEventPage() {
+export default function EditEventPage() {
+  const params = useParams();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
-  const [eventData, setEventData] = useState<Partial<Event>>({
-    eventType: 'festival',
-    eventStatus: 'draft',
-    eventAttendanceMode: 'offline',
-    inLanguage: 'es-CL',
-    country: 'CL',
-    currency: 'CLP',
-    isMultiDay: false,
-    isAccessibleForFree: false,
-    isHighlighted: false,
-    sellTicketsOnPlatform: true,
-    allowOfflinePayments: true,
-    allowInstallmentPayments: false,
-    ticketDeliveryMode: 'automatic',
-    categories: [],
-    tags: [],
-    faqSection: [],
-    specifications: [],
-    location: {
-      venue: '',
-      city: '',
-      region: 'RM',
-    },
-    organizer: {
-      name: '',
-      email: '',
-      website: '',
-    },
-    artistLineup: [],
-    subEvents: [],
-    salesPhases: [],
-    zones: [],
-    createdAt: new Date().toISOString(),
-  });
+  const [eventData, setEventData] = useState<Partial<Event>>({});
+  const [originalEvent, setOriginalEvent] = useState<Event | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (params.slug) {
+      loadEvent(params.slug as string);
+    }
+  }, [params.slug]);
+
+  const loadEvent = async (eventId: string) => {
+    try {
+      const event = await eventsCollection.get(eventId);
+      if (event) {
+        setEventData(event as Event);
+        setOriginalEvent(event as Event);
+      }
+    } catch (error) {
+      console.error('Error loading event:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateEventData = (field: string, value: any) => {
     setEventData(prev => ({
@@ -86,17 +77,16 @@ export default function NewEventPage() {
     }
   };
 
-  const saveAsDraft = async () => {
+  const saveChanges = async () => {
     setSaving(true);
     try {
-      const eventId = await eventsCollection.create({
+      await eventsCollection.update(params.slug as string, {
         ...eventData,
-        eventStatus: 'draft',
-        createdBy: 'admin', // TODO: Get from auth context
+        updatedAt: new Date().toISOString(),
       });
-      router.push(`/admin/events/${eventId}`);
+      router.push(`/admin/events/${params.slug}`);
     } catch (error) {
-      console.error('Error saving draft:', error);
+      console.error('Error saving event:', error);
     } finally {
       setSaving(false);
     }
@@ -105,16 +95,16 @@ export default function NewEventPage() {
   const publishEvent = async () => {
     setSaving(true);
     try {
-      const eventId = await eventsCollection.create({
+      await eventsCollection.update(params.slug as string, {
         ...eventData,
         eventStatus: 'published',
-        createdBy: 'admin', // TODO: Get from auth context
+        updatedAt: new Date().toISOString(),
       });
 
       // Sync eventDjs after publishing
-      await syncEventDjsForEvent(eventId);
+      await syncEventDjsForEvent(params.slug as string);
 
-      router.push(`/admin/events/${eventId}`);
+      router.push(`/admin/events/${params.slug}`);
     } catch (error) {
       console.error('Error publishing event:', error);
     } finally {
@@ -321,41 +311,6 @@ export default function NewEventPage() {
                   </Select>
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Latitud</label>
-                  <Input
-                    type="number"
-                    step="0.000001"
-                    value={eventData.location?.geo?.lat || ''}
-                    onChange={(e) => updateEventData('location', {
-                      ...eventData.location,
-                      geo: {
-                        ...eventData.location?.geo,
-                        lat: parseFloat(e.target.value)
-                      }
-                    })}
-                    placeholder="-33.4489"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Longitud</label>
-                  <Input
-                    type="number"
-                    step="0.000001"
-                    value={eventData.location?.geo?.lng || ''}
-                    onChange={(e) => updateEventData('location', {
-                      ...eventData.location,
-                      geo: {
-                        ...eventData.location?.geo,
-                        lng: parseFloat(e.target.value)
-                      }
-                    })}
-                    placeholder="-70.6693"
-                  />
-                </div>
-              </div>
             </div>
           </div>
         );
@@ -378,39 +333,6 @@ export default function NewEventPage() {
               startDate={eventData.startDate}
               endDate={eventData.endDate}
             />
-          </div>
-        );
-
-      case 4: // Zones and Phases
-        return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Zonas y Capacidad</h3>
-              <p className="text-muted-foreground mb-6">
-                Define las zonas del evento y su capacidad máxima.
-              </p>
-            </div>
-
-            {/* TODO: Implement zone management */}
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">
-                Gestión de zonas próximamente - permitirá agregar zonas con capacidad y características
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-medium mb-4">Fases de Venta</h3>
-              <p className="text-muted-foreground mb-6">
-                Configura las fases de venta con fechas y precios por zona.
-              </p>
-            </div>
-
-            {/* TODO: Implement phase management */}
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">
-                Gestión de fases próximamente - permitirá configurar fases con precios dinámicos
-              </p>
-            </div>
           </div>
         );
 
@@ -501,169 +423,6 @@ export default function NewEventPage() {
                   Fecha a partir de la cual los usuarios podrán descargar sus tickets
                 </p>
               </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">URL externa de tickets (opcional)</Label>
-                <Input
-                  type="url"
-                  value={eventData.externalTicketUrl || ''}
-                  onChange={(e) => updateEventData('externalTicketUrl', e.target.value)}
-                  placeholder="https://external-site.com/tickets"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Si vendes tickets en otra plataforma, redirigiremos aquí
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 6: // Organizer
-        return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Información del Organizador</h3>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium mb-2">Nombre del Organizador *</Label>
-                <Input
-                  value={eventData.organizer?.name || ''}
-                  onChange={(e) => updateEventData('organizer', {
-                    ...eventData.organizer,
-                    name: e.target.value
-                  })}
-                  placeholder="Ej: Ultra Music Festival"
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Email de Contacto</Label>
-                <Input
-                  type="email"
-                  value={eventData.organizer?.email || ''}
-                  onChange={(e) => updateEventData('organizer', {
-                    ...eventData.organizer,
-                    email: e.target.value
-                  })}
-                  placeholder="contacto@organizador.com"
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Teléfono</Label>
-                <Input
-                  value={eventData.organizer?.phone || ''}
-                  onChange={(e) => updateEventData('organizer', {
-                    ...eventData.organizer,
-                    phone: e.target.value
-                  })}
-                  placeholder="+56 9 1234 5678"
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Sitio Web</Label>
-                <Input
-                  type="url"
-                  value={eventData.organizer?.website || ''}
-                  onChange={(e) => updateEventData('organizer', {
-                    ...eventData.organizer,
-                    website: e.target.value
-                  })}
-                  placeholder="https://organizador.com"
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Logo (URL)</Label>
-                <Input
-                  type="url"
-                  value={eventData.organizer?.logoUrl || ''}
-                  onChange={(e) => updateEventData('organizer', {
-                    ...eventData.organizer,
-                    logoUrl: e.target.value
-                  })}
-                  placeholder="https://organizador.com/logo.png"
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 7: // SEO and Schema
-        return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">SEO y Schema.org</h3>
-              <p className="text-muted-foreground mb-6">
-                Configura la información para motores de búsqueda y redes sociales.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium mb-2">Título SEO</Label>
-                <Input
-                  value={eventData.seoTitle || ''}
-                  onChange={(e) => updateEventData('seoTitle', e.target.value)}
-                  placeholder="Ultra Chile 2026 - Festival de Música Electrónica"
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Descripción SEO</Label>
-                <Textarea
-                  value={eventData.seoDescription || ''}
-                  onChange={(e) => updateEventData('seoDescription', e.target.value)}
-                  placeholder="Únete al festival más grande de música electrónica en Chile..."
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Palabras Clave SEO</Label>
-                <Input
-                  value={eventData.seoKeywords?.join(', ') || ''}
-                  onChange={(e) => updateEventData('seoKeywords', e.target.value.split(',').map(k => k.trim()))}
-                  placeholder="festival, música electrónica, Chile, Ultra"
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Tipo de Schema</Label>
-                <Select
-                  value={eventData.schemaType || 'MusicFestival'}
-                  onValueChange={(value) => updateEventData('schemaType', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MusicFestival">MusicFestival</SelectItem>
-                    <SelectItem value="MusicEvent">MusicEvent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Categorías</Label>
-                <Input
-                  value={eventData.categories?.join(', ') || ''}
-                  onChange={(e) => updateEventData('categories', e.target.value.split(',').map(c => c.trim()))}
-                  placeholder="Electrónica, EDM, Techno"
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Etiquetas</Label>
-                <Input
-                  value={eventData.tags?.join(', ') || ''}
-                  onChange={(e) => updateEventData('tags', e.target.value.split(',').map(t => t.trim()))}
-                  placeholder="ultra, chile, festival"
-                />
-              </div>
             </div>
           </div>
         );
@@ -674,7 +433,7 @@ export default function NewEventPage() {
             <div>
               <h3 className="text-lg font-medium mb-4">Revisión Final</h3>
               <p className="text-muted-foreground mb-6">
-                Revisa toda la información antes de publicar el evento.
+                Revisa toda la información antes de guardar los cambios.
               </p>
             </div>
 
@@ -721,26 +480,6 @@ export default function NewEventPage() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Validation Messages */}
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardHeader>
-                <CardTitle className="text-lg text-yellow-800">Validaciones</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  {!eventData.name && <div className="text-red-600">❌ Nombre del evento requerido</div>}
-                  {!eventData.slug && <div className="text-red-600">❌ Slug requerido</div>}
-                  {!eventData.startDate && <div className="text-red-600">❌ Fecha de inicio requerida</div>}
-                  {!eventData.location?.venue && <div className="text-red-600">❌ Recinto requerido</div>}
-                  {!eventData.location?.city && <div className="text-red-600">❌ Ciudad requerida</div>}
-                  {!eventData.mainImageUrl && <div className="text-yellow-600">⚠️ Imagen principal recomendada</div>}
-                  {(!eventData.artistLineup || eventData.artistLineup.length === 0) && <div className="text-yellow-600">⚠️ Lineup vacío</div>}
-                  {eventData.sellTicketsOnPlatform && (!eventData.zones || eventData.zones.length === 0) && <div className="text-red-600">❌ Zonas requeridas para venta de tickets</div>}
-                  {eventData.sellTicketsOnPlatform && (!eventData.salesPhases || eventData.salesPhases.length === 0) && <div className="text-red-600">❌ Fases de venta requeridas</div>}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         );
 
@@ -749,84 +488,96 @@ export default function NewEventPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <AuthGuard>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      </AuthGuard>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/admin/events">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Crear Nuevo Evento</h1>
-          <p className="text-muted-foreground">Completa la información paso a paso</p>
+    <AuthGuard>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Link href={`/admin/events/${params.slug}`}>
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold">Editar Evento</h1>
+            <p className="text-muted-foreground">Modifica la información del evento</p>
+          </div>
         </div>
-      </div>
 
-      {/* Progress Steps */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                index <= currentStep
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'
-              }`}>
-                {index + 1}
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            {STEPS.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                  index <= currentStep
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {index + 1}
+                </div>
+                {index < STEPS.length - 1 && (
+                  <div className={`w-12 h-0.5 mx-2 ${
+                    index < currentStep ? 'bg-primary' : 'bg-muted'
+                  }`} />
+                )}
               </div>
-              {index < STEPS.length - 1 && (
-                <div className={`w-12 h-0.5 mx-2 ${
-                  index < currentStep ? 'bg-primary' : 'bg-muted'
-                }`} />
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="mt-4">
+            <h2 className="text-lg font-medium">{STEPS[currentStep].title}</h2>
+            <p className="text-muted-foreground">{STEPS[currentStep].description}</p>
+          </div>
         </div>
-        <div className="mt-4">
-          <h2 className="text-lg font-medium">{STEPS[currentStep].title}</h2>
-          <p className="text-muted-foreground">{STEPS[currentStep].description}</p>
-        </div>
-      </div>
 
-      {/* Step Content */}
-      <Card>
-        <CardContent className="p-6">
-          {renderStepContent()}
-        </CardContent>
-      </Card>
+        {/* Step Content */}
+        <Card>
+          <CardContent className="p-6">
+            {renderStepContent()}
+          </CardContent>
+        </Card>
 
-      {/* Navigation */}
-      <div className="flex justify-between mt-8">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          disabled={currentStep === 0}
-        >
-          Anterior
-        </Button>
-
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={saveAsDraft} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? 'Guardando...' : 'Guardar Borrador'}
+        {/* Navigation */}
+        <div className="flex justify-between mt-8">
+          <Button
+            variant="outline"
+            onClick={prevStep}
+            disabled={currentStep === 0}
+          >
+            Anterior
           </Button>
 
-          {currentStep === STEPS.length - 1 && (
-            <Button onClick={publishEvent} disabled={saving}>
-              <Eye className="mr-2 h-4 w-4" />
-              {saving ? 'Publicando...' : 'Publicar Evento'}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={saveChanges} disabled={saving}>
+              <Save className="mr-2 h-4 w-4" />
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
-          )}
 
-          {currentStep < STEPS.length - 1 && (
-            <Button onClick={nextStep}>
-              Siguiente
-            </Button>
-          )}
+            {originalEvent?.eventStatus === 'draft' && (
+              <Button onClick={publishEvent} disabled={saving}>
+                <Eye className="mr-2 h-4 w-4" />
+                {saving ? 'Publicando...' : 'Publicar Evento'}
+              </Button>
+            )}
+
+            {currentStep < STEPS.length - 1 && (
+              <Button onClick={nextStep}>
+                Siguiente
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }
