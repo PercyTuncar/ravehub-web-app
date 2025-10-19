@@ -315,6 +315,46 @@ export default function EditEventPage() {
           </div>
         );
 
+      case 2: // Media
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Multimedia</h3>
+              <p className="text-muted-foreground mb-6">
+                Sube imágenes y contenido visual para el evento.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="block text-sm font-medium mb-2">Imagen Principal *</Label>
+                <Input
+                  type="url"
+                  value={eventData.mainImageUrl || ''}
+                  onChange={(e) => updateEventData('mainImageUrl', e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  URL de la imagen principal del evento (recomendado: 1200x675px)
+                </p>
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Imagen de Banner</Label>
+                <Input
+                  type="url"
+                  value={eventData.bannerImageUrl || ''}
+                  onChange={(e) => updateEventData('bannerImageUrl', e.target.value)}
+                  placeholder="https://example.com/banner.jpg"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  URL de la imagen de banner (opcional)
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
       case 3: // Lineup
         return (
           <div className="space-y-6">
@@ -333,6 +373,39 @@ export default function EditEventPage() {
               startDate={eventData.startDate}
               endDate={eventData.endDate}
             />
+          </div>
+        );
+
+      case 4: // Zones and Phases
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Zonas y Capacidad</h3>
+              <p className="text-muted-foreground mb-6">
+                Define las zonas del evento y su capacidad máxima.
+              </p>
+            </div>
+
+            {/* TODO: Implement zone management */}
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+              <p className="text-muted-foreground">
+                Gestión de zonas próximamente - permitirá agregar zonas con capacidad y características
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium mb-4">Fases de Venta</h3>
+              <p className="text-muted-foreground mb-6">
+                Configura las fases de venta con fechas y precios por zona.
+              </p>
+            </div>
+
+            {/* TODO: Implement phase management */}
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+              <p className="text-muted-foreground">
+                Gestión de fases próximamente - permitirá configurar fases con precios dinámicos
+              </p>
+            </div>
           </div>
         );
 
@@ -422,6 +495,169 @@ export default function EditEventPage() {
                 <p className="text-xs text-muted-foreground mt-1">
                   Fecha a partir de la cual los usuarios podrán descargar sus tickets
                 </p>
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">URL externa de tickets (opcional)</Label>
+                <Input
+                  type="url"
+                  value={eventData.externalTicketUrl || ''}
+                  onChange={(e) => updateEventData('externalTicketUrl', e.target.value)}
+                  placeholder="https://external-site.com/tickets"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Si vendes tickets en otra plataforma, redirigiremos aquí
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 6: // Organizer
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Información del Organizador</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="block text-sm font-medium mb-2">Nombre del Organizador *</Label>
+                <Input
+                  value={eventData.organizer?.name || ''}
+                  onChange={(e) => updateEventData('organizer', {
+                    ...eventData.organizer,
+                    name: e.target.value
+                  })}
+                  placeholder="Ej: Ultra Music Festival"
+                />
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Email de Contacto</Label>
+                <Input
+                  type="email"
+                  value={eventData.organizer?.email || ''}
+                  onChange={(e) => updateEventData('organizer', {
+                    ...eventData.organizer,
+                    email: e.target.value
+                  })}
+                  placeholder="contacto@organizador.com"
+                />
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Teléfono</Label>
+                <Input
+                  value={eventData.organizer?.phone || ''}
+                  onChange={(e) => updateEventData('organizer', {
+                    ...eventData.organizer,
+                    phone: e.target.value
+                  })}
+                  placeholder="+56 9 1234 5678"
+                />
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Sitio Web</Label>
+                <Input
+                  type="url"
+                  value={eventData.organizer?.website || ''}
+                  onChange={(e) => updateEventData('organizer', {
+                    ...eventData.organizer,
+                    website: e.target.value
+                  })}
+                  placeholder="https://organizador.com"
+                />
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Logo (URL)</Label>
+                <Input
+                  type="url"
+                  value={eventData.organizer?.logoUrl || ''}
+                  onChange={(e) => updateEventData('organizer', {
+                    ...eventData.organizer,
+                    logoUrl: e.target.value
+                  })}
+                  placeholder="https://organizador.com/logo.png"
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 7: // SEO and Schema
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">SEO y Schema.org</h3>
+              <p className="text-muted-foreground mb-6">
+                Configura la información para motores de búsqueda y redes sociales.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="block text-sm font-medium mb-2">Título SEO</Label>
+                <Input
+                  value={eventData.seoTitle || ''}
+                  onChange={(e) => updateEventData('seoTitle', e.target.value)}
+                  placeholder="Ultra Chile 2026 - Festival de Música Electrónica"
+                />
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Descripción SEO</Label>
+                <Textarea
+                  value={eventData.seoDescription || ''}
+                  onChange={(e) => updateEventData('seoDescription', e.target.value)}
+                  placeholder="Únete al festival más grande de música electrónica en Chile..."
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Palabras Clave SEO</Label>
+                <Input
+                  value={eventData.seoKeywords?.join(', ') || ''}
+                  onChange={(e) => updateEventData('seoKeywords', e.target.value.split(',').map(k => k.trim()))}
+                  placeholder="festival, música electrónica, Chile, Ultra"
+                />
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Tipo de Schema</Label>
+                <Select
+                  value={eventData.schemaType || 'MusicFestival'}
+                  onValueChange={(value) => updateEventData('schemaType', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MusicFestival">MusicFestival</SelectItem>
+                    <SelectItem value="MusicEvent">MusicEvent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Categorías</Label>
+                <Input
+                  value={eventData.categories?.join(', ') || ''}
+                  onChange={(e) => updateEventData('categories', e.target.value.split(',').map(c => c.trim()))}
+                  placeholder="Electrónica, EDM, Techno"
+                />
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Etiquetas</Label>
+                <Input
+                  value={eventData.tags?.join(', ') || ''}
+                  onChange={(e) => updateEventData('tags', e.target.value.split(',').map(t => t.trim()))}
+                  placeholder="ultra, chile, festival"
+                />
               </div>
             </div>
           </div>
