@@ -1,4 +1,5 @@
-import { Metadata } from 'next';
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -11,67 +12,6 @@ import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections
 import { Event, EventDj } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { SchemaGenerator } from '@/lib/seo/schema-generator';
-
-// Generate metadata for SEO
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  try {
-    // Fetch event data for metadata generation
-    const conditions = [{ field: 'slug', operator: '==', value: params.slug }];
-    const events = await eventsCollection.query(conditions);
-
-    if (events.length === 0) {
-      return {
-        title: 'Evento no encontrado | Ravehub',
-        description: 'El evento que buscas no existe o ha sido eliminado.',
-      };
-    }
-
-    const event = events[0] as Event;
-
-    // Generate schema for structured data
-    const schema = SchemaGenerator.generate({
-      type: 'festival', // or 'concert' based on event type
-      data: event,
-    });
-
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com';
-
-    return {
-      title: `${event.name} | Ravehub`,
-      description: event.description.substring(0, 160),
-      openGraph: {
-        title: event.name,
-        description: event.description.substring(0, 160),
-        url: `${baseUrl}/eventos/${event.slug}`,
-        siteName: 'Ravehub',
-        images: event.mainImageUrl ? [{
-          url: event.mainImageUrl,
-          width: 1200,
-          height: 630,
-          alt: event.name,
-        }] : [],
-        locale: 'es_CL',
-        type: 'website',
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: event.name,
-        description: event.description.substring(0, 160),
-        images: event.mainImageUrl ? [event.mainImageUrl] : [],
-      },
-      other: {
-        'application/ld+json': JSON.stringify(schema),
-      },
-    };
-  } catch (error) {
-    console.error('Error generating metadata:', error);
-    return {
-      title: 'Evento | Ravehub',
-      description: 'Descubre eventos de música electrónica en Latinoamérica.',
-    };
-  }
-}
 
 export default function EventDetailPage() {
   const params = useParams();
