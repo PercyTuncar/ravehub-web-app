@@ -3,7 +3,7 @@
 **Version:** 2.1.1
 **Fecha:** Octubre 2025  
 **Framework:** Next.js 15.1 con App Router  
-**Estado:** listo para implementacion
+**Estado:** listo para implementacion - PROBANDO VERCEL
 
 ---
 
