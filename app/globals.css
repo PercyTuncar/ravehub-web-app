@@ -105,3 +105,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .hero-subtitle {
+    @apply text-xl md:text-2xl text-gray-200;
+  }
+}

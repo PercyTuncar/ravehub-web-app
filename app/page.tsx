@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import JsonLd from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Ravehub — Música electrónica en Latinoamérica',
+  title: 'Ravehub - Eventos de Música Electrónica en Latinoamérica',
   description: 'La plataforma líder en eventos de música electrónica en Latinoamérica. Compra entradas oficiales para festivales y conciertos de música electrónica en Perú, Chile, Ecuador, Colombia, México y Argentina. Pagos seguros, lineups verificados y soporte en español.',
   alternates: { canonical: 'https://www.ravehublatam.com/' },
   openGraph: {
@@ -175,51 +175,6 @@ const jsonLd = {
           "alternateName": "AR"
         }
       ],
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Entradas para eventos de música electrónica",
-        "itemListElement": [
-          {
-            "@type": "OfferCatalog",
-            "name": "Festivales de música electrónica",
-            "itemListElement": [
-              {
-                "@type": "Offer",
-                "itemOffered": {
-                  "@type": "Product",
-                  "name": "Entradas para festivales EDM"
-                }
-              }
-            ]
-          },
-          {
-            "@type": "OfferCatalog",
-            "name": "Clubes y eventos nocturnos",
-            "itemListElement": [
-              {
-                "@type": "Offer",
-                "itemOffered": {
-                  "@type": "Product",
-                  "name": "Entradas para clubes"
-                }
-              }
-            ]
-          },
-          {
-            "@type": "OfferCatalog",
-            "name": "Conciertos de DJs internacionales",
-            "itemListElement": [
-              {
-                "@type": "Offer",
-                "itemOffered": {
-                  "@type": "Product",
-                  "name": "Entradas para conciertos"
-                }
-              }
-            ]
-          }
-        ]
-      },
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "4.7",
@@ -457,13 +412,17 @@ const jsonLd = {
         "offerCount": "250"
       },
       "audience": {
-        "@type": "Audience",
-        "audienceType": "Fans de música electrónica",
-        "geographicArea": {
-          "@type": "Place",
-          "name": "Latinoamérica"
-        }
-      }
+  "@type": "Audience",
+  "audienceType": "Fans de música electrónica",
+  "geographicArea": [
+    { "@type": "Country", "name": "Perú" },
+    { "@type": "Country", "name": "Chile" },
+    { "@type": "Country", "name": "Ecuador" },
+    { "@type": "Country", "name": "Colombia" },
+    { "@type": "Country", "name": "México" },
+    { "@type": "Country", "name": "Argentina" }
+  ]
+}
     },
     {
       "@type": "ItemList",
@@ -566,7 +525,7 @@ export default function HomePage() {
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">
             Vive la música electrónica en Latinoamérica
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-gray-200">
+          <p className="text-xl md:text-2xl mb-8 text-gray-200 hero-subtitle">
             Compra entradas oficiales para festivales, clubes y conciertos en Perú, Chile, Ecuador, Colombia, México y Argentina.
           </p>
 

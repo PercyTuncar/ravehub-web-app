@@ -13,6 +13,26 @@ export const metadata: Metadata = {
   title: 'Ravehub - Plataforma de Música Electrónica',
   description: 'La plataforma integral para la comunidad de música electrónica en Latinoamérica',
   alternates: { canonical: '/' },
+  icons: {
+    icon: '/icons/favicon.ico',
+    shortcut: '/icons/favicon.ico',
+    apple: '/icons/apple-touch-icon.png',
+    other: [
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '32x32',
+        url: '/icons/favicon-32x32.png',
+      },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '16x16',
+        url: '/icons/favicon-16x16.png',
+      },
+    ],
+  },
+  manifest: '/manifest.json',
   openGraph: {
     title: 'Ravehub',
     description: 'La plataforma integral para la comunidad de música electrónica en Latinoamérica',
