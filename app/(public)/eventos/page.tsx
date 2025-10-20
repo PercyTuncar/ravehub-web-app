@@ -14,10 +14,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Image from 'next/image';
 
-export const metadata = {
-  alternates: { canonical: '/eventos' },
-}
-
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
