@@ -45,7 +45,7 @@ const jsonLd = {
         "width": "1200",
         "height": "630"
       },
-      "description": "Plataforma líder de venta de entradas para festivales, clubes y conciertos de música electrónica en Latinoamérica. Venta oficial de tickets con pagos seguros y verificación de lineups.",
+      "description": "Plataforma líder de venta de entradas para festivales y conciertos de música electrónica en Latinoamérica. Venta oficial de tickets con pagos seguros y verificación de lineups.",
       "slogan": "Vive la música electrónica en Latinoamérica",
       "foundingDate": "2023",
       "foundingLocation": {
