@@ -82,18 +82,7 @@ const jsonLd = {
           "contactType": "customer service",
           "email": "hola@ravehublatam.com",
           "areaServed": ["PE", "CL", "EC", "CO", "MX", "AR"],
-          "availableLanguage": [
-            {
-              "@type": "Language",
-              "name": "Spanish",
-              "alternateName": "Español"
-            },
-            {
-              "@type": "Language",
-              "name": "English",
-              "alternateName": "Inglés"
-            }
-          ],
+          "availableLanguage": ["es", "en"],
           "contactOption": "TollFree",
           "hoursAvailable": {
             "@type": "OpeningHoursSpecification",
@@ -115,14 +104,14 @@ const jsonLd = {
           "contactType": "sales",
           "email": "ventas@ravehublatam.com",
           "areaServed": ["PE", "CL", "EC", "CO", "MX", "AR"],
-          "availableLanguage": ["Spanish", "English"]
+         "availableLanguage": ["es", "en"]
         },
         {
           "@type": "ContactPoint",
           "contactType": "technical support",
           "email": "soporte@ravehublatam.com",
           "areaServed": ["PE", "CL", "EC", "CO", "MX", "AR"],
-          "availableLanguage": ["Spanish"]
+          "availableLanguage": ["es"]
         }
       ],
       "address": {
@@ -131,11 +120,7 @@ const jsonLd = {
         "addressLocality": "Lima",
         "addressRegion": "Lima",
         "postalCode": "15074",
-        "addressCountry": {
-          "@type": "Country",
-          "name": "Perú",
-          "sameAs": "https://en.wikipedia.org/wiki/Peru"
-        }
+      "addressCountry": "PE"
       },
       "areaServed": [
         {
@@ -259,6 +244,7 @@ const jsonLd = {
     {
       "@type": "BreadcrumbList",
       "@id": "https://www.ravehublatam.com/#breadcrumb",
+      "name": "Ruta de navegación",
       "itemListElement": [
         {
           "@type": "ListItem",
