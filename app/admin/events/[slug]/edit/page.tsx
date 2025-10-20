@@ -13,9 +13,14 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { AuthGuard } from '@/components/admin/AuthGuard';
 import { eventsCollection } from '@/lib/firebase/collections';
-import { Event } from '@/lib/types';
+import { Event, Country, Region, City } from '@/lib/types';
 import { LineupSelector } from '@/components/admin/LineupSelector';
 import { syncEventDjsForEvent } from '@/lib/firebase/eventDjs-sync';
+import { SocialPreview } from '@/components/seo/SocialPreview';
+import { SchemaPreview } from '@/components/seo/SchemaPreview';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Combobox } from '@/components/ui/combobox';
+import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
 
 const STEPS = [
   { id: 'basic', title: 'Información Básica', description: 'Nombre, tipo y descripción' },
@@ -26,6 +31,7 @@ const STEPS = [
   { id: 'tickets', title: 'Tickets y Pagos', description: 'Configuración de venta' },
   { id: 'organizer', title: 'Organizador', description: 'Información de contacto' },
   { id: 'seo', title: 'SEO y Schema', description: 'Optimización y metadatos' },
+  { id: 'preview', title: 'Previsualización', description: 'SEO y redes sociales' },
   { id: 'review', title: 'Revisión', description: 'Validación final' },
 ];
 
@@ -37,6 +43,125 @@ export default function EditEventPage() {
   const [originalEvent, setOriginalEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [locationErrors, setLocationErrors] = useState<{
+    countries?: string;
+    regions?: string;
+    cities?: string;
+  }>({});
+  const [timezone, setTimezone] = useState('');
+
+  // Load countries on component mount
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const response = await fetch('/api/locations/countries');
+        if (response.ok) {
+          const data = await response.json();
+          setCountries(data);
+          setLocationErrors(prev => ({ ...prev, countries: undefined }));
+        } else {
+          setLocationErrors(prev => ({ ...prev, countries: 'Error al cargar países' }));
+        }
+      } catch (error) {
+        console.error('Error loading countries:', error);
+        setLocationErrors(prev => ({ ...prev, countries: 'Error de conexión' }));
+      }
+    };
+    loadCountries();
+  }, []);
+
+  // Load regions when country changes
+  useEffect(() => {
+    const loadRegions = async () => {
+      if (!eventData.location?.countryCode) {
+        setRegions([]);
+        return;
+      }
+
+      setLoadingLocations(true);
+      setLocationErrors(prev => ({ ...prev, regions: undefined }));
+
+      try {
+        const response = await fetch(`/api/locations/regions?country=${eventData.location.countryCode}`);
+        if (response.ok) {
+          const data = await response.json();
+          setRegions(data);
+        } else {
+          setLocationErrors(prev => ({ ...prev, regions: 'Error al cargar regiones' }));
+        }
+      } catch (error) {
+        console.error('Error loading regions:', error);
+        setLocationErrors(prev => ({ ...prev, regions: 'Error de conexión' }));
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+    loadRegions();
+  }, [eventData.location?.countryCode]);
+
+  // Load timezone when country changes
+  useEffect(() => {
+    const loadTimezone = async () => {
+      if (!eventData.location?.countryCode) {
+        setTimezone('');
+        return;
+      }
+
+      try {
+        const response = await fetch(`https://restcountries.com/v3.1/alpha/${eventData.location.countryCode}`);
+        if (response.ok) {
+          const data = await response.json();
+          const country = data[0];
+          if (country?.timezones?.length > 0) {
+            // Use the first timezone and format it properly
+            const tz = country.timezones[0];
+            setTimezone(tz);
+            updateEventData('timezone', tz);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading timezone:', error);
+      }
+    };
+    loadTimezone();
+  }, [eventData.location?.countryCode]);
+
+  // Load cities when country or region changes
+  useEffect(() => {
+    const loadCities = async () => {
+      if (!eventData.location?.countryCode) {
+        setCities([]);
+        return;
+      }
+
+      setLoadingLocations(true);
+      setLocationErrors(prev => ({ ...prev, cities: undefined }));
+
+      try {
+        const params = new URLSearchParams({
+          country: eventData.location.countryCode,
+          ...(eventData.location.regionCode && { region: eventData.location.regionCode })
+        });
+        const response = await fetch(`/api/locations/cities?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          setCities(data);
+        } else {
+          setLocationErrors(prev => ({ ...prev, cities: 'Error al cargar ciudades' }));
+        }
+      } catch (error) {
+        console.error('Error loading cities:', error);
+        setLocationErrors(prev => ({ ...prev, cities: 'Error de conexión' }));
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+    loadCities();
+  }, [eventData.location?.countryCode, eventData.location?.regionCode]);
 
   useEffect(() => {
     if (params.slug) {
@@ -142,6 +267,68 @@ export default function EditEventPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Tipo de Público *</label>
+              <Select
+                value={eventData.audienceType || 'Adultos 18+'}
+                onValueChange={(value) => updateEventData('audienceType', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Adultos 18+">Adultos 18+</SelectItem>
+                  <SelectItem value="Todos los públicos">Todos los públicos</SelectItem>
+                  <SelectItem value="Mayores de 16">Mayores de 16</SelectItem>
+                  <SelectItem value="Mayores de 21">Mayores de 21</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Venta de Entradas *</label>
+              <Select
+                value={eventData.sellTicketsOnPlatform ? 'platform' : 'external'}
+                onValueChange={(value) => {
+                  updateEventData('sellTicketsOnPlatform', value === 'platform');
+                  if (value === 'external') {
+                    updateEventData('externalTicketUrl', '');
+                    updateEventData('externalOrganizerName', '');
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="platform">Ravehub vende las entradas</SelectItem>
+                  <SelectItem value="external">Entradas vendidas externamente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {!eventData.sellTicketsOnPlatform && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Nombre del Organizador Externo</label>
+                  <Input
+                    value={eventData.externalOrganizerName || ''}
+                    onChange={(e) => updateEventData('externalOrganizerName', e.target.value)}
+                    placeholder="Ej: Ticketmaster, Eventbrite"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">URL para Comprar Entradas</label>
+                  <Input
+                    value={eventData.externalTicketUrl || ''}
+                    onChange={(e) => updateEventData('externalTicketUrl', e.target.value)}
+                    placeholder="https://..."
+                    type="url"
+                  />
+                </div>
+              </>
+            )}
 
             <div>
               <label className="block text-sm font-medium mb-2">Descripción Corta *</label>
@@ -275,41 +462,111 @@ export default function EditEventPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Ciudad *</label>
-                  <Input
-                    value={eventData.location?.city || ''}
-                    onChange={(e) => updateEventData('location', {
-                      ...eventData.location,
-                      city: e.target.value
-                    })}
-                    placeholder="Santiago"
+                  <Label className="block text-sm font-medium mb-2">País *</Label>
+                  <Combobox
+                    options={countries.map(country => ({
+                      value: country.code,
+                      label: country.name,
+                      flag: country.flag
+                    }))}
+                    value={eventData.location?.countryCode || ''}
+                    onValueChange={(value) => {
+                      const selectedCountry = countries.find(c => c.code === value);
+                      updateEventData('location', {
+                        ...eventData.location,
+                        country: selectedCountry?.name || '',
+                        countryCode: value,
+                        region: '',
+                        regionCode: '',
+                        city: '',
+                        cityCode: ''
+                      });
+                      updateEventData('country', value);
+                      updateEventData('currency', selectedCountry?.currencies?.[0]?.code || 'CLP');
+                    }}
+                    placeholder="Seleccionar país"
+                    searchPlaceholder="Buscar país..."
+                    loading={countries.length === 0}
+                    error={locationErrors.countries}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Región *</label>
-                  <Select
-                    value={eventData.location?.region || 'RM'}
-                    onValueChange={(value) => updateEventData('location', {
-                      ...eventData.location,
-                      region: value
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="RM">Región Metropolitana</SelectItem>
-                      <SelectItem value="V">Valparaíso</SelectItem>
-                      <SelectItem value="VII">Maule</SelectItem>
-                      <SelectItem value="VIII">Biobío</SelectItem>
-                      <SelectItem value="IX">Araucanía</SelectItem>
-                      <SelectItem value="XIV">Los Ríos</SelectItem>
-                      <SelectItem value="XV">Arica y Parinacota</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="block text-sm font-medium mb-2">Región/Estado</Label>
+                  <Combobox
+                    options={regions.map(region => ({
+                      value: region.code,
+                      label: region.name
+                    }))}
+                    value={eventData.location?.regionCode || ''}
+                    onValueChange={(value) => {
+                      const selectedRegion = regions.find(r => r.code === value);
+                      updateEventData('location', {
+                        ...eventData.location,
+                        region: selectedRegion?.name || '',
+                        regionCode: value,
+                        city: '',
+                        cityCode: ''
+                      });
+                    }}
+                    placeholder="Seleccionar región"
+                    searchPlaceholder="Buscar región..."
+                    disabled={!eventData.location?.countryCode}
+                    loading={loadingLocations}
+                    error={locationErrors.regions}
+                  />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="block text-sm font-medium mb-2">Ciudad *</Label>
+                  <Combobox
+                    options={cities.map(city => ({
+                      value: city.id,
+                      label: city.name
+                    }))}
+                    value={eventData.location?.cityCode || ''}
+                    onValueChange={(value) => {
+                      const selectedCity = cities.find(c => c.id === value);
+                      updateEventData('location', {
+                        ...eventData.location,
+                        city: selectedCity?.name || '',
+                        cityCode: value
+                      });
+                    }}
+                    placeholder="Seleccionar ciudad"
+                    searchPlaceholder="Buscar ciudad..."
+                    disabled={!eventData.location?.countryCode}
+                    loading={loadingLocations}
+                    error={locationErrors.cities}
+                  />
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium mb-2">Código Postal</Label>
+                  <Input
+                    value={eventData.location?.postalCode || ''}
+                    onChange={(e) => updateEventData('location', {
+                      ...eventData.location,
+                      postalCode: e.target.value
+                    })}
+                    placeholder="7500000"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium mb-2">Zona Horaria</Label>
+                <Input
+                  value={timezone}
+                  readOnly
+                  placeholder="Se cargará automáticamente al seleccionar país"
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  La zona horaria se determina automáticamente según el país seleccionado
+                </p>
               </div>
             </div>
           </div>
@@ -380,17 +637,122 @@ export default function EditEventPage() {
         return (
           <div className="space-y-6">
             <div>
+              <h3 className="text-lg font-medium mb-4">Divisa del Evento</h3>
+              <p className="text-muted-foreground mb-6">
+                Selecciona la divisa en la que se venderán las entradas. Se mostrarán las divisas de países de América del Sur más el dólar estadounidense.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Divisa *</label>
+              <Select
+                value={eventData.currency || ''}
+                onValueChange={(value) => {
+                  const selectedCurrency = SOUTH_AMERICAN_CURRENCIES.find(c => c.code === value);
+                  updateEventData('currency', value);
+                  updateEventData('currencySymbol', selectedCurrency?.symbol || value);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar divisa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOUTH_AMERICAN_CURRENCIES.map((currency) => (
+                    <SelectItem key={currency.code} value={currency.code}>
+                      {currency.symbol} {currency.name} ({currency.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {eventData.currency && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Divisa seleccionada: {getCurrencySymbol(eventData.currency)} ({eventData.currency})
+                </p>
+              )}
+            </div>
+
+            <div>
               <h3 className="text-lg font-medium mb-4">Zonas y Capacidad</h3>
               <p className="text-muted-foreground mb-6">
                 Define las zonas del evento y su capacidad máxima.
               </p>
             </div>
 
-            {/* TODO: Implement zone management */}
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">
-                Gestión de zonas próximamente - permitirá agregar zonas con capacidad y características
-              </p>
+            {/* Zone Management */}
+            <div className="space-y-4">
+              {eventData.zones?.map((zone, index) => (
+                <Card key={zone.id}>
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="block text-sm font-medium mb-2">Nombre de Zona</Label>
+                        <Input
+                          value={zone.name}
+                          onChange={(e) => {
+                            const newZones = [...(eventData.zones || [])];
+                            newZones[index] = { ...zone, name: e.target.value };
+                            updateEventData('zones', newZones);
+                          }}
+                          placeholder="VIP, General, etc."
+                        />
+                      </div>
+                      <div>
+                        <Label className="block text-sm font-medium mb-2">Capacidad</Label>
+                        <Input
+                          type="number"
+                          value={zone.capacity}
+                          onChange={(e) => {
+                            const newZones = [...(eventData.zones || [])];
+                            newZones[index] = { ...zone, capacity: parseInt(e.target.value) || 0 };
+                            updateEventData('zones', newZones);
+                          }}
+                          placeholder="100"
+                        />
+                      </div>
+                      <div>
+                        <Label className="block text-sm font-medium mb-2">Descripción</Label>
+                        <Input
+                          value={zone.description || ''}
+                          onChange={(e) => {
+                            const newZones = [...(eventData.zones || [])];
+                            newZones[index] = { ...zone, description: e.target.value };
+                            updateEventData('zones', newZones);
+                          }}
+                          placeholder="Descripción opcional"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          const newZones = (eventData.zones || []).filter((_, i) => i !== index);
+                          updateEventData('zones', newZones);
+                        }}
+                      >
+                        Eliminar Zona
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const newZone = {
+                    id: `zone-${Date.now()}`,
+                    name: '',
+                    capacity: 0,
+                    description: '',
+                    isActive: true,
+                  };
+                  updateEventData('zones', [...(eventData.zones || []), newZone]);
+                }}
+              >
+                Agregar Zona
+              </Button>
             </div>
 
             <div>
@@ -400,11 +762,132 @@ export default function EditEventPage() {
               </p>
             </div>
 
-            {/* TODO: Implement phase management */}
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">
-                Gestión de fases próximamente - permitirá configurar fases con precios dinámicos
-              </p>
+            {/* Phase Management */}
+            <div className="space-y-4">
+              {eventData.salesPhases?.map((phase, phaseIndex) => (
+                <Card key={phase.id}>
+                  <CardContent className="p-4">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <Label className="block text-sm font-medium mb-2">Nombre de Fase</Label>
+                          <Input
+                            value={phase.name}
+                            onChange={(e) => {
+                              const newPhases = [...(eventData.salesPhases || [])];
+                              newPhases[phaseIndex] = { ...phase, name: e.target.value };
+                              updateEventData('salesPhases', newPhases);
+                            }}
+                            placeholder="Preventa 1"
+                          />
+                        </div>
+                        <div>
+                          <Label className="block text-sm font-medium mb-2">Fecha Inicio</Label>
+                          <Input
+                            type="datetime-local"
+                            value={phase.startDate ? new Date(phase.startDate).toISOString().slice(0, 16) : ''}
+                            onChange={(e) => {
+                              const newPhases = [...(eventData.salesPhases || [])];
+                              newPhases[phaseIndex] = { ...phase, startDate: e.target.value };
+                              updateEventData('salesPhases', newPhases);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label className="block text-sm font-medium mb-2">Fecha Fin</Label>
+                          <Input
+                            type="datetime-local"
+                            value={phase.endDate ? new Date(phase.endDate).toISOString().slice(0, 16) : ''}
+                            onChange={(e) => {
+                              const newPhases = [...(eventData.salesPhases || [])];
+                              newPhases[phaseIndex] = { ...phase, endDate: e.target.value };
+                              updateEventData('salesPhases', newPhases);
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Zone Pricing for this phase */}
+                      <div>
+                        <Label className="block text-sm font-medium mb-2">Precios por Zona</Label>
+                        <div className="space-y-2">
+                          {eventData.zones?.map((zone) => {
+                            const existingPricing = phase.zonesPricing?.find(p => p.zoneId === zone.id);
+                            return (
+                              <div key={zone.id} className="flex items-center gap-4 p-3 border rounded">
+                                <span className="font-medium min-w-0 flex-1">{zone.name}</span>
+                                <Input
+                                  type="number"
+                                  placeholder="Precio"
+                                  value={existingPricing?.price || ''}
+                                  onChange={(e) => {
+                                    const newPhases = [...(eventData.salesPhases || [])];
+                                    const currentPhase = newPhases[phaseIndex];
+                                    const currentPricing = currentPhase.zonesPricing || [];
+
+                                    const existingIndex = currentPricing.findIndex(p => p.zoneId === zone.id);
+                                    const newPrice = parseFloat(e.target.value) || 0;
+
+                                    if (existingIndex >= 0) {
+                                      currentPricing[existingIndex] = {
+                                        ...currentPricing[existingIndex],
+                                        price: newPrice,
+                                      };
+                                    } else {
+                                      currentPricing.push({
+                                        zoneId: zone.id,
+                                        price: newPrice,
+                                        available: zone.capacity,
+                                        sold: 0,
+                                        phaseId: phase.id,
+                                      });
+                                    }
+
+                                    newPhases[phaseIndex] = { ...currentPhase, zonesPricing: currentPricing };
+                                    updateEventData('salesPhases', newPhases);
+                                  }}
+                                  className="w-24"
+                                />
+                                <span className="text-sm text-muted-foreground">{eventData.currencySymbol || eventData.currency}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const newPhases = (eventData.salesPhases || []).filter((_, i) => i !== phaseIndex);
+                            updateEventData('salesPhases', newPhases);
+                          }}
+                        >
+                          Eliminar Fase
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const newPhase = {
+                    id: `phase-${Date.now()}`,
+                    name: '',
+                    startDate: '',
+                    endDate: '',
+                    isActive: true,
+                    zonesPricing: [],
+                  };
+                  updateEventData('salesPhases', [...(eventData.salesPhases || []), newPhase]);
+                }}
+              >
+                Agregar Fase de Venta
+              </Button>
             </div>
           </div>
         );
@@ -663,7 +1146,34 @@ export default function EditEventPage() {
           </div>
         );
 
-      case 8: // Review
+      case 8: // SEO Preview
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Previsualización SEO y Redes Sociales</h3>
+              <p className="text-muted-foreground mb-6">
+                Revisa cómo se verá tu evento en motores de búsqueda y redes sociales antes de guardar los cambios.
+              </p>
+            </div>
+
+            <Tabs defaultValue="social" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="social">Redes Sociales</TabsTrigger>
+                <TabsTrigger value="schema">Schema JSON-LD</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="social" className="space-y-4">
+                <SocialPreview eventData={eventData} />
+              </TabsContent>
+
+              <TabsContent value="schema" className="space-y-4">
+                <SchemaPreview eventData={eventData} />
+              </TabsContent>
+            </Tabs>
+          </div>
+        );
+
+      case 9: // Review
         return (
           <div className="space-y-6">
             <div>

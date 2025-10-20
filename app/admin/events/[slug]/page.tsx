@@ -12,6 +12,7 @@ import { eventsCollection } from '@/lib/firebase/collections';
 import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getCurrencySymbol } from '@/lib/utils';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -208,12 +209,12 @@ export default function EventDetailPage() {
                             {phase.prices?.map((price) => (
                               <div key={price.zoneId} className="flex justify-between text-sm">
                                 <span>{price.zoneName}</span>
-                                <span className="font-medium">${price.price.toLocaleString()} {event.currency}</span>
+                                <span className="font-medium">{getCurrencySymbol(event.currency || 'CLP')}{price.price.toLocaleString()} {event.currency || 'CLP'}</span>
                               </div>
                             )) || phase.zonesPricing?.map((zonePricing) => (
                               <div key={zonePricing.zoneId} className="flex justify-between text-sm">
                                 <span>{event.zones?.find(z => z.id === zonePricing.zoneId)?.name || 'Zona desconocida'}</span>
-                                <span className="font-medium">${zonePricing.price.toLocaleString()} {event.currency}</span>
+                                <span className="font-medium">{getCurrencySymbol(event.currency || 'CLP')}{zonePricing.price.toLocaleString()} {event.currency || 'CLP'}</span>
                               </div>
                             )) || (
                               <p className="text-sm text-muted-foreground">No hay precios configurados</p>

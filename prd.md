@@ -2005,11 +2005,12 @@ El formulario ajusta campos segun el tipo:
   - Integraciones pasarelas (Webpay/MercadoPago/Flow), colas de aprobacion y notificaciones por Resend.
   - **Generador JSON-LD para eventos**: Implementar generador de schemas `MusicFestival` y `MusicEvent` con UI de previsualizacion en formularios de eventos (seccion 10.4). Incluir validaciones de imagenes en proporciones 1:1, 4:3, 16:9 y direcciones completas de recinto.
   - **Navbar completo para usuarios**: Expandir `MainNavbar` con secciones principales (Eventos, Blog, DJs, Tienda), menu de usuario autenticado (perfil, tickets, ordenes, logout), indicadores de estado (carrito, notificaciones) y navegacion responsive. Implementar en contextos publico y admin separados. El menu desplegable incluye acceso condicional al panel admin para usuarios con rol 'admin' o 'moderator'.
+  - **Gestion de zonas y fases en edicion de eventos**: Implementar UI completa en paso 4 del formulario de edicion de eventos para gestionar zonas (nombre, capacidad, descripcion) y fases de venta (nombre, fechas, precios por zona). Los datos se cargan desde Firebase y se guardan automaticamente. Incluye validaciones de capacidad total y precios consistentes.
   - Componentes de eventos: EventCard, EventDetail, TicketSelector, PhaseSelector, CheckoutForm, PaymentProofUpload, TicketDownload.
   - Sincronizacion automatica de `eventDjs` con eventos publicados (upcomingEvents, pastEvents).
   - APIs de eventos: `/api/eventos`, `/api/tickets/purchase`, `/api/tickets/generate-pdf`.
 - **Dependencias**: Fases 1-2, navbar de fases anteriores, definicion de medios de pago.
-- **Validacion**: suites E2E (Cypress/Playwright) para compra/entrega, navegacion completa entre todas las secciones implementadas, pruebas unitarias de Cloud Functions y QA de montos/cuotas, validacion de schemas JSON-LD para eventos (Google Rich Results test).
+- **Validacion**: suites E2E (Cypress/Playwright) para compra/entrega, navegacion completa entre todas las secciones implementadas, pruebas unitarias de Cloud Functions y QA de montos/cuotas, validacion de schemas JSON-LD para eventos (Google Rich Results test), verificacion de carga y guardado de zonas/fases en edicion de eventos.
 
 ### Fase 4 - E-commerce y perfiles (4 semanas)
 - **Objetivo**: Completar tienda, perfiles de usuario y sistema de DJs.

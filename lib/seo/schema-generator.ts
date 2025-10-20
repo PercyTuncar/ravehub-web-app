@@ -102,6 +102,214 @@ interface BlogPostingNode {
 export class SchemaGenerator {
   private static readonly BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
 
+  generateEventSchema(eventData: any) {
+    const eventUrl = `${SchemaGenerator.BASE_URL}/eventos/${eventData.slug}`;
+
+    // Helper function to format dates with timezone
+    const formatDateWithTimezone = (dateString: string, timeString?: string, timezone?: string) => {
+      if (!dateString) return dateString;
+
+      const date = new Date(dateString);
+      if (timeString) {
+        const [hours, minutes] = timeString.split(':');
+        date.setHours(parseInt(hours), parseInt(minutes));
+      }
+
+      // Format as ISO string with timezone offset
+      const isoString = date.toISOString();
+      if (timezone) {
+        // Convert to timezone offset format (e.g., -05:00)
+        const offset = timezone.includes(':') ? timezone : `${timezone}:00`;
+        return isoString.replace('Z', offset);
+      }
+
+      return isoString;
+    };
+
+    // Base schema structure
+    const schema: any = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        // Website
+        {
+          '@type': 'WebSite',
+          '@id': `${SchemaGenerator.BASE_URL}/#website`,
+          url: SchemaGenerator.BASE_URL,
+          name: 'Ravehub',
+          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+        },
+        // Organization
+        {
+          '@type': 'Organization',
+          '@id': `${SchemaGenerator.BASE_URL}/#organization`,
+          name: 'Ravehub',
+          url: SchemaGenerator.BASE_URL,
+          logo: {
+            '@type': 'ImageObject',
+            '@id': `${SchemaGenerator.BASE_URL}/#logo`,
+            url: `${SchemaGenerator.BASE_URL}/icons/logo.png`,
+            width: 600,
+            height: 60,
+          },
+          sameAs: [
+            'https://www.instagram.com/ravehub.pe',
+            'https://www.facebook.com/ravehub'
+          ],
+        },
+        // WebPage
+        {
+          '@type': 'WebPage',
+          '@id': `${eventUrl}/#webpage`,
+          url: eventUrl,
+          name: eventData.seoTitle || eventData.name,
+          isPartOf: { '@id': `${SchemaGenerator.BASE_URL}/#website` },
+          about: { '@id': `${eventUrl}/#${eventData.schemaType?.toLowerCase() || 'musicevent'}` },
+          primaryImageOfPage: eventData.mainImageUrl ? {
+            '@type': 'ImageObject',
+            '@id': `${eventUrl}/#primaryimage`,
+            url: eventData.mainImageUrl,
+            width: 1200,
+            height: 675,
+          } : undefined,
+          datePublished: eventData.createdAt,
+          dateModified: typeof eventData.updatedAt === 'object' && eventData.updatedAt?.seconds
+            ? new Date(eventData.updatedAt.seconds * 1000).toISOString()
+            : eventData.updatedAt || eventData.createdAt,
+        },
+        // Main Event
+        {
+          '@type': eventData.schemaType || 'MusicFestival',
+          '@id': `${eventUrl}/#${eventData.schemaType?.toLowerCase() || 'musicevent'}`,
+          name: eventData.name,
+          description: eventData.seoDescription || eventData.shortDescription,
+          image: eventData.mainImageUrl ? [
+            eventData.mainImageUrl,
+            eventData.bannerImageUrl
+          ].filter(Boolean) : undefined,
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime, eventData.timezone),
+          endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime, eventData.timezone),
+          doorTime: eventData.doorTime ? formatDateWithTimezone(eventData.startDate, eventData.doorTime, eventData.timezone) : undefined,
+          location: eventData.location ? {
+            '@type': 'Place',
+            name: eventData.location.venue,
+            address: eventData.location.address || eventData.location.city ? {
+              '@type': 'PostalAddress',
+              streetAddress: eventData.location.address,
+              addressLocality: eventData.location.city,
+              addressRegion: eventData.location.region,
+              postalCode: eventData.location.postalCode,
+              addressCountry: eventData.location.countryCode || eventData.location.country,
+            } : undefined,
+            geo: eventData.location.geo ? {
+              '@type': 'GeoCoordinates',
+              latitude: eventData.location.geo.lat,
+              longitude: eventData.location.geo.lng,
+            } : undefined,
+          } : undefined,
+          organizer: eventData.organizer ? {
+            '@type': 'Organization',
+            name: eventData.organizer.name,
+            email: eventData.organizer.email,
+            url: eventData.organizer.website,
+          } : undefined,
+          performer: eventData.artistLineup?.length > 0 ? eventData.artistLineup.map((artist: any) => ({
+            '@type': 'Person',
+            name: artist.name,
+            sameAs: artist.instagram ? [`https://instagram.com/${artist.instagram.replace('@', '')}`] : undefined,
+          })) : undefined,
+          offers: eventData.sellTicketsOnPlatform && eventData.salesPhases?.length > 0 ? eventData.salesPhases.flatMap((phase: any) =>
+            phase.zonesPricing?.map((zonePricing: any) => {
+              const zone = eventData.zones?.find((z: any) => z.id === zonePricing.zoneId);
+              return {
+                '@type': 'Offer',
+                name: `${zone?.name || 'General'} - ${phase.name}`,
+                category: zone?.name || 'General',
+                price: zonePricing.price,
+                priceCurrency: eventData.currency || 'CLP',
+                availability: 'https://schema.org/InStock',
+                availabilityStarts: formatDateWithTimezone(phase.startDate, undefined, eventData.timezone),
+                availabilityEnds: formatDateWithTimezone(phase.endDate, undefined, eventData.timezone),
+                validFrom: formatDateWithTimezone(phase.startDate, undefined, eventData.timezone),
+                validThrough: formatDateWithTimezone(phase.endDate, undefined, eventData.timezone),
+                inventoryLevel: {
+                  '@type': 'QuantitativeValue',
+                  value: zone?.capacity || zonePricing.available || 0,
+                },
+                seller: {
+                  '@type': 'Organization',
+                  name: 'Ravehub',
+                  url: SchemaGenerator.BASE_URL,
+                },
+                url: `${eventUrl}/comprar`,
+              };
+            }) || []
+          ) : eventData.externalTicketUrl ? [{
+            '@type': 'Offer',
+            name: 'Comprar entradas',
+            url: eventData.externalTicketUrl,
+            seller: {
+              '@type': 'Organization',
+              name: eventData.externalOrganizerName || 'Organizador Externo',
+              url: eventData.externalTicketUrl,
+            },
+          }] : undefined,
+          maximumAttendeeCapacity: eventData.sellTicketsOnPlatform
+            ? eventData.zones?.reduce((total: number, zone: any) => total + (zone.capacity || 0), 0)
+            : 5000, // Default for external events
+          isAccessibleForFree: eventData.isAccessibleForFree || false,
+          inLanguage: eventData.inLanguage || `es-${eventData.location?.countryCode || 'CL'}`,
+          audience: eventData.audienceType ? {
+            '@type': 'Audience',
+            audienceType: eventData.audienceType,
+          } : undefined,
+          typicalAgeRange: eventData.typicalAgeRange,
+        }
+      ]
+    };
+
+    // Add subEvents for lineup
+    if (eventData.artistLineup?.length > 0) {
+      const subEvents = eventData.artistLineup.map((artist: any, index: number) => ({
+        '@type': 'MusicEvent',
+        '@id': `${eventUrl}/lineup/${index}/#event`,
+        name: `${artist.name} - ${eventData.name}`,
+        startDate: artist.performanceDate
+          ? formatDateWithTimezone(artist.performanceDate, artist.performanceTime, eventData.timezone)
+          : formatDateWithTimezone(eventData.startDate, eventData.startTime, eventData.timezone),
+        endDate: artist.performanceDate
+          ? formatDateWithTimezone(artist.performanceDate, artist.performanceEndTime, eventData.timezone)
+          : formatDateWithTimezone(eventData.endDate, eventData.endTime, eventData.timezone),
+        location: eventData.location ? {
+          '@type': 'Place',
+          name: eventData.location.venue,
+        } : undefined,
+        superEvent: { '@id': `${eventUrl}/#${eventData.schemaType?.toLowerCase() || 'musicevent'}` },
+        performer: {
+          '@type': 'Person',
+          name: artist.name,
+          sameAs: artist.instagram ? [`https://instagram.com/${artist.instagram.replace('@', '')}`] : undefined,
+        },
+      }));
+
+      schema['@graph'].push(...subEvents);
+    }
+
+    // Filter out undefined values
+    schema['@graph'] = schema['@graph'].map((node: any) => {
+      const filtered: any = {};
+      Object.keys(node).forEach(key => {
+        if (node[key] !== undefined) {
+          filtered[key] = node[key];
+        }
+      });
+      return filtered;
+    });
+
+    return schema;
+  }
+
   static generateBlogPosting(post: BlogPost): BlogPostingSchema {
     const webpageId = `${this.BASE_URL}/blog/${post.slug}/#webpage`;
     const articleId = `${this.BASE_URL}/blog/${post.slug}/#article`;
@@ -125,8 +333,8 @@ export class SchemaGenerator {
           url: this.BASE_URL,
           logo: {
             '@type': 'ImageObject',
-            '@id': `${this.BASE_URL}/#logo`,
-            url: `${this.BASE_URL}/logo.png`,
+            '@id': `${SchemaGenerator.BASE_URL}/#logo`,
+            url: `${SchemaGenerator.BASE_URL}/icons/logo.png`,
             width: 600,
             height: 60,
           },
@@ -266,7 +474,7 @@ export class SchemaGenerator {
           logo: {
             '@type': 'ImageObject',
             '@id': `${baseUrl}/#logo`,
-            url: `${baseUrl}/logo.png`,
+            url: `${baseUrl}/icons/logo.png`,
             width: 600,
             height: 60,
           },
@@ -286,7 +494,7 @@ export class SchemaGenerator {
             addressLocality: event.location.city,
             addressRegion: event.location.region,
             postalCode: event.location.postalCode || '',
-            addressCountry: event.country,
+            addressCountry: event.location.countryCode || event.location.country || event.country,
           },
         },
         {
@@ -346,7 +554,7 @@ export class SchemaGenerator {
           logo: {
             '@type': 'ImageObject',
             '@id': `${baseUrl}/#logo`,
-            url: `${baseUrl}/logo.png`,
+            url: `${baseUrl}/icons/logo.png`,
             width: 600,
             height: 60,
           },
@@ -366,7 +574,7 @@ export class SchemaGenerator {
             addressLocality: event.location.city,
             addressRegion: event.location.region,
             postalCode: event.location.postalCode || '',
-            addressCountry: event.country,
+            addressCountry: event.location.countryCode || event.location.country || event.country,
           },
         },
         {
@@ -415,6 +623,11 @@ export class SchemaGenerator {
             category: zone.name,
             price: zonePricing.price,
             priceCurrency: event.currency,
+            priceSpecification: {
+              '@type': 'PriceSpecification',
+              price: zonePricing.price,
+              priceCurrency: event.currency,
+            },
             availability: 'https://schema.org/InStock',
             availabilityStarts: phase.startDate,
             availabilityEnds: phase.endDate,

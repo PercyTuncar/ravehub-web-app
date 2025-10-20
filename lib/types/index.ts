@@ -55,6 +55,7 @@ export interface Event {
   inLanguage: string;
   country: string;
   currency: string;
+  currencySymbol?: string;
   isMultiDay: boolean;
   isAccessibleForFree: boolean;
   isHighlighted: boolean;
@@ -67,6 +68,8 @@ export interface Event {
   typicalAgeRange?: string;
   ticketDeliveryMode?: 'automatic' | 'manualUpload';
   ticketDownloadAvailableDate?: string;
+  timezone?: string;
+  externalOrganizerName?: string;
 
   categories: string[];
   tags: string[];
@@ -77,7 +80,11 @@ export interface Event {
     venue: string;
     address?: string;
     city?: string;
+    cityCode?: string; // City ID reference
     region?: string;
+    regionCode?: string; // Region ISO code
+    country: string;
+    countryCode: string; // Country ISO code
     postalCode?: string;
     geo?: { lat: number; lng: number };
   };
@@ -289,6 +296,14 @@ export interface CommentReaction {
   updatedAt?: Date;
 }
 
+// Currency types
+export interface Currency {
+  code: string;
+  name: string;
+  symbol: string;
+  region: string;
+}
+
 // Config types
 export interface Config {
   id: string;
@@ -302,13 +317,53 @@ export interface Config {
   updatedAt?: Date;
 }
 
-// Country types
+// Location types
 export interface Country {
   id: string;
-  code: string;
+  code: string; // ISO 3166-1 alpha-2
   name: string;
-  region?: string;
-  flag?: string;
+  nativeName?: string;
+  region: string; // Continent
+  subregion?: string;
+  capital?: string;
+  currencies: Array<{
+    code: string;
+    name: string;
+    symbol: string;
+  }>;
+  languages: Array<{
+    iso639_1: string;
+    iso639_2: string;
+    name: string;
+    nativeName: string;
+  }>;
+  flag: string;
+  population?: number;
+  timezones: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Region {
+  id: string;
+  countryCode: string;
+  code: string; // ISO 3166-2
+  name: string;
+  type: 'state' | 'province' | 'department' | 'region' | 'district';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface City {
+  id: string;
+  countryCode: string;
+  regionCode?: string;
+  name: string;
+  state?: string;
+  latitude?: number;
+  longitude?: number;
+  population?: number;
+  timezone?: string;
   createdAt: Date;
   updatedAt: Date;
 }
