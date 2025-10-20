@@ -99,8 +99,28 @@ interface BlogPostingNode {
   };
 }
 
+// Sanitizador recomendado por Next.js
+export function safeJSONStringify(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+}
+
 export class SchemaGenerator {
   private static readonly BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
+
+  static generate(input: SchemaInput): any {
+    switch (input.type) {
+      case 'blog':
+        return SchemaGenerator.generateBlogPosting(input.data);
+      case 'news':
+        return SchemaGenerator.generateNewsArticle(input.data);
+      case 'festival':
+        return SchemaGenerator.generateFestival(input.data);
+      case 'concert':
+        return SchemaGenerator.generateConcert(input.data);
+      default:
+        throw new Error(`Unsupported schema type: ${input.type}`);
+    }
+  }
 
   generateEventSchema(eventData: any) {
     const eventUrl = `${SchemaGenerator.BASE_URL}/eventos/${eventData.slug}`;
@@ -688,20 +708,5 @@ export class SchemaGenerator {
     }
 
     return subEvents;
-  }
-
-  static generate(input: SchemaInput): any {
-    switch (input.type) {
-      case 'blog':
-        return this.generateBlogPosting(input.data);
-      case 'news':
-        return this.generateNewsArticle(input.data);
-      case 'festival':
-        return this.generateFestival(input.data);
-      case 'concert':
-        return this.generateConcert(input.data);
-      default:
-        throw new Error(`Unsupported schema type: ${input.type}`);
-    }
   }
 }

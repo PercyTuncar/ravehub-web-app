@@ -1,7 +1,4 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import { Calendar, MapPin, Clock, Users, Share2, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,65 +9,91 @@ import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections
 import { Event, EventDj } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import JsonLd from '@/components/seo/JsonLd';
+import { SchemaGenerator } from '@/lib/seo/schema-generator';
 
-export default function EventDetailPage() {
-  const params = useParams();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [eventDjs, setEventDjs] = useState<EventDj[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  useEffect(() => {
-    if (params.slug) {
-      loadEvent(params.slug as string);
-    }
-  }, [params.slug]);
-
-  const loadEvent = async (slug: string) => {
-    try {
-      // Find event by slug
-      const conditions = [{ field: 'slug', operator: '==', value: slug }];
-      const events = await eventsCollection.query(conditions);
-
-      if (events.length > 0) {
-        const eventData = events[0] as Event;
-        setEvent(eventData);
-
-        // Load DJ profiles for lineup
-        if (eventData.artistLineup && eventData.artistLineup.length > 0) {
-          const djIds = eventData.artistLineup
-            .map(artist => artist.eventDjId)
-            .filter(id => id) as string[];
-
-          if (djIds.length > 0) {
-            const djPromises = djIds.map(id => eventDjsCollection.get(id));
-            const djResults = await Promise.all(djPromises);
-            setEventDjs(djResults.filter(dj => dj !== null) as EventDj[]);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error loading event:', error);
-    } finally {
-      setLoading(false);
-    }
+interface PageProps {
+  params: {
+    slug: string;
   };
+}
 
-  const getDjProfile = (eventDjId?: string) => {
-    if (!eventDjId) return null;
-    return eventDjs.find(dj => dj.id === eventDjId);
-  };
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  try {
+    const conditions = [{ field: 'slug', operator: '==', value: params.slug }];
+    const events = await eventsCollection.query(conditions);
 
+    if (events.length === 0) {
+      return {
+        title: 'Evento no encontrado',
+        description: 'El evento que buscas no existe.',
+      };
+    }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+    const event = events[0] as Event;
+
+    return {
+      title: event.seoTitle || event.name,
+      description: event.seoDescription || event.shortDescription,
+      openGraph: {
+        title: event.seoTitle || event.name,
+        description: event.seoDescription || event.shortDescription,
+        images: event.mainImageUrl ? [event.mainImageUrl] : [],
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: event.seoTitle || event.name,
+        description: event.seoDescription || event.shortDescription,
+        images: event.mainImageUrl ? [event.mainImageUrl] : [],
+      },
+    };
+  } catch (error) {
+    console.error('Error generating metadata:', error);
+    return {
+      title: 'Evento',
+      description: 'Detalles del evento',
+    };
   }
+}
 
-  if (!event) {
+async function getEventData(slug: string): Promise<{ event: Event; eventDjs: EventDj[] } | null> {
+  try {
+    // Find event by slug
+    const conditions = [{ field: 'slug', operator: '==', value: slug }];
+    const events = await eventsCollection.query(conditions);
+
+    if (events.length === 0) {
+      return null;
+    }
+
+    const eventData = events[0] as Event;
+    let eventDjs: EventDj[] = [];
+
+    // Load DJ profiles for lineup
+    if (eventData.artistLineup && eventData.artistLineup.length > 0) {
+      const djIds = eventData.artistLineup
+        .map(artist => artist.eventDjId)
+        .filter(id => id) as string[];
+
+      if (djIds.length > 0) {
+        const djPromises = djIds.map(id => eventDjsCollection.get(id));
+        const djResults = await Promise.all(djPromises);
+        eventDjs = djResults.filter(dj => dj !== null) as EventDj[];
+      }
+    }
+
+    return { event: eventData, eventDjs };
+  } catch (error) {
+    console.error('Error loading event:', error);
+    return null;
+  }
+}
+
+export default async function EventDetailPage({ params }: PageProps) {
+  const data = await getEventData(params.slug);
+
+  if (!data) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
@@ -88,6 +111,17 @@ export default function EventDetailPage() {
       </div>
     );
   }
+
+  const { event, eventDjs } = data;
+
+  // Generate JSON-LD schema
+  const schemaGenerator = new SchemaGenerator();
+  const jsonLd = schemaGenerator.generateEventSchema(event);
+
+  const getDjProfile = (eventDjId?: string) => {
+    if (!eventDjId) return null;
+    return eventDjs.find(dj => dj.id === eventDjId);
+  };
 
   const getEventTypeLabel = (type: string) => {
     switch (type) {
@@ -109,6 +143,9 @@ export default function EventDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* JSON-LD Schema */}
+      <JsonLd data={jsonLd} id="event-jsonld" />
+
       {/* Hero Section */}
       <div className="relative">
         {event.mainImageUrl && (
@@ -182,8 +219,8 @@ export default function EventDetailPage() {
                 <CardContent>
                   <div className="grid gap-4 md:grid-cols-2">
                     {event.artistLineup
-                      .sort((a, b) => a.order - b.order)
-                      .map((artist) => {
+                      .sort((a: any, b: any) => a.order - b.order)
+                      .map((artist: any) => {
                         const djProfile = getDjProfile(artist.eventDjId);
                         return (
                           <div key={artist.eventDjId || artist.name} className="flex items-center gap-4 p-4 border rounded-lg">
@@ -248,7 +285,7 @@ export default function EventDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {event.faqSection.map((faq, index) => (
+                    {event.faqSection.map((faq: any, index: number) => (
                       <div key={index}>
                         <h4 className="font-medium mb-2">{faq.question}</h4>
                         <p className="text-muted-foreground">{faq.answer}</p>
