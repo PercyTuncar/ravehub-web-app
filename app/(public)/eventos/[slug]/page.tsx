@@ -12,15 +12,10 @@ import { es } from 'date-fns/locale';
 import JsonLd from '@/components/seo/JsonLd';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 
-interface PageProps {
-  params: {
-    slug: string;
-  };
-}
-
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   try {
-    const conditions = [{ field: 'slug', operator: '==', value: params.slug }];
+    const { slug } = await params;
+    const conditions = [{ field: 'slug', operator: '==', value: slug }];
     const events = await eventsCollection.query(conditions);
 
     if (events.length === 0) {
@@ -90,8 +85,9 @@ async function getEventData(slug: string): Promise<{ event: Event; eventDjs: Eve
   }
 }
 
-export default async function EventDetailPage({ params }: PageProps) {
-  const data = await getEventData(params.slug);
+export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const data = await getEventData(slug);
 
   if (!data) {
     return (
