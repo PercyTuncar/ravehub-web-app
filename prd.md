@@ -1,6 +1,6 @@
 # Documento de Requisitos del Proyecto (PRD): Ravehub
 
-**Version:** 2.1.0  
+**Version:** 2.1.1
 **Fecha:** Octubre 2025  
 **Framework:** Next.js 15.1 con App Router  
 **Estado:** listo para implementacion
@@ -26,7 +26,7 @@
 
 ---
 
-## 1. Resumen Ejecutivo
+## 1. Resumen Ejecutivo 
 
 Ravehub es la plataforma integral para la comunidad de musica electronica en Latinoamerica que conecta fans, artistas y organizadores de eventos. Esta construida sobre Next.js 15.1 y la suite de servicios de Firebase para garantizar escalabilidad, personalizacion y despliegues rapidos. El producto se organiza en modulos altamente cohesivos que comparten un nucleo comun de autenticacion, pagos, contenidos y analitica.
 
