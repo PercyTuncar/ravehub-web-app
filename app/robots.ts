@@ -5,8 +5,6 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       { userAgent: '*', allow: '/', disallow: ['/admin', '/api'] },
     ],
-    sitemap: process.env.NEXT_PUBLIC_SITE_URL
-      ? `${process.env.NEXT_PUBLIC_SITE_URL}/sitemap.xml`
-      : undefined,
+    sitemap: 'https://www.ravehublatam.com/sitemap.xml',
   }
 }

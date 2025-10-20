@@ -10,11 +10,18 @@ export default function NotFound() {
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           Lo sentimos, la página que buscas no existe o ha sido movida.
         </p>
-        <Link href="/">
-          <Button size="lg">
-            Volver al inicio
-          </Button>
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link href="/eventos">
+            <Button size="lg">
+              Ver eventos
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button variant="outline" size="lg">
+              Volver al inicio
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   )

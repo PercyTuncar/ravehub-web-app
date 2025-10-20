@@ -1,5 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // No queremos slash final en URLs
+  trailingSlash: false,
+
+  // Solo 1 idioma (sin rutas /es/*)
+  i18n: {
+    locales: ['es'],
+    defaultLocale: 'es',
+    localeDetection: false, // no detectar por Accept-Language
+  },
+
   images: {
     domains: ['firebasestorage.googleapis.com', 'cdn.ravehublatam.com'],
     remotePatterns: [
@@ -33,6 +43,25 @@ const nextConfig = {
         ],
       },
     ];
+  },
+
+  async redirects() {
+    return [
+      // 1 salto a https + www
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'ravehublatam.com' }],
+        destination: 'https://www.ravehublatam.com/:path*',
+        permanent: true,
+      },
+
+      // Eliminar el slash final en /eventos y en cualquier /eventos/
+      { source: '/eventos/', destination: '/eventos', permanent: true },
+
+      // Si existió multilenguaje, limpia /es/* -> sin prefijo
+      { source: '/es/eventos', destination: '/eventos', permanent: true },
+      { source: '/es/:path*', destination: '/:path*', permanent: true },
+    ]
   },
 };
 

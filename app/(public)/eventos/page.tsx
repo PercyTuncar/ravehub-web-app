@@ -12,6 +12,11 @@ import { eventsCollection } from '@/lib/firebase/collections';
 import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Image from 'next/image';
+
+export const metadata = {
+  alternates: { canonical: '/eventos' },
+}
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -77,12 +82,45 @@ export default function EventsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* JSON-LD for ItemList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            name: 'Eventos de Música Electrónica',
+            description: 'Eventos de música electrónica en LATAM. Encuentra festivales, conciertos y experiencias únicas en Perú, México, Chile y más países.',
+            numberOfItems: events.length,
+            itemListElement: events.slice(0, 10).map((event, index) => ({
+              '@type': 'ListItem',
+              position: index + 1,
+              item: {
+                '@type': 'MusicEvent',
+                name: event.name,
+                url: `https://www.ravehublatam.com/eventos/${event.slug}`,
+                startDate: event.startDate,
+                location: {
+                  '@type': 'Place',
+                  name: event.location.venue,
+                  address: {
+                    '@type': 'PostalAddress',
+                    addressLocality: event.location.city,
+                    addressRegion: event.location.region,
+                    addressCountry: event.location.countryCode || 'CL'
+                  }
+                }
+              }
+            }))
+          })
+        }}
+      />
+
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Eventos de Música Electrónica</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Descubre los mejores eventos de música electrónica en Latinoamérica.
-          Encuentra festivales, conciertos y experiencias únicas.
+          Eventos de música electrónica en LATAM. Encuentra festivales, conciertos y experiencias únicas en Perú, México, Chile y más países.
         </p>
       </div>
 
@@ -146,10 +184,11 @@ export default function EventsPage() {
               {/* Event Image */}
               {event.mainImageUrl && (
                 <div className="aspect-video bg-muted relative overflow-hidden">
-                  <img
+                  <Image
                     src={event.mainImageUrl}
                     alt={event.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                   <div className="absolute top-4 left-4">
                     <Badge className={getEventTypeColor(event.eventType)}>
@@ -223,8 +262,8 @@ export default function EventsPage() {
                     </Button>
                   </Link>
                   {event.sellTicketsOnPlatform && (
-                    <Link href={`/eventos/${event.slug}/comprar`}>
-                      <Button className="whitespace-nowrap">
+                    <Link href={`/eventos/${event.slug}/comprar`} className="flex-1">
+                      <Button className="w-full">
                         Comprar Entradas
                       </Button>
                     </Link>

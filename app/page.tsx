@@ -593,7 +593,7 @@ export default function HomePage() {
             ].map((country) => (
               <a
                 key={country.code}
-                href={`/${country.code}`}
+                href={`/eventos`}
                 className="px-6 py-3 bg-orange-50 hover:bg-orange-100 text-orange-800 hover:text-orange-900 dark:bg-orange-900/20 dark:hover:bg-orange-800/30 dark:text-orange-200 dark:hover:text-orange-100 rounded-full transition-colors"
                 aria-label={`Explorar eventos en ${country.name}`}
                 role="listitem"

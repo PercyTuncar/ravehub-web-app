@@ -135,15 +135,14 @@ export class SchemaGenerator {
         date.setHours(parseInt(hours), parseInt(minutes));
       }
 
-      // Format as ISO string with timezone offset
-      const isoString = date.toISOString();
+      // Format as ISO-8601 string with timezone offset
       if (timezone) {
         // Convert to timezone offset format (e.g., -05:00)
         const offset = timezone.includes(':') ? timezone : `${timezone}:00`;
-        return isoString.replace('Z', offset);
+        return date.toISOString().replace('Z', offset);
       }
 
-      return isoString;
+      return date.toISOString();
     };
 
     // Base schema structure
@@ -157,6 +156,11 @@ export class SchemaGenerator {
           url: SchemaGenerator.BASE_URL,
           name: 'Ravehub',
           alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: `${SchemaGenerator.BASE_URL}/buscar?q={search_term_string}`,
+            'query-input': 'required name=search_term_string'
+          }
         },
         // Organization
         {
@@ -284,7 +288,7 @@ export class SchemaGenerator {
             '@type': 'Audience',
             audienceType: eventData.audienceType,
           } : undefined,
-          typicalAgeRange: eventData.typicalAgeRange,
+          typicalAgeRange: eventData.typicalAgeRange || "18-120",
         }
       ]
     };
@@ -315,6 +319,31 @@ export class SchemaGenerator {
 
       schema['@graph'].push(...subEvents);
     }
+
+    // Add BreadcrumbList
+    schema['@graph'].push({
+      '@type': 'BreadcrumbList',
+      'itemListElement': [
+        {
+          '@type': 'ListItem',
+          'position': 1,
+          'name': 'Inicio',
+          'item': SchemaGenerator.BASE_URL
+        },
+        {
+          '@type': 'ListItem',
+          'position': 2,
+          'name': 'Eventos',
+          'item': `${SchemaGenerator.BASE_URL}/eventos`
+        },
+        {
+          '@type': 'ListItem',
+          'position': 3,
+          'name': eventData.name,
+          'item': eventUrl
+        }
+      ]
+    });
 
     // Filter out undefined values
     schema['@graph'] = schema['@graph'].map((node: any) => {

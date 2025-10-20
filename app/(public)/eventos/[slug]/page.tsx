@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import JsonLd from '@/components/seo/JsonLd';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
+import Image from 'next/image';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   try {
@@ -26,15 +27,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 
     const event = events[0] as Event;
+    const url = `/eventos/${slug}`;
 
     return {
       title: event.seoTitle || event.name,
       description: event.seoDescription || event.shortDescription,
+      alternates: { canonical: url },
       openGraph: {
         title: event.seoTitle || event.name,
         description: event.seoDescription || event.shortDescription,
         images: event.mainImageUrl ? [event.mainImageUrl] : [],
         type: 'website',
+        url,
       },
       twitter: {
         card: 'summary_large_image',
@@ -97,12 +101,19 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           <p className="text-muted-foreground mb-6">
             El evento que buscas no existe o ha sido eliminado.
           </p>
-          <Link href="/eventos">
-            <Button>
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Ver todos los eventos
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/eventos">
+              <Button>
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Ver todos los eventos
+              </Button>
+            </Link>
+            <Link href="/">
+              <Button variant="outline">
+                Volver al inicio
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -146,10 +157,12 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       <div className="relative">
         {event.mainImageUrl && (
           <div className="h-96 md:h-[500px] relative overflow-hidden">
-            <img
+            <Image
               src={event.mainImageUrl}
               alt={event.name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              priority
             />
             <div className="absolute inset-0 bg-black/40" />
             <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
@@ -221,9 +234,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                         return (
                           <div key={artist.eventDjId || artist.name} className="flex items-center gap-4 p-4 border rounded-lg">
                             {djProfile?.imageUrl && (
-                              <img
+                              <Image
                                 src={djProfile.imageUrl}
                                 alt={artist.name}
+                                width={48}
+                                height={48}
                                 className="w-12 h-12 rounded-full object-cover"
                               />
                             )}
@@ -262,10 +277,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 <CardContent>
                   <div className="relative">
                     <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                      <img
+                      <Image
                         src={event.mainImageUrl}
                         alt={event.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     </div>
                   </div>

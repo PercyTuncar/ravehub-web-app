@@ -9,9 +9,9 @@ import { MainNavbar } from '@/components/layout/MainNavbar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com'),
-  title: 'Ravehub - Plataforma de Música Electrónica',
-  description: 'La plataforma integral para la comunidad de música electrónica en Latinoamérica',
+  metadataBase: new URL('https://www.ravehublatam.com'),
+  title: { default: 'Ravehub', template: '%s | Ravehub' },
+  description: 'Eventos de música electrónica en LATAM. Entradas, fechas y lineups.',
   alternates: { canonical: '/' },
   icons: {
     icon: '/icons/favicon.ico',
@@ -35,13 +35,13 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   openGraph: {
     title: 'Ravehub',
-    description: 'La plataforma integral para la comunidad de música electrónica en Latinoamérica',
+    description: 'Eventos de música electrónica en LATAM. Entradas, fechas y lineups.',
     url: '/',
     siteName: 'Ravehub',
-    locale: 'es_CL',
+    locale: 'es',
     type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'Ravehub', description: 'La plataforma integral para la comunidad de música electrónica en Latinoamérica' },
+  twitter: { card: 'summary_large_image', title: 'Ravehub', description: 'Eventos de música electrónica en LATAM. Entradas, fechas y lineups.' },
 }
 
 export default function RootLayout({

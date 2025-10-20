@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { blogCollection, blogCategoriesCollection, blogTagsCollection } from '@/lib/firebase/collections';
+import { blogCollection, blogCategoriesCollection, blogTagsCollection, eventsCollection } from '@/lib/firebase/collections';
 
 function toValidDate(dateValue: any): Date | undefined {
   if (!dateValue) return undefined;
@@ -9,7 +9,7 @@ function toValidDate(dateValue: any): Date | undefined {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
+  const baseUrl = 'https://www.ravehublatam.com';
 
   const sitemap: MetadataRoute.Sitemap = [
     {
@@ -17,6 +17,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1,
+    },
+    {
+      url: `${baseUrl}/eventos`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/blog`,
@@ -27,6 +33,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
+    // Add published events
+    const events = await eventsCollection.query(
+      [{ field: 'status', operator: '==', value: 'published' }],
+      'createdAt',
+      'desc'
+    );
+
+    events.forEach((event: any) => {
+      const lastModified = toValidDate(event.updatedAt || event.createdAt);
+      sitemap.push({
+        url: `${baseUrl}/eventos/${event.slug}`,
+        lastModified,
+        changeFrequency: 'weekly',
+        priority: 0.8,
+      });
+    });
+
     // Add blog posts
     const posts = await blogCollection.query(
       [{ field: 'status', operator: '==', value: 'published' }],
