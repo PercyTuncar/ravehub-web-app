@@ -51,6 +51,33 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Ravehub specific colors
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          foreground: 'hsl(var(--info-foreground))',
+        },
+        // Extended orange palette
+        orange: {
+          50: 'hsl(24, 100%, 97%)',
+          100: 'hsl(24, 100%, 94%)',
+          200: 'hsl(24, 95%, 87%)',
+          300: 'hsl(24, 95%, 76%)',
+          400: 'hsl(24, 95%, 64%)',
+          500: 'hsl(24, 95%, 53%)', // Main brand color
+          600: 'hsl(24, 95%, 45%)',
+          700: 'hsl(24, 95%, 37%)',
+          800: 'hsl(24, 45%, 25%)',
+          900: 'hsl(24, 45%, 15%)',
+          950: 'hsl(24, 45%, 9%)',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
