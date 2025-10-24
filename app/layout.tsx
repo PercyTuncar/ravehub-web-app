@@ -6,7 +6,12 @@ import { AuthProvider } from '@/lib/contexts/AuthContext'
 import { CartProvider } from '@/lib/contexts/CartContext'
 import { MainNavbar } from '@/components/layout/MainNavbar'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  variable: '--font-inter'
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.ravehublatam.com'),
@@ -51,7 +56,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${inter.className}`}>
         <ThemeProvider>
           <AuthProvider>
             <CartProvider>

@@ -217,21 +217,29 @@ export class SchemaGenerator {
           doorTime: eventData.doorTime ? formatDateWithTimezone(eventData.startDate, eventData.doorTime, eventData.timezone) : undefined,
           location: eventData.location ? {
             '@type': 'Place',
-            name: eventData.location.venue,
-            address: eventData.location.address || eventData.location.city ? {
+            name: eventData.location.venue || eventData.location.city || 'Ubicación del evento',
+            address: {
               '@type': 'PostalAddress',
-              streetAddress: eventData.location.address,
-              addressLocality: eventData.location.city,
-              addressRegion: eventData.location.region,
-              postalCode: eventData.location.postalCode,
-              addressCountry: eventData.location.countryCode || eventData.location.country,
-            } : undefined,
+              streetAddress: eventData.location.address || '',
+              addressLocality: eventData.location.city || 'Ciudad no especificada',
+              addressRegion: eventData.location.region || '',
+              postalCode: eventData.location.postalCode || '',
+              addressCountry: eventData.location.countryCode || eventData.location.country || 'CL',
+            },
             geo: eventData.location.geo ? {
               '@type': 'GeoCoordinates',
               latitude: eventData.location.geo.lat,
               longitude: eventData.location.geo.lng,
             } : undefined,
-          } : undefined,
+          } : {
+            '@type': 'Place',
+            name: 'Ubicación por confirmar',
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: 'Ubicación por confirmar',
+              addressCountry: 'CL',
+            },
+          },
           organizer: eventData.organizer ? {
             '@type': 'Organization',
             name: eventData.organizer.name,
@@ -307,7 +315,12 @@ export class SchemaGenerator {
           : formatDateWithTimezone(eventData.endDate, eventData.endTime, eventData.timezone),
         location: eventData.location ? {
           '@type': 'Place',
-          name: eventData.location.venue,
+          name: eventData.location.venue || eventData.location.city || 'Ubicación del evento',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: eventData.location.city || 'Ciudad no especificada',
+            addressCountry: eventData.location.countryCode || eventData.location.country || 'CL',
+          },
         } : undefined,
         superEvent: { '@id': `${eventUrl}/#${eventData.schemaType?.toLowerCase() || 'musicevent'}` },
         performer: {
@@ -536,14 +549,14 @@ export class SchemaGenerator {
         {
           '@type': 'Place',
           '@id': venueId,
-          name: event.location.venue,
+          name: event.location.venue || event.location.city || 'Ubicación del evento',
           address: {
             '@type': 'PostalAddress',
             streetAddress: event.location.address || '',
-            addressLocality: event.location.city,
-            addressRegion: event.location.region,
+            addressLocality: event.location.city || 'Ciudad no especificada',
+            addressRegion: event.location.region || '',
             postalCode: event.location.postalCode || '',
-            addressCountry: event.location.countryCode || event.location.country || event.country,
+            addressCountry: event.location.countryCode || event.location.country || event.country || 'CL',
           },
         },
         {
@@ -565,7 +578,15 @@ export class SchemaGenerator {
           startDate: event.startDate,
           endDate: event.endDate,
           doorTime: event.doorTime,
-          location: { '@id': venueId },
+          location: event.location ? {
+            '@type': 'Place',
+            name: event.location.venue || event.location.city || 'Ubicación del evento',
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: event.location.city || 'Ciudad no especificada',
+              addressCountry: event.location.countryCode || event.location.country || 'CL',
+            },
+          } : { '@id': venueId },
           organizer: { '@id': organizationId },
           maximumAttendeeCapacity: event.zones?.reduce((total: number, zone: any) => total + zone.capacity, 0) || 0,
           isAccessibleForFree: event.isAccessibleForFree,
@@ -616,14 +637,14 @@ export class SchemaGenerator {
         {
           '@type': 'Place',
           '@id': venueId,
-          name: event.location.venue,
+          name: event.location.venue || event.location.city || 'Ubicación del evento',
           address: {
             '@type': 'PostalAddress',
             streetAddress: event.location.address || '',
-            addressLocality: event.location.city,
-            addressRegion: event.location.region,
+            addressLocality: event.location.city || 'Ciudad no especificada',
+            addressRegion: event.location.region || '',
             postalCode: event.location.postalCode || '',
-            addressCountry: event.location.countryCode || event.location.country || event.country,
+            addressCountry: event.location.countryCode || event.location.country || event.country || 'CL',
           },
         },
         {
@@ -645,7 +666,15 @@ export class SchemaGenerator {
           startDate: event.startDate,
           endDate: event.endDate,
           doorTime: event.doorTime,
-          location: { '@id': venueId },
+          location: event.location ? {
+            '@type': 'Place',
+            name: event.location.venue || event.location.city || 'Ubicación del evento',
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: event.location.city || 'Ciudad no especificada',
+              addressCountry: event.location.countryCode || event.location.country || 'CL',
+            },
+          } : { '@id': venueId },
           organizer: { '@id': organizationId },
           performer: this.generatePerformers(event),
           maximumAttendeeCapacity: event.zones?.reduce((total: number, zone: any) => total + zone.capacity, 0) || 0,
@@ -723,7 +752,15 @@ export class SchemaGenerator {
             '@id': `${eventUrl}/dia-${currentDate.toISOString().split('T')[0]}/#event`,
             name: `${event.name} - Día ${currentDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}`,
             startDate: currentDate.toISOString().split('T')[0],
-            location: { '@id': `${this.BASE_URL}/#venue` },
+            location: event.location ? {
+              '@type': 'Place',
+              name: event.location.venue || event.location.city || 'Ubicación del evento',
+              address: {
+                '@type': 'PostalAddress',
+                addressLocality: event.location.city || 'Ciudad no especificada',
+                addressCountry: event.location.countryCode || event.location.country || 'CL',
+              },
+            } : { '@id': `${this.BASE_URL}/#venue` },
             superEvent: { '@id': `${eventUrl}/#${event.eventType === 'festival' ? 'festival' : 'event'}` },
             performer: dayArtists.map((artist: any) => ({
               '@type': 'Person',
