@@ -61,6 +61,10 @@ const nextConfig = {
       // Si existió multilenguaje, limpia /es/* -> sin prefijo
       { source: '/es/eventos', destination: '/eventos', permanent: true },
       { source: '/es/:path*', destination: '/:path*', permanent: true },
+
+      // Redirecciones 301 para carrito y checkout desde rutas anidadas
+      { source: '/tienda/:slug/carrito', destination: '/tienda/carrito', permanent: true },
+      { source: '/tienda/:slug/checkout', destination: '/tienda/checkout', permanent: true },
     ]
   },
 };
