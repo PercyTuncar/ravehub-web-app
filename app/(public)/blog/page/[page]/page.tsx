@@ -5,6 +5,10 @@ import { BlogHeader } from '@/components/blog/BlogHeader';
 import { BlogContent } from '../../BlogContent';
 import { getBlogPosts } from '@/lib/data-fetching';
 
+// ISR: Revalidate every 5 minutes (300 seconds) + on-demand revalidation
+export const revalidate = 300;
+export const dynamic = 'force-dynamic';
+
 interface BlogPageProps {
   searchParams: Promise<{
     category?: string;
