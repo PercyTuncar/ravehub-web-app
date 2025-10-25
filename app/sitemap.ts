@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { blogCollection, blogCategoriesCollection, blogTagsCollection, eventsCollection } from '@/lib/firebase/collections';
+import { blogCollection, blogCategoriesCollection, blogTagsCollection, eventsCollection, productsCollection, djsCollection } from '@/lib/firebase/collections';
 
 function toValidDate(dateValue: any): Date | undefined {
   if (!dateValue) return undefined;
@@ -29,6 +29,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/djs`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/tienda`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
     },
   ];
 
@@ -94,6 +106,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified,
         changeFrequency: 'weekly',
         priority: 0.5,
+      });
+    });
+
+    // Add DJs
+    const djs = await djsCollection.query(
+      [{ field: 'isActive', operator: '==', value: true }],
+      'updatedAt',
+      'desc'
+    );
+
+    djs.forEach((dj: any) => {
+      const lastModified = toValidDate(dj.updatedAt);
+      sitemap.push({
+        url: `${baseUrl}/djs/${dj.slug}`,
+        lastModified,
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      });
+    });
+
+    // Add products
+    const products = await productsCollection.query(
+      [{ field: 'isActive', operator: '==', value: true }],
+      'updatedAt',
+      'desc'
+    );
+
+    products.forEach((product: any) => {
+      const lastModified = toValidDate(product.updatedAt);
+      sitemap.push({
+        url: `${baseUrl}/tienda/${product.slug}`,
+        lastModified,
+        changeFrequency: 'weekly',
+        priority: 0.7,
       });
     });
 

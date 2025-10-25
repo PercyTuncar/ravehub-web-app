@@ -57,10 +57,12 @@ export async function POST(request: NextRequest) {
     // TODO: Send notification to user
     // TODO: Trigger ticket generation if automatic delivery
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: 'Transaction approved successfully'
     });
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
 
   } catch (error) {
     console.error('Error approving offline payment:', error);
@@ -109,10 +111,12 @@ export async function PUT(request: NextRequest) {
 
     // TODO: Send notification to user about rejection
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: 'Transaction rejected'
     });
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
 
   } catch (error) {
     console.error('Error rejecting offline payment:', error);

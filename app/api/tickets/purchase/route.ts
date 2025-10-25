@@ -82,16 +82,18 @@ export async function POST(request: NextRequest) {
     if (paymentMethod === 'online') {
       // TODO: Integrate with actual payment gateway (Webpay, MercadoPago, etc.)
       // For now, return a mock response
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         transactionId,
         paymentUrl: `/payment/${transactionId}`, // Mock payment URL
         message: 'Redirecting to payment gateway'
       });
+      response.headers.set('X-Robots-Tag', 'noindex');
+      return response;
     }
 
     // For offline payments, return success with instructions
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       transactionId,
       message: 'Transaction created successfully. Please upload payment proof.',
@@ -101,6 +103,8 @@ export async function POST(request: NextRequest) {
         'Download tickets once approved'
       ]
     });
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
 
   } catch (error) {
     console.error('Error processing ticket purchase:', error);

@@ -1,8 +1,11 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { blogCollection, slugRedirectsCollection } from '@/lib/firebase/collections';
+import { blogCollection, slugRedirectsCollection, blogCommentsCollection } from '@/lib/firebase/collections';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import { BlogPostDetail } from '@/components/blog/BlogPostDetail';
+
+// ISR: Revalidate every 5 minutes (300 seconds) + on-demand revalidation
+export const revalidate = 300;
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -38,11 +41,14 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
     const post = posts[0] as any;
 
+    const isDraft = post.status !== 'published';
+
     return {
       title: post.seoTitle || post.title,
       description: post.seoDescription || post.excerpt,
       keywords: post.seoKeywords?.join(', '),
       authors: [{ name: post.author }],
+      robots: isDraft ? { index: false, follow: true } : undefined,
       openGraph: {
         title: post.seoTitle || post.title,
         description: post.seoDescription || post.excerpt,
@@ -104,7 +110,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       notFound();
     }
 
-    const jsonLd = SchemaGenerator.generateBlogPosting(post);
+    // Get comment count
+    const comments = await blogCommentsCollection.query(
+      [{ field: 'postId', operator: '==', value: post.id }]
+    );
+    const commentCount = comments.length;
+
+    const jsonLd = SchemaGenerator.generateBlogPosting(post, commentCount);
 
     return (
       <>

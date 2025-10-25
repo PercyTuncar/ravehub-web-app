@@ -371,6 +371,7 @@ export interface City {
 // Event DJ types
 export interface EventDj {
   id: string;
+  slug?: string;
   name: string;
   alternateName?: string;
   description: string;

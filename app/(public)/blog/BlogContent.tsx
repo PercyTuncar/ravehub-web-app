@@ -3,14 +3,18 @@
 import { useState } from 'react';
 import { BlogPost } from '@/lib/types';
 import { BlogPostCard } from '@/components/blog/BlogPostCard';
+import { Pagination } from '@/components/ui/pagination';
 
 interface BlogContentProps {
   initialPosts: BlogPost[];
   category?: string;
   tag?: string;
+  currentPage?: number;
+  totalPages?: number;
+  totalPosts?: number;
 }
 
-export function BlogContent({ initialPosts, category, tag }: BlogContentProps) {
+export function BlogContent({ initialPosts, category, tag, currentPage = 1, totalPages = 1, totalPosts = 0 }: BlogContentProps) {
   const [posts] = useState<BlogPost[]>(initialPosts);
 
   if (posts.length === 0) {
@@ -31,7 +35,18 @@ export function BlogContent({ initialPosts, category, tag }: BlogContentProps) {
         ))}
       </div>
 
-      {/* Pagination would go here */}
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          baseUrl="/blog"
+          queryParams={{
+            ...(category && { category }),
+            ...(tag && { tag }),
+          }}
+        />
+      )}
     </div>
   );
 }

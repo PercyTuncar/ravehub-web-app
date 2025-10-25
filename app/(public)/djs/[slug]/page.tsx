@@ -4,19 +4,22 @@ import { eventDjsCollection } from '@/lib/firebase/collections';
 import { EventDj } from '@/lib/types';
 import { DJProfile } from '@/components/djs/DJProfile';
 
+// ISR configuration with revalidation
+export const revalidate = 3600; // Revalidate every hour
+
 interface DJPageProps {
   params: Promise<{
-    id: string;
+    slug: string;
   }>;
 }
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: DJPageProps): Promise<Metadata> {
   try {
-    const { id } = await params;
+    const { slug } = await params;
 
     // Fetch the DJ
-    const dj = await eventDjsCollection.get(id) as EventDj;
+    const dj = await eventDjsCollection.get(slug) as EventDj;
 
     if (!dj || !dj.approved) {
       return {
@@ -24,20 +27,24 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
       };
     }
 
+    const url = `https://www.ravehublatam.com/djs/${slug}`;
+
     return {
       title: `${dj.name} - DJ | Ravehub`,
-      description: dj.bio || `Perfil de ${dj.name}, DJ de ${dj.country}`,
-      keywords: ['DJ', 'música electrónica', dj.genres.join(', '), dj.country],
+      description: dj.bio || `Perfil de ${dj.name}, DJ de ${dj.country}. Descubre su música, próximos eventos y biografía completa.`,
+      keywords: ['DJ', 'música electrónica', dj.genres.join(', '), dj.country, dj.name],
+      alternates: { canonical: url },
       openGraph: {
         title: `${dj.name} - DJ | Ravehub`,
-        description: dj.bio || `Perfil de ${dj.name}, DJ de ${dj.country}`,
+        description: dj.bio || `Perfil de ${dj.name}, DJ de ${dj.country}. Descubre su música, próximos eventos y biografía completa.`,
         type: 'profile',
+        url,
         images: dj.imageUrl ? [{ url: dj.imageUrl, alt: dj.name }] : [],
       },
       twitter: {
         card: 'summary_large_image',
         title: `${dj.name} - DJ | Ravehub`,
-        description: dj.bio || `Perfil de ${dj.name}, DJ de ${dj.country}`,
+        description: dj.bio || `Perfil de ${dj.name}, DJ de ${dj.country}. Descubre su música, próximos eventos y biografía completa.`,
         images: dj.imageUrl,
       },
     };
@@ -51,13 +58,13 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
 
 export default async function DJPage({ params }: DJPageProps) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
 
     // Convert slug back to name for database lookup
-    const nameFromSlug = id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const nameFromSlug = slug.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
 
     // First try to find by slug (id field)
-    let dj = await eventDjsCollection.get(id) as EventDj;
+    let dj = await eventDjsCollection.get(slug) as EventDj;
 
     // If not found, try to find by name
     if (!dj) {

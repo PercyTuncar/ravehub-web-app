@@ -57,12 +57,14 @@ export async function POST(request: NextRequest) {
     const pdfBuffer = await generateTicketsPDF(transaction, event);
 
     // Return PDF as response
-    return new NextResponse(pdfBuffer as any, {
+    const response = new NextResponse(pdfBuffer as any, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="tickets-${transactionId}.pdf"`,
+        'X-Robots-Tag': 'noindex',
       },
     });
+    return response;
 
   } catch (error) {
     console.error('Error generating PDF:', error);

@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { AuthGuard } from '@/components/admin/AuthGuard';
 import { eventsCollection } from '@/lib/firebase/collections';
 import { Event, Country, Region, City } from '@/lib/types';
+import { revalidateEvent, revalidateEventsListing } from '@/lib/revalidate';
 import { LineupSelector } from '@/components/admin/LineupSelector';
 import { syncEventDjsForEvent } from '@/lib/firebase/eventDjs-sync';
 import { SocialPreview } from '@/components/seo/SocialPreview';
@@ -209,6 +210,11 @@ export default function EditEventPage() {
         ...eventData,
         updatedAt: new Date().toISOString(),
       });
+
+      // Revalidate event pages when event is updated
+      await revalidateEvent(params.slug as string);
+      await revalidateEventsListing();
+
       router.push(`/admin/events/${params.slug}`);
     } catch (error) {
       console.error('Error saving event:', error);
@@ -228,6 +234,10 @@ export default function EditEventPage() {
 
       // Sync eventDjs after publishing
       await syncEventDjsForEvent(params.slug as string);
+
+      // Revalidate event pages when event is published
+      await revalidateEvent(params.slug as string);
+      await revalidateEventsListing();
 
       router.push(`/admin/events/${params.slug}`);
     } catch (error) {

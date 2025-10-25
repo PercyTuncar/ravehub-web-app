@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { AuthGuard } from '@/components/admin/AuthGuard';
 import { blogCollection } from '@/lib/firebase/collections';
 import { BlogPost } from '@/lib/types';
+import { revalidateBlogPost, revalidateBlogListing } from '@/lib/revalidate';
 
 const STEPS = [
   { id: 'basic', title: 'Información Básica', description: 'Título, contenido y tipo' },
@@ -77,6 +78,11 @@ export default function EditBlogPostPage() {
         ...postData,
         updatedDate: new Date().toISOString(),
       });
+
+      // Revalidate blog post and listing pages
+      await revalidateBlogPost(params.slug as string);
+      await revalidateBlogListing();
+
       router.push(`/admin/blog/${params.slug}`);
     } catch (error) {
       console.error('Error saving post:', error);
@@ -94,6 +100,11 @@ export default function EditBlogPostPage() {
         publishDate: new Date().toISOString(),
         updatedDate: new Date().toISOString(),
       });
+
+      // Revalidate blog post and listing pages when publishing
+      await revalidateBlogPost(params.slug as string);
+      await revalidateBlogListing();
+
       router.push(`/admin/blog/${params.slug}`);
     } catch (error) {
       console.error('Error publishing post:', error);

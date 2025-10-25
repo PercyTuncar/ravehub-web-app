@@ -13,6 +13,9 @@ import JsonLd from '@/components/seo/JsonLd';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import Image from 'next/image';
 
+// ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
+export const revalidate = 180;
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   try {
     const { slug } = await params;
@@ -28,10 +31,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
     const event = events[0] as Event;
     const url = `/eventos/${slug}`;
+    const isDraft = event.eventStatus !== 'published';
 
     return {
       title: event.seoTitle || event.name,
       description: event.seoDescription || event.shortDescription,
+      robots: isDraft ? { index: false, follow: true } : undefined,
       alternates: { canonical: url },
       openGraph: {
         title: event.seoTitle || event.name,

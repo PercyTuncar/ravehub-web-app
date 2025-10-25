@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useBlogCategories, useBlogTags } from '@/lib/hooks/useBlog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,8 +12,19 @@ interface BlogFiltersProps {
 }
 
 export function BlogFilters({ selectedCategory, selectedTag }: BlogFiltersProps) {
+  const router = useRouter();
   const { categories, loading: categoriesLoading } = useBlogCategories();
   const { tags, loading: tagsLoading } = useBlogTags();
+
+  // Update URL when filters change
+  const updateURL = (category?: string, tag?: string) => {
+    const params = new URLSearchParams();
+    if (category) params.set('category', category);
+    if (tag) params.set('tag', tag);
+
+    const queryString = params.toString();
+    router.push(queryString ? `/blog?${queryString}` : '/blog', { scroll: false });
+  };
 
   return (
     <div className="space-y-6">
@@ -30,23 +42,22 @@ export function BlogFilters({ selectedCategory, selectedTag }: BlogFiltersProps)
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              <Link href="/blog">
-                <Badge
-                  variant={!selectedCategory ? "default" : "secondary"}
-                  className="cursor-pointer hover:bg-primary/80"
-                >
-                  Todas
-                </Badge>
-              </Link>
+              <Badge
+                variant={!selectedCategory ? "default" : "secondary"}
+                className="cursor-pointer hover:bg-primary/80"
+                onClick={() => updateURL(undefined, selectedTag)}
+              >
+                Todas
+              </Badge>
               {categories.map((category) => (
-                <Link key={category.id} href={`/blog/categoria/${category.slug}`}>
-                  <Badge
-                    variant={selectedCategory === category.slug ? "default" : "secondary"}
-                    className="cursor-pointer hover:bg-primary/80"
-                  >
-                    {category.name}
-                  </Badge>
-                </Link>
+                <Badge
+                  key={category.id}
+                  variant={selectedCategory === category.slug ? "default" : "secondary"}
+                  className="cursor-pointer hover:bg-primary/80"
+                  onClick={() => updateURL(category.slug, selectedTag)}
+                >
+                  {category.name}
+                </Badge>
               ))}
             </div>
           )}
@@ -68,14 +79,14 @@ export function BlogFilters({ selectedCategory, selectedTag }: BlogFiltersProps)
           ) : (
             <div className="flex flex-wrap gap-2">
               {tags.slice(0, 10).map((tag) => (
-                <Link key={tag.id} href={`/blog?tag=${tag.slug}`}>
-                  <Badge
-                    variant={selectedTag === tag.slug ? "default" : "outline"}
-                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground text-xs"
-                  >
-                    #{tag.name}
-                  </Badge>
-                </Link>
+                <Badge
+                  key={tag.id}
+                  variant={selectedTag === tag.slug ? "default" : "outline"}
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground text-xs"
+                  onClick={() => updateURL(selectedCategory, tag.slug)}
+                >
+                  #{tag.name}
+                </Badge>
               ))}
             </div>
           )}

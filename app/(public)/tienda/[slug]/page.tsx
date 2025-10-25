@@ -3,6 +3,11 @@ import { notFound } from 'next/navigation';
 import { productsCollection, productCategoriesCollection, productReviewsCollection } from '@/lib/firebase/collections';
 import { Product, ProductCategory, ProductReview } from '@/lib/types';
 import { ProductDetail } from '@/components/shop/ProductDetail';
+import { SchemaGenerator } from '@/lib/seo/schema-generator';
+import JsonLd from '@/components/seo/JsonLd';
+
+// ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
+export const revalidate = 180;
 
 interface ProductPageProps {
   params: Promise<{
@@ -27,15 +32,20 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     }
 
     const product = products[0] as Product;
+    const url = `https://www.ravehublatam.com/tienda/${slug}`;
+    const isInactive = !product.isActive;
 
     return {
       title: product.seoTitle || product.name,
       description: product.seoDescription || product.shortDescription,
       keywords: product.seoKeywords?.join(', '),
+      robots: isInactive ? { index: false, follow: true } : undefined,
+      alternates: { canonical: url },
       openGraph: {
         title: product.seoTitle || product.name,
         description: product.seoDescription || product.shortDescription,
         type: 'website',
+        url,
         images: product.images?.map(img => ({
           url: img,
           alt: product.imageAltTexts?.[img] || product.name,
@@ -92,12 +102,30 @@ export default async function ProductPage({ params }: ProductPageProps) {
       'desc'
     ) as ProductReview[];
 
+    // Calculate average rating and rating count
+    const ratingCount = reviews.length;
+    const averageRating = ratingCount > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / ratingCount
+      : 0;
+
+    // Add calculated fields to product for schema generation
+    const productWithRating = {
+      ...product,
+      averageRating,
+      ratingCount,
+    };
+
+    const jsonLd = SchemaGenerator.generateProduct(productWithRating);
+
     return (
-      <ProductDetail
-        product={product}
-        category={category}
-        reviews={reviews}
-      />
+      <>
+        <JsonLd data={jsonLd} id="product-jsonld" />
+        <ProductDetail
+          product={product}
+          category={category}
+          reviews={reviews}
+        />
+      </>
     );
   } catch (error) {
     console.error('Error loading product:', error);

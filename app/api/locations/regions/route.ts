@@ -29,15 +29,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Using CountriesNow API for states (free, community-driven)
-    const response = await fetch(`https://countriesnow.space/api/v0.1/countries/states/q?country=${encodeURIComponent(countryName)}`, {
+    const apiResponse = await fetch(`https://countriesnow.space/api/v0.1/countries/states/q?country=${encodeURIComponent(countryName)}`, {
       next: { revalidate: 86400 } // Cache for 24 hours
     });
 
-    if (!response.ok) {
+    if (!apiResponse.ok) {
       throw new Error('Failed to fetch regions');
     }
 
-    const data = await response.json();
+    const data = await apiResponse.json();
 
     if (data.error || !data.data || !data.data.states) {
       // Fallback: try to get regions from REST Countries
@@ -51,7 +51,9 @@ export async function GET(request: NextRequest) {
         updatedAt: new Date()
       }];
 
-      return NextResponse.json(regions);
+      const fallbackResponse = NextResponse.json(regions);
+      fallbackResponse.headers.set('X-Robots-Tag', 'noindex');
+      return fallbackResponse;
     }
 
     // Transform states to our Region format
@@ -65,7 +67,9 @@ export async function GET(request: NextRequest) {
       updatedAt: new Date()
     }));
 
-    return NextResponse.json(regions);
+    const response = NextResponse.json(regions);
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
   } catch (error) {
     console.error('Error fetching regions:', error);
     return NextResponse.json(

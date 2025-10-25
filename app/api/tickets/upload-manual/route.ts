@@ -78,11 +78,13 @@ export async function POST(request: NextRequest) {
 
     // TODO: Send notification to user
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: 'Tickets uploaded successfully',
       files: uploadedUrls
     });
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
 
   } catch (error) {
     console.error('Error uploading manual tickets:', error);

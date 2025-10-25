@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, MapPin, Users, Clock, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,23 +12,35 @@ import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Image from 'next/image';
-import EventsClient from './EventsClient';
-import { Pagination } from '@/components/ui/pagination';
+import EventsClient from '../../EventsClient';
 
-// ISR: Revalidate every 10 minutes (600 seconds)
-export const revalidate = 600;
+interface EventsPageProps {
+  searchParams: Promise<{
+    tipo?: string;
+    region?: string;
+  }>;
+  params: Promise<{
+    page: string;
+  }>;
+}
 
-export async function generateMetadata({ searchParams }: EventsPageProps): Promise<Metadata> {
-  const { page: pageParam, tipo, region } = await searchParams;
+export async function generateMetadata({ params, searchParams }: EventsPageProps): Promise<Metadata> {
+  const { page } = await params;
+  const { tipo, region } = await searchParams;
 
-  const currentPage = Math.max(1, parseInt(pageParam || '1', 10));
+  const pageNumber = parseInt(page, 10);
+  if (isNaN(pageNumber) || pageNumber < 1) {
+    return {
+      title: 'Página no encontrada | Ravehub',
+    };
+  }
 
   try {
     const allEvents = await eventsCollection.query([{ field: 'status', operator: '==', value: 'published' }]);
     const totalEvents = allEvents.length;
     const totalPages = Math.ceil(totalEvents / 12);
 
-    if (currentPage > totalPages && currentPage > 1) {
+    if (pageNumber > totalPages) {
       return {
         title: 'Página no encontrada | Ravehub',
       };
@@ -35,26 +48,23 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
 
     // Determine if this is a filtered page
     const hasFilters = tipo || region;
-    const isRepetitiveFilter = hasFilters && (tipo || region); // All filters are considered potentially repetitive
+    const isRepetitiveFilter = hasFilters; // All filters are considered potentially repetitive
 
     const baseTitle = 'Eventos de Música Electrónica';
-    const pageTitle = currentPage === 1 ? baseTitle : `${baseTitle} - Página ${currentPage}`;
+    const pageTitle = pageNumber === 1 ? baseTitle : `${baseTitle} - Página ${pageNumber}`;
     const filterTitle = tipo || region ? `Eventos ${tipo || ''} ${region || ''}`.trim() : '';
-    const title = filterTitle ? `${filterTitle} | Ravehub` : `${pageTitle} | Ravehub`;
+    const title = filterTitle ? `${filterTitle} - Página ${pageNumber} | Ravehub` : `${pageTitle} | Ravehub`;
 
     const description = filterTitle
-      ? `Eventos de música electrónica ${tipo ? `tipo ${tipo}` : ''} ${region ? `en ${region}` : ''} en Latinoamérica.`
-      : currentPage === 1
-      ? `Descubre ${totalEvents} eventos de música electrónica en Latinoamérica. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más géneros.`
-      : `Página ${currentPage} de eventos de música electrónica en Latinoamérica. Descubre ${totalEvents} eventos totales de techno, house, trance y más géneros.`;
+      ? `Página ${pageNumber} de eventos de música electrónica ${tipo ? `tipo ${tipo}` : ''} ${region ? `en ${region}` : ''} en Latinoamérica.`
+      : `Página ${pageNumber} de eventos de música electrónica en Latinoamérica. Descubre ${totalEvents} eventos totales de techno, house, trance y más géneros.`;
 
     const canonicalUrl = (() => {
       const params = new URLSearchParams();
       if (tipo) params.set('tipo', tipo);
       if (region) params.set('region', region);
-      if (currentPage > 1) params.set('page', currentPage.toString());
-      const queryString = params.toString();
-      return queryString ? `https://www.ravehublatam.com/eventos?${queryString}` : 'https://www.ravehublatam.com/eventos';
+      params.set('page', pageNumber.toString());
+      return `https://www.ravehublatam.com/eventos?${params.toString()}`;
     })();
 
     return {
@@ -79,15 +89,14 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
   } catch (error) {
     console.error('Error generating metadata:', error);
     return {
-      title: 'Eventos | Ravehub',
-      description: 'Descubre eventos de música electrónica en Latinoamérica',
+      title: `${pageNumber === 1 ? 'Eventos de Música Electrónica' : `Eventos - Página ${pageNumber}`} | Ravehub`,
+      description: 'Eventos de música electrónica en Latinoamérica',
     };
   }
 }
 
 async function getEvents(): Promise<Event[]> {
   try {
-    // Only load published events
     const conditions = [{ field: 'status', operator: '==', value: 'published' }];
     const allEvents = await eventsCollection.query(conditions);
     return allEvents as Event[];
@@ -97,24 +106,25 @@ async function getEvents(): Promise<Event[]> {
   }
 }
 
-interface EventsPageProps {
-  searchParams: Promise<{
-    page?: string;
-    tipo?: string;
-    region?: string;
-  }>;
-}
+export default async function EventsPage({ params, searchParams }: EventsPageProps) {
+  const { page } = await params;
+  const { tipo, region } = await searchParams;
 
-export default async function EventsPage({ searchParams }: EventsPageProps) {
-  const { page: pageParam, tipo, region } = await searchParams;
+  const currentPage = parseInt(page, 10);
+  if (isNaN(currentPage) || currentPage < 1) {
+    notFound();
+  }
 
-  const currentPage = Math.max(1, parseInt(pageParam || '1', 10));
   const eventsPerPage = 12;
   const offset = (currentPage - 1) * eventsPerPage;
 
   const allEvents = await getEvents();
   const totalEvents = allEvents.length;
   const totalPages = Math.ceil(totalEvents / eventsPerPage);
+
+  if (currentPage > totalPages) {
+    notFound();
+  }
 
   // Paginate events
   const paginatedEvents = allEvents.slice(offset, offset + eventsPerPage);

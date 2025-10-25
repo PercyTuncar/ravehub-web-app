@@ -18,7 +18,9 @@ export async function POST(request: NextRequest) {
       data,
     });
 
-    return NextResponse.json({ schema });
+    const response = NextResponse.json({ schema });
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
   } catch (error) {
     console.error('Error generating schema preview:', error);
     return NextResponse.json(

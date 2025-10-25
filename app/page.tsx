@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import JsonLd from '@/components/seo/JsonLd'
 
+// ISR: Revalidate every 10 minutes (600 seconds)
+export const revalidate = 600
+
 export const metadata: Metadata = {
   title: 'Ravehub - Eventos de Música Electrónica en Latinoamérica',
   description: 'La plataforma líder en eventos de música electrónica en Latinoamérica. Compra entradas oficiales para festivales y conciertos de música electrónica en Perú, Chile, Ecuador, Colombia, México y Argentina. Pagos seguros, lineups verificados y soporte en español.',

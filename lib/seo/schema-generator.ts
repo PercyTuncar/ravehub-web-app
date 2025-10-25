@@ -1,7 +1,7 @@
 import { BlogPost } from '@/lib/types';
 
 interface SchemaInput {
-  type: 'blog' | 'news' | 'festival' | 'concert';
+  type: 'blog' | 'news' | 'festival' | 'concert' | 'product';
   data: any;
 }
 
@@ -117,6 +117,8 @@ export class SchemaGenerator {
         return SchemaGenerator.generateFestival(input.data);
       case 'concert':
         return SchemaGenerator.generateConcert(input.data);
+      case 'product':
+        return SchemaGenerator.generateProduct(input.data);
       default:
         throw new Error(`Unsupported schema type: ${input.type}`);
     }
@@ -372,7 +374,7 @@ export class SchemaGenerator {
     return schema;
   }
 
-  static generateBlogPosting(post: BlogPost): BlogPostingSchema {
+  static generateBlogPosting(post: BlogPost, commentCount: number = 0): BlogPostingSchema {
     const webpageId = `${this.BASE_URL}/blog/${post.slug}/#webpage`;
     const articleId = `${this.BASE_URL}/blog/${post.slug}/#article`;
     const websiteId = `${this.BASE_URL}/#website`;
@@ -465,7 +467,7 @@ export class SchemaGenerator {
           thumbnailUrl: post.socialImageUrl || post.featuredImageUrl,
           wordCount: this.estimateWordCount(post.content),
           about: post.tags.map(tag => ({ '@type': 'Thing', name: tag })),
-          commentCount: 0, // This would need to be calculated
+          commentCount: commentCount,
         },
       ],
     };
@@ -774,5 +776,160 @@ export class SchemaGenerator {
     }
 
     return subEvents;
+  }
+
+  static generateProduct(product: any): any {
+    const productUrl = `${this.BASE_URL}/tienda/${product.slug}`;
+    const websiteId = `${this.BASE_URL}/#website`;
+    const organizationId = `${this.BASE_URL}/#organization`;
+
+    const schema = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          '@id': websiteId,
+          url: this.BASE_URL,
+          name: 'Ravehub',
+          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+        },
+        {
+          '@type': 'Organization',
+          '@id': organizationId,
+          name: 'Ravehub',
+          url: this.BASE_URL,
+          logo: {
+            '@type': 'ImageObject',
+            '@id': `${this.BASE_URL}/#logo`,
+            url: `${this.BASE_URL}/icons/logo.png`,
+            width: 600,
+            height: 60,
+          },
+          sameAs: [
+            'https://www.instagram.com/ravehub.pe',
+            'https://www.facebook.com/ravehub'
+          ],
+        },
+        {
+          '@type': 'WebPage',
+          '@id': `${productUrl}/#webpage`,
+          url: productUrl,
+          name: product.seoTitle || product.name,
+          isPartOf: { '@id': websiteId },
+          primaryImageOfPage: product.images?.[0] ? {
+            '@type': 'ImageObject',
+            '@id': `${productUrl}/#primaryimage`,
+            url: product.images[0],
+            width: 1200,
+            height: 675,
+          } : undefined,
+          datePublished: product.createdAt,
+          dateModified: product.updatedAt || product.createdAt,
+        },
+        {
+          '@type': 'Product',
+          '@id': `${productUrl}/#product`,
+          name: product.name,
+          description: product.seoDescription || product.shortDescription,
+          image: product.images?.map((img: string) => ({
+            '@type': 'ImageObject',
+            url: img,
+            width: 1200,
+            height: 1200,
+            caption: product.imageAltTexts?.[img] || product.name,
+          })) || [],
+          sku: product.id,
+          brand: product.brand ? {
+            '@type': 'Brand',
+            name: product.brand,
+          } : undefined,
+          category: product.categoryId ? {
+            '@type': 'CategoryCode',
+            name: product.categoryId, // This could be enhanced with category name lookup
+          } : undefined,
+          offers: {
+            '@type': 'Offer',
+            price: product.discountPercentage && product.discountPercentage > 0
+              ? (product.price * (1 - product.discountPercentage / 100)).toFixed(2)
+              : product.price.toFixed(2),
+            priceCurrency: product.currency || 'CLP',
+            priceValidUntil: product.discountPercentage && product.discountPercentage > 0
+              ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 days from now
+              : undefined,
+            availability: product.stock > 0
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+            condition: 'https://schema.org/NewCondition',
+            seller: {
+              '@type': 'Organization',
+              name: 'Ravehub',
+              url: this.BASE_URL,
+            },
+            priceSpecification: product.discountPercentage && product.discountPercentage > 0 ? {
+              '@type': 'PriceSpecification',
+              price: (product.price * (1 - product.discountPercentage / 100)).toFixed(2),
+              priceCurrency: product.currency || 'CLP',
+            } : undefined,
+            shippingDetails: product.shippingDetails ? {
+              '@type': 'OfferShippingDetails',
+              shippingRate: {
+                '@type': 'MonetaryAmount',
+                value: '0', // Free shipping or calculate based on location
+                currency: product.currency || 'CLP',
+              },
+              shippingDestination: {
+                '@type': 'DefinedRegion',
+                addressCountry: 'CL', // Could be dynamic based on eligibleRegions
+              },
+              deliveryTime: {
+                '@type': 'ShippingDeliveryTime',
+                handlingTime: {
+                  '@type': 'QuantitativeValue',
+                  minValue: 1,
+                  maxValue: 3,
+                  unitText: 'Day',
+                },
+                transitTime: {
+                  '@type': 'QuantitativeValue',
+                  minValue: 3,
+                  maxValue: 7,
+                  unitText: 'Day',
+                },
+              },
+            } : undefined,
+            hasMerchantReturnPolicy: {
+              '@type': 'MerchantReturnPolicy',
+              applicableCountry: 'CL',
+              returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+              merchantReturnDays: 30,
+              returnMethod: 'https://schema.org/ReturnByMail',
+              returnFees: 'https://schema.org/FreeReturn',
+            },
+          },
+          aggregateRating: product.averageRating ? {
+            '@type': 'AggregateRating',
+            ratingValue: product.averageRating.toFixed(1),
+            reviewCount: product.ratingCount || 0,
+          } : undefined,
+          review: [], // Could be populated with actual reviews
+          additionalProperty: product.shippingDetails ? [
+            {
+              '@type': 'PropertyValue',
+              name: 'Peso',
+              value: `${product.shippingDetails.weight}kg`,
+            },
+            ...(product.shippingDetails.dimensions ? [
+              {
+                '@type': 'PropertyValue',
+                name: 'Dimensiones',
+                value: `${product.shippingDetails.dimensions.length}x${product.shippingDetails.dimensions.width}x${product.shippingDetails.dimensions.height}cm`,
+              },
+            ] : []),
+          ] : [],
+        },
+      ],
+    };
+
+    return schema;
   }
 }

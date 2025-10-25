@@ -1,17 +1,32 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { BlogFilters } from '@/components/blog/BlogFilters';
 import { BlogHeader } from '@/components/blog/BlogHeader';
-import { BlogContent } from './BlogContent';
+import { BlogContent } from '../../BlogContent';
 import { getBlogPosts } from '@/lib/data-fetching';
 
-// ISR: Revalidate every 10 minutes (600 seconds)
-export const revalidate = 600;
+interface BlogPageProps {
+  searchParams: Promise<{
+    category?: string;
+    tag?: string;
+  }>;
+  params: Promise<{
+    page: string;
+  }>;
+}
 
-export async function generateMetadata({ searchParams }: BlogPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: BlogPageProps): Promise<Metadata> {
+  const { page } = await params;
   const { category, tag } = await searchParams;
 
+  const pageNumber = parseInt(page, 10);
+  if (isNaN(pageNumber) || pageNumber < 1) {
+    return {
+      title: 'Página no encontrada | Ravehub',
+    };
+  }
+
   try {
-    // Get published posts count for description
     const { total } = await getBlogPosts({
       category,
       tag,
@@ -19,18 +34,30 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
       limit: 1, // Just to get total count
     });
 
+    const totalPages = Math.ceil(total / 12);
+
+    if (pageNumber > totalPages) {
+      return {
+        title: 'Página no encontrada | Ravehub',
+      };
+    }
+
     // Determine if this is a filtered page
     const hasFilters = category || tag;
     const isRepetitiveFilter = hasFilters; // All filters are considered potentially repetitive
 
-    const pageTitle = category || tag ? `Blog - ${category || tag}` : 'Blog';
+    const pageTitle = pageNumber === 1 ? 'Blog' : `Blog - Página ${pageNumber}`;
     const description = category || tag
-      ? `Artículos filtrados sobre ${category || tag} en la escena electrónica de Latinoamérica. ${total} artículos publicados.`
-      : `Artículos, noticias y contenido sobre la escena electrónica en Latinoamérica. ${total} artículos publicados sobre música electrónica, festivales y cultura rave.`;
+      ? `Página ${pageNumber} de artículos filtrados sobre música electrónica en Latinoamérica.`
+      : `Página ${pageNumber} de artículos sobre música electrónica, festivales y cultura rave en Latinoamérica.`;
 
-    const canonicalUrl = category || tag
-      ? `https://www.ravehublatam.com/blog?${category ? `category=${encodeURIComponent(category)}` : ''}${category && tag ? '&' : ''}${tag ? `tag=${encodeURIComponent(tag)}` : ''}`
-      : 'https://www.ravehublatam.com/blog';
+    const canonicalUrl = (() => {
+      const params = new URLSearchParams();
+      if (category) params.set('category', category);
+      if (tag) params.set('tag', tag);
+      const queryString = params.toString();
+      return queryString ? `https://www.ravehublatam.com/blog/page/${pageNumber}?${queryString}` : `https://www.ravehublatam.com/blog/page/${pageNumber}`;
+    })();
 
     return {
       title: `${pageTitle} | Ravehub`,
@@ -54,32 +81,38 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
   } catch (error) {
     console.error('Error generating metadata:', error);
     return {
-      title: 'Blog | Ravehub',
-      description: 'Artículos, noticias y contenido sobre la escena electrónica en Latinoamérica',
+      title: `${pageNumber === 1 ? 'Blog' : `Blog - Página ${pageNumber}`} | Ravehub`,
+      description: 'Artículos sobre música electrónica en Latinoamérica',
     };
   }
 }
 
-interface BlogPageProps {
-  searchParams: Promise<{
-    category?: string;
-    tag?: string;
-    page?: string;
-  }>;
-}
-
-export default async function BlogPage({ searchParams }: BlogPageProps) {
+export default async function BlogPage({ searchParams, params }: BlogPageProps) {
   const { category, tag } = await searchParams;
+  const { page } = await params;
+
+  const currentPage = parseInt(page, 10);
+  if (isNaN(currentPage) || currentPage < 1) {
+    notFound();
+  }
+
+  const postsPerPage = 12;
+  const offset = (currentPage - 1) * postsPerPage;
 
   // Fetch data on the server
   const { posts: initialPosts, total } = await getBlogPosts({
     category,
     tag,
     status: 'published',
-    limit: 12,
+    limit: postsPerPage,
+    offset,
   });
 
-  const totalPages = Math.ceil(total / 12);
+  const totalPages = Math.ceil(total / postsPerPage);
+
+  if (currentPage > totalPages) {
+    notFound();
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,7 +134,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
               initialPosts={initialPosts}
               category={category}
               tag={tag}
-              currentPage={1}
+              currentPage={currentPage}
               totalPages={totalPages}
               totalPosts={total}
             />

@@ -30,18 +30,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Using CountriesNow API for cities (free, community-driven)
-    const response = await fetch(`https://countriesnow.space/api/v0.1/countries/cities/q?country=${encodeURIComponent(countryName)}`, {
+    const apiResponse = await fetch(`https://countriesnow.space/api/v0.1/countries/cities/q?country=${encodeURIComponent(countryName)}`, {
       next: { revalidate: 86400 } // Cache for 24 hours
     });
 
-    if (!response.ok) {
+    if (!apiResponse.ok) {
       throw new Error('Failed to fetch cities');
     }
 
-    const data = await response.json();
+    const data = await apiResponse.json();
 
     if (data.error || !data.data || !Array.isArray(data.data)) {
-      return NextResponse.json([]);
+      const emptyResponse = NextResponse.json([]);
+      emptyResponse.headers.set('X-Robots-Tag', 'noindex');
+      return emptyResponse;
     }
 
     // Transform cities to our City format
@@ -61,7 +63,9 @@ export async function GET(request: NextRequest) {
       ? cities.filter((city: any) => city.state === regionCode || !city.state)
       : cities;
 
-    return NextResponse.json(filteredCities);
+    const response = NextResponse.json(filteredCities);
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
   } catch (error) {
     console.error('Error fetching cities:', error);
     return NextResponse.json(

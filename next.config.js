@@ -65,6 +65,14 @@ const nextConfig = {
       // Redirecciones 301 para carrito y checkout desde rutas anidadas
       { source: '/tienda/:slug/carrito', destination: '/tienda/carrito', permanent: true },
       { source: '/tienda/:slug/checkout', destination: '/tienda/checkout', permanent: true },
+
+      // Redirecciones 301 para DJs: de IDs numéricos a slugs legibles
+      { source: '/djs/:id(\\d+)', destination: '/djs/:id', permanent: true },
+
+      // Redirección para favicon.ico a la ubicación correcta
+      { source: '/favicon.ico', destination: '/icons/favicon.ico', permanent: true },
+
+      // Redirección para globals.css - no es necesario ya que es un archivo interno de Next.js
     ]
   },
 };

@@ -28,11 +28,24 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     }
 
     const category = categories[0] as any;
+    const url = `https://www.ravehublatam.com/blog/categoria/${slug}`;
 
     return {
       title: `${category.name} | Blog | Ravehub`,
-      description: category.description || `Artículos de la categoría ${category.name} en el blog de Ravehub`,
-      keywords: category.metaKeywords?.join(', ') || [category.name, 'blog', 'música electrónica'],
+      description: category.description || `Artículos de la categoría ${category.name} en el blog de Ravehub. Descubre contenido sobre música electrónica, festivales y cultura rave.`,
+      keywords: category.metaKeywords?.join(', ') || [category.name, 'blog', 'música electrónica', 'festivales', 'Latinoamérica'],
+      alternates: { canonical: url },
+      openGraph: {
+        title: `${category.name} | Blog | Ravehub`,
+        description: category.description || `Artículos de la categoría ${category.name} en el blog de Ravehub. Descubre contenido sobre música electrónica, festivales y cultura rave.`,
+        type: 'website',
+        url,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${category.name} | Blog | Ravehub`,
+        description: category.description || `Artículos de la categoría ${category.name} en el blog de Ravehub. Descubre contenido sobre música electrónica, festivales y cultura rave.`,
+      },
     };
   } catch (error) {
     console.error('Error generating metadata:', error);
@@ -87,8 +100,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </div>
 
               <BlogContent
-                initialPosts={posts}
+                initialPosts={posts.posts}
                 category={slug}
+                currentPage={1}
+                totalPages={Math.ceil(posts.total / 12)}
+                totalPosts={posts.total}
               />
             </main>
           </div>

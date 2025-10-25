@@ -51,7 +51,9 @@ export async function POST(request: NextRequest) {
       data,
     });
 
-    return NextResponse.json({ schema });
+    const response = NextResponse.json({ schema });
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
   } catch (error) {
     console.error('Error generating schema:', error);
     return NextResponse.json(
@@ -112,7 +114,9 @@ export async function GET(request: NextRequest) {
       data,
     });
 
-    return NextResponse.json({ schema });
+    const response = NextResponse.json({ schema });
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
   } catch (error) {
     console.error('Error generating schema:', error);
     return NextResponse.json(

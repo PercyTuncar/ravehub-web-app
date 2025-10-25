@@ -1,6 +1,4 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,301 +9,87 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Music, MapPin, Calendar, Star, TrendingUp, Users, Search, Filter } from 'lucide-react';
 import { eventDjsCollection, djsCollection } from '@/lib/firebase/collections';
 import { EventDj, Dj } from '@/lib/types';
+import DJsClient from './DJsClient';
 
-export default function DJsPage() {
-  const [eventDjs, setEventDjs] = useState<EventDj[]>([]);
-  const [djs, setDjs] = useState<Dj[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [countryFilter, setCountryFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('name');
+// ISR: Revalidate every 30 minutes (1800 seconds)
+export const revalidate = 1800;
 
-  useEffect(() => {
-    loadDJs();
-  }, []);
+interface DJsPageProps {
+  searchParams: Promise<{
+    pais?: string;
+    ordenar?: string;
+    busqueda?: string;
+  }>;
+}
 
-  const loadDJs = async () => {
-    try {
-      // Load event DJs (detailed profiles)
-      const allEventDjs = await eventDjsCollection.query(
-        [{ field: 'approved', operator: '==', value: true }]
-      );
-      setEventDjs(allEventDjs as EventDj[]);
-
-      // Load DJ rankings
-      const allDjs = await djsCollection.query(
-        [{ field: 'approved', operator: '==', value: true }]
-      );
-      setDjs(allDjs as Dj[]);
-    } catch (error) {
-      console.error('Error loading DJs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredDJs = eventDjs.filter(dj => {
-    const matchesSearch = dj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         dj.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         dj.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    const matchesCountry = countryFilter === 'all' || dj.country === countryFilter;
-
-    return matchesSearch && matchesCountry;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'country':
-        return a.country.localeCompare(b.country);
-      case 'upcoming-events':
-        return (b.upcomingEvents?.length || 0) - (a.upcomingEvents?.length || 0);
-      case 'name':
-      default:
-        return a.name.localeCompare(b.name);
-    }
-  });
-
-  const countries = [...new Set(eventDjs.map(dj => dj.country))].sort();
-  const topGenres = [...new Set(eventDjs.flatMap(dj => dj.genres))].slice(0, 8);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
+export async function generateMetadata({ searchParams }: DJsPageProps): Promise<Metadata> {
+  const { pais, ordenar, busqueda } = await searchParams;
+  try {
+    // Get DJs count for description
+    const allEventDjs = await eventDjsCollection.query(
+      [{ field: 'approved', operator: '==', value: true }]
     );
+    const totalDJs = allEventDjs.length;
+
+    // Determine if this is a filtered page
+    const hasFilters = pais || ordenar || busqueda;
+    const isRepetitiveFilter = hasFilters && (ordenar === 'country' || ordenar === 'upcoming-events' || busqueda);
+
+    const baseTitle = 'DJs y Artistas | Ravehub';
+    const title = pais ? `DJs de ${pais} | Ravehub` : baseTitle;
+    const description = pais
+      ? `DJs y artistas de ${pais} en la escena electrónica latinoamericana. Perfiles completos y próximos eventos.`
+      : `Descubre ${totalDJs} DJs y artistas de la escena electrónica latinoamericana. Perfiles completos, rankings por país y próximos eventos.`;
+
+    const canonicalUrl = pais
+      ? `https://www.ravehublatam.com/djs?pais=${encodeURIComponent(pais)}`
+      : 'https://www.ravehublatam.com/djs';
+
+    return {
+      title,
+      description,
+      keywords: ['DJs', 'artistas', 'música electrónica', 'techno', 'house', 'trance', 'Latinoamérica', 'rankings'],
+      alternates: { canonical: canonicalUrl },
+      // Add noindex for repetitive filters to prevent thousands of URLs
+      robots: isRepetitiveFilter ? 'noindex, follow' : 'index, follow',
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        url: canonicalUrl,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+      },
+    };
+  } catch (error) {
+    console.error('Error generating metadata:', error);
+    return {
+      title: 'DJs | Ravehub',
+      description: 'Descubre DJs y artistas de la escena electrónica latinoamericana',
+    };
   }
+}
+
+export default async function DJsPage({ searchParams }: DJsPageProps) {
+  const { pais, ordenar, busqueda } = await searchParams;
+
+  // Load initial data on server
+  const allEventDjs = await eventDjsCollection.query(
+    [{ field: 'approved', operator: '==', value: true }]
+  );
+
+  const allDjs = await djsCollection.query(
+    [{ field: 'approved', operator: '==', value: true }]
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">DJs y Artistas</h1>
-        <p className="text-muted-foreground text-lg">
-          Descubre los mejores DJs y artistas de la escena electrónica latinoamericana
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Buscar DJs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-        <Select value={countryFilter} onValueChange={setCountryFilter}>
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="País" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los países</SelectItem>
-            {countries.map((country) => (
-              <SelectItem key={country} value={country}>
-                {country}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="Ordenar por" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="name">Nombre</SelectItem>
-            <SelectItem value="country">País</SelectItem>
-            <SelectItem value="upcoming-events">Próximos eventos</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Featured DJs */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-6">DJs Destacados</h2>
-        {filteredDJs.length === 0 ? (
-          <div className="text-center py-12">
-            <Music className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-2xl font-semibold mb-2">No se encontraron DJs</h3>
-            <p className="text-muted-foreground">
-              {eventDjs.length === 0 ? 'No hay DJs disponibles en este momento.' : 'Intenta con otros filtros de búsqueda.'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDJs.map((dj) => (
-              <Card key={dj.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={dj.imageUrl} alt={dj.name} />
-                      <AvatarFallback>{dj.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{dj.name}</CardTitle>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {dj.country}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 mb-4">
-                    <div className="flex flex-wrap gap-1">
-                      {dj.genres.slice(0, 3).map((genre) => (
-                        <Badge key={genre} variant="secondary" className="text-xs">
-                          {genre}
-                        </Badge>
-                      ))}
-                      {dj.genres.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{dj.genres.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="flex justify-between text-sm">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
-                        <span>{dj.upcomingEvents?.length || 0} próximos</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Music className="h-4 w-4 mr-1 text-muted-foreground" />
-                        <span>{dj.pastEvents?.length || 0} pasados</span>
-                      </div>
-                    </div>
-
-                    {dj.instagramHandle && (
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>@{dj.instagramHandle}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <Link href={`/djs/${dj.name.toLowerCase().replace(/\s+/g, '-')}`}>
-                    <Button className="w-full">
-                      Ver Perfil Completo
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Rankings Section */}
-      {djs.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-6">Rankings por País</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {djs.slice(0, 6).map((dj, index) => (
-              <Card key={dj.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-8 h-8 bg-primary text-primary-foreground rounded-full text-sm font-bold">
-                        #{index + 1}
-                      </div>
-                      <div>
-                        <p className="font-medium">{dj.name}</p>
-                        <p className="text-sm text-muted-foreground">{dj.country}</p>
-                      </div>
-                    </div>
-                    {dj.instagram && (
-                      <Badge variant="outline" className="text-xs">
-                        @{dj.instagram}
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <Users className="h-12 w-12 mx-auto mb-4 text-primary" />
-            <h3 className="font-semibold mb-2">Perfiles Completos</h3>
-            <p className="text-sm text-muted-foreground">
-              Biografías, discografías y redes sociales de cada artista
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6 text-center">
-            <TrendingUp className="h-12 w-12 mx-auto mb-4 text-primary" />
-            <h3 className="font-semibold mb-2">Rankings por País</h3>
-            <p className="text-sm text-muted-foreground">
-              Los mejores DJs de cada país según votaciones comunitarias
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6 text-center">
-            <Star className="h-12 w-12 mx-auto mb-4 text-primary" />
-            <h3 className="font-semibold mb-2">Sistema de Votación</h3>
-            <p className="text-sm text-muted-foreground">
-              Vota por tus DJs favoritos una vez al año
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6 text-center">
-            <Music className="h-12 w-12 mx-auto mb-4 text-primary" />
-            <h3 className="font-semibold mb-2">Sugerencias</h3>
-            <p className="text-sm text-muted-foreground">
-              La comunidad puede sugerir nuevos DJs para incluir
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Genres Section */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-6">Géneros Populares</h2>
-        <div className="flex flex-wrap gap-3">
-          {topGenres.map((genre) => (
-            <Badge
-              key={genre}
-              variant="outline"
-              className="px-4 py-2 text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground"
-              onClick={() => setSearchTerm(genre)}
-            >
-              {genre}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      {/* Call to Action */}
-      <Card>
-        <CardContent className="p-8 text-center">
-          <h2 className="text-2xl font-semibold mb-4">¿Eres DJ o conoces uno?</h2>
-          <p className="text-muted-foreground mb-6">
-            Ayúdanos a completar el directorio más completo de DJs latinoamericanos.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button>
-              Sugerir DJ
-            </Button>
-            <Button variant="outline">
-              Votar por Favoritos
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <DJsClient
+      initialEventDjs={allEventDjs as EventDj[]}
+      initialDjs={allDjs as Dj[]}
+      searchParams={{ pais, ordenar, busqueda }}
+    />
   );
 }

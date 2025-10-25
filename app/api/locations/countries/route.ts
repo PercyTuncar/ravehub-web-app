@@ -3,15 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     // Using REST Countries API (free, no key required)
-    const response = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,region,subregion,capital,currencies,languages,flags,population,timezones', {
+    const apiResponse = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,region,subregion,capital,currencies,languages,flags,population,timezones', {
       next: { revalidate: 86400 } // Cache for 24 hours
     });
 
-    if (!response.ok) {
+    if (!apiResponse.ok) {
       throw new Error('Failed to fetch countries');
     }
 
-    const countries = await response.json();
+    const countries = await apiResponse.json();
 
     // Transform to our format
     const transformedCountries = countries.map((country: any) => ({
@@ -40,7 +40,9 @@ export async function GET(request: NextRequest) {
       updatedAt: new Date()
     }));
 
-    return NextResponse.json(transformedCountries);
+    const response = NextResponse.json(transformedCountries);
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
   } catch (error) {
     console.error('Error fetching countries:', error);
     return NextResponse.json(

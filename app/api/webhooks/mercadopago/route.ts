@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ticketTransactionsCollection, paymentInstallmentsCollection } from '@/lib/firebase/collections';
+import { revalidateEvent, revalidateEventsListing } from '@/lib/revalidate';
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,14 +65,22 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
+    // Revalidate event pages if payment was approved (tickets sold)
+    if (newStatus === 'approved' && transaction.eventId) {
+      await revalidateEvent(transaction.eventId);
+      await revalidateEventsListing();
+    }
+
     // TODO: Send notification to user
     // TODO: Trigger ticket generation if approved
     // TODO: Update inventory/stock
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: `Transaction ${external_reference} updated to ${newStatus}`
     });
+    response.headers.set('X-Robots-Tag', 'noindex');
+    return response;
 
   } catch (error) {
     console.error('Error processing MercadoPago webhook:', error);

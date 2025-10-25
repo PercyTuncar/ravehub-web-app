@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Calendar, MapPin, Users, Clock, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,16 +13,35 @@ import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Image from 'next/image';
+import { Pagination } from '@/components/ui/pagination';
 
 interface EventsClientProps {
   initialEvents: Event[];
+  currentPage?: number;
+  totalPages?: number;
+  totalEvents?: number;
+  searchParams?: {
+    tipo?: string;
+    region?: string;
+  };
 }
 
-export default function EventsClient({ initialEvents }: EventsClientProps) {
+export default function EventsClient({ initialEvents, currentPage = 1, totalPages = 1, totalEvents = 0, searchParams }: EventsClientProps) {
+  const router = useRouter();
   const [events] = useState<Event[]>(initialEvents);
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [regionFilter, setRegionFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>(searchParams?.tipo || 'all');
+  const [regionFilter, setRegionFilter] = useState<string>(searchParams?.region || 'all');
+
+  // Update URL when filters change
+  const updateURL = (tipo?: string, region?: string) => {
+    const params = new URLSearchParams();
+    if (tipo && tipo !== 'all') params.set('tipo', tipo);
+    if (region && region !== 'all') params.set('region', region);
+
+    const queryString = params.toString();
+    router.push(queryString ? `/eventos?${queryString}` : '/eventos', { scroll: false });
+  };
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,7 +131,13 @@ export default function EventsClient({ initialEvents }: EventsClientProps) {
               />
             </div>
           </div>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <Select
+            value={typeFilter}
+            onValueChange={(value) => {
+              setTypeFilter(value);
+              updateURL(value, regionFilter);
+            }}
+          >
             <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="Tipo de evento" />
             </SelectTrigger>
@@ -122,7 +148,13 @@ export default function EventsClient({ initialEvents }: EventsClientProps) {
               <SelectItem value="club">Clubs</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={regionFilter} onValueChange={setRegionFilter}>
+          <Select
+            value={regionFilter}
+            onValueChange={(value) => {
+              setRegionFilter(value);
+              updateURL(typeFilter, value);
+            }}
+          >
             <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="Región" />
             </SelectTrigger>
@@ -269,6 +301,18 @@ export default function EventsClient({ initialEvents }: EventsClientProps) {
             ))}
           </div>
         </Suspense>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-12">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            baseUrl="/eventos"
+            queryParams={{}}
+          />
+        </div>
       )}
 
       {/* Call to Action */}
