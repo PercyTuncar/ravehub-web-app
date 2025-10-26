@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       description: post.seoDescription || post.excerpt,
       keywords: post.seoKeywords?.join(', '),
       authors: [{ name: post.author }],
-      robots: isDraft ? { index: false, follow: true } : undefined,
+      robots: isDraft ? { index: false, follow: true } : { index: true, follow: true },
       openGraph: {
         title: post.seoTitle || post.title,
         description: post.seoDescription || post.excerpt,

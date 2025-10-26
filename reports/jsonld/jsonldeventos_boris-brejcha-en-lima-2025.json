@@ -50,7 +50,7 @@
       "height": 675
     },
     "datePublished": "2025-10-10T04:59:42.147Z",
-    "dateModified": "2025-10-20T03:44:53.000Z"
+    "dateModified": "2025-10-26T01:33:28.000Z"
   },
   {
     "@type": "MusicEvent",
@@ -58,14 +58,26 @@
     "name": "Boris Brejcha",
     "description": "Información del Evento · Fecha: 12 de diciembre de 2025 · Inicio del show: 10:00 PM (Duración estimada: 6 horas) · Recinto: Paradiso – Centro Cultural Lima",
     "image": [
-      "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/events%2Fmain%2F4ab22a8d-554a-4a9c-9ec7-99f30d5835cc?alt=media&token=f3c7009b-a0d9-4197-8a82-2c174b5906ce",
-      "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/events%2Fbanner%2F3b3b77be-ed97-43ec-bb42-fc3062520fba?alt=media&token=a48ee8ad-37b1-4333-9d4d-a9d450deaad6"
+      {
+        "@type": "ImageObject",
+        "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/events%2Fmain%2F4ab22a8d-554a-4a9c-9ec7-99f30d5835cc?alt=media",
+        "width": 1200,
+        "height": 675,
+        "caption": "Boris Brejcha"
+      },
+      {
+        "@type": "ImageObject",
+        "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/events%2Fbanner%2F3b3b77be-ed97-43ec-bb42-fc3062520fba?alt=media",
+        "width": 1200,
+        "height": 675,
+        "caption": "Boris Brejcha"
+      }
     ],
     "eventStatus": "https://schema.org/EventScheduled",
     "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-    "startDate": "2025-12-12T22:00:00.000UTC-05:00",
-    "endDate": "2025-12-13T04:00:00.000UTC-05:00",
-    "doorTime": "2025-12-12T20:00:00.000UTC-05:00",
+    "startDate": "2025-12-12T22:00:00UTC-05:00",
+    "endDate": "2025-12-13T04:00:00UTC-05:00",
+    "doorTime": "2025-12-12T20:00:00UTC-05:00",
     "location": {
       "@type": "Place",
       "name": "PARADISO - CLUB CULTURAL - CHORRILLOS",
@@ -104,10 +116,10 @@
         "price": 155,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-09-01T04:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-10-12T03:00:00.000UTC-05:00",
-        "validFrom": "2025-09-01T04:00:00.000UTC-05:00",
-        "validThrough": "2025-10-12T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-09-01T04:00:00UTC-05:00",
+        "availabilityEnds": "2025-10-12T03:00:00UTC-05:00",
+        "validFrom": "2025-09-01T04:00:00UTC-05:00",
+        "validThrough": "2025-10-12T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 10
@@ -126,10 +138,10 @@
         "price": 180,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-09-01T04:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-10-12T03:00:00.000UTC-05:00",
-        "validFrom": "2025-09-01T04:00:00.000UTC-05:00",
-        "validThrough": "2025-10-12T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-09-01T04:00:00UTC-05:00",
+        "availabilityEnds": "2025-10-12T03:00:00UTC-05:00",
+        "validFrom": "2025-09-01T04:00:00UTC-05:00",
+        "validThrough": "2025-10-12T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 5
@@ -148,10 +160,10 @@
         "price": 250,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-09-01T04:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-10-12T03:00:00.000UTC-05:00",
-        "validFrom": "2025-09-01T04:00:00.000UTC-05:00",
-        "validThrough": "2025-10-12T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-09-01T04:00:00UTC-05:00",
+        "availabilityEnds": "2025-10-12T03:00:00UTC-05:00",
+        "validFrom": "2025-09-01T04:00:00UTC-05:00",
+        "validThrough": "2025-10-12T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 15
@@ -170,10 +182,10 @@
         "price": 360,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-09-01T04:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-10-12T03:00:00.000UTC-05:00",
-        "validFrom": "2025-09-01T04:00:00.000UTC-05:00",
-        "validThrough": "2025-10-12T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-09-01T04:00:00UTC-05:00",
+        "availabilityEnds": "2025-10-12T03:00:00UTC-05:00",
+        "validFrom": "2025-09-01T04:00:00UTC-05:00",
+        "validThrough": "2025-10-12T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 16
@@ -192,10 +204,10 @@
         "price": 155,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-10-01T03:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-12-02T03:00:00.000UTC-05:00",
-        "validFrom": "2025-10-01T03:00:00.000UTC-05:00",
-        "validThrough": "2025-12-02T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-10-01T03:00:00UTC-05:00",
+        "availabilityEnds": "2025-12-02T03:00:00UTC-05:00",
+        "validFrom": "2025-10-01T03:00:00UTC-05:00",
+        "validThrough": "2025-12-02T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 10
@@ -214,10 +226,10 @@
         "price": 175,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-10-01T03:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-12-02T03:00:00.000UTC-05:00",
-        "validFrom": "2025-10-01T03:00:00.000UTC-05:00",
-        "validThrough": "2025-12-02T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-10-01T03:00:00UTC-05:00",
+        "availabilityEnds": "2025-12-02T03:00:00UTC-05:00",
+        "validFrom": "2025-10-01T03:00:00UTC-05:00",
+        "validThrough": "2025-12-02T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 5
@@ -236,10 +248,10 @@
         "price": 250,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-10-01T03:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-12-02T03:00:00.000UTC-05:00",
-        "validFrom": "2025-10-01T03:00:00.000UTC-05:00",
-        "validThrough": "2025-12-02T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-10-01T03:00:00UTC-05:00",
+        "availabilityEnds": "2025-12-02T03:00:00UTC-05:00",
+        "validFrom": "2025-10-01T03:00:00UTC-05:00",
+        "validThrough": "2025-12-02T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 15
@@ -258,10 +270,10 @@
         "price": 350,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-10-01T03:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-12-02T03:00:00.000UTC-05:00",
-        "validFrom": "2025-10-01T03:00:00.000UTC-05:00",
-        "validThrough": "2025-12-02T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-10-01T03:00:00UTC-05:00",
+        "availabilityEnds": "2025-12-02T03:00:00UTC-05:00",
+        "validFrom": "2025-10-01T03:00:00UTC-05:00",
+        "validThrough": "2025-12-02T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 16
@@ -280,10 +292,10 @@
         "price": 195,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-12-03T03:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-12-12T03:00:00.000UTC-05:00",
-        "validFrom": "2025-12-03T03:00:00.000UTC-05:00",
-        "validThrough": "2025-12-12T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-12-03T03:00:00UTC-05:00",
+        "availabilityEnds": "2025-12-12T03:00:00UTC-05:00",
+        "validFrom": "2025-12-03T03:00:00UTC-05:00",
+        "validThrough": "2025-12-12T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 10
@@ -302,10 +314,10 @@
         "price": 220,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-12-03T03:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-12-12T03:00:00.000UTC-05:00",
-        "validFrom": "2025-12-03T03:00:00.000UTC-05:00",
-        "validThrough": "2025-12-12T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-12-03T03:00:00UTC-05:00",
+        "availabilityEnds": "2025-12-12T03:00:00UTC-05:00",
+        "validFrom": "2025-12-03T03:00:00UTC-05:00",
+        "validThrough": "2025-12-12T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 5
@@ -324,10 +336,10 @@
         "price": 330,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-12-03T03:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-12-12T03:00:00.000UTC-05:00",
-        "validFrom": "2025-12-03T03:00:00.000UTC-05:00",
-        "validThrough": "2025-12-12T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-12-03T03:00:00UTC-05:00",
+        "availabilityEnds": "2025-12-12T03:00:00UTC-05:00",
+        "validFrom": "2025-12-03T03:00:00UTC-05:00",
+        "validThrough": "2025-12-12T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 15
@@ -346,10 +358,10 @@
         "price": 434.99,
         "priceCurrency": "PEN",
         "availability": "https://schema.org/InStock",
-        "availabilityStarts": "2025-12-03T03:00:00.000UTC-05:00",
-        "availabilityEnds": "2025-12-12T03:00:00.000UTC-05:00",
-        "validFrom": "2025-12-03T03:00:00.000UTC-05:00",
-        "validThrough": "2025-12-12T03:00:00.000UTC-05:00",
+        "availabilityStarts": "2025-12-03T03:00:00UTC-05:00",
+        "availabilityEnds": "2025-12-12T03:00:00UTC-05:00",
+        "validFrom": "2025-12-03T03:00:00UTC-05:00",
+        "validThrough": "2025-12-12T03:00:00UTC-05:00",
         "inventoryLevel": {
           "@type": "QuantitativeValue",
           "value": 16
@@ -367,7 +379,7 @@
     "inLanguage": "es",
     "audience": {
       "@type": "Audience",
-      "audienceType": "public"
+      "audienceType": "Adultos 18+"
     },
     "typicalAgeRange": "18+"
   },
@@ -375,8 +387,10 @@
     "@type": "MusicEvent",
     "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/lineup/0/#event",
     "name": "Boris Brejcha - Boris Brejcha",
-    "startDate": "2025-12-13T00:00:00.000UTC-05:00",
-    "endDate": "2025-12-13T00:00:00.000UTC-05:00",
+    "startDate": "2025-12-13T00:00:00UTC-05:00",
+    "endDate": "2025-12-13T00:00:00UTC-05:00",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "location": {
       "@type": "Place",
       "name": "PARADISO - CLUB CULTURAL - CHORRILLOS",
@@ -392,14 +406,23 @@
     "performer": {
       "@type": "Person",
       "name": "Boris Brejcha"
-    }
+    },
+    "offers": [
+      {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "validFrom": "2025-12-12T22:00:00UTC-05:00"
+      }
+    ]
   },
   {
     "@type": "MusicEvent",
     "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/lineup/1/#event",
     "name": "Moritz Hofbauer - Boris Brejcha",
-    "startDate": "2025-12-13T00:00:00.000UTC-05:00",
-    "endDate": "2025-12-13T00:00:00.000UTC-05:00",
+    "startDate": "2025-12-13T00:00:00UTC-05:00",
+    "endDate": "2025-12-13T00:00:00UTC-05:00",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "location": {
       "@type": "Place",
       "name": "PARADISO - CLUB CULTURAL - CHORRILLOS",
@@ -415,14 +438,23 @@
     "performer": {
       "@type": "Person",
       "name": "Moritz Hofbauer"
-    }
+    },
+    "offers": [
+      {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "validFrom": "2025-12-12T22:00:00UTC-05:00"
+      }
+    ]
   },
   {
     "@type": "MusicEvent",
     "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/lineup/2/#event",
     "name": "Frieder & Jakob - Boris Brejcha",
-    "startDate": "2025-12-13T00:00:00.000UTC-05:00",
-    "endDate": "2025-12-13T00:00:00.000UTC-05:00",
+    "startDate": "2025-12-13T00:00:00UTC-05:00",
+    "endDate": "2025-12-13T00:00:00UTC-05:00",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
     "location": {
       "@type": "Place",
       "name": "PARADISO - CLUB CULTURAL - CHORRILLOS",
@@ -438,7 +470,14 @@
     "performer": {
       "@type": "Person",
       "name": "Frieder & Jakob"
-    }
+    },
+    "offers": [
+      {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "validFrom": "2025-12-12T22:00:00UTC-05:00"
+      }
+    ]
   },
   {
     "@type": "BreadcrumbList",

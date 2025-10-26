@@ -7,18 +7,29 @@ export const revalidate = 600
 export const metadata: Metadata = {
   title: 'Ravehub - Eventos de Música Electrónica en Latinoamérica',
   description: 'La plataforma líder en eventos de música electrónica en Latinoamérica. Compra entradas oficiales para festivales y conciertos de música electrónica en Perú, Chile, Ecuador, Colombia, México y Argentina. Pagos seguros, lineups verificados y soporte en español.',
+  keywords: ['música electrónica', 'festivales EDM', 'entradas oficiales', 'techno', 'house', 'trance', 'Perú', 'Chile', 'Ecuador', 'Colombia', 'México', 'Argentina', 'ticketing', 'eventos en vivo'],
   alternates: { canonical: 'https://www.ravehublatam.com/' },
+  robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
     url: 'https://www.ravehublatam.com/',
     title: 'Ravehub — Música electrónica en Latinoamérica',
     description: 'Compra entradas oficiales y descubre próximos eventos en tu ciudad.',
-    siteName: 'Ravehub'
+    siteName: 'Ravehub',
+    images: [
+      {
+        url: 'https://www.ravehublatam.com/static/og-image-home.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Ravehub - Plataforma de entradas para música electrónica en Latinoamérica'
+      }
+    ]
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Ravehub — Música electrónica en Latinoamérica',
-    description: 'Entradas oficiales y próximos eventos en Perú, Chile, Ecuador, Colombia, México y Argentina.'
+    description: 'Entradas oficiales y próximos eventos en Perú, Chile, Ecuador, Colombia, México y Argentina.',
+    images: ['https://www.ravehublatam.com/static/og-image-home.jpg']
   }
 }
 
@@ -222,7 +233,7 @@ const jsonLd = {
       },
       "inLanguage": "es-419",
       "datePublished": "2023-01-15T00:00:00+00:00",
-      "dateModified": "2025-10-20T14:30:00+00:00",
+      "dateModified": "2025-10-26T01:30:00+00:00",
       "primaryImageOfPage": {
         "@type": "ImageObject",
         "@id": "https://www.ravehublatam.com/#primaryimage",

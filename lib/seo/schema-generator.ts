@@ -443,7 +443,7 @@ export class SchemaGenerator {
         {
           '@type': 'ImageObject',
           '@id': `${this.BASE_URL}/blog/${post.slug}/#primaryimage`,
-          url: post.featuredImageUrl,
+          url: post.featuredImageUrl.replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
           width: 1200,
           height: 675,
           caption: post.imageAltTexts?.[post.featuredImageUrl] || post.title,
@@ -474,19 +474,19 @@ export class SchemaGenerator {
           image: [
             {
               '@type': 'ImageObject',
-              url: post.featuredImageUrl,
+              url: post.featuredImageUrl.replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
               width: 1200,
               height: 675,
               caption: post.imageAltTexts?.[post.featuredImageUrl] || post.title,
             },
             {
               '@type': 'ImageObject',
-              url: post.socialImageUrl || post.featuredImageUrl,
+              url: (post.socialImageUrl || post.featuredImageUrl).replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
               width: 1200,
               height: 630,
             },
           ],
-          thumbnailUrl: post.socialImageUrl || post.featuredImageUrl,
+          thumbnailUrl: (post.socialImageUrl || post.featuredImageUrl).replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
           wordCount: this.estimateWordCount(post.content),
           about: post.tags.map(tag => ({ '@type': 'Thing', name: tag })),
           commentCount: commentCount,
