@@ -1,5 +1,5 @@
-import { BlogPost } from '@/lib/types';
-import { blogCollection } from '@/lib/firebase/collections';
+import { BlogPost, Event } from '@/lib/types';
+import { blogCollection, eventsCollection } from '@/lib/firebase/collections';
 
 export async function getBlogPosts(filters?: {
   category?: string;
@@ -38,5 +38,39 @@ export async function getBlogPosts(filters?: {
     return { posts: fetchedPosts as BlogPost[], total };
   } catch (err) {
     throw new Error(err instanceof Error ? err.message : 'Error fetching posts');
+  }
+}
+
+export async function getEventsByCountry(countryCode: string, filters?: {
+  status?: 'published' | 'draft' | 'scheduled';
+  limit?: number;
+  offset?: number;
+}): Promise<{ events: Event[]; total: number }> {
+  try {
+    let conditions: Array<{ field: string; operator: any; value: any }> = [];
+
+    // Always filter by published status
+    conditions.push({ field: 'eventStatus', operator: '==', value: 'published' });
+
+    // Filter by country in location
+    conditions.push({ field: 'location.countryCode', operator: '==', value: countryCode.toUpperCase() });
+
+    if (filters?.status) {
+      conditions.push({ field: 'status', operator: '==', value: filters.status });
+    }
+
+    const limit = filters?.limit || 50; // Higher limit for country pages
+    const offset = filters?.offset || 0;
+
+    // Get all matching events
+    const allEvents = await eventsCollection.query(conditions, 'startDate', 'asc');
+    const total = allEvents.length;
+
+    // Get paginated events
+    const fetchedEvents = allEvents.slice(offset, offset + limit);
+
+    return { events: fetchedEvents as Event[], total };
+  } catch (err) {
+    throw new Error(err instanceof Error ? err.message : 'Error fetching events by country');
   }
 }
