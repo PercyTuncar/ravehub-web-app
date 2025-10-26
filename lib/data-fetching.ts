@@ -74,3 +74,28 @@ export async function getEventsByCountry(countryCode: string, filters?: {
     throw new Error(err instanceof Error ? err.message : 'Error fetching events by country');
   }
 }
+
+export async function getUpcomingEvents(limit: number = 3): Promise<Event[]> {
+  try {
+    const conditions: Array<{ field: string; operator: any; value: any }> = [
+      { field: 'eventStatus', operator: '==', value: 'published' }
+    ];
+
+    // Get current date in ISO format for comparison
+    const now = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
+    // Get events starting from today onwards, ordered by startDate ascending
+    const allEvents = await eventsCollection.query(conditions, 'startDate', 'asc');
+
+    // Filter events that start today or in the future
+    const upcomingEvents = allEvents.filter(event => {
+      const eventDate = event.startDate;
+      return eventDate >= now;
+    });
+
+    // Return limited number of events
+    return upcomingEvents.slice(0, limit) as Event[];
+  } catch (err) {
+    throw new Error(err instanceof Error ? err.message : 'Error fetching upcoming events');
+  }
+}

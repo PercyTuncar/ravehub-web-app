@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import JsonLd from '@/components/seo/JsonLd'
+import { getUpcomingEvents } from '@/lib/data-fetching'
+import { Event } from '@/lib/types'
 
 // ISR: Revalidate every 10 minutes (600 seconds)
 export const revalidate = 600
@@ -33,7 +36,7 @@ export const metadata: Metadata = {
   }
 }
 
-const jsonLd = {
+const jsonLd = (upcomingEvents: Event[]) => ({
   "@context": "https://schema.org",
   "@graph": [
     {
@@ -61,7 +64,7 @@ const jsonLd = {
       },
       "description": "Plataforma líder de venta de entradas para festivales y conciertos de música electrónica en Latinoamérica. Venta oficial de tickets con pagos seguros y verificación de lineups.",
       "slogan": "Vive la música electrónica en Latinoamérica",
-      "foundingDate": "2023",
+      "foundingDate": "2025",
       "foundingLocation": {
         "@type": "Place",
         "address": {
@@ -211,7 +214,7 @@ const jsonLd = {
           "valueName": "search_term_string"
         }
       },
-      "copyrightYear": "2025",
+      "copyrightYear": new Date().getFullYear().toString(),
       "copyrightHolder": {
         "@id": "https://www.ravehublatam.com/#organization"
       }
@@ -232,8 +235,8 @@ const jsonLd = {
         "sameAs": "https://en.wikipedia.org/wiki/Electronic_dance_music"
       },
       "inLanguage": "es-419",
-      "datePublished": "2023-01-15T00:00:00+00:00",
-      "dateModified": "2025-10-26T01:30:00+00:00",
+      "datePublished": "2025-10-26T00:00:00+00:00",
+      "dateModified": new Date().toISOString(),
       "primaryImageOfPage": {
         "@type": "ImageObject",
         "@id": "https://www.ravehublatam.com/#primaryimage",
@@ -409,7 +412,7 @@ const jsonLd = {
         "priceCurrency": "USD",
         "lowPrice": "15",
         "highPrice": "500",
-        "offerCount": "250"
+        "offerCount": upcomingEvents.length.toString()
       },
       "audience": {
   "@type": "Audience",
@@ -512,12 +515,14 @@ const jsonLd = {
       ]
     }
   ]
-}
+});
 
-export default function HomePage() {
+export default async function HomePage() {
+  const upcomingEvents = await getUpcomingEvents(3);
+
   return (
     <main className="min-h-screen">
-      <JsonLd id="homepage-jsonld" data={jsonLd} />
+      <JsonLd id="homepage-jsonld" data={jsonLd(upcomingEvents)} />
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-orange-900 via-orange-800 to-orange-900 text-white py-20 px-4">
@@ -551,48 +556,69 @@ export default function HomePage() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/eventos" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors text-center" aria-label="Ir a comprar entradas">
+            <Link href="/eventos" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors text-center" aria-label="Ir a comprar entradas">
               Comprar entradas
-            </a>
-            <a href="/eventos" className="border-2 border-white text-white hover:bg-white hover:text-orange-900 font-semibold py-3 px-8 rounded-lg transition-colors text-center" aria-label="Ver próximos eventos">
+            </Link>
+            <Link href="/eventos" className="border-2 border-white text-white hover:bg-white hover:text-orange-900 font-semibold py-3 px-8 rounded-lg transition-colors text-center" aria-label="Ver próximos eventos">
               Ver próximos eventos
-            </a>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Próximos eventos destacados */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Próximos eventos destacados</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+          <p className="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
             Descubre los sets imperdibles que vienen a tu ciudad. Compra con anticipación y asegura tu lugar en la pista.
           </p>
 
-          {/* Placeholder for events - will be replaced with actual data */}
+          {/* Dynamic events from database */}
           <div className="grid md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                <div className="h-48 bg-gradient-to-br from-orange-400 to-orange-600"></div>
-                <div className="p-6">
-                  <h3 className="font-semibold text-lg mb-2">Festival EDM {i}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-2">Lima, Perú</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">15 Dic 2024</p>
-                  <button className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors">
-                    Comprar
-                  </button>
+            {upcomingEvents.length > 0 ? (
+              upcomingEvents.map((event) => (
+                <div key={event.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                  <div
+                    className="h-48 bg-gradient-to-br from-orange-400 to-orange-600 bg-cover bg-center"
+                    style={{ backgroundImage: event.mainImageUrl ? `url(${event.mainImageUrl})` : undefined }}
+                  ></div>
+                  <div className="p-6">
+                    <h3 className="font-semibold text-lg mb-2">{event.name}</h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-2">
+                      {event.location.city || event.location.venue}, {event.location.country}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      {new Date(event.startDate).toLocaleDateString('es-ES', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </p>
+                    <Link
+                      href={`/eventos/${event.slug}`}
+                      className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors block text-center"
+                    >
+                      Comprar
+                    </Link>
+                  </div>
                 </div>
+              ))
+            ) : (
+              // Fallback when no events are available
+              <div className="col-span-3 text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400 text-lg">Próximamente más eventos disponibles</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
 
       {/* Explora por país */}
-      <section className="py-16 px-4 bg-white">
+      <section className="py-16 px-4 bg-white dark:bg-gray-800">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Explora por país</h2>
-          <p className="text-gray-600 mb-8">
+          <p className="text-gray-600 dark:text-gray-300 mb-8">
             Encuentra eventos y tickets por país y ciudad.
           </p>
 
@@ -605,22 +631,22 @@ export default function HomePage() {
               { name: 'México', code: 'mx' },
               { name: 'Argentina', code: 'ar' }
             ].map((country) => (
-              <a
+              <Link
                 key={country.code}
-                href={`/eventos`}
+                href={`/${country.code}/`}
                 className="px-6 py-3 bg-orange-50 hover:bg-orange-100 text-orange-800 hover:text-orange-900 dark:bg-orange-900/20 dark:hover:bg-orange-800/30 dark:text-orange-200 dark:hover:text-orange-100 rounded-full transition-colors"
                 aria-label={`Explorar eventos en ${country.name}`}
                 role="listitem"
               >
                 {country.name}
-              </a>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
       {/* Cómo funciona */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Compra fácil y segura</h2>
 
@@ -646,20 +672,20 @@ export default function HomePage() {
       </section>
 
       {/* Para fans y promotores */}
-      <section className="py-16 px-4 bg-white">
+      <section className="py-16 px-4 bg-white dark:bg-gray-800">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Hecho para ravers y organizadores</h2>
 
           <div className="grid md:grid-cols-2 gap-12">
             <div className="text-center">
               <h3 className="text-2xl font-semibold mb-4">Para Fans</h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 Acceso anticipado, recordatorios y beneficios de preventa.
               </p>
             </div>
             <div className="text-center">
               <h3 className="text-2xl font-semibold mb-4">Para Promotores</h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 Publica tu evento, automatiza ventas y reportes en tiempo real.
               </p>
             </div>
@@ -668,20 +694,20 @@ export default function HomePage() {
       </section>
 
       {/* Confianza & seguridad */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Tu seguridad es primero</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Procesamos pagos con partners confiables, protegemos tus datos y verificamos lineups para combatir la reventa.
           </p>
         </div>
       </section>
 
       {/* Contenido/Blog */}
-      <section className="py-16 px-4 bg-white">
+      <section className="py-16 px-4 bg-white dark:bg-gray-800">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Guías y cultura electrónica</h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Crónicas, entrevistas y guías para vivir la escena al máximo.
           </p>
         </div>
@@ -715,7 +741,7 @@ export default function HomePage() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Preguntas frecuentes</h2>
 

@@ -131,39 +131,39 @@ export default async function PeruPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 px-4 bg-gray-50">
+      <section className="py-12 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
               <div className="text-3xl font-bold text-red-600 mb-2">{events.length}</div>
-              <div className="text-gray-600">Eventos activos</div>
+              <div className="text-gray-600 dark:text-gray-300">Eventos activos</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-red-600 mb-2">6</div>
-              <div className="text-gray-600">Ciudades principales</div>
+              <div className="text-gray-600 dark:text-gray-300">Ciudades principales</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-red-600 mb-2">50+</div>
-              <div className="text-gray-600">DJ's internacionales</div>
+              <div className="text-gray-600 dark:text-gray-300">DJ's internacionales</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Events Section */}
-      <section id="eventos" className="py-16 px-4 bg-white">
+      <section id="eventos" className="py-16 px-4 bg-white dark:bg-gray-800">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Próximos eventos en Perú</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+          <p className="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
             Desde Lima hasta Cusco, descubre los mejores eventos de música electrónica del Perú.
           </p>
 
           {events.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-500 mb-4">
+              <div className="text-gray-500 dark:text-gray-400 mb-4">
                 <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p className="text-lg">No hay eventos programados actualmente</p>
-                <p className="text-sm text-gray-400 mt-2">¡Vuelve pronto para ver las próximas fechas!</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">¡Vuelve pronto para ver las próximas fechas!</p>
               </div>
             </div>
           ) : (
@@ -227,10 +227,10 @@ export default async function PeruPage() {
       </section>
 
       {/* Cities Section */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ciudades principales</h2>
-          <p className="text-gray-600 mb-8">
+          <p className="text-gray-600 dark:text-gray-300 mb-8">
             Explora eventos por ciudad en Perú
           </p>
 
