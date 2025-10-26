@@ -452,7 +452,7 @@ export class SchemaGenerator {
           '@type': 'BlogPosting',
           '@id': articleId,
           isPartOf: { '@id': webpageId },
-          mainEntityOfPage: { '@id': webpageId },
+          mainEntityOfPage: { '@id': `${this.BASE_URL}/blog/${post.slug}` },
           headline: post.title,
           alternativeHeadline: post.excerpt,
           description: post.seoDescription || post.excerpt,

@@ -68,7 +68,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
         images: post.socialImageUrl || post.featuredImageUrl,
       },
       alternates: {
-        canonical: post.canonicalUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
+        canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
       },
     };
   } catch (error) {

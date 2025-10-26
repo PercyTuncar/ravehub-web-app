@@ -39,12 +39,12 @@
       "@id": "https://www.ravehublatam.com/blog/dldk-chile-2025/#primaryimage"
     },
     "datePublished": "2025-04-30T07:30",
-    "dateModified": "2025-05-03T10:55:46.296Z"
+    "dateModified": "2025-10-26T02:18:48.142Z"
   },
   {
     "@type": "ImageObject",
     "@id": "https://www.ravehublatam.com/blog/dldk-chile-2025/#primaryimage",
-    "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/dldkchile.jpeg?alt=media&token=92a083e0-f6f1-40bf-a630-bee9994f93ab",
+    "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/dldkchile.jpeg?alt=media",
     "width": 1200,
     "height": 675,
     "caption": "DLDK Chile 2025 | Don't Let Daddy Know"
@@ -67,7 +67,7 @@
       "DLDK Chile 2025"
     ],
     "datePublished": "2025-04-30T07:30",
-    "dateModified": "2025-05-03T10:55:46.296Z",
+    "dateModified": "2025-10-26T02:18:48.142Z",
     "author": [
       {
         "@type": "Person",
@@ -83,19 +83,19 @@
     "image": [
       {
         "@type": "ImageObject",
-        "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/dldkchile.jpeg?alt=media&token=92a083e0-f6f1-40bf-a630-bee9994f93ab",
+        "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/dldkchile.jpeg?alt=media",
         "width": 1200,
         "height": 675,
         "caption": "DLDK Chile 2025 | Don't Let Daddy Know"
       },
       {
         "@type": "ImageObject",
-        "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/blog%2Fafa9a1e2-eb12-4e60-a514-9147fb483628-DLDK-CHILE-WEB-LINEUP-1500x554-EVENTGROOT.jpeg?alt=media&token=7288fafe-dcdf-4af2-9346-9dd8599315c4",
+        "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/blog%2Fafa9a1e2-eb12-4e60-a514-9147fb483628-DLDK-CHILE-WEB-LINEUP-1500x554-EVENTGROOT.jpeg?alt=media",
         "width": 1200,
         "height": 630
       }
     ],
-    "thumbnailUrl": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/blog%2Fafa9a1e2-eb12-4e60-a514-9147fb483628-DLDK-CHILE-WEB-LINEUP-1500x554-EVENTGROOT.jpeg?alt=media&token=7288fafe-dcdf-4af2-9346-9dd8599315c4",
+    "thumbnailUrl": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/blog%2Fafa9a1e2-eb12-4e60-a514-9147fb483628-DLDK-CHILE-WEB-LINEUP-1500x554-EVENTGROOT.jpeg?alt=media",
     "wordCount": 2085,
     "about": [],
     "commentCount": 37

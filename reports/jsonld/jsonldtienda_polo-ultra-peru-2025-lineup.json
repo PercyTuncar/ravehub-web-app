@@ -1,0 +1,146 @@
+[
+  {
+    "@type": "WebSite",
+    "@id": "https://www.ravehublatam.com/#website",
+    "url": "https://www.ravehublatam.com",
+    "name": "Ravehub",
+    "alternateName": [
+      "Ravehub",
+      "www.ravehublatam.com"
+    ]
+  },
+  {
+    "@type": "Organization",
+    "@id": "https://www.ravehublatam.com/#organization",
+    "name": "Ravehub",
+    "url": "https://www.ravehublatam.com",
+    "logo": {
+      "@type": "ImageObject",
+      "@id": "https://www.ravehublatam.com/#logo",
+      "url": "https://www.ravehublatam.com/icons/logo.png",
+      "width": 600,
+      "height": 60
+    },
+    "sameAs": [
+      "https://www.instagram.com/ravehub.pe",
+      "https://www.facebook.com/ravehub"
+    ]
+  },
+  {
+    "@type": "WebPage",
+    "@id": "https://www.ravehublatam.com/tienda/polo-ultra-peru-2025-lineup/#webpage",
+    "url": "https://www.ravehublatam.com/tienda/polo-ultra-peru-2025-lineup",
+    "name": "Polo Ultra Perú 2025 Lineup",
+    "isPartOf": {
+      "@id": "https://www.ravehublatam.com/#website"
+    },
+    "primaryImageOfPage": {
+      "@type": "ImageObject",
+      "@id": "https://www.ravehublatam.com/tienda/polo-ultra-peru-2025-lineup/#primaryimage",
+      "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/c73f9ac9-46d4-43a3-b5d2-365d27e57f80%2F1744423706759_polo2.png?alt=media&token=fe0c94ad-5d12-4d32-b701-9f7e106d6a77",
+      "width": 1200,
+      "height": 675
+    },
+    "datePublished": "2025-04-12T02:30:33.894Z",
+    "dateModified": {
+      "_methodName": "serverTimestamp"
+    }
+  },
+  {
+    "@type": "Product",
+    "@id": "https://www.ravehublatam.com/tienda/polo-ultra-peru-2025-lineup/#product",
+    "name": "Polo Ultra Perú 2025 Lineup",
+    "description": "Compra el polo oficial del Ultra Perú 2025, modelo Lineup. Producto original, 100% algodón Jersey 30/1 con estampado al agua. Disponible en Lima Metropolitana. ¡Luce el espíritu del festival con estilo!\n\n",
+    "image": [
+      {
+        "@type": "ImageObject",
+        "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/c73f9ac9-46d4-43a3-b5d2-365d27e57f80%2F1744423706759_polo2.png?alt=media&token=fe0c94ad-5d12-4d32-b701-9f7e106d6a77",
+        "width": 1200,
+        "height": 1200,
+        "caption": "Polo Ultra Perú 2025 Lineup"
+      },
+      {
+        "@type": "ImageObject",
+        "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/e5fb9dd1-a0db-4436-aefd-8d6f7e9753bf%2F1744423706803_polo1_1024x1024.jpg?alt=media&token=7fbc28b7-1d74-4248-a84d-59f2606da8e6",
+        "width": 1200,
+        "height": 1200,
+        "caption": "Polo Ultra Perú 2025 Lineup"
+      }
+    ],
+    "sku": "ObMBqphrjx6XNEp0nTjZ",
+    "brand": {
+      "@type": "Brand",
+      "name": "Ravehub"
+    },
+    "category": {
+      "@type": "CategoryCode",
+      "name": "JiqF6CyC311e5usLfi6v"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "90.00",
+      "priceCurrency": "PEN",
+      "priceValidUntil": "2025-11-25",
+      "availability": "https://schema.org/InStock",
+      "condition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "Ravehub",
+        "url": "https://www.ravehublatam.com"
+      },
+      "priceSpecification": {
+        "@type": "PriceSpecification",
+        "price": "90.00",
+        "priceCurrency": "PEN"
+      },
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+          "@type": "MonetaryAmount",
+          "value": "0",
+          "currency": "PEN"
+        },
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": "CL"
+        },
+        "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 1,
+            "maxValue": 3,
+            "unitText": "Day"
+          },
+          "transitTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 3,
+            "maxValue": 7,
+            "unitText": "Day"
+          }
+        }
+      },
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": "CL",
+        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+        "merchantReturnDays": 30,
+        "returnMethod": "https://schema.org/ReturnByMail",
+        "returnFees": "https://schema.org/FreeReturn"
+      }
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5.0",
+      "reviewCount": 1
+    },
+    "review": [],
+    "additionalProperty": [
+      {
+        "@type": "PropertyValue",
+        "name": "Peso",
+        "value": "undefinedkg"
+      }
+    ]
+  }
+]
