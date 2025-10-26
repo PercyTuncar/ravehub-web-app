@@ -9,12 +9,12 @@ export async function generateMetadata(): Promise<Metadata> {
     title: 'Mi Perfil | Ravehub',
     description: 'Gestiona tu cuenta, revisa tus tickets comprados, órdenes realizadas y eventos favoritos en Ravehub.',
     keywords: ['perfil', 'cuenta', 'tickets', 'órdenes', 'favoritos', 'Ravehub'],
-    alternates: { canonical: 'https://www.ravehublatam.com/profile' },
+    alternates: { canonical: 'https://www.ravehublatam.com/perfil' },
     openGraph: {
       title: 'Mi Perfil | Ravehub',
       description: 'Gestiona tu cuenta, revisa tus tickets comprados, órdenes realizadas y eventos favoritos en Ravehub.',
       type: 'website',
-      url: 'https://www.ravehublatam.com/profile',
+      url: 'https://www.ravehublatam.com/perfil',
     },
     twitter: {
       card: 'summary_large_image',

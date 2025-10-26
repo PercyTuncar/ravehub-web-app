@@ -10,6 +10,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Handle profile redirect from /perfil to /profile
+  if (url.pathname === '/perfil') {
+    const newUrl = new URL('/profile', request.url);
+    return NextResponse.redirect(newUrl, { status: 301 });
+  }
+
   // Handle blog category redirects from query params to path-based routes
   if (url.pathname === '/blog' && url.searchParams.has('category')) {
     const category = url.searchParams.get('category');
