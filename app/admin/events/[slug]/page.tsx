@@ -7,12 +7,14 @@ import { ArrowLeft, Edit, Eye, Calendar, MapPin, Users, DollarSign, Trash2 } fro
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AuthGuard } from '@/components/admin/AuthGuard';
 import { eventsCollection } from '@/lib/firebase/collections';
 import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getCurrencySymbol } from '@/lib/utils';
+import { revalidateEvent, revalidateEventsListing } from '@/lib/revalidate';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -73,6 +75,27 @@ export default function EventDetailPage() {
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    if (!event) return;
+
+    try {
+      await eventsCollection.update(event.id, { eventStatus: newStatus });
+
+      // Revalidate pages when status changes to published
+      if (newStatus === 'published') {
+        await revalidateEvent(event.slug);
+        await revalidateEventsListing();
+      }
+
+      // Reload event data
+      await loadEvent(event.id);
+      alert(`Estado del evento actualizado a ${getStatusLabel(newStatus)}`);
+    } catch (error) {
+      console.error('Error updating event status:', error);
+      alert('Error al actualizar el estado del evento');
+    }
+  };
+
   return (
     <AuthGuard>
       {loading ? (
@@ -113,6 +136,24 @@ export default function EventDetailPage() {
                   Editar
                 </Button>
               </Link>
+              {event.eventStatus === 'draft' && (
+                <Button onClick={() => handleStatusChange('published')}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Publicar Evento
+                </Button>
+              )}
+              {event.eventStatus === 'published' && (
+                <Select value={event.eventStatus} onValueChange={handleStatusChange}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="published">Publicado</SelectItem>
+                    <SelectItem value="cancelled">Cancelar</SelectItem>
+                    <SelectItem value="finished">Finalizar</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <Button
                 variant="outline"
                 onClick={handleDeleteEvent}
@@ -122,7 +163,7 @@ export default function EventDetailPage() {
                 Eliminar
               </Button>
               <Link href={`/eventos/${event.slug}`} target="_blank">
-                <Button>
+                <Button variant="outline">
                   <Eye className="mr-2 h-4 w-4" />
                   Ver Público
                 </Button>

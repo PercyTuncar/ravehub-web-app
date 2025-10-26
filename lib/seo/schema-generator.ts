@@ -141,7 +141,10 @@ export class SchemaGenerator {
       if (timezone) {
         // Convert to timezone offset format (e.g., -05:00)
         const offset = timezone.includes(':') ? timezone : `${timezone}:00`;
-        return date.toISOString().replace('Z', offset);
+        // Ensure proper ISO format: remove milliseconds and add timezone
+        const isoString = date.toISOString();
+        const withoutMs = isoString.replace(/\.\d{3}Z$/, 'Z');
+        return withoutMs.replace('Z', offset);
       }
 
       return date.toISOString();
@@ -209,8 +212,20 @@ export class SchemaGenerator {
           name: eventData.name,
           description: eventData.seoDescription || eventData.shortDescription,
           image: eventData.mainImageUrl ? [
-            eventData.mainImageUrl,
-            eventData.bannerImageUrl
+            {
+              '@type': 'ImageObject',
+              url: eventData.mainImageUrl.replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
+              width: 1200,
+              height: 675,
+              caption: eventData.name
+            },
+            eventData.bannerImageUrl ? {
+              '@type': 'ImageObject',
+              url: eventData.bannerImageUrl.replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
+              width: 1200,
+              height: 675,
+              caption: eventData.name
+            } : undefined
           ].filter(Boolean) : undefined,
           eventStatus: 'https://schema.org/EventScheduled',
           eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
@@ -315,6 +330,8 @@ export class SchemaGenerator {
         endDate: artist.performanceDate
           ? formatDateWithTimezone(artist.performanceDate, artist.performanceEndTime, eventData.timezone)
           : formatDateWithTimezone(eventData.endDate, eventData.endTime, eventData.timezone),
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
         location: eventData.location ? {
           '@type': 'Place',
           name: eventData.location.venue || eventData.location.city || 'Ubicación del evento',
@@ -330,6 +347,11 @@ export class SchemaGenerator {
           name: artist.name,
           sameAs: artist.instagram ? [`https://instagram.com/${artist.instagram.replace('@', '')}`] : undefined,
         },
+        offers: eventData.sellTicketsOnPlatform ? [{
+          '@type': 'Offer',
+          availability: 'https://schema.org/InStock',
+          validFrom: formatDateWithTimezone(eventData.startDate, eventData.startTime, eventData.timezone),
+        }] : undefined,
       }));
 
       schema['@graph'].push(...subEvents);

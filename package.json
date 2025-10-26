@@ -14,7 +14,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "seed": "node scripts/seed-firestore.js development",
-    "export": "node scripts/export-firestore.js development all"
+    "export": "node scripts/export-firestore.js development all",
+    "seo:audit": "node scripts/seo-audit/index.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

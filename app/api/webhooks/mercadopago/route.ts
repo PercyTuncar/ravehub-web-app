@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ticketTransactionsCollection, paymentInstallmentsCollection } from '@/lib/firebase/collections';
-import { revalidateEvent, revalidateEventsListing } from '@/lib/revalidate';
+import { revalidateEventCapacity } from '@/lib/revalidate';
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,8 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Revalidate event pages if payment was approved (tickets sold)
     if (newStatus === 'approved' && transaction.eventId) {
-      await revalidateEvent(transaction.eventId);
-      await revalidateEventsListing();
+      await revalidateEventCapacity(transaction.eventId);
     }
 
     // TODO: Send notification to user

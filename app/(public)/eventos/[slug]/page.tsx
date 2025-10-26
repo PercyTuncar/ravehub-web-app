@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
       title: event.seoTitle || event.name,
       description: event.seoDescription || event.shortDescription,
-      robots: isDraft ? { index: false, follow: true } : undefined,
+      robots: isDraft ? { index: false, follow: true } : { index: true, follow: true },
       alternates: { canonical: url },
       openGraph: {
         title: event.seoTitle || event.name,
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 async function getEventData(slug: string): Promise<{ event: Event; eventDjs: EventDj[] } | null> {
   try {
-    // Find event by slug
+    // Find event by slug with ISR cache and revalidation tags
     const conditions = [{ field: 'slug', operator: '==', value: slug }];
     const events = await eventsCollection.query(conditions);
 

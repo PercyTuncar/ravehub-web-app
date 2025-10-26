@@ -51,9 +51,47 @@ export default function EventsAdminPage() {
     }
   };
 
+  const handleStatusChange = async (eventId: string, newStatus: string, eventName: string) => {
+    try {
+      await eventsCollection.update(eventId, { eventStatus: newStatus });
+      setEvents(prev => prev.map(event =>
+        event.id === eventId ? { ...event, eventStatus: newStatus } : event
+      ));
+
+      // Revalidate pages when status changes to published
+      if (newStatus === 'published') {
+        const event = events.find(e => e.id === eventId);
+        if (event) {
+          await fetch('/api/revalidate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token: process.env.REVALIDATE_TOKEN || 'your-secret-token',
+              path: `/eventos/${event.slug}`
+            })
+          });
+          await fetch('/api/revalidate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token: process.env.REVALIDATE_TOKEN || 'your-secret-token',
+              path: '/eventos'
+            })
+          });
+        }
+      }
+
+      alert(`Estado del evento "${eventName}" actualizado a ${getStatusLabel(newStatus)}`);
+    } catch (error) {
+      console.error('Error updating event status:', error);
+      alert('Error al actualizar el estado del evento');
+    }
+  };
+
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.shortDescription.toLowerCase().includes(searchTerm.toLowerCase());
+                          event.shortDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          event.slug.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || event.eventStatus === statusFilter;
     const matchesType = typeFilter === 'all' || event.eventType === typeFilter;
 
@@ -194,15 +232,30 @@ export default function EventsAdminPage() {
                     Editar
                   </Button>
                 </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDeleteEvent(event.id, event.name)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar
-                </Button>
+                <div className="flex gap-1">
+                  <Select
+                    value={event.eventStatus}
+                    onValueChange={(value) => handleStatusChange(event.id, value, event.name)}
+                  >
+                    <SelectTrigger className="w-32 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Borrador</SelectItem>
+                      <SelectItem value="published">Publicar</SelectItem>
+                      <SelectItem value="cancelled">Cancelar</SelectItem>
+                      <SelectItem value="finished">Finalizar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteEvent(event.id, event.name)}
+                    className="text-red-600 hover:text-red-700 px-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

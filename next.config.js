@@ -72,6 +72,7 @@ const nextConfig = {
       // Redirección para favicon.ico a la ubicación correcta
       { source: '/favicon.ico', destination: '/icons/favicon.ico', permanent: true },
 
+
       // Redirección para globals.css - no es necesario ya que es un archivo interno de Next.js
     ]
   },
