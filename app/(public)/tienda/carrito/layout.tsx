@@ -1,13 +1,10 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  robots: 'noindex',
-};
-
-export default function CartLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return children;
+  robots: { index: false, follow: false },
 }
+
+export default function CarritoLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>
+}
+

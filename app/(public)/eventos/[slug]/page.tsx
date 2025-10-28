@@ -30,12 +30,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 
     const event = events[0] as Event;
-    const url = `/eventos/${slug}`;
+    const url = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com'}/eventos/${slug}`;
     const isDraft = event.eventStatus !== 'published';
 
-    return {
+  return {
       title: event.seoTitle || event.name,
       description: event.seoDescription || event.shortDescription,
+      keywords: (event.seoKeywords as string[] | undefined) || event.tags,
       robots: isDraft ? { index: false, follow: true } : { index: true, follow: true },
       alternates: { canonical: url },
       openGraph: {

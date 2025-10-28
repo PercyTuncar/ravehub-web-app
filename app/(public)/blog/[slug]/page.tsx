@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { blogCollection, slugRedirectsCollection, blogCommentsCollection } from '@/lib/firebase/collections';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import { BlogPostDetail } from '@/components/blog/BlogPostDetail';
@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
     let actualSlug = slug;
     if (redirects.length > 0) {
+      // If the slug has been redirected, ensure canonical points to the new slug
       actualSlug = redirects[0].newSlug;
     }
 
@@ -68,7 +69,8 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
         images: post.socialImageUrl || post.featuredImageUrl,
       },
       alternates: {
-        canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
+        // Use relative canonical so Next resolves with metadataBase
+        canonical: `/blog/${post.slug}`,
       },
     };
   } catch (error) {
@@ -91,7 +93,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
     let actualSlug = slug;
     if (redirects.length > 0) {
-      actualSlug = redirects[0].newSlug;
+      const newSlug = redirects[0].newSlug as string;
+      // Issue a permanent redirect so crawlers and users land on the canonical URL
+      if (newSlug && newSlug !== slug) {
+        permanentRedirect(`/blog/${newSlug}`);
+      }
+      actualSlug = newSlug || slug;
     }
 
     // Fetch the post

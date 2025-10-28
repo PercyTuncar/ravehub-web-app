@@ -17,7 +17,18 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.ravehublatam.com'),
   title: { default: 'Ravehub', template: '%s | Ravehub' },
   description: 'Eventos de música electrónica en LATAM. Entradas, fechas y lineups.',
-  alternates: { canonical: '/' },
+  alternates: {
+    canonical: '/',
+    languages: {
+      'x-default': '/',
+      'es-PE': '/pe/',
+      'es-CL': '/cl/',
+      'es-EC': '/ec/',
+      'es-CO': '/co/',
+      'es-MX': '/mx/',
+      'es-AR': '/ar/',
+    },
+  },
   icons: {
     icon: '/icons/favicon.ico',
     shortcut: '/icons/favicon.ico',
