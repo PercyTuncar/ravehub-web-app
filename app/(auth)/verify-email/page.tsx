@@ -93,7 +93,7 @@ export default function VerifyEmailPage() {
         <div className="text-sm text-muted-foreground">
           <p>
             ¿Problemas con la verificación?{' '}
-            <a href="mailto:soporte@ravehublatam.com" className="text-primary hover:underline">
+            <a href="mailto:soporte@weareravehub.com" className="text-primary hover:underline">
               Contacta soporte
             </a>
           </p>

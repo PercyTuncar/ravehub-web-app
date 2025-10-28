@@ -42,8 +42,8 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
       : `Merchandising oficial de los mejores eventos electrónicos. ${totalProducts} productos disponibles: camisetas, accesorios y artículos exclusivos de festivales de música electrónica en Latinoamérica.`;
 
     const canonicalUrl = categoria
-      ? `https://www.ravehublatam.com/tienda?categoria=${encodeURIComponent(categoria)}`
-      : 'https://www.ravehublatam.com/tienda';
+      ? `https://www.weareravehub.com/tienda?categoria=${encodeURIComponent(categoria)}`
+      : 'https://www.weareravehub.com/tienda';
 
     return {
       title,

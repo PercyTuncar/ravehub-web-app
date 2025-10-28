@@ -18,17 +18,17 @@ export const metadata: Metadata = {
   title: 'Eventos de Música Electrónica en Colombia | Ravehub',
   description: 'Descubre todos los eventos de música electrónica en Colombia. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más en Bogotá, Medellín, Cali y todo Colombia.',
   keywords: ['eventos Colombia', 'música electrónica Colombia', 'festivales EDM Colombia', 'conciertos Colombia', 'techno Colombia', 'house Colombia', 'trance Colombia', 'entradas Colombia', 'Bogotá', 'Medellín', 'Cali'],
-  alternates: { canonical: 'https://www.ravehublatam.com/co/' },
+  alternates: { canonical: 'https://www.weareravehub.com/co/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
-    url: 'https://www.ravehublatam.com/co/',
+    url: 'https://www.weareravehub.com/co/',
     title: 'Eventos de Música Electrónica en Colombia | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Colombia.',
     siteName: 'Ravehub',
     images: [
       {
-        url: 'https://www.ravehublatam.com/static/og-image-colombia.jpg',
+        url: 'https://www.weareravehub.com/static/og-image-colombia.jpg',
         width: 1200,
         height: 630,
         alt: 'Eventos de música electrónica en Colombia - Ravehub'
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Eventos de Música Electrónica en Colombia | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Colombia.',
-    images: ['https://www.ravehublatam.com/static/og-image-colombia.jpg']
+    images: ['https://www.weareravehub.com/static/og-image-colombia.jpg']
   }
 }
 
@@ -48,12 +48,12 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "CollectionPage",
-      "@id": "https://www.ravehublatam.com/co/#webpage",
-      "url": "https://www.ravehublatam.com/co/",
+      "@id": "https://www.weareravehub.com/co/#webpage",
+      "url": "https://www.weareravehub.com/co/",
       "name": "Eventos de Música Electrónica en Colombia | Ravehub",
       "description": "Descubre todos los eventos de música electrónica en Colombia. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más.",
       "isPartOf": {
-        "@id": "https://www.ravehublatam.com/#website"
+        "@id": "https://www.weareravehub.com/#website"
       },
       "about": {
         "@type": "Place",

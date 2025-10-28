@@ -9,7 +9,7 @@ function toValidDate(dateValue: any): Date | undefined {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://www.ravehublatam.com';
+  const baseUrl = 'https://www.weareravehub.com';
 
   const sitemap: MetadataRoute.Sitemap = [
     {

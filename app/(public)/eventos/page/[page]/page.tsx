@@ -68,7 +68,7 @@ export async function generateMetadata({ params, searchParams }: EventsPageProps
       if (tipo) params.set('tipo', tipo);
       if (region) params.set('region', region);
       params.set('page', pageNumber.toString());
-      return `https://www.ravehublatam.com/eventos?${params.toString()}`;
+      return `https://www.weareravehub.com/eventos?${params.toString()}`;
     })();
 
     return {

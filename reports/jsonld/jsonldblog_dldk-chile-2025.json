@@ -1,23 +1,23 @@
 [
   {
     "@type": "WebSite",
-    "@id": "https://www.ravehublatam.com/#website",
-    "url": "https://www.ravehublatam.com",
+    "@id": "https://www.weareravehub.com/#website",
+    "url": "https://www.weareravehub.com",
     "name": "Ravehub",
     "alternateName": [
       "Ravehub",
-      "www.ravehublatam.com"
+      "www.weareravehub.com"
     ]
   },
   {
     "@type": "Organization",
-    "@id": "https://www.ravehublatam.com/#organization",
+    "@id": "https://www.weareravehub.com/#organization",
     "name": "Ravehub",
-    "url": "https://www.ravehublatam.com",
+    "url": "https://www.weareravehub.com",
     "logo": {
       "@type": "ImageObject",
-      "@id": "https://www.ravehublatam.com/#logo",
-      "url": "https://www.ravehublatam.com/icons/logo.png",
+      "@id": "https://www.weareravehub.com/#logo",
+      "url": "https://www.weareravehub.com/icons/logo.png",
       "width": 600,
       "height": 60
     },
@@ -29,21 +29,21 @@
   },
   {
     "@type": "WebPage",
-    "@id": "https://www.ravehublatam.com/blog/dldk-chile-2025/#webpage",
-    "url": "https://www.ravehublatam.com/blog/dldk-chile-2025/",
+    "@id": "https://www.weareravehub.com/blog/dldk-chile-2025/#webpage",
+    "url": "https://www.weareravehub.com/blog/dldk-chile-2025/",
     "name": "DLDK Chile 2025",
     "isPartOf": {
-      "@id": "https://www.ravehublatam.com/#website"
+      "@id": "https://www.weareravehub.com/#website"
     },
     "primaryImageOfPage": {
-      "@id": "https://www.ravehublatam.com/blog/dldk-chile-2025/#primaryimage"
+      "@id": "https://www.weareravehub.com/blog/dldk-chile-2025/#primaryimage"
     },
     "datePublished": "2025-04-30T07:30",
     "dateModified": "2025-10-26T02:18:48.142Z"
   },
   {
     "@type": "ImageObject",
-    "@id": "https://www.ravehublatam.com/blog/dldk-chile-2025/#primaryimage",
+    "@id": "https://www.weareravehub.com/blog/dldk-chile-2025/#primaryimage",
     "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/dldkchile.jpeg?alt=media",
     "width": 1200,
     "height": 675,
@@ -51,12 +51,12 @@
   },
   {
     "@type": "BlogPosting",
-    "@id": "https://www.ravehublatam.com/blog/dldk-chile-2025/#article",
+    "@id": "https://www.weareravehub.com/blog/dldk-chile-2025/#article",
     "isPartOf": {
-      "@id": "https://www.ravehublatam.com/blog/dldk-chile-2025/#webpage"
+      "@id": "https://www.weareravehub.com/blog/dldk-chile-2025/#webpage"
     },
     "mainEntityOfPage": {
-      "@id": "https://www.ravehublatam.com/blog/dldk-chile-2025"
+      "@id": "https://www.weareravehub.com/blog/dldk-chile-2025"
     },
     "headline": "DLDK Chile 2025 | Don't Let Daddy Know",
     "alternativeHeadline": "DLDK Chile 2025 | Don't Let Daddy Know regresa a Chile con un line-up espectacular: Afrojack, Don Diablo, Nicky Romero, Oliver Heldens, Nervo y Third Party.\n",
@@ -71,14 +71,14 @@
     "author": [
       {
         "@type": "Person",
-        "@id": "https://www.ravehublatam.com/authors/0gXurveXRgMTkPhtz45igcmQNzK2/#author",
+        "@id": "https://www.weareravehub.com/authors/0gXurveXRgMTkPhtz45igcmQNzK2/#author",
         "name": "Percy Tuncar",
-        "url": "https://www.ravehublatam.com/authors/0gXurveXRgMTkPhtz45igcmQNzK2/",
+        "url": "https://www.weareravehub.com/authors/0gXurveXRgMTkPhtz45igcmQNzK2/",
         "sameAs": []
       }
     ],
     "publisher": {
-      "@id": "https://www.ravehublatam.com/#organization"
+      "@id": "https://www.weareravehub.com/#organization"
     },
     "image": [
       {

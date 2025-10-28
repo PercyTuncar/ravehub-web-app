@@ -18,17 +18,17 @@ export const metadata: Metadata = {
   title: 'Eventos de Música Electrónica en Ecuador | Ravehub',
   description: 'Descubre todos los eventos de música electrónica en Ecuador. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más en Quito, Guayaquil, Cuenca y todo Ecuador.',
   keywords: ['eventos Ecuador', 'música electrónica Ecuador', 'festivales EDM Ecuador', 'conciertos Ecuador', 'techno Ecuador', 'house Ecuador', 'trance Ecuador', 'entradas Ecuador', 'Quito', 'Guayaquil', 'Cuenca'],
-  alternates: { canonical: 'https://www.ravehublatam.com/ec/' },
+  alternates: { canonical: 'https://www.weareravehub.com/ec/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
-    url: 'https://www.ravehublatam.com/ec/',
+    url: 'https://www.weareravehub.com/ec/',
     title: 'Eventos de Música Electrónica en Ecuador | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Ecuador.',
     siteName: 'Ravehub',
     images: [
       {
-        url: 'https://www.ravehublatam.com/static/og-image-ecuador.jpg',
+        url: 'https://www.weareravehub.com/static/og-image-ecuador.jpg',
         width: 1200,
         height: 630,
         alt: 'Eventos de música electrónica en Ecuador - Ravehub'
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Eventos de Música Electrónica en Ecuador | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Ecuador.',
-    images: ['https://www.ravehublatam.com/static/og-image-ecuador.jpg']
+    images: ['https://www.weareravehub.com/static/og-image-ecuador.jpg']
   }
 }
 
@@ -48,12 +48,12 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "CollectionPage",
-      "@id": "https://www.ravehublatam.com/ec/#webpage",
-      "url": "https://www.ravehublatam.com/ec/",
+      "@id": "https://www.weareravehub.com/ec/#webpage",
+      "url": "https://www.weareravehub.com/ec/",
       "name": "Eventos de Música Electrónica en Ecuador | Ravehub",
       "description": "Descubre todos los eventos de música electrónica en Ecuador. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más.",
       "isPartOf": {
-        "@id": "https://www.ravehublatam.com/#website"
+        "@id": "https://www.weareravehub.com/#website"
       },
       "about": {
         "@type": "Place",

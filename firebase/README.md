@@ -37,7 +37,7 @@ In Authentication settings:
 
 - Enable Email/Password sign-in
 - Enable Google sign-in
-- Configure authorized domains (localhost:3000, vercel.app domains, www.ravehublatam.com)
+- Configure authorized domains (localhost:3000, vercel.app domains, www.weareravehub.com)
 
 ### 4. Firestore Security Rules
 

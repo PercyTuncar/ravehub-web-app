@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
       };
     }
 
-    const url = `https://www.ravehublatam.com/djs/${slug}`;
+    const url = `https://www.weareravehub.com/djs/${slug}`;
 
     return {
       title: `${dj.name} - DJ | Ravehub`,

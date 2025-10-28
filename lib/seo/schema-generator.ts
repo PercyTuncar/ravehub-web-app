@@ -105,7 +105,7 @@ export function safeJSONStringify(value: unknown): string {
 }
 
 export class SchemaGenerator {
-  private static readonly BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
+  private static readonly BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.weareravehub.com';
 
   static generate(input: SchemaInput): any {
     switch (input.type) {
@@ -160,7 +160,7 @@ export class SchemaGenerator {
           '@id': `${SchemaGenerator.BASE_URL}/#website`,
           url: SchemaGenerator.BASE_URL,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub', 'www.weareravehub.com'],
           potentialAction: {
             '@type': 'SearchAction',
             target: `${SchemaGenerator.BASE_URL}/buscar?q={search_term_string}`,
@@ -410,7 +410,7 @@ export class SchemaGenerator {
           '@id': websiteId,
           url: this.BASE_URL,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub', 'www.weareravehub.com'],
         },
         {
           '@type': 'Organization',
@@ -550,7 +550,7 @@ export class SchemaGenerator {
           '@id': websiteId,
           url: baseUrl,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub', 'www.weareravehub.com'],
         },
         {
           '@type': 'Organization',
@@ -638,7 +638,7 @@ export class SchemaGenerator {
           '@id': websiteId,
           url: baseUrl,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub', 'www.weareravehub.com'],
         },
         {
           '@type': 'Organization',
@@ -813,7 +813,7 @@ export class SchemaGenerator {
           '@id': websiteId,
           url: this.BASE_URL,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub', 'www.weareravehub.com'],
         },
         {
           '@type': 'Organization',

@@ -32,7 +32,7 @@
 - [ ] Enable Firestore Database
 - [ ] Enable Firebase Storage
 - [ ] Enable Cloud Functions (if needed)
-- [ ] Configure authorized domains: `www.ravehublatam.com`
+- [ ] Configure authorized domains: `www.weareravehub.com`
 - [ ] Generate service account key: `serviceAccountKey-production.json`
 - [ ] Set up Firestore security rules
 - [ ] Set up Storage security rules
@@ -47,7 +47,7 @@
 - [ ] Set up project: `ravehub-web-app`
 - [ ] Configure build settings (Next.js 15.1, Node.js 20.x)
 - [ ] Set up environment variables for all environments
-- [ ] Configure custom domain: `www.ravehublatam.com`
+- [ ] Configure custom domain: `www.weareravehub.com`
 - [ ] Set up SSL certificate
 - [ ] Configure preview deployments for staging
 
@@ -61,7 +61,7 @@
 ## DNS and Domain Configuration
 
 ### Domain Setup
-- [ ] Register domain: `www.ravehublatam.com`
+- [ ] Register domain: `www.weareravehub.com`
 - [ ] Configure DNS records for Vercel
 - [ ] Set up www redirect
 - [ ] Configure SPF/DKIM/DMARC for email

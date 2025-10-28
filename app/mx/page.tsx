@@ -18,17 +18,17 @@ export const metadata: Metadata = {
   title: 'Eventos de Música Electrónica en México | Ravehub',
   description: 'Descubre todos los eventos de música electrónica en México. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más en CDMX, Guadalajara, Monterrey y todo México.',
   keywords: ['eventos México', 'música electrónica México', 'festivales EDM México', 'conciertos México', 'techno México', 'house México', 'trance México', 'entradas México', 'CDMX', 'Guadalajara', 'Monterrey'],
-  alternates: { canonical: 'https://www.ravehublatam.com/mx/' },
+  alternates: { canonical: 'https://www.weareravehub.com/mx/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
-    url: 'https://www.ravehublatam.com/mx/',
+    url: 'https://www.weareravehub.com/mx/',
     title: 'Eventos de Música Electrónica en México | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en México.',
     siteName: 'Ravehub',
     images: [
       {
-        url: 'https://www.ravehublatam.com/static/og-image-mexico.jpg',
+        url: 'https://www.weareravehub.com/static/og-image-mexico.jpg',
         width: 1200,
         height: 630,
         alt: 'Eventos de música electrónica en México - Ravehub'
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Eventos de Música Electrónica en México | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en México.',
-    images: ['https://www.ravehublatam.com/static/og-image-mexico.jpg']
+    images: ['https://www.weareravehub.com/static/og-image-mexico.jpg']
   }
 }
 
@@ -48,12 +48,12 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "CollectionPage",
-      "@id": "https://www.ravehublatam.com/mx/#webpage",
-      "url": "https://www.ravehublatam.com/mx/",
+      "@id": "https://www.weareravehub.com/mx/#webpage",
+      "url": "https://www.weareravehub.com/mx/",
       "name": "Eventos de Música Electrónica en México | Ravehub",
       "description": "Descubre todos los eventos de música electrónica en México. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más.",
       "isPartOf": {
-        "@id": "https://www.ravehublatam.com/#website"
+        "@id": "https://www.weareravehub.com/#website"
       },
       "about": {
         "@type": "Place",

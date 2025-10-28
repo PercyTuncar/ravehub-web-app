@@ -5,6 +5,6 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       { userAgent: '*', allow: '/', disallow: ['/admin/', '/api/', '/auth/', '/user/', '/tienda/carrito', '/tienda/checkout', '/eventos/*/comprar'] },
     ],
-    sitemap: 'https://www.ravehublatam.com/sitemap.xml',
+    sitemap: 'https://www.weareravehub.com/sitemap.xml',
   }
 }

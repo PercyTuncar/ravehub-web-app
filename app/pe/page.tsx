@@ -18,17 +18,17 @@ export const metadata: Metadata = {
   title: 'Eventos de Música Electrónica en Perú | Ravehub',
   description: 'Descubre todos los eventos de música electrónica en Perú. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más en Lima, Cusco, Arequipa y todo el Perú.',
   keywords: ['eventos Perú', 'música electrónica Perú', 'festivales EDM Perú', 'conciertos Perú', 'techno Perú', 'house Perú', 'trance Perú', 'entradas Perú', 'Lima', 'Cusco', 'Arequipa'],
-  alternates: { canonical: 'https://www.ravehublatam.com/pe/' },
+  alternates: { canonical: 'https://www.weareravehub.com/pe/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
-    url: 'https://www.ravehublatam.com/pe/',
+    url: 'https://www.weareravehub.com/pe/',
     title: 'Eventos de Música Electrónica en Perú | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Perú.',
     siteName: 'Ravehub',
     images: [
       {
-        url: 'https://www.ravehublatam.com/static/og-image-peru.jpg',
+        url: 'https://www.weareravehub.com/static/og-image-peru.jpg',
         width: 1200,
         height: 630,
         alt: 'Eventos de música electrónica en Perú - Ravehub'
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Eventos de Música Electrónica en Perú | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Perú.',
-    images: ['https://www.ravehublatam.com/static/og-image-peru.jpg']
+    images: ['https://www.weareravehub.com/static/og-image-peru.jpg']
   }
 }
 
@@ -48,12 +48,12 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "CollectionPage",
-      "@id": "https://www.ravehublatam.com/pe/#webpage",
-      "url": "https://www.ravehublatam.com/pe/",
+      "@id": "https://www.weareravehub.com/pe/#webpage",
+      "url": "https://www.weareravehub.com/pe/",
       "name": "Eventos de Música Electrónica en Perú | Ravehub",
       "description": "Descubre todos los eventos de música electrónica en Perú. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más.",
       "isPartOf": {
-        "@id": "https://www.ravehublatam.com/#website"
+        "@id": "https://www.weareravehub.com/#website"
       },
       "about": {
         "@type": "Place",
