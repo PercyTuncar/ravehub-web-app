@@ -77,7 +77,9 @@ export default function RootLayout({
               {children}
             </CartProvider>
           </AuthProvider>
-        </ThemeProvider>
+        </ThemeProvider> 
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   )
