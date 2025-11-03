@@ -55,7 +55,7 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
       if (region) params.set('region', region);
       if (currentPage > 1) params.set('page', currentPage.toString());
       const queryString = params.toString();
-      return queryString ? `https://www.weareravehub.com/eventos?${queryString}` : 'https://www.weareravehub.com/eventos';
+      return queryString ? `https://www.ravehublatam.com/eventos?${queryString}` : 'https://www.ravehublatam.com/eventos';
     })();
 
     return {

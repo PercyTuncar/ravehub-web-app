@@ -11,17 +11,17 @@ export const metadata: Metadata = {
   title: 'Ravehub - Eventos de Música Electrónica en Latinoamérica',
   description: 'La plataforma líder en eventos de música electrónica en Latinoamérica. Compra entradas oficiales para festivales y conciertos de música electrónica en Perú, Chile, Ecuador, Colombia, México y Argentina. Pagos seguros, lineups verificados y soporte en español.',
   keywords: ['música electrónica', 'festivales EDM', 'entradas oficiales', 'techno', 'house', 'trance', 'Perú', 'Chile', 'Ecuador', 'Colombia', 'México', 'Argentina', 'ticketing', 'eventos en vivo'],
-  alternates: { canonical: 'https://www.weareravehub.com/' },
+  alternates: { canonical: 'https://www.ravehublatam.com/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
-    url: 'https://www.weareravehub.com/',
+    url: 'https://www.ravehublatam.com/',
     title: 'Ravehub — Música electrónica en Latinoamérica',
     description: 'Compra entradas oficiales y descubre próximos eventos en tu ciudad.',
     siteName: 'Ravehub',
     images: [
       {
-        url: 'https://www.weareravehub.com/static/og-image-home.jpg',
+        url: 'https://www.ravehublatam.com/static/og-image-home.jpg',
         width: 1200,
         height: 630,
         alt: 'Ravehub - Plataforma de entradas para música electrónica en Latinoamérica'
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Ravehub — Música electrónica en Latinoamérica',
     description: 'Entradas oficiales y próximos eventos en Perú, Chile, Ecuador, Colombia, México y Argentina.',
-    images: ['https://www.weareravehub.com/static/og-image-home.jpg']
+    images: ['https://www.ravehublatam.com/static/og-image-home.jpg']
   }
 }
 
@@ -41,16 +41,16 @@ const jsonLd = (upcomingEvents: Event[]) => ({
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://www.weareravehub.com/#organization",
+      "@id": "https://www.ravehublatam.com/#organization",
       "name": "Ravehub",
       "legalName": "Ravehub LATAM S.A.C.",
       "alternateName": "Ravehub Latinoamérica",
-      "url": "https://www.weareravehub.com/",
+      "url": "https://www.ravehublatam.com/",
       "logo": {
         "@type": "ImageObject",
-        "@id": "https://www.weareravehub.com/#logo",
-        "url": "https://www.weareravehub.com/static/logo-ravehub.png",
-        "contentUrl": "https://www.weareravehub.com/static/logo-ravehub.png",
+        "@id": "https://www.ravehublatam.com/#logo",
+        "url": "https://www.ravehublatam.com/static/logo-ravehub.png",
+        "contentUrl": "https://www.ravehublatam.com/static/logo-ravehub.png",
         "width": "512",
         "height": "512",
         "caption": "Logo de Ravehub",
@@ -58,7 +58,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
       },
       "image": {
         "@type": "ImageObject",
-        "url": "https://www.weareravehub.com/static/og-image-home.jpg",
+        "url": "https://www.ravehublatam.com/static/og-image-home.jpg",
         "width": "1200",
         "height": "630"
       },
@@ -87,17 +87,17 @@ const jsonLd = (upcomingEvents: Event[]) => ({
         "https://www.instagram.com/ravehub.pe/",
         "https://www.tiktok.com/@ravehub.pe",
         "https://www.facebook.com/ravehub",
-        "https://twitter.com/weareravehub",
-        "https://www.youtube.com/@weareravehub",
-        "https://open.spotify.com/user/weareravehub",
-        "https://www.linkedin.com/company/weareravehub"
+        "https://twitter.com/ravehublatam",
+        "https://www.youtube.com/@ravehublatam",
+        "https://open.spotify.com/user/ravehublatam",
+        "https://www.linkedin.com/company/ravehublatam"
       ],
       "contactPoint": [
         {
           "@type": "ContactPoint",
           "telephone": "+51-944-784-488",
           "contactType": "customer service",
-          "email": "hola@weareravehub.com",
+          "email": "hola@ravehublatam.com",
           "areaServed": ["PE", "CL", "EC", "CO", "MX", "AR"],
           "availableLanguage": ["es", "en"],
           "contactOption": "TollFree",
@@ -119,14 +119,14 @@ const jsonLd = (upcomingEvents: Event[]) => ({
         {
           "@type": "ContactPoint",
           "contactType": "sales",
-          "email": "ventas@weareravehub.com",
+          "email": "ventas@ravehublatam.com",
           "areaServed": ["PE", "CL", "EC", "CO", "MX", "AR"],
          "availableLanguage": ["es", "en"]
         },
         {
           "@type": "ContactPoint",
           "contactType": "technical support",
-          "email": "soporte@weareravehub.com",
+          "email": "soporte@ravehublatam.com",
           "areaServed": ["PE", "CL", "EC", "CO", "MX", "AR"],
           "availableLanguage": ["es"]
         }
@@ -188,25 +188,25 @@ const jsonLd = (upcomingEvents: Event[]) => ({
       "brand": {
         "@type": "Brand",
         "name": "Ravehub",
-        "logo": "https://www.weareravehub.com/static/logo-ravehub.png"
+        "logo": "https://www.ravehublatam.com/static/logo-ravehub.png"
       }
     },
     {
       "@type": "WebSite",
-      "@id": "https://www.weareravehub.com/#website",
-      "url": "https://www.weareravehub.com/",
+      "@id": "https://www.ravehublatam.com/#website",
+      "url": "https://www.ravehublatam.com/",
       "name": "Ravehub",
       "alternateName": "Ravehub Latinoamérica",
       "description": "Plataforma de venta de entradas para eventos de música electrónica en Latinoamérica",
       "inLanguage": "es-419",
       "publisher": {
-        "@id": "https://www.weareravehub.com/#organization"
+        "@id": "https://www.ravehublatam.com/#organization"
       },
       "potentialAction": {
         "@type": "SearchAction",
         "target": {
           "@type": "EntryPoint",
-          "urlTemplate": "https://www.weareravehub.com/eventos?q={search_term_string}"
+          "urlTemplate": "https://www.ravehublatam.com/eventos?q={search_term_string}"
         },
         "query-input": {
           "@type": "PropertyValueSpecification",
@@ -216,17 +216,17 @@ const jsonLd = (upcomingEvents: Event[]) => ({
       },
       "copyrightYear": new Date().getFullYear().toString(),
       "copyrightHolder": {
-        "@id": "https://www.weareravehub.com/#organization"
+        "@id": "https://www.ravehublatam.com/#organization"
       }
     },
     {
       "@type": ["WebPage", "CollectionPage"],
-      "@id": "https://www.weareravehub.com/#webpage",
-      "url": "https://www.weareravehub.com/",
+      "@id": "https://www.ravehublatam.com/#webpage",
+      "url": "https://www.ravehublatam.com/",
       "name": "Inicio — Ravehub | Entradas para Festivales de Música Electrónica en Latinoamérica",
       "description": "Compra entradas oficiales para festivales, clubes y conciertos de música electrónica en Perú, Chile, Ecuador, Colombia, México y Argentina. Pagos seguros, lineups verificados y soporte en español.",
       "isPartOf": {
-        "@id": "https://www.weareravehub.com/#website"
+        "@id": "https://www.ravehublatam.com/#website"
       },
       "about": {
         "@type": "Thing",
@@ -239,19 +239,19 @@ const jsonLd = (upcomingEvents: Event[]) => ({
       "dateModified": new Date().toISOString(),
       "primaryImageOfPage": {
         "@type": "ImageObject",
-        "@id": "https://www.weareravehub.com/#primaryimage",
-        "url": "https://www.weareravehub.com/static/og-image-home.jpg",
-        "contentUrl": "https://www.weareravehub.com/static/og-image-home.jpg",
+        "@id": "https://www.ravehublatam.com/#primaryimage",
+        "url": "https://www.ravehublatam.com/static/og-image-home.jpg",
+        "contentUrl": "https://www.ravehublatam.com/static/og-image-home.jpg",
         "width": "1200",
         "height": "630",
         "caption": "Ravehub - Plataforma de entradas para música electrónica en Latinoamérica",
         "inLanguage": "es-419"
       },
       "breadcrumb": {
-        "@id": "https://www.weareravehub.com/#breadcrumb"
+        "@id": "https://www.ravehublatam.com/#breadcrumb"
       },
       "mainEntity": {
-        "@id": "https://www.weareravehub.com/#organization"
+        "@id": "https://www.ravehublatam.com/#organization"
       },
       "speakable": {
         "@type": "SpeakableSpecification",
@@ -260,7 +260,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
     },
     {
       "@type": "BreadcrumbList",
-      "@id": "https://www.weareravehub.com/#breadcrumb",
+      "@id": "https://www.ravehublatam.com/#breadcrumb",
       "name": "Ruta de navegación",
       "itemListElement": [
         {
@@ -269,14 +269,14 @@ const jsonLd = (upcomingEvents: Event[]) => ({
           "name": "Inicio",
           "item": {
             "@type": "WebPage",
-            "@id": "https://www.weareravehub.com/"
+            "@id": "https://www.ravehublatam.com/"
           }
         }
       ]
     },
     {
       "@type": "FAQPage",
-      "@id": "https://www.weareravehub.com/#faqpage",
+      "@id": "https://www.ravehublatam.com/#faqpage",
       "mainEntity": [
         {
           "@type": "Question",
@@ -307,7 +307,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
           "name": "¿Dónde puedo ver mis entradas compradas?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Inicia sesión en weareravehub.com y dirígete a la sección 'Mis Tickets' en tu perfil. Ahí encontrarás todas tus entradas activas, historial de compras y podrás descargar los códigos QR. También recibes los e-tickets por email inmediatamente después de cada compra. Próximamente estará disponible nuestra app móvil para acceso aún más rápido."
+            "text": "Inicia sesión en ravehublatam.com y dirígete a la sección 'Mis Tickets' en tu perfil. Ahí encontrarás todas tus entradas activas, historial de compras y podrás descargar los códigos QR. También recibes los e-tickets por email inmediatamente después de cada compra. Próximamente estará disponible nuestra app móvil para acceso aún más rápido."
           }
         },
         {
@@ -346,10 +346,10 @@ const jsonLd = (upcomingEvents: Event[]) => ({
     },
     {
       "@type": "Service",
-      "@id": "https://www.weareravehub.com/#service",
+      "@id": "https://www.ravehublatam.com/#service",
       "serviceType": "Venta de entradas para eventos",
       "provider": {
-        "@id": "https://www.weareravehub.com/#organization"
+        "@id": "https://www.ravehublatam.com/#organization"
       },
       "areaServed": [
         {
@@ -429,7 +429,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
     },
     {
       "@type": "ItemList",
-      "@id": "https://www.weareravehub.com/#countrylist",
+      "@id": "https://www.ravehublatam.com/#countrylist",
       "name": "Países donde opera Ravehub",
       "description": "Ravehub ofrece venta de entradas en 6 países de Latinoamérica",
       "numberOfItems": 6,
@@ -440,7 +440,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
           "item": {
             "@type": "Place",
             "name": "Perú",
-            "url": "https://www.weareravehub.com/pe/",
+            "url": "https://www.ravehublatam.com/pe/",
             "address": {
               "@type": "PostalAddress",
               "addressCountry": "PE"
@@ -453,7 +453,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
           "item": {
             "@type": "Place",
             "name": "Chile",
-            "url": "https://www.weareravehub.com/cl/",
+            "url": "https://www.ravehublatam.com/cl/",
             "address": {
               "@type": "PostalAddress",
               "addressCountry": "CL"
@@ -466,7 +466,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
           "item": {
             "@type": "Place",
             "name": "Ecuador",
-            "url": "https://www.weareravehub.com/ec/",
+            "url": "https://www.ravehublatam.com/ec/",
             "address": {
               "@type": "PostalAddress",
               "addressCountry": "EC"
@@ -479,7 +479,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
           "item": {
             "@type": "Place",
             "name": "Colombia",
-            "url": "https://www.weareravehub.com/co/",
+            "url": "https://www.ravehublatam.com/co/",
             "address": {
               "@type": "PostalAddress",
               "addressCountry": "CO"
@@ -492,7 +492,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
           "item": {
             "@type": "Place",
             "name": "México",
-            "url": "https://www.weareravehub.com/mx/",
+            "url": "https://www.ravehublatam.com/mx/",
             "address": {
               "@type": "PostalAddress",
               "addressCountry": "MX"
@@ -505,7 +505,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
           "item": {
             "@type": "Place",
             "name": "Argentina",
-            "url": "https://www.weareravehub.com/ar/",
+            "url": "https://www.ravehublatam.com/ar/",
             "address": {
               "@type": "PostalAddress",
               "addressCountry": "AR"
@@ -761,7 +761,7 @@ export default async function HomePage() {
               },
               {
                 question: "¿Dónde veo mis entradas?",
-                answer: "Inicia sesión en weareravehub.com y dirígete a la sección 'Mis Tickets' en tu perfil. Ahí encontrarás todas tus entradas activas, historial de compras y podrás descargar los códigos QR. También recibes los e-tickets por email inmediatamente después de cada compra. Próximamente estará disponible nuestra app móvil para acceso aún más rápido."
+                answer: "Inicia sesión en ravehublatam.com y dirígete a la sección 'Mis Tickets' en tu perfil. Ahí encontrarás todas tus entradas activas, historial de compras y podrás descargar los códigos QR. También recibes los e-tickets por email inmediatamente después de cada compra. Próximamente estará disponible nuestra app móvil para acceso aún más rápido."
               }
             ].map((faq, index) => (
               <details key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm group">

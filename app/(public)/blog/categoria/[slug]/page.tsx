@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     }
 
     const category = categories[0] as any;
-    const url = `https://www.weareravehub.com/blog/categoria/${slug}`;
+    const url = `https://www.ravehublatam.com/blog/categoria/${slug}`;
 
     return {
       title: `${category.name} | Blog | Ravehub`,

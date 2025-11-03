@@ -1,28 +1,28 @@
 [
   {
     "@type": "WebSite",
-    "@id": "https://www.weareravehub.com/#website",
-    "url": "https://www.weareravehub.com",
+    "@id": "https://www.ravehublatam.com/#website",
+    "url": "https://www.ravehublatam.com",
     "name": "Ravehub",
     "alternateName": [
       "Ravehub",
-      "www.weareravehub.com"
+      "www.ravehublatam.com"
     ],
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://www.weareravehub.com/buscar?q={search_term_string}",
+      "target": "https://www.ravehublatam.com/buscar?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   },
   {
     "@type": "Organization",
-    "@id": "https://www.weareravehub.com/#organization",
+    "@id": "https://www.ravehublatam.com/#organization",
     "name": "Ravehub",
-    "url": "https://www.weareravehub.com",
+    "url": "https://www.ravehublatam.com",
     "logo": {
       "@type": "ImageObject",
-      "@id": "https://www.weareravehub.com/#logo",
-      "url": "https://www.weareravehub.com/icons/logo.png",
+      "@id": "https://www.ravehublatam.com/#logo",
+      "url": "https://www.ravehublatam.com/icons/logo.png",
       "width": 600,
       "height": 60
     },
@@ -33,18 +33,18 @@
   },
   {
     "@type": "WebPage",
-    "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/#webpage",
-    "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025",
+    "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/#webpage",
+    "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025",
     "name": "Boris Brejcha Lima 2025: Entradas y Fecha",
     "isPartOf": {
-      "@id": "https://www.weareravehub.com/#website"
+      "@id": "https://www.ravehublatam.com/#website"
     },
     "about": {
-      "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/#musicevent"
+      "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/#musicevent"
     },
     "primaryImageOfPage": {
       "@type": "ImageObject",
-      "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/#primaryimage",
+      "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/#primaryimage",
       "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/events%2Fmain%2F4ab22a8d-554a-4a9c-9ec7-99f30d5835cc?alt=media&token=f3c7009b-a0d9-4197-8a82-2c174b5906ce",
       "width": 1200,
       "height": 675
@@ -54,7 +54,7 @@
   },
   {
     "@type": "MusicEvent",
-    "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/#musicevent",
+    "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/#musicevent",
     "name": "Boris Brejcha",
     "description": "Información del Evento · Fecha: 12 de diciembre de 2025 · Inicio del show: 10:00 PM (Duración estimada: 6 horas) · Recinto: Paradiso – Centro Cultural Lima",
     "image": [
@@ -127,9 +127,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -149,9 +149,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -171,9 +171,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -193,9 +193,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -215,9 +215,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -237,9 +237,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -259,9 +259,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -281,9 +281,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -303,9 +303,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -325,9 +325,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -347,9 +347,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       },
       {
         "@type": "Offer",
@@ -369,9 +369,9 @@
         "seller": {
           "@type": "Organization",
           "name": "Ravehub",
-          "url": "https://www.weareravehub.com"
+          "url": "https://www.ravehublatam.com"
         },
-        "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/comprar"
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/comprar"
       }
     ],
     "maximumAttendeeCapacity": 46,
@@ -385,7 +385,7 @@
   },
   {
     "@type": "MusicEvent",
-    "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/lineup/0/#event",
+    "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/lineup/0/#event",
     "name": "Boris Brejcha - Boris Brejcha",
     "startDate": "2025-12-13T00:00:00UTC-05:00",
     "endDate": "2025-12-13T00:00:00UTC-05:00",
@@ -401,7 +401,7 @@
       }
     },
     "superEvent": {
-      "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/#musicevent"
+      "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/#musicevent"
     },
     "performer": {
       "@type": "Person",
@@ -417,7 +417,7 @@
   },
   {
     "@type": "MusicEvent",
-    "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/lineup/1/#event",
+    "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/lineup/1/#event",
     "name": "Moritz Hofbauer - Boris Brejcha",
     "startDate": "2025-12-13T00:00:00UTC-05:00",
     "endDate": "2025-12-13T00:00:00UTC-05:00",
@@ -433,7 +433,7 @@
       }
     },
     "superEvent": {
-      "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/#musicevent"
+      "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/#musicevent"
     },
     "performer": {
       "@type": "Person",
@@ -449,7 +449,7 @@
   },
   {
     "@type": "MusicEvent",
-    "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/lineup/2/#event",
+    "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/lineup/2/#event",
     "name": "Frieder & Jakob - Boris Brejcha",
     "startDate": "2025-12-13T00:00:00UTC-05:00",
     "endDate": "2025-12-13T00:00:00UTC-05:00",
@@ -465,7 +465,7 @@
       }
     },
     "superEvent": {
-      "@id": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025/#musicevent"
+      "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025/#musicevent"
     },
     "performer": {
       "@type": "Person",
@@ -486,19 +486,19 @@
         "@type": "ListItem",
         "position": 1,
         "name": "Inicio",
-        "item": "https://www.weareravehub.com"
+        "item": "https://www.ravehublatam.com"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Eventos",
-        "item": "https://www.weareravehub.com/eventos"
+        "item": "https://www.ravehublatam.com/eventos"
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": "Boris Brejcha",
-        "item": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025"
+        "item": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025"
       }
     ]
   }

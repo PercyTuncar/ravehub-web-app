@@ -91,7 +91,7 @@ export default function EventsClient({ initialEvents, currentPage = 1, totalPage
               item: {
                 '@type': 'MusicEvent',
                 name: event.name,
-                url: `https://www.weareravehub.com/eventos/${event.slug}`,
+                url: `https://www.ravehublatam.com/eventos/${event.slug}`,
                 startDate: event.startDate,
                 location: {
                   '@type': 'Place',

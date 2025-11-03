@@ -42,8 +42,8 @@ export async function generateMetadata({ searchParams }: DJsPageProps): Promise<
       : `Descubre ${totalDJs} DJs y artistas de la escena electrónica latinoamericana. Perfiles completos, rankings por país y próximos eventos.`;
 
     const canonicalUrl = pais
-      ? `https://www.weareravehub.com/djs?pais=${encodeURIComponent(pais)}`
-      : 'https://www.weareravehub.com/djs';
+      ? `https://www.ravehublatam.com/djs?pais=${encodeURIComponent(pais)}`
+      : 'https://www.ravehublatam.com/djs';
 
     return {
       title,

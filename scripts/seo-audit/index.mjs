@@ -478,7 +478,7 @@ function levenshtein(a, b) {
 
 // ---------- Robots & Sitemap ----------
 async function testRobotsSitemap() {
-  const { base } = await inquirer.prompt([{ name: 'base', message: 'Dominio base', default: 'https://www.weareravehub.com' }]);
+  const { base } = await inquirer.prompt([{ name: 'base', message: 'Dominio base', default: 'https://www.ravehublatam.com' }]);
   const robotsUrl = new URL('/robots.txt', base).toString();
   const smUrl = new URL('/sitemap.xml', base).toString();
   const spin = ora('Descargando robots.txt y sitemap.xml...').start();
@@ -513,7 +513,7 @@ async function testRobotsSitemap() {
 // ---------- Batch desde sitemap con Reporte HTML/CSV ----------
 async function testBatchFromSitemap() {
   const { sm, limit, validateImgs } = await inquirer.prompt([
-    { name: 'sm', message: 'URL del sitemap.xml', default: 'https://www.weareravehub.com/sitemap.xml' },
+    { name: 'sm', message: 'URL del sitemap.xml', default: 'https://www.ravehublatam.com/sitemap.xml' },
     { type: 'confirm', name: 'validateImgs', message: '¿Validar imágenes del JSON-LD (descarga)?', default: false }
   ]);
 
@@ -692,7 +692,7 @@ async function printAndSaveJsonLd(blocks, finalUrl) {
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g,m=>({'&':'&','<':'<','>':'>','"':'"'}[m])); }
 
 async function testPrivateAndApi() {
-  const { base } = await inquirer.prompt([{ name: 'base', message: 'Dominio base', default: 'https://www.weareravehub.com' }]);
+  const { base } = await inquirer.prompt([{ name: 'base', message: 'Dominio base', default: 'https://www.ravehublatam.com' }]);
   const candidates = [
     '/admin', '/auth/login', '/user/profile', '/tienda/checkout',
     '/eventos/dummy/comprar', '/api/seo/preview', '/api/tickets/generate-pdf'
@@ -710,7 +710,7 @@ async function testPrivateAndApi() {
 
 async function runLighthouse() {
   const { url, cats } = await inquirer.prompt([
-    { name: 'url', message: 'URL a analizar con Lighthouse', default: 'https://www.weareravehub.com' },
+    { name: 'url', message: 'URL a analizar con Lighthouse', default: 'https://www.ravehublatam.com' },
     { type: 'checkbox', name: 'cats', message: 'Categorías', choices: ['performance','seo','best-practices','accessibility'], default: ['performance','seo'] }
   ]);
   console.log(chalk.gray('\nEjecuta en consola (Chrome requerido):'));
@@ -721,7 +721,7 @@ async function runLighthouse() {
 async function main() {
   if (process.argv[2] === 'psi') {
     console.log(chalk.gray('Usa PSI si quieres PageSpeed online:'));
-    console.log(chalk.yellow('npx psi https://www.weareravehub.com --strategy=mobile'));
+    console.log(chalk.yellow('npx psi https://www.ravehublatam.com --strategy=mobile'));
     process.exit(0);
   }
 

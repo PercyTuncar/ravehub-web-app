@@ -14,7 +14,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.weareravehub.com'),
+  metadataBase: new URL('https://www.ravehublatam.com'),
   title: { default: 'Ravehub', template: '%s | Ravehub' },
   description: 'Eventos de música electrónica en LATAM. Entradas, fechas y lineups.',
   alternates: {

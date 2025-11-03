@@ -14,7 +14,7 @@ export function SocialPreview({ eventData }: SocialPreviewProps) {
     const title = eventData.seoTitle || eventData.name || 'Evento sin título';
     const description = eventData.seoDescription || eventData.shortDescription || 'Descripción del evento';
     const image = eventData.mainImageUrl || '/images/default-event.jpg';
-    const url = `https://www.weareravehub.com/eventos/${eventData.slug || 'evento'}`;
+    const url = `https://www.ravehublatam.com/eventos/${eventData.slug || 'evento'}`;
 
     return { title, description, image, url };
   }, [eventData]);
@@ -129,7 +129,7 @@ export function SocialPreview({ eventData }: SocialPreviewProps) {
                 {previewData.description}
               </p>
               <p className="text-gray-400 text-xs uppercase">
-                www.weareravehub.com
+                www.ravehublatam.com
               </p>
             </div>
           </CardContent>

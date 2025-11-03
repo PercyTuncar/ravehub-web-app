@@ -1,23 +1,23 @@
 [
   {
     "@type": "WebSite",
-    "@id": "https://www.weareravehub.com/#website",
-    "url": "https://www.weareravehub.com",
+    "@id": "https://www.ravehublatam.com/#website",
+    "url": "https://www.ravehublatam.com",
     "name": "Ravehub",
     "alternateName": [
       "Ravehub",
-      "www.weareravehub.com"
+      "www.ravehublatam.com"
     ]
   },
   {
     "@type": "Organization",
-    "@id": "https://www.weareravehub.com/#organization",
+    "@id": "https://www.ravehublatam.com/#organization",
     "name": "Ravehub",
-    "url": "https://www.weareravehub.com",
+    "url": "https://www.ravehublatam.com",
     "logo": {
       "@type": "ImageObject",
-      "@id": "https://www.weareravehub.com/#logo",
-      "url": "https://www.weareravehub.com/icons/logo.png",
+      "@id": "https://www.ravehublatam.com/#logo",
+      "url": "https://www.ravehublatam.com/icons/logo.png",
       "width": 600,
       "height": 60
     },
@@ -28,15 +28,15 @@
   },
   {
     "@type": "WebPage",
-    "@id": "https://www.weareravehub.com/tienda/polo-ultra-peru-2025-lineup/#webpage",
-    "url": "https://www.weareravehub.com/tienda/polo-ultra-peru-2025-lineup",
+    "@id": "https://www.ravehublatam.com/tienda/polo-ultra-peru-2025-lineup/#webpage",
+    "url": "https://www.ravehublatam.com/tienda/polo-ultra-peru-2025-lineup",
     "name": "Polo Ultra Perú 2025 Lineup",
     "isPartOf": {
-      "@id": "https://www.weareravehub.com/#website"
+      "@id": "https://www.ravehublatam.com/#website"
     },
     "primaryImageOfPage": {
       "@type": "ImageObject",
-      "@id": "https://www.weareravehub.com/tienda/polo-ultra-peru-2025-lineup/#primaryimage",
+      "@id": "https://www.ravehublatam.com/tienda/polo-ultra-peru-2025-lineup/#primaryimage",
       "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/c73f9ac9-46d4-43a3-b5d2-365d27e57f80%2F1744423706759_polo2.png?alt=media&token=fe0c94ad-5d12-4d32-b701-9f7e106d6a77",
       "width": 1200,
       "height": 675
@@ -48,7 +48,7 @@
   },
   {
     "@type": "Product",
-    "@id": "https://www.weareravehub.com/tienda/polo-ultra-peru-2025-lineup/#product",
+    "@id": "https://www.ravehublatam.com/tienda/polo-ultra-peru-2025-lineup/#product",
     "name": "Polo Ultra Perú 2025 Lineup",
     "description": "Compra el polo oficial del Ultra Perú 2025, modelo Lineup. Producto original, 100% algodón Jersey 30/1 con estampado al agua. Disponible en Lima Metropolitana. ¡Luce el espíritu del festival con estilo!\n\n",
     "image": [
@@ -86,7 +86,7 @@
       "seller": {
         "@type": "Organization",
         "name": "Ravehub",
-        "url": "https://www.weareravehub.com"
+        "url": "https://www.ravehublatam.com"
       },
       "priceSpecification": {
         "@type": "PriceSpecification",

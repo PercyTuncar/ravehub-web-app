@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 
     const event = events[0] as Event;
-    const url = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.weareravehub.com'}/eventos/${slug}`;
+    const url = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com'}/eventos/${slug}`;
     const isDraft = event.eventStatus !== 'published';
 
   return {

@@ -12,7 +12,7 @@
         "item": {
           "@type": "MusicEvent",
           "name": "FAR AWAY 2025  FESTIVAL EN LIMA PERÚ",
-          "url": "https://www.weareravehub.com/eventos/far-away-2025-festival-en-lima-peru",
+          "url": "https://www.ravehublatam.com/eventos/far-away-2025-festival-en-lima-peru",
           "startDate": "2025-07-28T04:00:00.000Z",
           "location": {
             "@type": "Place",
@@ -31,7 +31,7 @@
         "item": {
           "@type": "MusicEvent",
           "name": "DLDK CHILE 2025",
-          "url": "https://www.weareravehub.com/eventos/dldk-chile-2025",
+          "url": "https://www.ravehublatam.com/eventos/dldk-chile-2025",
           "startDate": "2025-05-03T04:00:00.000Z",
           "location": {
             "@type": "Place",
@@ -50,7 +50,7 @@
         "item": {
           "@type": "MusicEvent",
           "name": "Boris Brejcha",
-          "url": "https://www.weareravehub.com/eventos/boris-brejcha-en-lima-2025",
+          "url": "https://www.ravehublatam.com/eventos/boris-brejcha-en-lima-2025",
           "startDate": "2025-12-12",
           "location": {
             "@type": "Place",
@@ -70,7 +70,7 @@
         "item": {
           "@type": "MusicEvent",
           "name": "VASTION 10 Años con WADE en Lima ",
-          "url": "https://www.weareravehub.com/eventos/vastion-10-anos-con-wade-en-lima",
+          "url": "https://www.ravehublatam.com/eventos/vastion-10-anos-con-wade-en-lima",
           "startDate": "2025-04-30T04:00:00.000Z",
           "location": {
             "@type": "Place",
@@ -89,7 +89,7 @@
         "item": {
           "@type": "MusicEvent",
           "name": "Ultra Perú 2025",
-          "url": "https://www.weareravehub.com/eventos/ultra-peru-2025",
+          "url": "https://www.ravehublatam.com/eventos/ultra-peru-2025",
           "startDate": "2025-04-18T04:00:00.000Z",
           "location": {
             "@type": "Place",

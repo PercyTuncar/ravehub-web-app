@@ -60,7 +60,7 @@ export async function generateMetadata({ params, searchParams }: BlogPageProps):
       if (category) params.set('category', category);
       if (tag) params.set('tag', tag);
       const queryString = params.toString();
-      return queryString ? `https://www.weareravehub.com/blog/page/${pageNumber}?${queryString}` : `https://www.weareravehub.com/blog/page/${pageNumber}`;
+      return queryString ? `https://www.ravehublatam.com/blog/page/${pageNumber}?${queryString}` : `https://www.ravehublatam.com/blog/page/${pageNumber}`;
     })();
 
     return {

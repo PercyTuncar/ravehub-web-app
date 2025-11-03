@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     }
 
     const product = products[0] as Product;
-    const url = `https://www.weareravehub.com/tienda/${slug}`;
+    const url = `https://www.ravehublatam.com/tienda/${slug}`;
     const isInactive = !product.isActive;
 
     return {

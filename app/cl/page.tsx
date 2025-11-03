@@ -18,17 +18,17 @@ export const metadata: Metadata = {
   title: 'Eventos de Música Electrónica en Chile | Ravehub',
   description: 'Descubre todos los eventos de música electrónica en Chile. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más en Santiago, Valparaíso, Viña del Mar y todo Chile.',
   keywords: ['eventos Chile', 'música electrónica Chile', 'festivales EDM Chile', 'conciertos Chile', 'techno Chile', 'house Chile', 'trance Chile', 'entradas Chile', 'Santiago', 'Valparaíso', 'Viña del Mar'],
-  alternates: { canonical: 'https://www.weareravehub.com/cl/' },
+  alternates: { canonical: 'https://www.ravehublatam.com/cl/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
-    url: 'https://www.weareravehub.com/cl/',
+    url: 'https://www.ravehublatam.com/cl/',
     title: 'Eventos de Música Electrónica en Chile | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Chile.',
     siteName: 'Ravehub',
     images: [
       {
-        url: 'https://www.weareravehub.com/static/og-image-chile.jpg',
+        url: 'https://www.ravehublatam.com/static/og-image-chile.jpg',
         width: 1200,
         height: 630,
         alt: 'Eventos de música electrónica en Chile - Ravehub'
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Eventos de Música Electrónica en Chile | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Chile.',
-    images: ['https://www.weareravehub.com/static/og-image-chile.jpg']
+    images: ['https://www.ravehublatam.com/static/og-image-chile.jpg']
   }
 }
 
@@ -48,12 +48,12 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "CollectionPage",
-      "@id": "https://www.weareravehub.com/cl/#webpage",
-      "url": "https://www.weareravehub.com/cl/",
+      "@id": "https://www.ravehublatam.com/cl/#webpage",
+      "url": "https://www.ravehublatam.com/cl/",
       "name": "Eventos de Música Electrónica en Chile | Ravehub",
       "description": "Descubre todos los eventos de música electrónica en Chile. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más.",
       "isPartOf": {
-        "@id": "https://www.weareravehub.com/#website"
+        "@id": "https://www.ravehublatam.com/#website"
       },
       "about": {
         "@type": "Place",

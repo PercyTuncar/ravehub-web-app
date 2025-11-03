@@ -9,12 +9,12 @@ export async function generateMetadata(): Promise<Metadata> {
     title: 'Panel Administrativo | Ravehub',
     description: 'Panel de administración de Ravehub. Gestiona eventos, tickets, usuarios, productos y toda la plataforma de música electrónica.',
     keywords: ['admin', 'panel', 'administración', 'Ravehub', 'eventos', 'tickets', 'usuarios'],
-    alternates: { canonical: 'https://www.weareravehub.com/admin' },
+    alternates: { canonical: 'https://www.ravehublatam.com/admin' },
     openGraph: {
       title: 'Panel Administrativo | Ravehub',
       description: 'Panel de administración de Ravehub. Gestiona eventos, tickets, usuarios, productos y toda la plataforma de música electrónica.',
       type: 'website',
-      url: 'https://www.weareravehub.com/admin',
+      url: 'https://www.ravehublatam.com/admin',
     },
     twitter: {
       card: 'summary_large_image',

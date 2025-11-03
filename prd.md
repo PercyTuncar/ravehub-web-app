@@ -2117,7 +2117,7 @@ Cada fase cierra con revista de diseno, QA formal y gate de aprobacion. Para ava
 - **Frontend**: [Nombre]
 - **Backend**: [Nombre]
 - **UI/UX**: [Nombre]
-- **Soporte**: soporte@weareravehub.com
+- **Soporte**: soporte@ravehublatam.com
 - **Canal Discord**: [Enlace]
 - **Documentacion**: [Enlace interno Notion/Confluence]
 

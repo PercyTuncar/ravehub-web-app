@@ -29,8 +29,8 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
       : `Artículos, noticias y contenido sobre la escena electrónica en Latinoamérica. ${total} artículos publicados sobre música electrónica, festivales y cultura rave.`;
 
     const canonicalUrl = category || tag
-      ? `https://www.weareravehub.com/blog?${category ? `category=${encodeURIComponent(category)}` : ''}${category && tag ? '&' : ''}${tag ? `tag=${encodeURIComponent(tag)}` : ''}`
-      : 'https://www.weareravehub.com/blog';
+      ? `https://www.ravehublatam.com/blog?${category ? `category=${encodeURIComponent(category)}` : ''}${category && tag ? '&' : ''}${tag ? `tag=${encodeURIComponent(tag)}` : ''}`
+      : 'https://www.ravehublatam.com/blog';
 
     return {
       title: `${pageTitle} | Ravehub`,

@@ -18,17 +18,17 @@ export const metadata: Metadata = {
   title: 'Eventos de Música Electrónica en Argentina | Ravehub',
   description: 'Descubre todos los eventos de música electrónica en Argentina. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más en Buenos Aires, Córdoba, Rosario y todo Argentina.',
   keywords: ['eventos Argentina', 'música electrónica Argentina', 'festivales EDM Argentina', 'conciertos Argentina', 'techno Argentina', 'house Argentina', 'trance Argentina', 'entradas Argentina', 'Buenos Aires', 'Córdoba', 'Rosario'],
-  alternates: { canonical: 'https://www.weareravehub.com/ar/' },
+  alternates: { canonical: 'https://www.ravehublatam.com/ar/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
-    url: 'https://www.weareravehub.com/ar/',
+    url: 'https://www.ravehublatam.com/ar/',
     title: 'Eventos de Música Electrónica en Argentina | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Argentina.',
     siteName: 'Ravehub',
     images: [
       {
-        url: 'https://www.weareravehub.com/static/og-image-argentina.jpg',
+        url: 'https://www.ravehublatam.com/static/og-image-argentina.jpg',
         width: 1200,
         height: 630,
         alt: 'Eventos de música electrónica en Argentina - Ravehub'
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Eventos de Música Electrónica en Argentina | Ravehub',
     description: 'Compra entradas oficiales para los mejores eventos de música electrónica en Argentina.',
-    images: ['https://www.weareravehub.com/static/og-image-argentina.jpg']
+    images: ['https://www.ravehublatam.com/static/og-image-argentina.jpg']
   }
 }
 
@@ -48,12 +48,12 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "CollectionPage",
-      "@id": "https://www.weareravehub.com/ar/#webpage",
-      "url": "https://www.weareravehub.com/ar/",
+      "@id": "https://www.ravehublatam.com/ar/#webpage",
+      "url": "https://www.ravehublatam.com/ar/",
       "name": "Eventos de Música Electrónica en Argentina | Ravehub",
       "description": "Descubre todos los eventos de música electrónica en Argentina. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más.",
       "isPartOf": {
-        "@id": "https://www.weareravehub.com/#website"
+        "@id": "https://www.ravehublatam.com/#website"
       },
       "about": {
         "@type": "Place",

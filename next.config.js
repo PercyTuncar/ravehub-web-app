@@ -11,7 +11,7 @@ const nextConfig = {
   },
 
   images: {
-    domains: ['firebasestorage.googleapis.com', 'cdn.weareravehub.com'],
+    domains: ['firebasestorage.googleapis.com', 'cdn.ravehublatam.com'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -97,8 +97,8 @@ const nextConfig = {
       // 1 salto a https + www
       {
         source: '/:path*',
-        has: [{ type: 'host', value: 'weareravehub.com' }],
-        destination: 'https://www.weareravehub.com/:path*',
+        has: [{ type: 'host', value: 'ravehublatam.com' }],
+        destination: 'https://www.ravehublatam.com/:path*',
         permanent: true,
       },
 
