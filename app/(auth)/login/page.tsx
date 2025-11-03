@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signInWithGoogle, user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      const destination = redirect || sessionStorage.getItem('redirectAfterAuth') || '/';
+      sessionStorage.removeItem('redirectAfterAuth');
+      router.push(destination);
+    }
+  }, [user, router, redirect]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +34,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail(email, password);
-      router.push('/');
+      // Navigation will be handled by useEffect
     } catch (error: any) {
       setError(error.message || 'Error al iniciar sesión');
     } finally {
@@ -37,7 +48,7 @@ export default function LoginPage() {
 
     try {
       await signInWithGoogle();
-      router.push('/');
+      // Navigation will be handled by useEffect
     } catch (error: any) {
       setError(error.message || 'Error al iniciar sesión con Google');
     } finally {
@@ -55,9 +66,17 @@ export default function LoginPage() {
         <div className="text-center">
           <h2 className="text-3xl font-bold">Iniciar Sesión</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Accede a tu cuenta de Ravehub
+            {redirect ? 'Inicia sesión para continuar con tu compra' : 'Accede a tu cuenta de Ravehub'}
           </p>
         </div>
+
+        {redirect && (
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              🔐 Necesitas iniciar sesión para completar tu acción.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleEmailLogin} className="space-y-6">
           <div>
@@ -133,10 +152,19 @@ export default function LoginPage() {
         <div className="text-center">
           <span className="text-sm text-muted-foreground">
             ¿No tienes cuenta?{' '}
-            <Link href="/register" className="text-primary hover:underline">
+            <Link href={`/register${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-primary hover:underline">
               Regístrate
             </Link>
           </span>
+        </div>
+
+        <div className="text-center">
+          <Link
+            href="/tienda/checkout"
+            className="text-sm text-muted-foreground hover:text-primary"
+          >
+            ← Continuar sin registrarte
+          </Link>
         </div>
       </div>
     </div>

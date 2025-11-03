@@ -3,6 +3,11 @@ import Link from 'next/link'
 import JsonLd from '@/components/seo/JsonLd'
 import { getUpcomingEvents } from '@/lib/data-fetching'
 import { Event } from '@/lib/types'
+import HeroVideo from '@/components/home/HeroVideo'
+import EventCarousel from '@/components/home/EventCarousel'
+import CountrySelector from '@/components/home/CountrySelector'
+import HowItWorks from '@/components/home/HowItWorks'
+import Newsletter from '@/components/home/Newsletter'
 
 // ISR: Revalidate every 10 minutes (600 seconds)
 export const revalidate = 600
@@ -88,8 +93,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
         "https://www.tiktok.com/@ravehub.pe",
         "https://www.facebook.com/ravehub",
         "https://twitter.com/ravehublatam",
-        "https://www.youtube.com/@ravehublatam",
-        "https://open.spotify.com/user/ravehublatam",
+        "https://www.youtube.com/@ravehublatam", 
         "https://www.linkedin.com/company/ravehublatam"
       ],
       "contactPoint": [
@@ -518,263 +522,257 @@ const jsonLd = (upcomingEvents: Event[]) => ({
 });
 
 export default async function HomePage() {
-  const upcomingEvents = await getUpcomingEvents(3);
+  const upcomingEvents = await getUpcomingEvents(12); // Obtener más eventos para el carousel
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-black">
+      {/* JSON-LD for SEO */}
       <JsonLd id="homepage-jsonld" data={jsonLd(upcomingEvents)} />
 
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-orange-900 via-orange-800 to-orange-900 text-white py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">
-            Vive la música electrónica en Latinoamérica
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 text-gray-200 hero-subtitle">
-            Compra entradas oficiales para festivales, clubes y conciertos en Perú, Chile, Ecuador, Colombia, México y Argentina.
-          </p>
+      {/* Premium Hero Section with Video */}
+      <HeroVideo
+        title="Vive la música electrónica en Latinoamérica"
+        subtitle="La plataforma líder en eventos de música electrónica"
+        description="Compra entradas oficiales para festivales, clubes y conciertos en Perú, Chile, Ecuador, Colombia, México y Argentina. Pagos seguros, lineups verificados y soporte en español."
+        ctaPrimary={{
+          label: "Comprar entradas",
+          href: "/eventos"
+        }}
+        ctaSecondary={{
+          label: "Ver eventos",
+          href: "/eventos"
+        }}
+        videoSources={{
+          avif: "/videos/hero-background.avif",
+          webm: "/videos/hero-background.webm",
+          mp4: "/videos/hero-background.mp4"
+        }}
+        posterImage="/images/hero-poster.jpg"
+        fallbackImage="/images/hero-fallback.jpg"
+        trustIndicators={[
+          { icon: "🛡️", text: "Entradas 100% oficiales y seguras" },
+          { icon: "💳", text: "Pagos flexibles y locales" },
+          { icon: "⭐", text: "Lineups verificados" },
+          { icon: "🇪🇸", text: "Soporte en español" }
+        ]}
+      />
 
-          {/* Trust Bullets */}
-          <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm md:text-base" role="list" aria-label="Características de confianza">
-            <div className="flex items-center gap-2" role="listitem">
-              <div className="w-2 h-2 bg-success rounded-full" aria-hidden="true"></div>
-              <span>Entradas 100% oficiales y seguras</span>
-            </div>
-            <div className="flex items-center gap-2" role="listitem">
-              <div className="w-2 h-2 bg-success rounded-full" aria-hidden="true"></div>
-              <span>Pagos flexibles y locales</span>
-            </div>
-            <div className="flex items-center gap-2" role="listitem">
-              <div className="w-2 h-2 bg-success rounded-full" aria-hidden="true"></div>
-              <span>Lineups verificados</span>
-            </div>
-            <div className="flex items-center gap-2" role="listitem">
-              <div className="w-2 h-2 bg-success rounded-full" aria-hidden="true"></div>
-              <span>Soporte en español</span>
-            </div>
-          </div>
+      {/* Premium Events Carousel */}
+      <EventCarousel
+        events={upcomingEvents}
+        title="Próximos eventos destacados"
+        subtitle="Descubre los sets imperdibles que vienen a tu ciudad. Compra con anticipación y asegura tu lugar en la pista."
+        className="bg-gradient-to-b from-black via-gray-900 to-black"
+      />
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/eventos" className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors text-center" aria-label="Ir a comprar entradas">
-              Comprar entradas
-            </Link>
-            <Link href="/eventos" className="border-2 border-white text-white hover:bg-white hover:text-orange-900 font-semibold py-3 px-8 rounded-lg transition-colors text-center" aria-label="Ver próximos eventos">
-              Ver próximos eventos
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Premium Country Selector */}
+      <CountrySelector />
 
-      {/* Próximos eventos destacados */}
-      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Próximos eventos destacados</h2>
-          <p className="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
-            Descubre los sets imperdibles que vienen a tu ciudad. Compra con anticipación y asegura tu lugar en la pista.
-          </p>
+      {/* Premium How It Works Section */}
+      <HowItWorks />
 
-          {/* Dynamic events from database */}
-          <div className="grid md:grid-cols-3 gap-8">
-            {upcomingEvents.length > 0 ? (
-              upcomingEvents.map((event) => (
-                <div key={event.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                  <div
-                    className="h-48 bg-gradient-to-br from-orange-400 to-orange-600 bg-cover bg-center"
-                    style={{ backgroundImage: event.mainImageUrl ? `url(${event.mainImageUrl})` : undefined }}
-                  ></div>
-                  <div className="p-6">
-                    <h3 className="font-semibold text-lg mb-2">{event.name}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-2">
-                      {event.location.city || event.location.venue}, {event.location.country}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                      {new Date(event.startDate).toLocaleDateString('es-ES', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </p>
-                    <Link
-                      href={`/eventos/${event.slug}`}
-                      className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors block text-center"
-                    >
-                      Comprar
-                    </Link>
-                  </div>
-                </div>
-              ))
-            ) : (
-              // Fallback when no events are available
-              <div className="col-span-3 text-center py-12">
-                <p className="text-gray-500 dark:text-gray-400 text-lg">Próximamente más eventos disponibles</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      {/* Premium Newsletter Section */}
+      <Newsletter />
 
-      {/* Explora por país */}
-      <section className="py-16 px-4 bg-white dark:bg-gray-800">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Explora por país</h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-8">
-            Encuentra eventos y tickets por país y ciudad.
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-4" role="list" aria-label="Países disponibles">
-            {[
-              { name: 'Perú', code: 'pe' },
-              { name: 'Chile', code: 'cl' },
-              { name: 'Ecuador', code: 'ec' },
-              { name: 'Colombia', code: 'co' },
-              { name: 'México', code: 'mx' },
-              { name: 'Argentina', code: 'ar' }
-            ].map((country) => (
-              <Link
-                key={country.code}
-                href={`/${country.code}/`}
-                className="px-6 py-3 bg-orange-50 hover:bg-orange-100 text-orange-800 hover:text-orange-900 dark:bg-orange-900/20 dark:hover:bg-orange-800/30 dark:text-orange-200 dark:hover:text-orange-100 rounded-full transition-colors"
-                aria-label={`Explorar eventos en ${country.name}`}
-                role="listitem"
-              >
-                {country.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Cómo funciona */}
-      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Compra fácil y segura</h2>
-
-          <div className="grid md:grid-cols-4 gap-8 mt-12">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">1</div>
-              <h3 className="font-semibold mb-2">Elige tu evento</h3>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">2</div>
-              <h3 className="font-semibold mb-2">Selecciona tus entradas</h3>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">3</div>
-              <h3 className="font-semibold mb-2">Paga en minutos</h3>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">4</div>
-              <h3 className="font-semibold mb-2">Recibe tu e-ticket</h3>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Para fans y promotores */}
-      <section className="py-16 px-4 bg-white dark:bg-gray-800">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Hecho para ravers y organizadores</h2>
-
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="text-center">
-              <h3 className="text-2xl font-semibold mb-4">Para Fans</h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Acceso anticipado, recordatorios y beneficios de preventa.
-              </p>
-            </div>
-            <div className="text-center">
-              <h3 className="text-2xl font-semibold mb-4">Para Promotores</h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Publica tu evento, automatiza ventas y reportes en tiempo real.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Confianza & seguridad */}
-      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Tu seguridad es primero</h2>
-          <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Procesamos pagos con partners confiables, protegemos tus datos y verificamos lineups para combatir la reventa.
-          </p>
-        </div>
-      </section>
-
-      {/* Contenido/Blog */}
-      <section className="py-16 px-4 bg-white dark:bg-gray-800">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Guías y cultura electrónica</h2>
-          <p className="text-gray-600 dark:text-gray-300">
-            Crónicas, entrevistas y guías para vivir la escena al máximo.
-          </p>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="py-16 px-4 bg-orange-900 text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">No te pierdas el próximo rave</h2>
-          <p className="text-orange-100 mb-8">
-            Recibe preventas, lineups y noticias.
-          </p>
-
-          <form className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto" aria-label="Suscripción al newsletter">
-            <input
-              type="email"
-              placeholder="Tu email"
-              className="flex-1 px-4 py-3 rounded-lg text-gray-900"
-              aria-label="Dirección de email"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
-              aria-label="Suscribirse al newsletter"
-            >
-              Quiero recibir novedades
-            </button>
-          </form>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
+      {/* Additional Premium Sections */}
+      
+      {/* FAQ Section with Premium Design */}
+      <section className="py-20 px-4 bg-gradient-to-b from-black to-gray-900">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Preguntas frecuentes</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-white">
+            Preguntas{' '}
+            <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+              Frecuentes
+            </span>
+          </h2>
 
-          <div className="space-y-6" role="region" aria-label="Preguntas frecuentes">
+          <div className="space-y-6">
             {[
               {
                 question: "¿Cómo funcionan los e-tickets?",
-                answer: "Tu e-ticket es digital y llega a tu email inmediatamente después del pago. También lo encuentras en tu cuenta de Ravehub en la sección 'Mis Tickets'. En la entrada del evento, presenta el código QR desde tu celular, no es necesario imprimirlo. Recomendamos tomar un screenshot como backup por si no tienes señal de internet en el momento del ingreso."
+                answer: "Tu e-ticket es digital y llega a tu email inmediatamente después del pago. También lo encuentras en tu cuenta de Ravehub en la sección 'Mis Tickets'. En la entrada del evento, presenta el código QR desde tu celular, no es necesario imprimirlo."
               },
               {
                 question: "¿Qué medios de pago aceptan?",
-                answer: "Aceptamos tarjetas de crédito y débito Visa, Mastercard y American Express, transferencias bancarias, y métodos de pago locales como Yape (Perú), Mercado Pago (Chile, Argentina, México, Colombia), Nequi (Colombia), Pago Móvil (Venezuela) y más. Puedes pagar hasta en 6 cuotas sin interés con algunas tarjetas de crédito participantes."
+                answer: "Aceptamos tarjetas de crédito y débito Visa, Mastercard y American Express, transferencias bancarias, y métodos de pago locales como Yape (Perú), Mercado Pago, Nequi (Colombia) y más."
               },
               {
                 question: "¿Qué pasa si se reprograma el evento?",
-                answer: "Si el organizador reprograma el evento, tu entrada es válida automáticamente para la nueva fecha y recibirás un email con los detalles actualizados. Si la nueva fecha no te funciona, puedes solicitar reembolso completo dentro de los 7 días del anuncio de reprogramación. Si el evento se cancela definitivamente, recibirás reembolso automático del 100% del valor de tu entrada en un plazo máximo de 30 días."
+                answer: "Si el organizador reprograma el evento, tu entrada es válida automáticamente para la nueva fecha. Si la nueva fecha no te funciona, puedes solicitar reembolso completo dentro de los 7 días del anuncio."
               },
               {
                 question: "¿Dónde veo mis entradas?",
-                answer: "Inicia sesión en ravehublatam.com y dirígete a la sección 'Mis Tickets' en tu perfil. Ahí encontrarás todas tus entradas activas, historial de compras y podrás descargar los códigos QR. También recibes los e-tickets por email inmediatamente después de cada compra. Próximamente estará disponible nuestra app móvil para acceso aún más rápido."
+                answer: "Inicia sesión en ravehublatam.com y dirígete a la sección 'Mis Tickets' en tu perfil. Ahí encontrarás todas tus entradas activas, historial de compras y podrás descargar los códigos QR."
               }
             ].map((faq, index) => (
-              <details key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm group">
-                <summary className="font-semibold text-lg mb-2 cursor-pointer list-none flex items-center justify-between">
+              <details 
+                key={index} 
+                className="group bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 hover:border-orange-500/50 transition-all duration-300"
+              >
+                <summary className="font-semibold text-lg text-white cursor-pointer list-none flex items-center justify-between hover:text-orange-300 transition-colors">
                   <span>{faq.question}</span>
-                  <span className="text-orange-500 group-open:rotate-180 transition-transform" aria-hidden="true">▼</span>
+                  <div className="w-6 h-6 bg-orange-500/20 rounded-full flex items-center justify-center group-open:rotate-180 transition-transform">
+                    <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </summary>
-                <p className="text-gray-600 dark:text-gray-300 mt-4">{faq.answer}</p>
+                <div className="mt-4 text-gray-300 leading-relaxed animate-slide-in-up">
+                  {faq.answer}
+                </div>
               </details>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Premium Organizers CTA Section */}
+      <section className="py-24 px-4 bg-gradient-to-b from-gray-900 to-black relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-1/4 w-72 h-72 bg-orange-500/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse animation-delay-2000" />
+        </div>
+
+        {/* Main Content */}
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Content */}
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <span className="text-orange-400 font-medium text-sm uppercase tracking-wider">Para Organizadores</span>
+                </div>
+                
+                <h2 className="text-4xl md:text-6xl font-bold leading-tight">
+                  <span className="text-white">¿Organizas</span>{' '}
+                  <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+                    eventos?
+                  </span>
+                </h2>
+                
+                <p className="text-xl text-gray-300 leading-relaxed">
+                  Únete a la plataforma líder de música electrónica en Latinoamérica.
+                  Gestiona tus eventos, vende entradas y conecta con miles de ravers.
+                </p>
+              </div>
+
+              {/* Benefits */}
+              <div className="space-y-4">
+                {[
+                  {
+                    icon: "📊",
+                    title: "Analytics avanzados",
+                    description: "Reportes en tiempo real de ventas y asistencia"
+                  },
+                  {
+                    icon: "💳",
+                    title: "Pagos seguros",
+                    description: "Procesamiento automático con múltiples métodos"
+                  },
+                  {
+                    icon: "🎯",
+                    title: "Marketing incluido",
+                    description: "Promoción automática en nuestra red de fans"
+                  }
+                ].map((benefit, index) => (
+                  <div key={index} className="flex items-center gap-4 group">
+                    <div className="w-10 h-10 bg-gray-800/50 rounded-lg flex items-center justify-center group-hover:bg-orange-500/20 transition-all duration-300">
+                      <span className="text-lg">{benefit.icon}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">{benefit.title}</h3>
+                      <p className="text-gray-400 text-sm">{benefit.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: CTA Card */}
+            <div className="relative">
+              {/* Glass morphism card */}
+              <div className="bg-gray-900/50 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50 hover:border-orange-500/30 transition-all duration-500 group">
+                {/* Background glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-purple-500/5 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
+                
+                <div className="relative z-10 text-center space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-2xl font-bold text-white">
+                      Comienza hoy mismo
+                    </h3>
+                    <p className="text-gray-400">
+                      Más de 1,030+ eventos ya confían en nuestra plataforma
+                    </p>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-4 py-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-400">98%</div>
+                      <div className="text-xs text-gray-400">Satisfacción</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-400">24/7</div>
+                      <div className="text-xs text-gray-400">Soporte</div>
+                    </div>
+                  </div>
+
+                  {/* CTA Buttons */}
+                  <div className="space-y-3">
+                    <Link
+                      href="/contact"
+                      className="w-full inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group"
+                    >
+                      <svg className="h-5 w-5 mr-2 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      Contactar Ventas
+                    </Link>
+                    
+                    <Link
+                      href="/eventos"
+                      className="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-600 hover:border-orange-400/50 text-gray-300 hover:text-white font-medium rounded-xl backdrop-blur-sm bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300"
+                    >
+                      Ver Eventos Existentes
+                      <svg className="h-4 w-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </Link>
+                  </div>
+
+                  {/* Trust indicator */}
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-500 pt-4 border-t border-gray-700/50">
+                    <svg className="h-4 w-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span>Setup gratuito • Sin comisiones por configuración</span>
+                  </div>
+                </div>
+
+                {/* Floating elements */}
+                <div className="absolute -top-4 -right-4 w-8 h-8 bg-orange-500/20 rounded-full blur-sm animate-float" />
+                <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-purple-500/20 rounded-full blur-sm animate-float-delay" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom wave separator */}
+        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+      </section>
+
+      {/* Accessibility Skip Links */}
+      <div className="sr-only">
+        <a href="#main-content" className="focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-orange-500 text-white px-4 py-2 rounded z-50">
+          Saltar al contenido principal
+        </a>
+      </div>
     </main>
   )
 }

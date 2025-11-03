@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,19 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { signUpWithEmail, signInWithGoogle } = useAuth();
+  const { signUpWithEmail, signInWithGoogle, user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      const destination = redirect || sessionStorage.getItem('redirectAfterAuth') || '/';
+      sessionStorage.removeItem('redirectAfterAuth');
+      router.push(destination);
+    }
+  }, [user, router, redirect]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -68,7 +79,7 @@ export default function RegisterPage() {
 
     try {
       await signInWithGoogle();
-      router.push('/');
+      // Navigation will be handled by useEffect
     } catch (error: any) {
       setError(error.message || 'Error al registrarse con Google');
     } finally {
@@ -86,9 +97,17 @@ export default function RegisterPage() {
         <div className="text-center">
           <h2 className="text-3xl font-bold">Crear Cuenta</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Únete a la comunidad de Ravehub
+            {redirect ? 'Regístrate para continuar con tu compra' : 'Únete a la comunidad de Ravehub'}
           </p>
         </div>
+
+        {redirect && (
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              🔐 Necesitas registrarte para completar tu acción.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleEmailRegister} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -266,10 +285,19 @@ export default function RegisterPage() {
         <div className="text-center">
           <span className="text-sm text-muted-foreground">
             ¿Ya tienes cuenta?{' '}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href={`/login${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-primary hover:underline">
               Inicia sesión
             </Link>
           </span>
+        </div>
+
+        <div className="text-center">
+          <Link
+            href="/tienda/checkout"
+            className="text-sm text-muted-foreground hover:text-primary"
+          >
+            ← Continuar sin registrarte
+          </Link>
         </div>
       </div>
     </div>

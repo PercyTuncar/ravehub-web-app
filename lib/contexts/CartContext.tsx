@@ -48,67 +48,71 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const loadCartFromStorage = async () => {
     try {
-      if (typeof window !== 'undefined' && 'indexedDB' in window) {
-        const db = await openCartDB();
-        const transaction = db.transaction(['cart'], 'readonly');
-        const store = transaction.objectStore('cart');
-        const request = store.get('items');
+      if (typeof window === 'undefined') {
+        setIsLoading(false);
+        return;
+      }
 
-        request.onsuccess = () => {
-          const storedItems = request.result || [];
-          setItems(storedItems);
-          setIsLoading(false);
-        };
-
-        request.onerror = () => {
-          console.error('Error loading cart from IndexedDB');
-          setIsLoading(false);
-        };
-      } else {
-        // Fallback to localStorage
+      // Always use localStorage as primary storage for consistency
+      try {
         const stored = localStorage.getItem(CART_STORAGE_KEY);
         if (stored) {
-          setItems(JSON.parse(stored));
+          const parsedItems = JSON.parse(stored);
+          // Validate items structure
+          if (Array.isArray(parsedItems)) {
+            setItems(parsedItems);
+          }
         }
-        setIsLoading(false);
+      } catch (parseError) {
+        console.error('Error parsing cart from localStorage:', parseError);
+        // Clear corrupted data
+        localStorage.removeItem(CART_STORAGE_KEY);
       }
+      
+      setIsLoading(false);
     } catch (error) {
       console.error('Error loading cart:', error);
       setIsLoading(false);
     }
   };
 
-  const saveCartToStorage = async () => {
+  const saveCartToStorage = () => {
     try {
-      if (typeof window !== 'undefined' && 'indexedDB' in window) {
-        const db = await openCartDB();
-        const transaction = db.transaction(['cart'], 'readwrite');
-        const store = transaction.objectStore('cart');
-        store.put(items, 'items');
-      } else {
-        // Fallback to localStorage
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      if (typeof window !== 'undefined') {
+        // Save to localStorage with error handling
+        const dataToStore = JSON.stringify(items);
+        localStorage.setItem(CART_STORAGE_KEY, dataToStore);
       }
     } catch (error) {
-      console.error('Error saving cart:', error);
+      console.error('Error saving cart to localStorage:', error);
+      // Try to clear corrupted data and retry once
+      try {
+        localStorage.removeItem(CART_STORAGE_KEY);
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      } catch (retryError) {
+        console.error('Error retrying cart save:', retryError);
+      }
     }
   };
 
-  const openCartDB = (): Promise<IDBDatabase> => {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('RavehubCart', 1);
-
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains('cart')) {
-          db.createObjectStore('cart');
+  // Add cart synchronization across tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === CART_STORAGE_KEY && e.newValue !== null) {
+        try {
+          const newItems = JSON.parse(e.newValue);
+          setItems(Array.isArray(newItems) ? newItems : []);
+        } catch (error) {
+          console.error('Error parsing cart from storage event:', error);
         }
-      };
-    });
-  };
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }
+  }, []);
 
   const addItem = (product: Product, quantity: number, variantId?: string) => {
     const itemId = variantId ? `${product.id}-${variantId}` : product.id;

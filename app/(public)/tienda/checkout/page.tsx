@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CreditCard, Banknote, Truck, MapPin, User, Phone, Mail } from 'lucide-react';
+import { ArrowLeft, CreditCard, Banknote, Truck, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,14 +18,14 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 
 export default function CheckoutPage() {
   const { items, getTotalAmount, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline'>('online');
   const [shippingInfo, setShippingInfo] = useState({
-    fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
-    email: user?.email || '',
-    phone: user?.phone || '',
+    fullName: '',
+    email: '',
+    phone: '',
     address: '',
     city: '',
     region: '',
@@ -34,6 +34,19 @@ export default function CheckoutPage() {
   });
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+
+  // Pre-fill user data if logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      setShippingInfo(prev => ({
+        ...prev,
+        fullName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '',
+        email: user.email || '',
+        phone: user.phone || '',
+      }));
+    }
+  }, [user, authLoading]);
 
   const handleShippingInfoChange = (field: string, value: string) => {
     setShippingInfo(prev => ({ ...prev, [field]: value }));
@@ -42,10 +55,16 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     if (!acceptTerms || items.length === 0) return;
 
+    // Check if user is logged in before processing
+    if (!user) {
+      setShowAuthPrompt(true);
+      return;
+    }
+
     setProcessing(true);
     try {
       const orderData = {
-        userId: user?.id,
+        userId: user.id,
         orderItems: items.map(item => ({
           productId: item.productId,
           variantId: item.variantId,
@@ -86,6 +105,13 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleAuthAction = (action: 'login' | 'register') => {
+    // Store current URL to redirect back after login
+    const currentUrl = window.location.pathname;
+    sessionStorage.setItem('redirectAfterAuth', currentUrl);
+    router.push(`/${action}?redirect=${encodeURIComponent(currentUrl)}`);
+  };
+
   if (items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -116,9 +142,54 @@ export default function CheckoutPage() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold">Checkout</h1>
-          <p className="text-muted-foreground">Completa tu pedido</p>
+          <p className="text-muted-foreground">
+            {user ? 'Completa tu pedido' : 'Completa tu pedido (puedes comprar sin registrarte)'}
+          </p>
         </div>
       </div>
+
+      {/* Auth Prompt Modal */}
+      {showAuthPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LogIn className="h-5 w-5" />
+                Inicia sesión para continuar
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                Para guardar tu pedido y acceder al historial de compras, necesitamos que inicies sesión.
+              </p>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => handleAuthAction('login')}
+                >
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Iniciar Sesión
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={() => handleAuthAction('register')}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Registrarse
+                </Button>
+              </div>
+              <Button 
+                variant="ghost" 
+                className="w-full"
+                onClick={() => setShowAuthPrompt(false)}
+              >
+                Continuar sin registrarte
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Order Form */}
@@ -132,6 +203,15 @@ export default function CheckoutPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {!user && (
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    💡 <strong>Tip:</strong> Puedes completar tu compra sin registrarte. 
+                    Si tienes una cuenta, tus datos se completarán automáticamente.
+                  </p>
+                </div>
+              )}
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label htmlFor="fullName">Nombre completo</Label>
@@ -329,13 +409,23 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {!user && (
+                <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <p className="text-sm text-orange-800 dark:text-orange-200">
+                    🔐 <strong>Compra sin registro:</strong> Podrás completar tu compra, pero perderás el acceso al historial.
+                  </p>
+                </div>
+              )}
+
               <Button
                 className="w-full"
                 size="lg"
                 onClick={handleCheckout}
                 disabled={!acceptTerms || processing}
               >
-                {processing ? 'Procesando...' : `Pagar $${finalTotal.toLocaleString()} ${items[0]?.currency}`}
+                {processing ? 'Procesando...' : 
+                 !user ? `Proceder al pago (sin registro)` :
+                 `Pagar $${finalTotal.toLocaleString()} ${items[0]?.currency}`}
               </Button>
             </CardContent>
           </Card>
