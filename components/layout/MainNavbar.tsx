@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Music, User, LogIn, LogOut, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,8 +30,24 @@ export function MainNavbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <Music className="h-6 w-6 text-orange-500" />
-            <span className="font-bold text-xl text-white">Ravehub</span>
+            <Image
+              src="/icons/logo-full.png"
+              alt="Ravehub Logo"
+              width={120}
+              height={32}
+              className="h-8 w-auto object-contain"
+              onError={(e) => {
+                // Fallback to icon if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const icon = target.nextElementSibling as HTMLElement;
+                if (icon) icon.style.display = 'flex';
+              }}
+            />
+            <div className="hidden items-center space-x-2">
+              <Music className="h-6 w-6 text-orange-500" />
+              <span className="font-bold text-xl text-white">Ravehub</span>
+            </div>
           </Link>
 
           {/* Mobile menu button */}

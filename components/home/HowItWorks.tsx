@@ -142,186 +142,237 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        {/* Interactive Steps Display */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-          {/* Left: Active Step Details */}
-          <div className="space-y-6">
-            {steps.map((step, index) => (
-              <div
-                key={step.id}
-                className={`transition-all duration-500 ${
-                  index === activeStep
-                    ? 'opacity-100 transform translate-x-0'
-                    : 'opacity-50 transform translate-x-4'
-                }`}
-              >
-                <div 
-                  className={`
-                    p-6 rounded-2xl border cursor-pointer transition-all duration-300
-                    ${index === activeStep 
-                      ? `${step.bgColor} ${step.borderColor} shadow-lg` 
-                      : 'bg-gray-900/30 border-gray-700/50 hover:border-gray-600'
-                    }
-                  `}
-                  onClick={() => handleStepClick(index)}
+        {/* Interactive Steps Display - Modern Timeline Design */}
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 xl:gap-12 items-start mb-16 pt-4">
+          {/* Left: Step Timeline - Vertical Modern Design - Container Optimized */}
+          <div className="relative max-w-full overflow-hidden">
+            {/* Timeline Line */}
+            <div className="absolute left-4 sm:left-6 lg:left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-orange-500 via-gray-700 to-gray-700"></div>
+            
+            <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+              {steps.map((step, index) => (
+                <div
+                  key={step.id}
+                  className={`relative transition-all duration-500 ${index === activeStep ? 'opacity-100' : 'opacity-70'}`}
                 >
-                  <div className="flex items-start gap-4">
-                    {/* Icon */}
-                    <div className={`
-                      w-12 h-12 rounded-xl flex items-center justify-center
-                      ${index === activeStep ? step.bgColor : 'bg-gray-800'}
-                    `}>
-                      <step.icon className={`h-6 w-6 ${index === activeStep ? step.iconColor : 'text-gray-400'}`} />
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className={`
-                          text-sm font-bold px-2 py-1 rounded-full
-                          ${index === activeStep ? step.bgColor : 'bg-gray-800'}
-                          ${index === activeStep ? step.iconColor : 'text-gray-400'}
-                        `}>
-                          Paso {step.id}
-                        </span>
-                        {index === activeStep && (
-                          <ArrowRight className="h-4 w-4 text-orange-400 animate-pulse" />
-                        )}
-                      </div>
-                      
-                      <h3 className={`text-xl font-bold mb-2 ${
-                        index === activeStep ? 'text-white' : 'text-gray-400'
-                      }`}>
-                        {step.title}
-                      </h3>
-                      
-                      <p className={`text-sm mb-4 ${
-                        index === activeStep ? 'text-gray-300' : 'text-gray-500'
-                      }`}>
-                        {step.description}
-                      </p>
-                      
-                      {index === activeStep && (
-                        <div className="space-y-2 animate-slide-in-up">
-                          {step.details.map((detail, detailIndex) => (
-                            <div key={detailIndex} className="flex items-center gap-2 text-sm text-gray-400">
-                              <CheckCircle className="h-4 w-4 text-green-400" />
-                              <span>{detail}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Right: Visual Step Indicator */}
-          <div className="relative">
-            {/* Circular Step Indicator */}
-            <div className="relative w-80 h-80 mx-auto">
-              {/* Background Circle */}
-              <div className="absolute inset-0 rounded-full border border-gray-700/50" />
-              
-              {/* Steps positioned around circle */}
-              {steps.map((step, index) => {
-                const angle = (index * 90) - 90; // Start from top
-                const radius = 140;
-                const x = Math.cos((angle * Math.PI) / 180) * radius;
-                const y = Math.sin((angle * Math.PI) / 180) * radius;
-                
-                return (
+                  {/* Timeline Node */}
+                  <div className={`
+                    absolute left-2 sm:left-4 lg:left-6 w-3 h-3 lg:w-4 lg:h-4 rounded-full border-2 lg:border-4 transition-all duration-300 z-10
+                    ${index === activeStep
+                      ? 'bg-orange-500 border-orange-300 shadow-lg shadow-orange-500/50 scale-110 lg:scale-125'
+                      : index < activeStep
+                        ? 'bg-orange-500 border-orange-400'
+                        : 'bg-gray-700 border-gray-600'
+                    }
+                  `} />
+                  
+                  {/* Step Card - Container Optimized */}
                   <div
-                    key={step.id}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer"
-                    style={{
-                      left: `calc(50% + ${x}px)`,
-                      top: `calc(50% + ${y}px)`,
-                    }}
+                    className={`
+                      ml-12 sm:ml-16 lg:ml-20 p-3 sm:p-4 lg:p-6 rounded-xl lg:rounded-2xl border cursor-pointer transition-all duration-300 max-w-full
+                      ${index === activeStep
+                        ? `${step.bgColor} ${step.borderColor} shadow-xl`
+                        : 'bg-gray-900/40 border-gray-700/50 hover:bg-gray-900/60 hover:border-gray-600/70'
+                      }
+                    `}
                     onClick={() => handleStepClick(index)}
                   >
-                    {/* Step Circle */}
-                    <div className={`
-                      w-16 h-16 rounded-full border-2 flex items-center justify-center
-                      transition-all duration-300 hover:scale-110
-                      ${index === activeStep
-                        ? `${step.bgColor} ${step.borderColor} shadow-lg`
-                        : 'bg-gray-800/50 border-gray-600 hover:border-gray-500'
-                      }
-                    `}>
-                      <step.icon className={`h-6 w-6 ${
-                        index === activeStep ? step.iconColor : 'text-gray-400'
-                      }`} />
+                    {/* Step Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+                        {/* Icon */}
+                        <div className={`
+                          w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl flex items-center justify-center flex-shrink-0
+                          ${index === activeStep ? step.bgColor : 'bg-gray-800/80'}
+                        `}>
+                          {(() => {
+                            const IconComponent = step.icon;
+                            return <IconComponent className={`h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ${
+                              index === activeStep ? step.iconColor : 'text-gray-400'
+                            }`} />;
+                          })()}
+                        </div>
+                        
+                        {/* Step Info */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                            <span className={`
+                              text-xs sm:text-sm font-bold px-2 py-1 rounded-full w-fit
+                              ${index === activeStep
+                                ? `${step.bgColor} ${step.iconColor}`
+                                : 'bg-gray-800/80 text-gray-400'
+                              }
+                            `}>
+                              Paso {step.id}
+                            </span>
+                            {index === activeStep && (
+                              <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                            )}
+                          </div>
+                          <h3 className={`text-sm sm:text-base lg:text-xl font-bold break-words ${
+                            index === activeStep ? 'text-white' : 'text-gray-300'
+                          }`}>
+                            {step.title}
+                          </h3>
+                        </div>
+                      </div>
+                      
+                      {/* Progress Indicator - Responsive */}
+                      <div className="text-right sm:text-left mt-2 sm:mt-0">
+                        <div className={`text-sm sm:text-lg lg:text-xl font-bold ${
+                          index === activeStep ? 'text-orange-400' : 'text-gray-500'
+                        }`}>
+                          {`${Math.round(((index + 1) / steps.length) * 100)}%`}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {index < activeStep ? 'Completado' : index === activeStep ? 'En proceso' : 'Pendiente'}
+                        </div>
+                      </div>
                     </div>
                     
-                    {/* Step Number */}
-                    <div className={`
-                      absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold
-                      flex items-center justify-center transition-all duration-300
-                      ${index === activeStep
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-700 text-gray-300'
-                      }
-                    `}>
-                      {step.id}
-                    </div>
+                    {/* Description - Responsive */}
+                    <p className={`text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4 ${
+                      index === activeStep ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
+                      {step.description}
+                    </p>
+                    
+                    {/* Details - Only show for active step */}
+                    {index === activeStep && (
+                      <div className="space-y-1 sm:space-y-2 lg:space-y-3 animate-slide-in-up">
+                        {step.details.map((detail, detailIndex) => (
+                          <div key={detailIndex} className="flex items-start gap-2 lg:gap-3">
+                            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-green-400 flex-shrink-0 mt-0.5" />
+                            <span className="text-xs sm:text-sm lg:text-base text-gray-300 break-words">{detail}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                );
-              })}
-              
-              {/* Center Content */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                </div>
+              ))}
+            </div>
+            
+            {/* Auto-rotate control - Compact */}
+            <div className="flex justify-center mt-4 sm:mt-6 lg:mt-8">
+              <button
+                onClick={() => setAutoRotate(!autoRotate)}
+                className="flex items-center gap-2 px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 rounded-full bg-gray-800/60 hover:bg-gray-700/60 backdrop-blur-sm border border-gray-700/50 hover:border-gray-600/50 text-gray-400 hover:text-white transition-all duration-300 text-xs sm:text-sm"
+              >
+                {autoRotate ? (
+                  <>
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span className="hidden sm:inline">Pausar</span>
+                    <span className="sm:hidden">Pausar</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                    </svg>
+                    <span className="hidden sm:inline">Play</span>
+                    <span className="sm:hidden">Play</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Right: Active Step Detail - No Scroll Design */}
+          <div className="lg:sticky lg:top-20">
+            <div className={`
+              rounded-xl lg:rounded-2xl border transition-all duration-500 max-w-full
+              ${steps[activeStep].bgColor} ${steps[activeStep].borderColor} shadow-xl
+            `}>
+              {/* Content Container with Custom Scroll */}
+              <div className="p-4 sm:p-5 lg:p-6 rounded-xl lg:rounded-2xl border border-gray-700/30 bg-gray-900/30">
+                {/* Large Icon - Responsive */}
+                <div className="flex justify-center mb-3 sm:mb-4 lg:mb-5">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg lg:rounded-xl flex items-center justify-center shadow-lg">
                     {(() => {
                       const IconComponent = steps[activeStep].icon;
-                      return <IconComponent className="h-8 w-8 text-white" />;
+                      return <IconComponent className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-white" />;
                     })()}
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">
+                </div>
+                
+                {/* Step Title - Container Optimized */}
+                <div className="text-center mb-3 sm:mb-4 lg:mb-5">
+                  <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 lg:px-4 py-1.5 lg:py-2 bg-orange-500/20 rounded-full mb-2 sm:mb-3 lg:mb-4">
+                    <span className="text-xs sm:text-sm font-bold text-orange-300">
+                      Paso {steps[activeStep].id} de {steps.length}
+                    </span>
+                    <div className="w-0.5 h-0.5 lg:w-1 lg:h-1 bg-orange-400 rounded-full" />
+                    <span className="text-xs text-orange-400">
+                      {Math.round(((activeStep + 1) / steps.length) * 100)}%
+                    </span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-1 sm:mb-2 lg:mb-3 break-words">
                     {steps[activeStep].title}
                   </h3>
-                  <p className="text-gray-400 text-sm max-w-48">
+                  <p className="text-gray-300 text-sm lg:text-base leading-relaxed break-words">
                     {steps[activeStep].description}
                   </p>
                 </div>
-              </div>
-              
-              {/* Connection Lines */}
-              {steps.map((_, index) => {
-                const angle = (index * 90) - 90;
-                const radius = 140;
-                const x = Math.cos((angle * Math.PI) / 180) * radius;
-                const y = Math.sin((angle * Math.PI) / 180) * radius;
                 
-                return (
-                  <div
-                    key={index}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                    style={{
-                      left: `calc(50% + ${x}px)`,
-                      top: `calc(50% + ${y}px)`,
-                    }}
-                  >
-                    <div className={`
-                      w-12 h-0.5 origin-left transition-all duration-300
-                      ${index <= activeStep ? 'bg-orange-500' : 'bg-gray-600'}
-                    `} />
+                {/* Features List - Compact */}
+                <div className="space-y-2 sm:space-y-3 lg:space-y-4 mb-4 sm:mb-5">
+                  <h4 className="text-sm sm:text-base lg:text-lg font-semibold text-white">
+                    Características:
+                  </h4>
+                  <div className="space-y-2 sm:space-y-3 max-h-32 lg:max-h-40 overflow-y-auto custom-scrollbar">
+                    {steps[activeStep].details.map((detail, index) => (
+                      <div key={index} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-800/30 rounded-lg border border-gray-700/30">
+                        <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-200 text-xs sm:text-sm break-words leading-tight">{detail}</span>
+                      </div>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-            
-            {/* Auto-rotate control */}
-            <div className="text-center mt-8">
-              <button
-                onClick={() => setAutoRotate(!autoRotate)}
-                className="text-gray-400 hover:text-white text-sm transition-colors"
-              >
-                {autoRotate ? '⏸️ Pausar' : '▶️ Reproducir'} auto-rotación
-              </button>
+                </div>
+                
+                {/* Navigation - Compact */}
+                <div className="flex justify-between items-center pt-3 sm:pt-4 lg:pt-5 border-t border-gray-700/50 gap-2">
+                  <button
+                    onClick={() => handleStepClick(activeStep > 0 ? activeStep - 1 : steps.length - 1)}
+                    className="flex items-center gap-1 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 text-gray-400 hover:text-white transition-all duration-300 text-xs sm:text-sm"
+                  >
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span className="hidden sm:inline">Ant.</span>
+                    <span className="sm:hidden">←</span>
+                  </button>
+                  
+                  <div className="flex gap-1">
+                    {steps.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleStepClick(index)}
+                        className={`w-2 h-2 lg:w-3 lg:h-3 rounded-full transition-all duration-300 ${
+                          index === activeStep
+                            ? 'bg-orange-500 scale-125'
+                            : index < activeStep
+                              ? 'bg-orange-400/60'
+                              : 'bg-gray-600 hover:bg-gray-500'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
+                  <button
+                    onClick={() => handleStepClick(activeStep < steps.length - 1 ? activeStep + 1 : 0)}
+                    className="flex items-center gap-1 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 text-gray-400 hover:text-white transition-all duration-300 text-xs sm:text-sm"
+                  >
+                    <span className="hidden sm:inline">Sig.</span>
+                    <span className="sm:hidden">→</span>
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

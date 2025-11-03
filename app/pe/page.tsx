@@ -108,12 +108,10 @@ export default async function PeruPage() {
     <main className="min-h-screen bg-black">
       <JsonLd id="peru-page-jsonld" data={jsonLd} />
 
-      {/* ======================================== */}
-      {/* HERO SECTION REDISEÑADO - DISTRIBUCIÓN PERFECTA */}
-      {/* ======================================== */}
+      {/* Hero Section with Enhanced Animations */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         
-        {/* 🎥 VIDEO DE FONDO PRINCIPAL */}
+        {/* Video Background with Overlay */}
         <video
           autoPlay
           loop
@@ -126,96 +124,97 @@ export default async function PeruPage() {
           <source src="/videos/peru-hero-bg.webm" type="video/webm" />
         </video>
 
-        {/* 🖼️ OVERLAY CINEMATOGRÁFICO OPTIMIZADO */}
+        {/* Enhanced Overlay with Cultural Colors */}
         <div className="absolute inset-0 z-10">
-          {/* Gradiente principal para legibilidad */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-black/85" />
-          
-          {/* Overlay rojo sutil para ambiente peruano */}
           <div className="absolute inset-0 bg-gradient-to-tr from-red-900/25 via-transparent to-black/35" />
-          
-          {/* Vignette effect para efecto cinematográfico */}
           <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-black/60" />
         </div>
 
-        {/* ======================================== */}
-        {/* CONTENIDO REDISEÑADO CON NUEVA DISTRIBUCIÓN */}
-        {/* ======================================== */}
+        {/* Floating Cultural Elements */}
+        <div className="absolute inset-0 z-15 pointer-events-none">
+          <div className="absolute top-20 left-10 animate-float">
+            <ChakanaIcon className="w-8 h-8 text-red-400/30" />
+          </div>
+          <div className="absolute top-40 right-20 animate-float-delay">
+            <PeruLlamaIcon className="w-6 h-6 text-red-300/40" />
+          </div>
+          <div className="absolute bottom-40 left-20 animate-float">
+            <div className="w-4 h-4 bg-red-500/20 rounded-full animate-pulse" />
+          </div>
+          <div className="absolute bottom-60 right-10 animate-float-delay">
+            <div className="w-3 h-3 bg-orange-400/30 rounded-full animate-pulse" />
+          </div>
+        </div>
+
         <div className="relative z-20 w-full h-full flex items-center justify-center">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
             
-            {/* ======================================== */}
-            {/* LAYOUT PRINCIPAL - DISTRIBUCIÓN MODERNA */}
-            {/* ======================================== */}
             <div className="h-full grid grid-rows-4 gap-4 py-12 md:py-16">
               
-              {/* ======================================== */}
-              {/* Fila 1: Badge Cultural - Top Center */}
-              {/* ======================================== */}
+              {/* Cultural Badge */}
               <div className="row-span-1 flex items-center justify-center animate-fade-in-delay-1">
-                <div className="inline-flex items-center space-x-3 bg-black/50 backdrop-blur-lg rounded-full px-6 py-3 border border-red-400/30 shadow-xl">
+                <div className="inline-flex items-center space-x-3 bg-black/50 backdrop-blur-lg rounded-full px-6 py-3 border border-red-400/30 shadow-xl animate-glow">
                   <Crown className="w-4 h-4 text-red-400" />
                   <span className="text-red-300 text-sm font-medium">Perú • Tierra de los Incas</span>
                   <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse" />
                 </div>
               </div>
 
-              {/* ======================================== */}
-              {/* Fila 2: Título Principal - Center */}
-              {/* ======================================== */}
+              {/* Main Title */}
               <div className="row-span-2 flex items-center justify-center animate-fade-in-delay-2">
                 <div className="text-center space-y-4">
                   <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
-                    <span className="block text-white/90 mb-3">Eventos en</span>
-                    <span className="block relative">
-                      <span className="bg-gradient-to-r from-red-400 via-red-500 to-red-600 bg-clip-text text-transparent animate-shimmer">
-                        Perú 🦙
-                      </span>
-                     </span>
+                    <div className="text-white mb-3">Eventos en</div>
+                    <div className="text-red-500 text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold flex items-center gap-3 sm:gap-4 text-center justify-center">
+                      <span>Perú</span>
+                      <Image
+                        src="/images/llama-blanca.png"
+                        alt="Llama"
+                        width={50}
+                        height={50} 
+                        priority
+                      />
+                    </div>
                   </h1>
                 </div>
               </div>
 
-              {/* ======================================== */}
-              {/* Fila 3: Descripción - Center */}
-              {/* ======================================== */}
+              {/* Description */}
               <div className="row-span-1 flex items-center justify-center animate-fade-in-delay-3">
                 <div className="max-w-3xl mx-auto text-center">
-                  <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 leading-relaxed font-light">
-                   Conectando cada rincón del país a través de la música electrónica.  
-                    Desde <span className="text-red-400 font-medium">Tumbes a Tacna,</span> ningún evento de calidad  
+                  <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 leading-relaxed font-light animate-fade-in-up">
+                    Conectando cada rincón del país a través de la música electrónica.
+                    Desde <span className="text-red-400 font-medium">Tumbes a Tacna,</span> ningún evento de calidad
                     <span className="text-red-400 font-medium"> se nos escapa.</span>
                   </p>
                 </div>
               </div>
 
-              {/* ======================================== */}
-              {/* Fila 4: Botones CTA - Bottom */}
-              {/* ======================================== */}
+              {/* CTA Buttons */}
               <div className="row-span-1 flex items-center justify-center animate-fade-in-delay-4">
                 <div className="space-y-6">
                   
-                  {/* Botones CTA */}
                   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                     
-                    {/* Botón Principal */}
+                    {/* Primary CTA */}
                     <Link href="/eventos" className="group relative overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-red-500 to-red-400 group-hover:from-red-500 group-hover:via-red-400 group-hover:to-red-300 transition-all duration-700" />
-                      <div className="relative px-8 sm:px-10 py-3 sm:py-4 text-white font-bold text-base sm:text-lg rounded-xl flex items-center justify-center gap-3 backdrop-blur-sm border border-white/20 shadow-2xl">
+                      <div className="relative px-8 sm:px-10 py-3 sm:py-4 text-white font-bold text-base sm:text-lg rounded-xl flex items-center justify-center gap-3 backdrop-blur-sm border border-white/20 shadow-2xl hover:shadow-red-500/50 hover:scale-105 transition-all duration-300 btn-cultural pulse-glow">
                         <PeruLlamaIcon className="w-5 h-5" />
                         <span>Explorar Eventos Sagrados</span>
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                       </div>
                     </Link>
                     
-                    {/* Botón Secundario */}
-                    <Link href="#eventos" className="group border-2 border-white/40 hover:border-white/60 text-white hover:bg-white/10 font-bold text-base sm:text-lg py-3 sm:py-4 px-8 sm:px-10 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 backdrop-blur-sm shadow-xl">
+                    {/* Secondary CTA */}
+                    <Link href="#eventos" className="group border-2 border-white/40 hover:border-white/60 text-white hover:bg-white/10 font-bold text-base sm:text-lg py-3 sm:py-4 px-8 sm:px-10 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 backdrop-blur-sm shadow-xl hover:shadow-white/20 hover:scale-105">
                       <ChakanaIcon className="w-5 h-5" />
                       <span>Ver Destacados</span>
                     </Link>
                   </div>
 
-                  {/* Indicador de Scroll */}
+                  {/* Scroll Indicator */}
                   <div className="animate-fade-in-delay-5">
                     <div className="flex flex-col items-center gap-2 text-white/60">
                       <span className="text-xs font-medium tracking-widest">DESCUBRIR MÁS</span>
@@ -241,11 +240,11 @@ export default async function PeruPage() {
           {/* ======================================== */}
           {/* STATS SECTION MEJORADA */}
           {/* ======================================== */}
-          <section className="py-16 px-4">
+          <section className="py-20 px-4 relative overflow-hidden bg-pattern-peru">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-16">
                 <div className="flex justify-center mb-6">
-                  <ChakanaIcon className="w-12 h-12 text-red-500" />
+                  <ChakanaIcon className="w-12 h-12 text-red-500 icon-cultural cultural-pulse" />
                 </div>
                 <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
                   Energía Ancestral Electrónica
@@ -293,7 +292,7 @@ export default async function PeruPage() {
       </div>
 
       {/* Events Section with Cultural Integration */}
-      <section id="eventos" className="py-20 px-4 bg-gradient-to-b from-black via-gray-900 to-black">
+      <section id="eventos" className="py-20 px-4 bg-gradient-to-b from-red-950/30 via-black to-red-950/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <div className="flex justify-center mb-6">
@@ -306,7 +305,7 @@ export default async function PeruPage() {
               </span>
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Desde los Andes hasta la costa, cada evento es un ritual moderno 
+              Desde los Andes hasta la costa, cada evento es un ritual moderno
               donde la tradición peruana se encuentra con el futuro de la música electrónica.
             </p>
           </div>
@@ -396,9 +395,118 @@ export default async function PeruPage() {
         </div>
       </section>
 
+      {/* Rave Llama Cultural Section - Unique Creative Addition */}
+      <section className="py-16 px-4 bg-gradient-to-b from-red-950/20 via-black to-red-950/20 relative overflow-hidden">
+        {/* Dynamic Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 opacity-20">
+            <ChakanaIcon className="w-16 h-16 text-red-500 animate-spin-slow" />
+          </div>
+          <div className="absolute bottom-10 right-10 opacity-20">
+            <div className="w-24 h-24 bg-red-500/20 rounded-full animate-pulse" />
+          </div>
+          <div className="absolute top-1/2 left-5 opacity-10">
+            <div className="w-8 h-8 bg-orange-400/30 rounded-full animate-float" />
+          </div>
+          <div className="absolute top-1/3 right-20 opacity-15">
+            <div className="w-6 h-6 bg-red-400/40 rounded-full animate-float-delay" />
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left: Rave Llama Image */}
+            <div className="relative order-1 lg:order-1">
+              <div className="relative z-10 group">
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
+                <div className="relative bg-gray-900/50 backdrop-blur-sm rounded-3xl p-8 border border-red-500/30 hover:border-red-400/50 transition-all duration-500">
+                  <Image
+                    src="/images/rave-llama-peruana.png"
+                    alt="Llama peruana con lentes rave bailando techno"
+                    width={400}
+                    height={400}
+                    className="w-full h-auto max-w-sm mx-auto drop-shadow-2xl group-hover:scale-105 transition-transform duration-500"
+                    priority
+                  />
+                  
+                  {/* Floating Music Notes */}
+                  <div className="absolute -top-4 -right-4 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <div className="w-8 h-8 bg-red-500/30 rounded-full flex items-center justify-center animate-bounce">
+                      <span className="text-red-400 text-lg">🎵</span>
+                    </div>
+                  </div>
+                  <div className="absolute -bottom-4 -left-4 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <div className="w-6 h-6 bg-orange-500/30 rounded-full flex items-center justify-center animate-pulse">
+                      <span className="text-orange-400 text-sm">🎧</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Background Glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 via-transparent to-orange-500/10 rounded-3xl blur-3xl" />
+            </div>
+
+            {/* Right: Creative Content */}
+            <div className="space-y-6 order-2 lg:order-2">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-red-400 font-medium text-sm uppercase tracking-wider">Tradición & Futuro</span>
+                </div>
+                
+                <h2 className="text-3xl lg:text-4xl font-bold leading-tight">
+                  <span className="text-white">Donde la historia no se escribe,  </span>
+                  <span className="bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">
+                   se baila.
+                  </span>
+                </h2>
+                
+                <p className="text-gray-300 text-lg leading-relaxed">
+                  En Perú, la música electrónica no solo conecta corazones, sino que une
+                  <span className="text-red-400 font-semibold"> tradiciones milenarias</span> con
+                  <span className="text-orange-400 font-semibold"> beats futuristas</span>.
+                </p>
+              </div>
+
+              {/* Cultural Features */}
+              <div className="grid grid-cols-1 gap-4">
+               
+                
+                <div className="bg-gray-900/50 rounded-xl p-4 border border-red-500/20">
+                  <div className="flex items-center gap-3 mb-2">
+                    <ChakanaIcon className="w-6 h-6 text-orange-400" />
+                    <h3 className="font-semibold text-white">Comunidad Andina</h3>
+                  </div>
+                  <p className="text-sm text-gray-400">Conectamos ravers de todo el país</p>
+                </div>
+              </div>
+
+              {/* Call to Action */}
+              <div className="pt-4">
+                <Link
+                  href="/eventos"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-red-500/30"
+                >
+                  <span>Únete al Movimiento</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Cities Section with Cultural Design */}
       <section className="py-20 px-4 bg-gradient-to-b from-black via-red-950/10 to-black">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center relative">
+          {/* Background Cultural Elements */}
+          <div className="absolute inset-0 opacity-5">
+            <ChakanaIcon className="absolute top-20 right-20 w-24 h-24 cultural-spin" />
+            <PeruLlamaIcon className="absolute bottom-20 left-20 w-20 h-20 particle-float" />
+          </div>
           <div className="flex justify-center mb-8">
             <PeruLlamaIcon className="w-16 h-16 text-red-500" />
           </div>
@@ -426,7 +534,7 @@ export default async function PeruPage() {
                 href={`/eventos?region=${city.name.toLowerCase()}`}
                 className="group relative overflow-hidden"
               >
-                <div className="bg-gray-900/50 hover:bg-gray-800/50 border border-gray-700/50 hover:border-red-500/50 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-red-500/20">
+                <div className="bg-gray-900/50 hover:bg-gray-800/50 border border-gray-700/50 hover:border-red-500/50 rounded-2xl p-6 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-red-500/20 card-cultural interactive-cultural">
                   <div className="text-3xl mb-3">{city.icon}</div>
                   <h3 className="font-bold text-white text-lg mb-1 group-hover:text-red-300 transition-colors">{city.name}</h3>
                   <p className="text-sm text-gray-400">{city.count} eventos</p>
@@ -442,7 +550,7 @@ export default async function PeruPage() {
       </section>
 
       {/* Premium Newsletter with Cultural Elements */}
-      <section className="py-20 px-4 bg-gradient-to-r from-red-900 via-red-800 to-red-900 relative overflow-hidden">
+      <section className="py-20 px-4 bg-gradient-to-b from-red-900/20 via-black to-red-900/20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <ChakanaIcon className="absolute top-10 left-10 w-32 h-32 text-white" />
           <PeruLlamaIcon className="absolute bottom-10 right-10 w-24 h-24 text-white" />

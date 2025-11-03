@@ -86,33 +86,33 @@ export default function Newsletter() {
           </p>
           
           {/* Stats */}
-          <div className="flex justify-center items-center gap-8 text-sm text-gray-400 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8 text-sm text-gray-400 mb-12">
             {stats.map((stat, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <span className="text-orange-400 font-bold text-lg">{stat.value}</span>
-                <span>{stat.label}</span>
+              <div key={index} className="flex flex-col items-center text-center p-4 bg-gray-800/30 rounded-xl border border-gray-700/30">
+                <span className="text-orange-400 font-bold text-xl md:text-2xl mb-1">{stat.value}</span>
+                <span className="text-xs md:text-sm">{stat.label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Newsletter Form */}
-          <div className="relative">
+          <div className="relative order-2 lg:order-1">
             {/* Glass morphism container */}
-            <div className="relative bg-gray-900/50 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50">
+            <div className="relative bg-gray-900/50 backdrop-blur-xl rounded-2xl lg:rounded-3xl p-6 lg:p-8 border border-gray-700/50">
               {/* Background glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-orange-600/10 rounded-3xl blur-xl" />
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-orange-600/10 rounded-2xl lg:rounded-3xl blur-xl" />
               
               <div className="relative z-10">
                 {!isSuccess ? (
                   <>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 lg:gap-4 mb-6 lg:mb-6 text-center sm:text-left">
+                      <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                         <Mail className="h-6 w-6 text-orange-400" />
                       </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-white mb-1">
                           Suscríbete gratis
                         </h3>
                         <p className="text-gray-400 text-sm">
@@ -149,14 +149,14 @@ export default function Newsletter() {
                         className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       >
                         {isLoading ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            <span>Suscribiendo...</span>
+                            <span className="text-sm">Suscribiendo...</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             <Mail className="h-4 w-4" />
-                            <span>Quiero recibir novedades</span>
+                            <span className="text-sm">Quiero recibir novedades</span>
                           </div>
                         )}
                       </Button>
@@ -164,7 +164,7 @@ export default function Newsletter() {
 
                     <div className="mt-6 text-center">
                       <p className="text-xs text-gray-400">
-                        Sin spam. Cancela cuando quieras. 
+                        Sin spam. Cancela cuando quieras.{' '}
                         <span className="text-orange-400">Política de privacidad</span>
                       </p>
                     </div>
@@ -175,10 +175,10 @@ export default function Newsletter() {
                     <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                       <CheckCircle className="h-8 w-8 text-green-400" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-4">
+                    <h3 className="text-xl lg:text-2xl font-bold text-white mb-4">
                       ¡Bienvenido a la familia Ravehub!
                     </h3>
-                    <p className="text-gray-300 mb-6">
+                    <p className="text-gray-300 text-sm lg:text-base mb-6">
                       Revisa tu email para confirmar tu suscripción y recibir nuestras últimas novedades.
                     </p>
                     <div className="flex items-center justify-center gap-2 text-green-400">
@@ -192,26 +192,26 @@ export default function Newsletter() {
           </div>
 
           {/* Benefits */}
-          <div className="space-y-6">
-            <div className="mb-8">
-              <h3 className="text-2xl font-bold text-white mb-4">
+          <div className="space-y-6 order-1 lg:order-2">
+            <div className="mb-6 lg:mb-8 text-center lg:text-left">
+              <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">
                 ¿Por qué suscribirte?
               </h3>
-              <p className="text-gray-300">
+              <p className="text-gray-300 text-sm lg:text-base">
                 Únete a miles de ravers que ya reciben las mejores ofertas y novedades del mundo electrónico.
               </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 lg:space-y-6">
               {benefits.map((benefit, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-4 p-4 bg-gray-900/30 rounded-xl border border-gray-700/30 hover:border-gray-600/50 transition-all duration-300"
+                  className="flex flex-col sm:flex-row items-start gap-4 p-4 lg:p-6 bg-gray-900/30 rounded-xl border border-gray-700/30 hover:border-gray-600/50 transition-all duration-300"
                 >
                   <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                     <benefit.icon className="h-5 w-5 text-orange-400" />
                   </div>
-                  <div>
+                  <div className="flex-1 text-center sm:text-left">
                     <h4 className="font-semibold text-white mb-1">
                       {benefit.title}
                     </h4>
@@ -224,8 +224,8 @@ export default function Newsletter() {
             </div>
 
             {/* Social Proof */}
-            <div className="mt-8 p-6 bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-xl border border-gray-700/50">
-              <div className="flex items-center gap-3 mb-3">
+            <div className="mt-6 lg:mt-8 p-4 lg:p-6 bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-xl border border-gray-700/50">
+              <div className="flex flex-col sm:flex-row items-center gap-3 mb-3 text-center sm:text-left">
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-orange-400 text-orange-400" />
@@ -233,10 +233,10 @@ export default function Newsletter() {
                 </div>
                 <span className="text-white font-semibold">4.9/5</span>
               </div>
-              <p className="text-gray-300 text-sm mb-2">
+              <p className="text-gray-300 text-sm mb-2 text-center lg:text-left">
                 "Las mejores ofertas de festivales y excelente atención al cliente"
               </p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-gray-400 text-xs text-center lg:text-left">
                 - María S., Lima
               </p>
             </div>
