@@ -4,6 +4,8 @@ import { ThemeProvider } from '@/lib/contexts/ThemeContext'
 import { AuthProvider } from '@/lib/contexts/AuthContext'
 import { CartProvider } from '@/lib/contexts/CartContext'
 import { MainNavbar } from '@/components/layout/MainNavbar'
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import './globals.css'
 
 const inter = Inter({
