@@ -34,26 +34,47 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // In production, implement proper server-side auth with Firebase Admin SDK
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Admin Header */}
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-black">
+      {/* Admin Header - Premium Design (Not Fixed) */}
+      <header className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 shadow-xl border-b border-orange-500/30 mt-16"> {/* Add margin-top to account for navbar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">Ravehub Admin</h1>
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/25">
+                <svg className="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+                  Ravehub Admin
+                </h1>
+                <p className="text-sm text-gray-300 font-medium">Panel de Administración</p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Panel de Administración
-              </span>
+              <div className="hidden md:flex items-center space-x-3 bg-gray-800/50 rounded-lg px-4 py-2 border border-gray-700/30">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-200 font-medium">Sistema Activo</span>
+              </div>
+              <div className="text-sm text-gray-300 bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-700/30">
+                {new Date().toLocaleDateString('es-ES', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {children}
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="bg-gradient-to-br from-black via-gray-900 to-black rounded-2xl border border-gray-800 shadow-2xl">
+          {children}
+        </div>
       </main>
     </div>
   )

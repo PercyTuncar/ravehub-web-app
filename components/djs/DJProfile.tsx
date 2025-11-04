@@ -13,9 +13,10 @@ import { EventDj } from '@/lib/types';
 
 interface DJProfileProps {
   dj: EventDj;
+  isInEventDjs: boolean;
 }
 
-export function DJProfile({ dj }: DJProfileProps) {
+export function DJProfile({ dj, isInEventDjs }: DJProfileProps) {
   const [isFollowing, setIsFollowing] = useState(false);
 
   const upcomingEvents = dj.upcomingEvents || [];
@@ -96,12 +97,13 @@ export function DJProfile({ dj }: DJProfileProps) {
 
           {/* Social Links */}
           <div className="flex gap-3">
-            {socialLinks.instagram && (
+            {(socialLinks.instagram || dj.instagramHandle) && (
               <a
-                href={`https://instagram.com/${socialLinks.instagram}`}
+                href={socialLinks.instagram || `https://instagram.com/${dj.instagramHandle}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
+                title={dj.instagramHandle ? `@${dj.instagramHandle}` : 'Instagram'}
               >
                 <Instagram className="h-5 w-5" />
               </a>
@@ -112,6 +114,7 @@ export function DJProfile({ dj }: DJProfileProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
+                title="YouTube"
               >
                 <Youtube className="h-5 w-5" />
               </a>
@@ -122,6 +125,7 @@ export function DJProfile({ dj }: DJProfileProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
+                title="Sitio Web"
               >
                 <ExternalLink className="h-5 w-5" />
               </a>
@@ -301,20 +305,22 @@ export function DJProfile({ dj }: DJProfileProps) {
         </TabsContent>
       </Tabs>
 
-      {/* Vote Section */}
-      <Card className="mt-8">
-        <CardContent className="p-6 text-center">
-          <Star className="h-12 w-12 mx-auto mb-4 text-primary" />
-          <h3 className="text-lg font-semibold mb-2">¿Te gusta {dj.name}?</h3>
-          <p className="text-muted-foreground mb-4">
-            Vota por tus DJs favoritos y ayúdanos a crear los rankings de la comunidad.
-          </p>
-          <Button>
-            <Star className="mr-2 h-4 w-4" />
-            Votar por {dj.name}
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Vote Section - Only show for DJs in the "djs" collection (voting-eligible) */}
+      {!isInEventDjs && (
+        <Card className="mt-8">
+          <CardContent className="p-6 text-center">
+            <Star className="h-12 w-12 mx-auto mb-4 text-primary" />
+            <h3 className="text-lg font-semibold mb-2">¿Te gusta {dj.name}?</h3>
+            <p className="text-muted-foreground mb-4">
+              Vota por tus DJs favoritos y ayúdanos a crear los rankings de la comunidad.
+            </p>
+            <Button>
+              <Star className="mr-2 h-4 w-4" />
+              Votar por {dj.name}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

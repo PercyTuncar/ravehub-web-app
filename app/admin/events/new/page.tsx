@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Wand2, Image, Video, Plus, X, Upload, CheckCircle, Circle, Clock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,19 +20,81 @@ import { SocialPreview } from '@/components/seo/SocialPreview';
 import { SchemaPreview } from '@/components/seo/SchemaPreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Combobox } from '@/components/ui/combobox';
+import { FileUpload } from '@/components/common/FileUpload';
 import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
+import { generateSlug } from '@/lib/utils/slug-generator';
 
 const STEPS = [
-  { id: 'basic', title: 'Información Básica', description: 'Nombre, tipo y descripción' },
-  { id: 'dates', title: 'Fechas y Ubicación', description: 'Cuándo y dónde se realiza' },
-  { id: 'media', title: 'Multimedia', description: 'Imágenes y contenido visual' },
-  { id: 'lineup', title: 'Lineup', description: 'Artistas y DJs' },
-  { id: 'zones', title: 'Zonas y Fases', description: 'Capacidad y precios' },
-  { id: 'tickets', title: 'Tickets y Pagos', description: 'Configuración de venta' },
-  { id: 'organizer', title: 'Organizador', description: 'Información de contacto' },
-  { id: 'seo', title: 'SEO y Schema', description: 'Optimización y metadatos' },
-  { id: 'preview', title: 'Previsualización', description: 'SEO y redes sociales' },
-  { id: 'review', title: 'Revisión', description: 'Validación final' },
+  { 
+    id: 'basic', 
+    title: 'Información Básica', 
+    description: 'Nombre, tipo y descripción',
+    icon: Sparkles,
+    color: 'from-purple-500 to-pink-500'
+  },
+  { 
+    id: 'dates', 
+    title: 'Fechas y Ubicación', 
+    description: 'Cuándo y dónde se realiza',
+    icon: Clock,
+    color: 'from-blue-500 to-cyan-500'
+  },
+  { 
+    id: 'media', 
+    title: 'Multimedia', 
+    description: 'Imágenes y contenido visual',
+    icon: Image,
+    color: 'from-green-500 to-emerald-500'
+  },
+  { 
+    id: 'lineup', 
+    title: 'Lineup', 
+    description: 'Artistas y DJs',
+    icon: Circle,
+    color: 'from-orange-500 to-red-500'
+  },
+  { 
+    id: 'zones', 
+    title: 'Zonas y Fases', 
+    description: 'Capacidad y precios',
+    icon: Circle,
+    color: 'from-yellow-500 to-orange-500'
+  },
+  { 
+    id: 'tickets', 
+    title: 'Tickets y Pagos', 
+    description: 'Configuración de venta',
+    icon: Circle,
+    color: 'from-indigo-500 to-purple-500'
+  },
+  { 
+    id: 'organizer', 
+    title: 'Organizador', 
+    description: 'Información de contacto',
+    icon: Circle,
+    color: 'from-teal-500 to-green-500'
+  },
+  { 
+    id: 'seo', 
+    title: 'SEO y Schema', 
+    description: 'Optimización y metadatos',
+    icon: Circle,
+    color: 'from-pink-500 to-rose-500'
+  },
+  { 
+    id: 'preview', 
+    title: 'Previsualización', 
+    description: 'SEO y redes sociales',
+    icon: Eye,
+    color: 'from-emerald-500 to-teal-500'
+  },
+  { 
+    id: 'review', 
+    title: 'Revisión', 
+    description: 'Validación final',
+    icon: CheckCircle,
+    color: 'from-green-500 to-emerald-500'
+  },
 ];
 
 export default function NewEventPage() {
@@ -85,9 +147,15 @@ export default function NewEventPage() {
     subEvents: [],
     salesPhases: [],
     zones: [],
+    imageGallery: [],
+    imageAltTexts: {},
+    videoUrl: '',
+    videoGallery: [],
+    mediaOrder: [],
     createdAt: new Date().toISOString(),
   });
   const [saving, setSaving] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
   // Load countries on component mount
   useEffect(() => {
@@ -198,6 +266,14 @@ export default function NewEventPage() {
     loadCities();
   }, [eventData.location?.countryCode, eventData.location?.regionCode]);
 
+  // Auto-generar slug cuando cambie el nombre del evento (solo si no hay slug manual)
+  useEffect(() => {
+    if (eventData.name && !eventData.slug) {
+      const slug = generateSlug(eventData.name);
+      updateEventData('slug', slug);
+    }
+  }, [eventData.name]);
+
   const updateEventData = (field: string, value: any) => {
     setEventData(prev => ({
       ...prev,
@@ -205,15 +281,25 @@ export default function NewEventPage() {
     }));
   };
 
+  const generateSlugFromName = () => {
+    if (eventData.name) {
+      const slug = generateSlug(eventData.name);
+      updateEventData('slug', slug);
+    }
+  };
+
   const nextStep = () => {
     if (currentStep < STEPS.length - 1) {
+      setCompletedSteps(prev => new Set([...prev, currentStep]));
       setCurrentStep(currentStep + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const prevStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -257,380 +343,656 @@ export default function NewEventPage() {
     switch (currentStep) {
       case 0: // Basic Info
         return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">Nombre del Evento *</label>
-              <Input
-                value={eventData.name || ''}
-                onChange={(e) => updateEventData('name', e.target.value)}
-                placeholder="Ej: Ultra Chile 2026"
-              />
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mb-4">
+                <Sparkles className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Información Básica</h2>
+              <p className="text-muted-foreground">Comienza con los datos fundamentales de tu evento</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Tipo de Evento *</label>
-              <Select
-                value={eventData.eventType}
-                onValueChange={(value) => updateEventData('eventType', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="festival">Festival</SelectItem>
-                  <SelectItem value="concert">Concierto</SelectItem>
-                  <SelectItem value="club">Club</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="grid gap-6">
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Nombre del Evento *</Label>
+                <Input
+                  value={eventData.name || ''}
+                  onChange={(e) => updateEventData('name', e.target.value)}
+                  placeholder="Ej: Ultra Chile 2026"
+                  className="h-12 text-base transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Tipo de Público *</label>
-              <Select
-                value={eventData.audienceType || 'Adultos 18+'}
-                onValueChange={(value) => updateEventData('audienceType', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Adultos 18+">Adultos 18+</SelectItem>
-                  <SelectItem value="Todos los públicos">Todos los públicos</SelectItem>
-                  <SelectItem value="Mayores de 16">Mayores de 16</SelectItem>
-                  <SelectItem value="Mayores de 21">Mayores de 21</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Venta de Entradas *</label>
-              <Select
-                value={eventData.sellTicketsOnPlatform ? 'platform' : 'external'}
-                onValueChange={(value) => {
-                  updateEventData('sellTicketsOnPlatform', value === 'platform');
-                  if (value === 'external') {
-                    updateEventData('externalTicketUrl', '');
-                    updateEventData('externalOrganizerName', '');
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="platform">Ravehub vende las entradas</SelectItem>
-                  <SelectItem value="external">Entradas vendidas externamente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {!eventData.sellTicketsOnPlatform && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Nombre del Organizador Externo</label>
-                  <Input
-                    value={eventData.externalOrganizerName || ''}
-                    onChange={(e) => updateEventData('externalOrganizerName', e.target.value)}
-                    placeholder="Ej: Ticketmaster, Eventbrite"
-                  />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Tipo de Evento *</Label>
+                  <Select
+                    value={eventData.eventType}
+                    onValueChange={(value) => updateEventData('eventType', value)}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="festival">🎪 Festival</SelectItem>
+                      <SelectItem value="concert">🎵 Concierto</SelectItem>
+                      <SelectItem value="club">🏠 Club</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">URL para Comprar Entradas</label>
-                  <Input
-                    value={eventData.externalTicketUrl || ''}
-                    onChange={(e) => updateEventData('externalTicketUrl', e.target.value)}
-                    placeholder="https://..."
-                    type="url"
-                  />
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Tipo de Público *</Label>
+                  <Select
+                    value={eventData.audienceType || 'Adultos 18+'}
+                    onValueChange={(value) => updateEventData('audienceType', value)}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Adultos 18+">🎯 Adultos 18+</SelectItem>
+                      <SelectItem value="Todos los públicos">👨‍👩‍👧‍👦 Todos los públicos</SelectItem>
+                      <SelectItem value="Mayores de 16">🆔 Mayores de 16</SelectItem>
+                      <SelectItem value="Mayores de 21">🆔 Mayores de 21</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </>
-            )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Descripción Corta *</label>
-              <Textarea
-                value={eventData.shortDescription || ''}
-                onChange={(e) => updateEventData('shortDescription', e.target.value)}
-                placeholder="Breve descripción del evento"
-                rows={3}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Venta de Entradas *</Label>
+                <Select
+                  value={eventData.sellTicketsOnPlatform ? 'platform' : 'external'}
+                  onValueChange={(value) => {
+                    updateEventData('sellTicketsOnPlatform', value === 'platform');
+                    if (value === 'external') {
+                      updateEventData('externalTicketUrl', '');
+                      updateEventData('externalOrganizerName', '');
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="platform">💳 Ravehub vende las entradas</SelectItem>
+                    <SelectItem value="external">🔗 Entradas vendidas externamente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Descripción Completa *</label>
-              <Textarea
-                value={eventData.description || ''}
-                onChange={(e) => updateEventData('description', e.target.value)}
-                placeholder="Descripción detallada del evento"
-                rows={5}
-              />
-            </div>
+              {!eventData.sellTicketsOnPlatform && (
+                <div className="grid md:grid-cols-2 gap-6 animate-slide-in-up">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">Nombre del Organizador Externo</Label>
+                    <Input
+                      value={eventData.externalOrganizerName || ''}
+                      onChange={(e) => updateEventData('externalOrganizerName', e.target.value)}
+                      placeholder="Ej: Ticketmaster, Eventbrite"
+                      className="h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">URL para Comprar Entradas</Label>
+                    <Input
+                      value={eventData.externalTicketUrl || ''}
+                      onChange={(e) => updateEventData('externalTicketUrl', e.target.value)}
+                      placeholder="https://..."
+                      type="url"
+                      className="h-12"
+                    />
+                  </div>
+                </div>
+              )}
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Slug (URL) *</label>
-              <Input
-                value={eventData.slug || ''}
-                onChange={(e) => updateEventData('slug', e.target.value)}
-                placeholder="ultra-chile-2026"
-              />
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Descripción Corta *</Label>
+                <Textarea
+                  value={eventData.shortDescription || ''}
+                  onChange={(e) => updateEventData('shortDescription', e.target.value)}
+                  placeholder="Breve descripción del evento que capture la atención"
+                  rows={3}
+                  className="resize-none transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Descripción Completa *</Label>
+                <Textarea
+                  value={eventData.description || ''}
+                  onChange={(e) => updateEventData('description', e.target.value)}
+                  placeholder="Descripción detallada del evento, historia, concepto..."
+                  rows={6}
+                  className="resize-none transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                />
+              </div>
+
+              <div className="space-y-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 p-6 rounded-xl border border-purple-200/50 dark:border-purple-800/50">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold text-foreground">Slug (URL) *</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={generateSlugFromName}
+                    disabled={!eventData.name}
+                    className="flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800"
+                  >
+                    <Wand2 className="h-4 w-4" />
+                    Generar
+                  </Button>
+                </div>
+                <Input
+                  value={eventData.slug || ''}
+                  onChange={(e) => updateEventData('slug', e.target.value)}
+                  placeholder="ultra-chile-2026"
+                  className="h-12 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                />
+                {!eventData.slug && eventData.name && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                    💡 Presiona "Generar" para crear automáticamente el slug desde el nombre del evento
+                  </p>
+                )}
+                {eventData.slug && eventData.name && (
+                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                    ✅ URL: http://localhost:3000/eventos/{eventData.slug}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         );
 
       case 1: // Dates and Location
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Fecha de Inicio *</label>
-                <Input
-                  type="date"
-                  value={eventData.startDate || ''}
-                  onChange={(e) => updateEventData('startDate', e.target.value)}
-                />
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mb-4">
+                <Clock className="h-8 w-8 text-white" />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Fecha de Fin</label>
-                <Input
-                  type="date"
-                  value={eventData.endDate || ''}
-                  onChange={(e) => updateEventData('endDate', e.target.value)}
-                />
-              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Fechas y Ubicación</h2>
+              <p className="text-muted-foreground">Define cuándo y dónde sucederá tu evento</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Hora de Inicio *</label>
+            <div className="space-y-8">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Fecha de Inicio *</Label>
+                  <Input
+                    type="date"
+                    value={eventData.startDate || ''}
+                    onChange={(e) => updateEventData('startDate', e.target.value)}
+                    className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Fecha de Fin</Label>
+                  <Input
+                    type="date"
+                    value={eventData.endDate || ''}
+                    onChange={(e) => updateEventData('endDate', e.target.value)}
+                    className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Hora de Inicio *</Label>
+                  <Input
+                    type="time"
+                    value={eventData.startTime || ''}
+                    onChange={(e) => updateEventData('startTime', e.target.value)}
+                    className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Hora de Fin</Label>
+                  <Input
+                    type="time"
+                    value={eventData.endTime || ''}
+                    onChange={(e) => updateEventData('endTime', e.target.value)}
+                    className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Hora de Puertas</Label>
                 <Input
                   type="time"
-                  value={eventData.startTime || ''}
-                  onChange={(e) => updateEventData('startTime', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Hora de Fin</label>
-                <Input
-                  type="time"
-                  value={eventData.endTime || ''}
-                  onChange={(e) => updateEventData('endTime', e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Hora de Puertas</label>
-              <Input
-                type="time"
-                value={eventData.doorTime || ''}
-                onChange={(e) => updateEventData('doorTime', e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isMultiDay"
-                checked={eventData.isMultiDay || false}
-                onChange={(e) => updateEventData('isMultiDay', e.target.checked)}
-                className="rounded"
-              />
-              <Label htmlFor="isMultiDay">Evento multi-día</Label>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Ubicación</h3>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Recinto *</label>
-                <Input
-                  value={eventData.location?.venue || ''}
-                  onChange={(e) => updateEventData('location', {
-                    ...eventData.location,
-                    venue: e.target.value
-                  })}
-                  placeholder="Ej: Parque Bicentenario"
+                  value={eventData.doorTime || ''}
+                  onChange={(e) => updateEventData('doorTime', e.target.value)}
+                  className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Dirección</label>
+              <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
+                <input
+                  type="checkbox"
+                  id="isMultiDay"
+                  checked={eventData.isMultiDay || false}
+                  onChange={(e) => updateEventData('isMultiDay', e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <Label htmlFor="isMultiDay" className="text-sm font-medium text-foreground cursor-pointer">
+                  🎪 Evento multi-día
+                </Label>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  📍 Ubicación
+                </h3>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Recinto *</Label>
                   <Input
-                    value={eventData.location?.address || ''}
+                    value={eventData.location?.venue || ''}
                     onChange={(e) => updateEventData('location', {
                       ...eventData.location,
-                      address: e.target.value
+                      venue: e.target.value
                     })}
-                    placeholder="Av. Providencia 123"
+                    placeholder="Ej: Parque Bicentenario"
+                    className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Código Postal</label>
-                  <Input
-                    value={eventData.location?.postalCode || ''}
-                    onChange={(e) => updateEventData('location', {
-                      ...eventData.location,
-                      postalCode: e.target.value
-                    })}
-                    placeholder="7500000"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="block text-sm font-medium mb-2">País *</Label>
-                  <Combobox
-                    options={countries.map(country => ({
-                      value: country.code,
-                      label: country.name,
-                      flag: country.flag
-                    }))}
-                    value={eventData.location?.countryCode || ''}
-                    onValueChange={(value) => {
-                      const selectedCountry = countries.find(c => c.code === value);
-                      updateEventData('location', {
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">Dirección</Label>
+                    <Input
+                      value={eventData.location?.address || ''}
+                      onChange={(e) => updateEventData('location', {
                         ...eventData.location,
-                        country: selectedCountry?.name || '',
-                        countryCode: value,
-                        region: '',
-                        regionCode: '',
-                        city: '',
-                        cityCode: ''
-                      });
-                      updateEventData('country', value);
-                      updateEventData('currency', selectedCountry?.currencies?.[0]?.code || 'CLP');
-                    }}
-                    placeholder="Seleccionar país"
-                    searchPlaceholder="Buscar país..."
-                    loading={countries.length === 0}
-                    error={locationErrors.countries}
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium mb-2">Región/Estado</Label>
-                  <Combobox
-                    options={regions.map(region => ({
-                      value: region.code,
-                      label: region.name
-                    }))}
-                    value={eventData.location?.regionCode || ''}
-                    onValueChange={(value) => {
-                      const selectedRegion = regions.find(r => r.code === value);
-                      updateEventData('location', {
+                        address: e.target.value
+                      })}
+                      placeholder="Av. Providencia 123"
+                      className="h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">Código Postal</Label>
+                    <Input
+                      value={eventData.location?.postalCode || ''}
+                      onChange={(e) => updateEventData('location', {
                         ...eventData.location,
-                        region: selectedRegion?.name || '',
-                        regionCode: value,
-                        city: '',
-                        cityCode: ''
-                      });
-                    }}
-                    placeholder="Seleccionar región"
-                    searchPlaceholder="Buscar región..."
-                    disabled={!eventData.location?.countryCode}
-                    loading={loadingLocations}
-                    error={locationErrors.regions}
-                  />
+                        postalCode: e.target.value
+                      })}
+                      placeholder="7500000"
+                      className="h-12"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="block text-sm font-medium mb-2">Ciudad *</Label>
-                  <Combobox
-                    options={cities.map(city => ({
-                      value: city.id,
-                      label: city.name
-                    }))}
-                    value={eventData.location?.cityCode || ''}
-                    onValueChange={(value) => {
-                      const selectedCity = cities.find(c => c.id === value);
-                      updateEventData('location', {
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">País *</Label>
+                    <Combobox
+                      options={countries.map(country => ({
+                        value: country.code,
+                        label: country.name,
+                        flag: country.flag
+                      }))}
+                      value={eventData.location?.countryCode || ''}
+                      onValueChange={(value) => {
+                        const selectedCountry = countries.find(c => c.code === value);
+                        updateEventData('location', {
+                          ...eventData.location,
+                          country: selectedCountry?.name || '',
+                          countryCode: value,
+                          region: '',
+                          regionCode: '',
+                          city: '',
+                          cityCode: ''
+                        });
+                        updateEventData('country', value);
+                        updateEventData('currency', selectedCountry?.currencies?.[0]?.code || 'CLP');
+                      }}
+                      placeholder="Seleccionar país"
+                      searchPlaceholder="Buscar país..."
+                      loading={countries.length === 0}
+                      error={locationErrors.countries}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">Región/Estado</Label>
+                    <Combobox
+                      options={regions.map(region => ({
+                        value: region.code,
+                        label: region.name
+                      }))}
+                      value={eventData.location?.regionCode || ''}
+                      onValueChange={(value) => {
+                        const selectedRegion = regions.find(r => r.code === value);
+                        updateEventData('location', {
+                          ...eventData.location,
+                          region: selectedRegion?.name || '',
+                          regionCode: value,
+                          city: '',
+                          cityCode: ''
+                        });
+                      }}
+                      placeholder="Seleccionar región"
+                      searchPlaceholder="Buscar región..."
+                      disabled={!eventData.location?.countryCode}
+                      loading={loadingLocations}
+                      error={locationErrors.regions}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">Ciudad *</Label>
+                    <Combobox
+                      options={cities.map(city => ({
+                        value: city.id,
+                        label: city.name
+                      }))}
+                      value={eventData.location?.cityCode || ''}
+                      onValueChange={(value) => {
+                        const selectedCity = cities.find(c => c.id === value);
+                        updateEventData('location', {
+                          ...eventData.location,
+                          city: selectedCity?.name || '',
+                          cityCode: value
+                        });
+                      }}
+                      placeholder="Seleccionar ciudad"
+                      searchPlaceholder="Buscar ciudad..."
+                      disabled={!eventData.location?.countryCode}
+                      loading={loadingLocations}
+                      error={locationErrors.cities}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">Zona Horaria</Label>
+                    <Input
+                      value={timezone}
+                      readOnly
+                      placeholder="Se cargará automáticamente al seleccionar país"
+                      className="h-12 bg-muted/50"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      La zona horaria se determina automáticamente según el país seleccionado
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">Latitud</Label>
+                    <Input
+                      type="number"
+                      step="0.000001"
+                      value={eventData.location?.geo?.lat || ''}
+                      onChange={(e) => updateEventData('location', {
                         ...eventData.location,
-                        city: selectedCity?.name || '',
-                        cityCode: value
-                      });
-                    }}
-                    placeholder="Seleccionar ciudad"
-                    searchPlaceholder="Buscar ciudad..."
-                    disabled={!eventData.location?.countryCode}
-                    loading={loadingLocations}
-                    error={locationErrors.cities}
-                  />
-                </div>
-                <div>
-                  <Label className="block text-sm font-medium mb-2">Código Postal</Label>
-                  <Input
-                    value={eventData.location?.postalCode || ''}
-                    onChange={(e) => updateEventData('location', {
-                      ...eventData.location,
-                      postalCode: e.target.value
-                    })}
-                    placeholder="7500000"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Zona Horaria</Label>
-                <Input
-                  value={timezone}
-                  readOnly
-                  placeholder="Se cargará automáticamente al seleccionar país"
-                  className="bg-muted"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  La zona horaria se determina automáticamente según el país seleccionado
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Latitud</label>
-                  <Input
-                    type="number"
-                    step="0.000001"
-                    value={eventData.location?.geo?.lat || ''}
-                    onChange={(e) => updateEventData('location', {
-                      ...eventData.location,
-                      geo: {
-                        ...eventData.location?.geo,
-                        lat: parseFloat(e.target.value)
-                      }
-                    })}
-                    placeholder="-33.4489"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Longitud</label>
-                  <Input
-                    type="number"
-                    step="0.000001"
-                    value={eventData.location?.geo?.lng || ''}
-                    onChange={(e) => updateEventData('location', {
-                      ...eventData.location,
-                      geo: {
-                        ...eventData.location?.geo,
-                        lng: parseFloat(e.target.value)
-                      }
-                    })}
-                    placeholder="-70.6693"
-                  />
+                        geo: {
+                          ...eventData.location?.geo,
+                          lat: parseFloat(e.target.value)
+                        }
+                      })}
+                      placeholder="-33.4489"
+                      className="h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">Longitud</Label>
+                    <Input
+                      type="number"
+                      step="0.000001"
+                      value={eventData.location?.geo?.lng || ''}
+                      onChange={(e) => updateEventData('location', {
+                        ...eventData.location,
+                        geo: {
+                          ...eventData.location?.geo,
+                          lng: parseFloat(e.target.value)
+                        }
+                      })}
+                      placeholder="-70.6693"
+                      className="h-12"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         );
 
+      case 2: // Media
+        return (
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mb-4">
+                <Image className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Multimedia</h2>
+              <p className="text-muted-foreground">Sube imágenes y contenido visual que represente tu evento</p>
+            </div>
+
+            <div className="space-y-8">
+              {/* Imagen Principal */}
+              <Card className="border-2 border-green-200/50 dark:border-green-800/50 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                      🖼️
+                    </div>
+                    Imagen Principal *
+                    {!eventData.mainImageUrl && (
+                      <Badge variant="destructive" className="text-xs">Requerida</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">Subir Archivo (Recomendado)</Label>
+                      <FileUpload
+                        onUploadComplete={(url: string) => {
+                          updateEventData('mainImageUrl', url);
+                          if (!eventData.imageAltTexts?.main) {
+                            updateEventData('imageAltTexts', {
+                              ...eventData.imageAltTexts,
+                              main: `${eventData.name || 'Evento'} - Imagen principal`
+                            });
+                          }
+                        }}
+                        currentUrl={eventData.mainImageUrl}
+                        onClear={() => {
+                          updateEventData('mainImageUrl', '');
+                          updateEventData('imageAltTexts', {
+                            ...eventData.imageAltTexts,
+                            main: ''
+                          });
+                        }}
+                        accept="image/jpeg,image/png,image/webp"
+                        maxSize={5}
+                        folder="events/images"
+                        variant="default"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
+                      <Input
+                        type="url"
+                        value={eventData.mainImageUrl || ''}
+                        onChange={(e) => updateEventData('mainImageUrl', e.target.value)}
+                        placeholder="https://example.com/evento-principal.jpg"
+                        className="h-12"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Si ya tienes la imagen en un servidor externo
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50">
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      📐 Recomendado: 1200x675px (16:9) • Formatos: JPG, PNG, WebP • Máximo: 5MB
+                    </p>
+                  </div>
+
+                  {eventData.mainImageUrl && (
+                    <div className="border-2 border-dashed border-green-300 dark:border-green-700 rounded-lg p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30">
+                      <Label className="block text-sm font-semibold mb-3 text-green-800 dark:text-green-200">
+                        📝 Texto Alternativo (SEO) *
+                      </Label>
+                      <Input
+                        value={eventData.imageAltTexts?.main || ''}
+                        onChange={(e) => updateEventData('imageAltTexts', {
+                          ...eventData.imageAltTexts,
+                          main: e.target.value
+                        })}
+                        placeholder={`${eventData.name || 'Evento'} - Imagen principal`}
+                        className="mb-4 h-12"
+                      />
+                      <p className="text-xs text-green-600 dark:text-green-400 mb-4">
+                        Describe la imagen para motores de búsqueda y accesibilidad (importante para SEO)
+                      </p>
+                      
+                      <div className="border-2 border-green-200 dark:border-green-800 rounded-lg p-3 bg-white dark:bg-gray-900">
+                        <img
+                          src={eventData.mainImageUrl}
+                          alt={eventData.imageAltTexts?.main || eventData.name || 'Imagen del evento'}
+                          className="w-full max-w-md h-48 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Imagen de Banner */}
+              <Card className="border-2 border-orange-200/50 dark:border-orange-800/50 bg-gradient-to-br from-orange-50/50 to-yellow-50/50 dark:from-orange-950/20 dark:to-yellow-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-3">
+                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                      🎨
+                    </div>
+                    Imagen de Banner
+                    {eventData.bannerImageUrl && (
+                      <Badge variant="default" className="text-xs bg-green-500">Agregada</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">Subir Archivo (Recomendado)</Label>
+                      <FileUpload
+                        onUploadComplete={(url: string) => updateEventData('bannerImageUrl', url)}
+                        currentUrl={eventData.bannerImageUrl}
+                        onClear={() => updateEventData('bannerImageUrl', '')}
+                        accept="image/jpeg,image/png,image/webp"
+                        maxSize={10}
+                        folder="events/banners"
+                        variant="banner"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
+                      <Input
+                        type="url"
+                        value={eventData.bannerImageUrl || ''}
+                        onChange={(e) => updateEventData('bannerImageUrl', e.target.value)}
+                        placeholder="https://example.com/banner-evento.jpg"
+                        className="h-12"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Si ya tienes la imagen en un servidor externo
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800/50">
+                    <p className="text-xs text-orange-700 dark:text-orange-300">
+                      📐 Recomendado: 1920x1080px (16:9) • Formatos: JPG, PNG, WebP • Máximo: 10MB
+                    </p>
+                  </div>
+
+                  {eventData.bannerImageUrl && (
+                    <div className="border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-lg p-6 bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-950/30 dark:to-yellow-950/30">
+                      <div className="flex justify-between items-center mb-3">
+                        <Label className="block text-sm font-semibold text-orange-800 dark:text-orange-200">
+                          🎯 Vista Previa del Banner
+                        </Label>
+                      </div>
+                      <div className="border-2 border-orange-200 dark:border-orange-800 rounded-lg p-2 bg-white dark:bg-gray-900">
+                        <img
+                          src={eventData.bannerImageUrl}
+                          alt={eventData.name || 'Banner del evento'}
+                          className="w-full max-w-lg h-32 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                        Esta imagen aparecerá en la portada del evento (opcional pero recomendado)
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* SEO Tips */}
+              <Card className="border-2 border-blue-200/50 dark:border-blue-800/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                    💡 Tips para SEO
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-700 dark:text-blue-300">
+                    <ul className="space-y-2">
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-500">•</span>
+                        <span>Usa nombres de archivo descriptivos</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-500">•</span>
+                        <span>Mantén las imágenes entre 100KB - 500KB</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-500">•</span>
+                        <span>Los textos alternativos ayudan al SEO</span>
+                      </li>
+                    </ul>
+                    <ul className="space-y-2">
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-500">•</span>
+                        <span>Las imágenes de alta calidad aumentan engagement</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-500">•</span>
+                        <span>Un video principal aumenta visualizaciones</span>
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        );
+
       case 3: // Lineup
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Lineup del Evento</h3>
-              <p className="text-muted-foreground mb-6">
-                Agrega los artistas y DJs que participarán en el evento. Para festivales multi-día, especifica el día y escenario.
-              </p>
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mb-4">
+                <Circle className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Lineup del Evento</h2>
+              <p className="text-muted-foreground">Agrega los artistas y DJs que participarán en el evento</p>
             </div>
 
             <LineupSelector
@@ -646,121 +1008,144 @@ export default function NewEventPage() {
 
       case 4: // Zones and Phases
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Divisa del Evento</h3>
-              <p className="text-muted-foreground mb-6">
-                Selecciona la divisa en la que se venderán las entradas. Se mostrarán las divisas de países de América del Sur más el dólar estadounidense.
-              </p>
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full mb-4">
+                <Circle className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Zonas y Fases</h2>
+              <p className="text-muted-foreground">Define la estructura de precios y capacidad del evento</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Divisa *</label>
-              <Select
-                value={eventData.currency || ''}
-                onValueChange={(value) => {
-                  const selectedCurrency = SOUTH_AMERICAN_CURRENCIES.find(c => c.code === value);
-                  updateEventData('currency', value);
-                  updateEventData('currencySymbol', selectedCurrency?.symbol || value);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar divisa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SOUTH_AMERICAN_CURRENCIES.map((currency) => (
-                    <SelectItem key={currency.code} value={currency.code}>
-                      {currency.symbol} {currency.name} ({currency.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {eventData.currency && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Divisa seleccionada: {getCurrencySymbol(eventData.currency)} ({eventData.currency})
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Divisa del Evento</h3>
+                <p className="text-muted-foreground">
+                  Selecciona la divisa en la que se venderán las entradas. Se mostrarán las divisas de países de América del Sur más el dólar estadounidense.
                 </p>
-              )}
-            </div>
+              </div>
 
-            <div>
-              <h3 className="text-lg font-medium mb-4">Zonas y Capacidad</h3>
-              <p className="text-muted-foreground mb-6">
-                Define las zonas del evento y su capacidad máxima.
-              </p>
-            </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Divisa *</Label>
+                <Select
+                  value={eventData.currency || ''}
+                  onValueChange={(value) => {
+                    const selectedCurrency = SOUTH_AMERICAN_CURRENCIES.find(c => c.code === value);
+                    updateEventData('currency', value);
+                    updateEventData('currencySymbol', selectedCurrency?.symbol || value);
+                  }}
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Seleccionar divisa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOUTH_AMERICAN_CURRENCIES.map((currency) => (
+                      <SelectItem key={currency.code} value={currency.code}>
+                        {currency.symbol} {currency.name} ({currency.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {eventData.currency && (
+                  <p className="text-xs text-muted-foreground">
+                    Divisa seleccionada: {getCurrencySymbol(eventData.currency)} ({eventData.currency})
+                  </p>
+                )}
+              </div>
 
-            {/* TODO: Implement zone management */}
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">
-                Gestión de zonas próximamente - permitirá agregar zonas con capacidad y características
-              </p>
-            </div>
+              {/* Placeholder sections for future implementation */}
+              <div className="grid md:grid-cols-2 gap-8">
+                <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
+                  <CardContent className="p-8 text-center">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      🏟️
+                    </div>
+                    <h4 className="text-lg font-semibold text-foreground mb-2">Zonas y Capacidad</h4>
+                    <p className="text-muted-foreground mb-4">
+                      Gestión de zonas próximamente - permitirá agregar zonas con capacidad y características
+                    </p>
+                    <Badge variant="outline" className="animate-pulse">Próximamente</Badge>
+                  </CardContent>
+                </Card>
 
-            <div>
-              <h3 className="text-lg font-medium mb-4">Fases de Venta</h3>
-              <p className="text-muted-foreground mb-6">
-                Configura las fases de venta con fechas y precios por zona.
-              </p>
-            </div>
-
-            {/* TODO: Implement phase management */}
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">
-                Gestión de fases próximamente - permitirá configurar fases con precios dinámicos
-              </p>
+                <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
+                  <CardContent className="p-8 text-center">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      💰
+                    </div>
+                    <h4 className="text-lg font-semibold text-foreground mb-2">Fases de Venta</h4>
+                    <p className="text-muted-foreground mb-4">
+                      Gestión de fases próximamente - permitirá configurar fases con precios dinámicos
+                    </p>
+                    <Badge variant="outline" className="animate-pulse">Próximamente</Badge>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         );
 
       case 5: // Tickets and Payments
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Configuración de Tickets</h3>
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mb-4">
+                <Circle className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Tickets y Pagos</h2>
+              <p className="text-muted-foreground">Configura las opciones de venta y pago de entradas</p>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="sellTicketsOnPlatform"
-                  checked={eventData.sellTicketsOnPlatform || false}
-                  onChange={(e) => updateEventData('sellTicketsOnPlatform', e.target.checked)}
-                  className="rounded"
-                />
-                <Label htmlFor="sellTicketsOnPlatform">Vender tickets en la plataforma</Label>
+            <div className="grid gap-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-lg border border-indigo-200/50 dark:border-indigo-800/50">
+                  <input
+                    type="checkbox"
+                    id="sellTicketsOnPlatform"
+                    checked={eventData.sellTicketsOnPlatform || false}
+                    onChange={(e) => updateEventData('sellTicketsOnPlatform', e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                  />
+                  <Label htmlFor="sellTicketsOnPlatform" className="text-sm font-medium text-foreground cursor-pointer">
+                    💳 Vender tickets en la plataforma
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200/50 dark:border-green-800/50">
+                  <input
+                    type="checkbox"
+                    id="allowOfflinePayments"
+                    checked={eventData.allowOfflinePayments || false}
+                    onChange={(e) => updateEventData('allowOfflinePayments', e.target.checked)}
+                    className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                  />
+                  <Label htmlFor="allowOfflinePayments" className="text-sm font-medium text-foreground cursor-pointer">
+                    💵 Permitir pagos offline
+                  </Label>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="allowOfflinePayments"
-                  checked={eventData.allowOfflinePayments || false}
-                  onChange={(e) => updateEventData('allowOfflinePayments', e.target.checked)}
-                  className="rounded"
-                />
-                <Label htmlFor="allowOfflinePayments">Permitir pagos offline</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 rounded-lg border border-yellow-200/50 dark:border-yellow-800/50">
                 <input
                   type="checkbox"
                   id="allowInstallmentPayments"
                   checked={eventData.allowInstallmentPayments || false}
                   onChange={(e) => updateEventData('allowInstallmentPayments', e.target.checked)}
-                  className="rounded"
+                  className="w-4 h-4 text-yellow-600 rounded focus:ring-yellow-500"
                 />
-                <Label htmlFor="allowInstallmentPayments">Permitir pagos en cuotas</Label>
+                <Label htmlFor="allowInstallmentPayments" className="text-sm font-medium text-foreground cursor-pointer">
+                  📅 Permitir pagos en cuotas
+                </Label>
               </div>
 
               {eventData.allowInstallmentPayments && (
-                <div>
-                  <Label className="block text-sm font-medium mb-2">Máximo de cuotas</Label>
+                <div className="space-y-2 animate-slide-in-up">
+                  <Label className="text-sm font-semibold text-foreground">Máximo de cuotas</Label>
                   <Select
                     value={eventData.maxInstallments?.toString() || '3'}
                     onValueChange={(value) => updateEventData('maxInstallments', parseInt(value))}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -772,43 +1157,45 @@ export default function NewEventPage() {
                 </div>
               )}
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Modo de entrega de tickets</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Modo de entrega de tickets</Label>
                 <Select
                   value={eventData.ticketDeliveryMode || 'automatic'}
                   onValueChange={(value) => updateEventData('ticketDeliveryMode', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="automatic">Automático (generado por sistema)</SelectItem>
-                    <SelectItem value="manualUpload">Manual (admin sube archivos)</SelectItem>
+                    <SelectItem value="automatic">🤖 Automático (generado por sistema)</SelectItem>
+                    <SelectItem value="manualUpload">📁 Manual (admin sube archivos)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Fecha disponible de descarga</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Fecha disponible de descarga</Label>
                 <Input
                   type="date"
                   value={eventData.ticketDownloadAvailableDate || ''}
                   onChange={(e) => updateEventData('ticketDownloadAvailableDate', e.target.value)}
+                  className="h-12"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground">
                   Fecha a partir de la cual los usuarios podrán descargar sus tickets
                 </p>
               </div>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">URL externa de tickets (opcional)</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">URL externa de tickets (opcional)</Label>
                 <Input
                   type="url"
                   value={eventData.externalTicketUrl || ''}
                   onChange={(e) => updateEventData('externalTicketUrl', e.target.value)}
                   placeholder="https://external-site.com/tickets"
+                  className="h-12"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground">
                   Si vendes tickets en otra plataforma, redirigiremos aquí
                 </p>
               </div>
@@ -818,14 +1205,18 @@ export default function NewEventPage() {
 
       case 6: // Organizer
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Información del Organizador</h3>
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-teal-500 to-green-500 rounded-full mb-4">
+                <Circle className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Información del Organizador</h2>
+              <p className="text-muted-foreground">Agrega los datos de contacto del organizador del evento</p>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium mb-2">Nombre del Organizador *</Label>
+            <div className="grid gap-6">
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Nombre del Organizador *</Label>
                 <Input
                   value={eventData.organizer?.name || ''}
                   onChange={(e) => updateEventData('organizer', {
@@ -833,36 +1224,41 @@ export default function NewEventPage() {
                     name: e.target.value
                   })}
                   placeholder="Ej: Ultra Music Festival"
+                  className="h-12"
                 />
               </div>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Email de Contacto</Label>
-                <Input
-                  type="email"
-                  value={eventData.organizer?.email || ''}
-                  onChange={(e) => updateEventData('organizer', {
-                    ...eventData.organizer,
-                    email: e.target.value
-                  })}
-                  placeholder="contacto@organizador.com"
-                />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Email de Contacto</Label>
+                  <Input
+                    type="email"
+                    value={eventData.organizer?.email || ''}
+                    onChange={(e) => updateEventData('organizer', {
+                      ...eventData.organizer,
+                      email: e.target.value
+                    })}
+                    placeholder="contacto@organizador.com"
+                    className="h-12"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Teléfono</Label>
+                  <Input
+                    value={eventData.organizer?.phone || ''}
+                    onChange={(e) => updateEventData('organizer', {
+                      ...eventData.organizer,
+                      phone: e.target.value
+                    })}
+                    placeholder="+56 9 1234 5678"
+                    className="h-12"
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Teléfono</Label>
-                <Input
-                  value={eventData.organizer?.phone || ''}
-                  onChange={(e) => updateEventData('organizer', {
-                    ...eventData.organizer,
-                    phone: e.target.value
-                  })}
-                  placeholder="+56 9 1234 5678"
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Sitio Web</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Sitio Web</Label>
                 <Input
                   type="url"
                   value={eventData.organizer?.website || ''}
@@ -871,11 +1267,12 @@ export default function NewEventPage() {
                     website: e.target.value
                   })}
                   placeholder="https://organizador.com"
+                  className="h-12"
                 />
               </div>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Logo (URL)</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-foreground">Logo (URL)</Label>
                 <Input
                   type="url"
                   value={eventData.organizer?.logoUrl || ''}
@@ -884,6 +1281,7 @@ export default function NewEventPage() {
                     logoUrl: e.target.value
                   })}
                   placeholder="https://organizador.com/logo.png"
+                  className="h-12"
                 />
               </div>
             </div>
@@ -892,94 +1290,163 @@ export default function NewEventPage() {
 
       case 7: // SEO and Schema
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">SEO y Schema.org</h3>
-              <p className="text-muted-foreground mb-6">
-                Configura la información para motores de búsqueda y redes sociales.
-              </p>
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full mb-4">
+                <Circle className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">SEO y Schema.org</h2>
+              <p className="text-muted-foreground">Optimiza tu evento para motores de búsqueda y redes sociales</p>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium mb-2">Título SEO</Label>
-                <Input
-                  value={eventData.seoTitle || ''}
-                  onChange={(e) => updateEventData('seoTitle', e.target.value)}
-                  placeholder="Ultra Chile 2026 - Festival de Música Electrónica"
-                />
-              </div>
+            <div className="space-y-8">
+              {/* Título SEO */}
+              <Card className="border-2 border-green-200/50 dark:border-green-800/50 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg text-green-800 dark:text-green-200 flex items-center gap-2">
+                    🎯 Título SEO Optimizado
+                    {eventData.seoTitle && <Badge variant="default" className="text-xs">Personalizado</Badge>}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">
+                      Título SEO *
+                      {!eventData.seoTitle && eventData.name && (
+                        <span className="text-xs text-green-600 dark:text-green-400 font-normal ml-2">
+                          ⚡ Se auto-completa desde el nombre del evento
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      value={eventData.seoTitle || eventData.name || ''}
+                      onChange={(e) => updateEventData('seoTitle', e.target.value)}
+                      placeholder={`${eventData.name || 'Evento'} - Festival de Música`}
+                      className="h-12 font-medium"
+                    />
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-muted-foreground">
+                        Longitud recomendada: 50-60 caracteres
+                      </p>
+                      <span className={`text-xs font-medium ${
+                        (eventData.seoTitle || eventData.name || '').length > 60 ? 'text-red-500' :
+                        (eventData.seoTitle || eventData.name || '').length > 50 ? 'text-green-500' : 'text-yellow-500'
+                      }`}>
+                        {(eventData.seoTitle || eventData.name || '').length}/60
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Descripción SEO</Label>
-                <Textarea
-                  value={eventData.seoDescription || ''}
-                  onChange={(e) => updateEventData('seoDescription', e.target.value)}
-                  placeholder="Únete al festival más grande de música electrónica en Chile..."
-                  rows={3}
-                />
-              </div>
+              {/* Descripción SEO */}
+              <Card className="border-2 border-blue-200/50 dark:border-blue-800/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                    📝 Descripción SEO Optimizada
+                    {eventData.seoDescription && <Badge variant="default" className="text-xs">Personalizada</Badge>}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">
+                      Descripción SEO *
+                      {!eventData.seoDescription && eventData.shortDescription && (
+                        <span className="text-xs text-blue-600 dark:text-blue-400 font-normal ml-2">
+                          ⚡ Se auto-completa desde la descripción corta
+                        </span>
+                      )}
+                    </Label>
+                    <Textarea
+                      value={eventData.seoDescription || eventData.shortDescription || ''}
+                      onChange={(e) => updateEventData('seoDescription', e.target.value)}
+                      placeholder={`Únete al evento más esperado del año. ${eventData.name || 'El evento'} te espera en ${eventData.location?.city || 'una increíble ubicación'}.`}
+                      rows={4}
+                      className="resize-none"
+                    />
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-muted-foreground">
+                        Longitud recomendada: 150-160 caracteres para Google
+                      </p>
+                      <span className={`text-xs font-medium ${
+                        (eventData.seoDescription || eventData.shortDescription || '').length > 160 ? 'text-red-500' :
+                        (eventData.seoDescription || eventData.shortDescription || '').length > 150 ? 'text-green-500' : 'text-yellow-500'
+                      }`}>
+                        {(eventData.seoDescription || eventData.shortDescription || '').length}/160
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Palabras Clave SEO</Label>
-                <Input
-                  value={eventData.seoKeywords?.join(', ') || ''}
-                  onChange={(e) => updateEventData('seoKeywords', e.target.value.split(',').map(k => k.trim()))}
-                  placeholder="festival, música electrónica, Chile, Ultra"
-                />
-              </div>
+              {/* Configuración Avanzada */}
+              <Card className="border-2 border-purple-200/50 dark:border-purple-800/50 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg text-purple-800 dark:text-purple-200">⚙️ Configuración Avanzada</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">Tipo de Schema</Label>
+                      <Select
+                        value={eventData.schemaType || 'MusicFestival'}
+                        onValueChange={(value) => updateEventData('schemaType', value)}
+                      >
+                        <SelectTrigger className="h-12">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MusicFestival">🎪 MusicFestival</SelectItem>
+                          <SelectItem value="MusicEvent">🎵 MusicEvent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Tipo de Schema</Label>
-                <Select
-                  value={eventData.schemaType || 'MusicFestival'}
-                  onValueChange={(value) => updateEventData('schemaType', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MusicFestival">MusicFestival</SelectItem>
-                    <SelectItem value="MusicEvent">MusicEvent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">Categorías</Label>
+                      <Input
+                        value={eventData.categories?.join(', ') || ''}
+                        onChange={(e) => updateEventData('categories', e.target.value.split(',').map(c => c.trim()).filter(c => c))}
+                        placeholder="Electrónica, EDM, Techno"
+                        className="h-12"
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Categorías</Label>
-                <Input
-                  value={eventData.categories?.join(', ') || ''}
-                  onChange={(e) => updateEventData('categories', e.target.value.split(',').map(c => c.trim()))}
-                  placeholder="Electrónica, EDM, Techno"
-                />
-              </div>
-
-              <div>
-                <Label className="block text-sm font-medium mb-2">Etiquetas</Label>
-                <Input
-                  value={eventData.tags?.join(', ') || ''}
-                  onChange={(e) => updateEventData('tags', e.target.value.split(',').map(t => t.trim()))}
-                  placeholder="ultra, chile, festival"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-foreground">Etiquetas</Label>
+                    <Input
+                      value={eventData.tags?.join(', ') || ''}
+                      onChange={(e) => updateEventData('tags', e.target.value.split(',').map(t => t.trim()).filter(t => t))}
+                      placeholder="ultra, chile, festival"
+                      className="h-12"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         );
 
       case 8: // SEO Preview
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Previsualización SEO y Redes Sociales</h3>
-              <p className="text-muted-foreground mb-6">
-                Revisa cómo se verá tu evento en motores de búsqueda y redes sociales antes de publicarlo.
-              </p>
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full mb-4">
+                <Eye className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Previsualización SEO</h2>
+              <p className="text-muted-foreground">Revisa cómo se verá tu evento en motores de búsqueda y redes sociales</p>
             </div>
 
             <Tabs defaultValue="social" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="social">Redes Sociales</TabsTrigger>
-                <TabsTrigger value="schema">Schema JSON-LD</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="social" className="flex items-center gap-2">
+                  📱 Redes Sociales
+                </TabsTrigger>
+                <TabsTrigger value="schema" className="flex items-center gap-2">
+                  🔍 Schema JSON-LD
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="social" className="space-y-4">
@@ -995,74 +1462,114 @@ export default function NewEventPage() {
 
       case 9: // Review
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Revisión Final</h3>
-              <p className="text-muted-foreground mb-6">
-                Revisa toda la información antes de publicar el evento.
-              </p>
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mb-4">
+                <CheckCircle className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Revisión Final</h2>
+              <p className="text-muted-foreground">Revisa toda la información antes de publicar el evento</p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-              <Card>
+              <Card className="border-2 border-blue-200/50 dark:border-blue-800/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">Información Básica</CardTitle>
+                  <CardTitle className="text-lg text-blue-800 dark:text-blue-200">📝 Información Básica</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <div><strong>Nombre:</strong> {eventData.name}</div>
-                  <div><strong>Tipo:</strong> {eventData.eventType}</div>
-                  <div><strong>Slug:</strong> {eventData.slug}</div>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Nombre:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.name || 'No definido'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Tipo:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.eventType || 'No definido'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Slug:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.slug || 'No definido'}</span>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-2 border-green-200/50 dark:border-green-800/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">Fechas y Ubicación</CardTitle>
+                  <CardTitle className="text-lg text-green-800 dark:text-green-200">📅 Fechas y Ubicación</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <div><strong>Fecha:</strong> {eventData.startDate}</div>
-                  <div><strong>Recinto:</strong> {eventData.location?.venue}</div>
-                  <div><strong>Ciudad:</strong> {eventData.location?.city}</div>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Fecha:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.startDate || 'No definida'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Recinto:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.location?.venue || 'No definido'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Ciudad:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.location?.city || 'No definida'}</span>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-2 border-purple-200/50 dark:border-purple-800/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">Lineup</CardTitle>
+                  <CardTitle className="text-lg text-purple-800 dark:text-purple-200">🎤 Lineup</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div><strong>Artistas:</strong> {eventData.artistLineup?.length || 0}</div>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Artistas:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.artistLineup?.length || 0}</span>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-2 border-orange-200/50 dark:border-orange-800/50">
                 <CardHeader>
-                  <CardTitle className="text-lg">Configuración</CardTitle>
+                  <CardTitle className="text-lg text-orange-800 dark:text-orange-200">⚙️ Configuración</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <div><strong>Venta de tickets:</strong> {eventData.sellTicketsOnPlatform ? 'Sí' : 'No'}</div>
-                  <div><strong>Pagos offline:</strong> {eventData.allowOfflinePayments ? 'Sí' : 'No'}</div>
-                  <div><strong>Entrega:</strong> {eventData.ticketDeliveryMode}</div>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Venta de tickets:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.sellTicketsOnPlatform ? 'Sí' : 'No'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Pagos offline:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.allowOfflinePayments ? 'Sí' : 'No'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Entrega:</span>
+                    <span className="text-sm font-semibold text-foreground">{eventData.ticketDeliveryMode || 'No definida'}</span>
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Validation Messages */}
-            <Card className="border-yellow-200 bg-yellow-50">
+            <Card className="border-2 border-yellow-200/50 dark:border-yellow-800/50 bg-gradient-to-br from-yellow-50/50 to-orange-50/50 dark:from-yellow-950/20 dark:to-orange-950/20">
               <CardHeader>
-                <CardTitle className="text-lg text-yellow-800">Validaciones</CardTitle>
+                <CardTitle className="text-lg text-yellow-800 dark:text-yellow-200">⚠️ Validaciones</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2 text-sm">
-                  {!eventData.name && <div className="text-red-600">❌ Nombre del evento requerido</div>}
-                  {!eventData.slug && <div className="text-red-600">❌ Slug requerido</div>}
-                  {!eventData.startDate && <div className="text-red-600">❌ Fecha de inicio requerida</div>}
-                  {!eventData.location?.venue && <div className="text-red-600">❌ Recinto requerido</div>}
-                  {!eventData.location?.city && <div className="text-red-600">❌ Ciudad requerida</div>}
-                  {!eventData.mainImageUrl && <div className="text-yellow-600">⚠️ Imagen principal recomendada</div>}
-                  {(!eventData.artistLineup || eventData.artistLineup.length === 0) && <div className="text-yellow-600">⚠️ Lineup vacío</div>}
-                  {eventData.sellTicketsOnPlatform && (!eventData.zones || eventData.zones.length === 0) && <div className="text-red-600">❌ Zonas requeridas para venta de tickets</div>}
-                  {eventData.sellTicketsOnPlatform && (!eventData.salesPhases || eventData.salesPhases.length === 0) && <div className="text-red-600">❌ Fases de venta requeridas</div>}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground">Campos Requeridos:</h4>
+                    <div className="space-y-1 text-sm">
+                      {!eventData.name && <div className="text-red-600 dark:text-red-400 flex items-center gap-2">❌ Nombre del evento requerido</div>}
+                      {!eventData.slug && <div className="text-red-600 dark:text-red-400 flex items-center gap-2">❌ Slug requerido</div>}
+                      {!eventData.startDate && <div className="text-red-600 dark:text-red-400 flex items-center gap-2">❌ Fecha de inicio requerida</div>}
+                      {!eventData.location?.venue && <div className="text-red-600 dark:text-red-400 flex items-center gap-2">❌ Recinto requerido</div>}
+                      {!eventData.location?.city && <div className="text-red-600 dark:text-red-400 flex items-center gap-2">❌ Ciudad requerida</div>}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground">Recomendaciones:</h4>
+                    <div className="space-y-1 text-sm">
+                      {!eventData.mainImageUrl && <div className="text-yellow-600 dark:text-yellow-400 flex items-center gap-2">⚠️ Imagen principal recomendada</div>}
+                      {(!eventData.artistLineup || eventData.artistLineup.length === 0) && <div className="text-yellow-600 dark:text-yellow-400 flex items-center gap-2">⚠️ Lineup vacío</div>}
+                      {eventData.sellTicketsOnPlatform && (!eventData.zones || eventData.zones.length === 0) && <div className="text-yellow-600 dark:text-yellow-400 flex items-center gap-2">⚠️ Zonas requeridas para venta de tickets</div>}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1076,82 +1583,131 @@ export default function NewEventPage() {
 
   return (
     <AuthGuard>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/admin/events">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">Crear Nuevo Evento</h1>
-            <p className="text-muted-foreground">Completa la información paso a paso</p>
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-8 animate-slide-in-left">
+            <Link href="/admin/events">
+              <Button variant="ghost" size="sm" className="hover:bg-muted/50 transition-colors">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                Crear Nuevo Evento
+              </h1>
+              <p className="text-muted-foreground mt-1">Completa la información paso a paso</p>
+            </div>
           </div>
-        </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                index <= currentStep
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'
-              }`}>
-                {index + 1}
-              </div>
-              {index < STEPS.length - 1 && (
-                <div className={`w-12 h-0.5 mx-2 ${
-                  index < currentStep ? 'bg-primary' : 'bg-muted'
-                }`} />
+          {/* Progress Steps */}
+          <div className="mb-8 animate-fade-in-up">
+            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2 mb-6">
+              {STEPS.map((step, index) => {
+                const IconComponent = step.icon;
+                const isCompleted = completedSteps.has(index);
+                const isCurrent = index === currentStep;
+                const isAccessible = index <= currentStep || isCompleted;
+                
+                return (
+                  <div key={step.id} className="flex flex-col items-center group">
+                    <button
+                      onClick={() => isAccessible && setCurrentStep(index)}
+                      disabled={!isAccessible}
+                      className={`
+                        relative flex items-center justify-center w-12 h-12 rounded-full text-sm font-medium transition-all duration-300 
+                        ${isCurrent 
+                          ? `bg-gradient-to-r ${step.color} text-white shadow-lg scale-110 ring-4 ring-white/20` 
+                          : isCompleted
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md hover:scale-105'
+                          : isAccessible
+                          ? 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground cursor-pointer'
+                          : 'bg-muted/50 text-muted-foreground/50 cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle className="h-5 w-5" />
+                      ) : (
+                        <IconComponent className="h-5 w-5" />
+                      )}
+                      
+                      {/* Step number for non-completed steps */}
+                      {!isCompleted && (
+                        <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 dark:text-white border-2 border-current">
+                          {index + 1}
+                        </span>
+                      )}
+                    </button>
+                    
+                    <div className="mt-2 text-center max-w-20">
+                      <p className={`text-xs font-medium transition-colors ${
+                        isCurrent ? 'text-foreground' : isCompleted ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                      }`}>
+                        {step.title}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Current step info */}
+            <div className="text-center bg-gradient-to-r from-muted/50 to-muted/30 backdrop-blur-sm rounded-xl p-4 border border-muted/50">
+              <h2 className="text-xl font-semibold text-foreground">{STEPS[currentStep].title}</h2>
+              <p className="text-muted-foreground mt-1">{STEPS[currentStep].description}</p>
+            </div>
+          </div>
+
+          {/* Step Content */}
+          <Card className="border-2 border-muted/50 bg-card/80 backdrop-blur-sm shadow-2xl">
+            <CardContent className="p-8">
+              {renderStepContent()}
+            </CardContent>
+          </Card>
+
+          {/* Navigation */}
+          <div className="flex justify-between items-center mt-8 animate-slide-in-up">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 0}
+              className="flex items-center gap-2 h-12 px-6 transition-all duration-200 hover:bg-muted/50"
+            >
+              ← Anterior
+            </Button>
+
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={saveAsDraft} 
+                disabled={saving}
+                className="flex items-center gap-2 h-12 px-6 transition-all duration-200 hover:bg-muted/50"
+              >
+                <Save className="h-4 w-4" />
+                {saving ? 'Guardando...' : 'Guardar Borrador'}
+              </Button>
+
+              {currentStep === STEPS.length - 1 ? (
+                <Button 
+                  onClick={publishEvent} 
+                  disabled={saving}
+                  className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
+                >
+                  <Eye className="h-4 w-4" />
+                  {saving ? 'Publicando...' : 'Publicar Evento'}
+                </Button>
+              ) : (
+                <Button 
+                  onClick={nextStep}
+                  className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
+                >
+                  Siguiente →
+                </Button>
               )}
             </div>
-          ))}
-        </div>
-        <div className="mt-4">
-          <h2 className="text-lg font-medium">{STEPS[currentStep].title}</h2>
-          <p className="text-muted-foreground">{STEPS[currentStep].description}</p>
-        </div>
-      </div>
-
-      {/* Step Content */}
-      <Card>
-        <CardContent className="p-6">
-          {renderStepContent()}
-        </CardContent>
-      </Card>
-
-      {/* Navigation */}
-      <div className="flex justify-between mt-8">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          disabled={currentStep === 0}
-        >
-          Anterior
-        </Button>
-
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={saveAsDraft} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? 'Guardando...' : 'Guardar Borrador'}
-          </Button>
-
-          {currentStep === STEPS.length - 1 && (
-            <Button onClick={publishEvent} disabled={saving}>
-              <Eye className="mr-2 h-4 w-4" />
-              {saving ? 'Publicando...' : 'Publicar Evento'}
-            </Button>
-          )}
-
-          {currentStep < STEPS.length - 1 && (
-            <Button onClick={nextStep}>
-              Siguiente
-            </Button>
-          )}
-        </div>
+          </div>
         </div>
       </div>
     </AuthGuard>

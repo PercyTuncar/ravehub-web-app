@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Plus, X, Calendar, MapPin, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Search, Plus, X, Calendar, MapPin, Star, ExternalLink, Music, Users, Award, Filter, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,10 +40,14 @@ export function LineupSelector({
   startDate,
   endDate
 }: LineupSelectorProps) {
+  const router = useRouter();
   const [availableDjs, setAvailableDjs] = useState<EventDj[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDj, setSelectedDj] = useState<EventDj | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'approved' | 'pending'>('approved');
+  const [sortBy, setSortBy] = useState<'name' | 'country' | 'genres'>('name');
+  const [loading, setLoading] = useState(true);
   const [newArtist, setNewArtist] = useState<Partial<LineupArtist>>({
     name: '',
     performanceDate: startDate,
@@ -56,18 +62,43 @@ export function LineupSelector({
 
   const loadAvailableDjs = async () => {
     try {
+      setLoading(true);
       const djs = await eventDjsCollection.getAll() as EventDj[];
-      setAvailableDjs(djs.filter(dj => dj.approved));
+      setAvailableDjs(djs);
     } catch (error) {
       console.error('Error loading DJs:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredDjs = availableDjs.filter(dj =>
-    dj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dj.alternateName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dj.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredAndSortedDjs = availableDjs
+    .filter(dj => {
+      // Status filter
+      if (filterStatus === 'approved' && !dj.approved) return false;
+      if (filterStatus === 'pending' && dj.approved) return false;
+      
+      // Search filter
+      if (searchTerm) {
+        return dj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               dj.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               dj.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+               dj.country.toLowerCase().includes(searchTerm.toLowerCase());
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'country':
+          return a.country.localeCompare(b.country);
+        case 'genres':
+          return a.genres[0]?.localeCompare(b.genres[0] || '') || 0;
+        default:
+          return 0;
+      }
+    });
 
   const addDjToLineup = (dj: EventDj) => {
     const newArtist: LineupArtist = {
@@ -131,150 +162,226 @@ export function LineupSelector({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Current Lineup */}
-      <div>
-        <h4 className="font-medium mb-4">Lineup Actual ({lineup.length} artistas)</h4>
-        {lineup.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-            No hay artistas en el lineup aún. Agrega algunos abajo.
+    <div className="space-y-8">
+      {/* Current Lineup - Modern Design */}
+      <Card className="border-2 border-blue-200/50 dark:border-blue-800/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Lineup Actual ({lineup.length} artistas)
+            </h4>
+            {lineup.length > 0 && (
+              <Badge variant="outline" className="text-sm">
+                Ordenado por prioridad
+              </Badge>
+            )}
           </div>
-        ) : (
-          <div className="space-y-3">
-            {lineup.map((artist, index) => (
-              <Card key={index}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+          
+          {lineup.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl bg-gradient-to-br from-muted/30 to-muted/10">
+              <Music className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg mb-2">No hay artistas en el lineup aún</p>
+              <p className="text-sm">Agrega algunos DJs abajo para construir tu evento</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {lineup.map((artist, index) => (
+                <Card key={index} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveArtist(index, Math.max(0, index - 1))}
+                            disabled={index === 0}
+                            className="hover:bg-muted"
+                          >
+                            ↑
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveArtist(index, Math.min(lineup.length - 1, index + 1))}
+                            disabled={index === lineup.length - 1}
+                            className="hover:bg-muted"
+                          >
+                            ↓
+                          </Button>
+                        </div>
+
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
+                          {artist.name.charAt(0).toUpperCase()}
+                        </div>
+
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-foreground">{artist.name}</span>
+                            {artist.isHeadliner && <Badge variant="default" className="text-xs">⭐ Headliner</Badge>}
+                            <Badge variant="outline" className="text-xs">#{artist.order}</Badge>
+                            {artist.eventDjId && (
+                              <Badge variant="secondary" className="text-xs">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                DJ Registrado
+                              </Badge>
+                            )}
+                          </div>
+
+                          {(artist.performanceDate || artist.stage || artist.performanceTime) && (
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              {artist.performanceDate && (
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {new Date(artist.performanceDate).toLocaleDateString()}
+                                </div>
+                              )}
+                              {artist.performanceTime && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {artist.performanceTime}
+                                </div>
+                              )}
+                              {artist.stage && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {artist.stage}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => moveArtist(index, Math.max(0, index - 1))}
-                          disabled={index === 0}
+                          onClick={() => updateArtist(index, { isHeadliner: !artist.isHeadliner })}
+                          className="hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
                         >
-                          ↑
+                          <Star className={`h-4 w-4 ${artist.isHeadliner ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                         </Button>
+
+                        {(eventType === 'festival' || isMultiDay) && (
+                          <Select
+                            value={artist.performanceDate || ''}
+                            onValueChange={(value) => updateArtist(index, { performanceDate: value })}
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue placeholder="Fecha" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {startDate && (
+                                <SelectItem value={startDate}>
+                                  Día 1: {new Date(startDate).toLocaleDateString()}
+                                </SelectItem>
+                              )}
+                              {endDate && endDate !== startDate && (
+                                <SelectItem value={endDate}>
+                                  Día 2: {new Date(endDate).toLocaleDateString()}
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        )}
+
+                        <Input
+                          placeholder="Escenario"
+                          value={artist.stage || ''}
+                          onChange={(e) => updateArtist(index, { stage: e.target.value })}
+                          className="w-28"
+                        />
+
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => moveArtist(index, Math.min(lineup.length - 1, index + 1))}
-                          disabled={index === lineup.length - 1}
+                          onClick={() => removeFromLineup(index)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
                         >
-                          ↓
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{artist.name}</span>
-                          {artist.isHeadliner && <Badge variant="default">Headliner</Badge>}
-                          <span className="text-sm text-muted-foreground">#{artist.order}</span>
-                        </div>
-
-                        {(artist.performanceDate || artist.stage) && (
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                            {artist.performanceDate && (
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {new Date(artist.performanceDate).toLocaleDateString()}
-                              </div>
-                            )}
-                            {artist.stage && (
-                              <div className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {artist.stage}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => updateArtist(index, { isHeadliner: !artist.isHeadliner })}
-                      >
-                        <Star className={`h-4 w-4 ${artist.isHeadliner ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                      </Button>
-
-                      {(eventType === 'festival' || isMultiDay) && (
-                        <Select
-                          value={artist.performanceDate || ''}
-                          onValueChange={(value) => updateArtist(index, { performanceDate: value })}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue placeholder="Fecha" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {startDate && (
-                              <SelectItem value={startDate}>
-                                Día 1: {new Date(startDate).toLocaleDateString()}
-                              </SelectItem>
-                            )}
-                            {endDate && endDate !== startDate && (
-                              <SelectItem value={endDate}>
-                                Día 2: {new Date(endDate).toLocaleDateString()}
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      )}
-
-                      <Input
-                        placeholder="Escenario"
-                        value={artist.stage || ''}
-                        onChange={(e) => updateArtist(index, { stage: e.target.value })}
-                        className="w-24"
-                      />
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFromLineup(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Add Artists Section */}
-      <div>
-        <h4 className="font-medium mb-4">Agregar Artistas</h4>
-
-        {/* Search DJs */}
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar DJs por nombre o género..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowAddForm(!showAddForm)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Artista Personalizado
-            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add Artists Section - Modern Design */}
+      <Card className="border-2 border-green-200/50 dark:border-green-800/50 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Agregar Artistas
+            </h4>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/admin/djs')}
+                className="flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Gestionar DJs
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddForm(!showAddForm)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Artista Personalizado
+              </Button>
+            </div>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="space-y-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar DJs por nombre, género o país..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="approved">Aprobados</SelectItem>
+                  <SelectItem value="pending">Pendientes</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Nombre</SelectItem>
+                  <SelectItem value="country">País</SelectItem>
+                  <SelectItem value="genres">Género</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Custom Artist Form */}
           {showAddForm && (
-            <Card>
-              <CardContent className="p-4 space-y-3">
+            <Card className="mb-6 border-2 border-yellow-200/50 dark:border-yellow-800/50 bg-gradient-to-br from-yellow-50/50 to-orange-50/50 dark:from-yellow-950/20 dark:to-orange-950/20">
+              <CardContent className="p-4 space-y-4">
+                <h5 className="font-medium text-foreground">Agregar Artista Personalizado</h5>
                 <Input
                   placeholder="Nombre del artista"
                   value={newArtist.name || ''}
@@ -323,13 +430,14 @@ export function LineupSelector({
                     id="isHeadliner"
                     checked={newArtist.isHeadliner || false}
                     onChange={(e) => setNewArtist({ ...newArtist, isHeadliner: e.target.checked })}
+                    className="rounded"
                   />
-                  <label htmlFor="isHeadliner" className="text-sm">Es headliner</label>
+                  <label htmlFor="isHeadliner" className="text-sm text-foreground">Es headliner</label>
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={addCustomArtist} disabled={!newArtist.name}>
-                    Agregar
+                  <Button onClick={addCustomArtist} disabled={!newArtist.name} className="flex-1">
+                    Agregar al Lineup
                   </Button>
                   <Button variant="outline" onClick={() => setShowAddForm(false)}>
                     Cancelar
@@ -339,38 +447,86 @@ export function LineupSelector({
             </Card>
           )}
 
-          {/* Available DJs */}
-          {searchTerm && (
-            <div className="border rounded-lg max-h-60 overflow-y-auto">
-              {filteredDjs.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  No se encontraron DJs
-                </div>
-              ) : (
-                filteredDjs.map((dj) => (
+          {/* Available DJs - Modern Design */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h5 className="font-medium text-foreground">DJs Disponibles</h5>
+              <Badge variant="secondary">
+                {filteredAndSortedDjs.filter(dj => dj.approved).length} aprobados
+              </Badge>
+            </div>
+            
+            {loading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Cargando DJs...
+              </div>
+            ) : filteredAndSortedDjs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-xl">
+                <Music className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="mb-2">No se encontraron DJs</p>
+                <p className="text-sm">Intenta cambiar los filtros o agregar DJs desde la gestión</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push('/admin/djs')}
+                  className="mt-2"
+                >
+                  Gestionar DJs
+                </Button>
+              </div>
+            ) : (
+              <div className="border rounded-xl max-h-96 overflow-y-auto custom-scrollbar">
+                {filteredAndSortedDjs.map((dj) => (
                   <div
                     key={dj.id}
-                    className="p-3 border-b last:border-b-0 hover:bg-muted cursor-pointer"
-                    onClick={() => addDjToLineup(dj)}
+                    className={`p-4 border-b last:border-b-0 hover:bg-muted/50 cursor-pointer transition-colors ${
+                      !dj.approved ? 'opacity-60' : ''
+                    }`}
+                    onClick={() => dj.approved && addDjToLineup(dj)}
                   >
                     <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{dj.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {dj.genres.join(', ')} • {dj.country}
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {dj.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-foreground">{dj.name}</span>
+                            <Badge variant={dj.approved ? "default" : "secondary"} className="text-xs">
+                              {dj.approved ? "Aprobado" : "Pendiente"}
+                            </Badge>
+                            {dj.famousTracks.length > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                <Award className="h-3 w-3 mr-1" />
+                                {dj.famousTracks.length} tracks
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Music className="h-3 w-3" />
+                              {dj.genres.slice(0, 2).join(', ')}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              🌍 {dj.country}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <Button size="sm">
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                      {dj.approved && (
+                        <Button size="sm" className="flex items-center gap-1">
+                          <Plus className="h-4 w-4" />
+                          Agregar
+                        </Button>
+                      )}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

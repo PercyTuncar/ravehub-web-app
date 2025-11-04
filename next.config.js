@@ -1,15 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // No queremos slash final en URLs
-  trailingSlash: false,
-
-  // Solo 1 idioma (sin rutas /es/*)
-  i18n: {
-    locales: ['es'],
-    defaultLocale: 'es',
-    localeDetection: false, // no detectar por Accept-Language
-  },
-
   images: {
     domains: ['firebasestorage.googleapis.com', 'cdn.ravehublatam.com'],
     remotePatterns: [
@@ -18,6 +8,11 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+  },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:3000'],
+    },
   },
   env: {
     NEXT_PUBLIC_APP_NAME: 'Ravehub',

@@ -99,6 +99,11 @@ export interface Event {
 
   mainImageUrl: string;
   bannerImageUrl?: string;
+  imageGallery?: string[]; // Galería de imágenes adicionales
+  imageAltTexts?: Record<string, string>; // Textos alternativos para SEO
+  videoUrl?: string; // Video principal del evento
+  videoGallery?: string[]; // Galería de videos
+  mediaOrder?: string[]; // Orden de visualización de multimedia
 
   artistLineup: Array<{
     eventDjId?: string;
@@ -406,6 +411,7 @@ export interface EventDj {
     stage?: string;
     isHeadliner?: boolean;
   }>;
+  
   pastEvents?: Array<{
     eventId: string;
     eventName: string;
@@ -413,6 +419,12 @@ export interface EventDj {
     endDate?: string;
     stage?: string;
   }>;
+
+  // SEO and Schema fields
+  jsonLdSchema?: any;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string[];
 }
 
 // Event CTA types

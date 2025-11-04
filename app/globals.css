@@ -21,6 +21,20 @@
 .custom-scrollbar::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* Force modal to be fully responsive without height constraints */
+[data-radix-dialog-content] {
+  max-height: 95vh !important;
+  height: auto !important;
+}
+
+/* Override any responsive height constraints for modal content */
+@media (min-width: 768px) {
+  [data-radix-dialog-content] {
+    height: auto !important;
+    max-height: 95vh !important;
+  }
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

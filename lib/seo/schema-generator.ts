@@ -1,13 +1,13 @@
 import { BlogPost } from '@/lib/types';
 
 interface SchemaInput {
-  type: 'blog' | 'news' | 'festival' | 'concert' | 'product';
+  type: 'blog' | 'news' | 'festival' | 'concert' | 'product' | 'dj';
   data: any;
 }
 
 interface WebSiteSchema {
   '@context': string;
-  '@graph': Array<WebSiteNode | OrganizationSchema | WebPageNode | ImageObjectNode | BlogPostingNode>;
+  '@graph': Array<any>;
 }
 
 interface WebSiteNode {
@@ -105,7 +105,14 @@ export function safeJSONStringify(value: unknown): string {
 }
 
 export class SchemaGenerator {
-  private static readonly BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
+  private static get BASE_URL() {
+    // Always use production URL for schema generation (Google ignores localhost)
+    const envUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (envUrl && envUrl.startsWith('http')) {
+      return envUrl;
+    }
+    return 'https://www.ravehublatam.com';
+  }
 
   static generate(input: SchemaInput): any {
     switch (input.type) {
@@ -119,6 +126,8 @@ export class SchemaGenerator {
         return SchemaGenerator.generateConcert(input.data);
       case 'product':
         return SchemaGenerator.generateProduct(input.data);
+      case 'dj':
+        return SchemaGenerator.generateDjProfile(input.data);
       default:
         throw new Error(`Unsupported schema type: ${input.type}`);
     }
@@ -160,7 +169,7 @@ export class SchemaGenerator {
           '@id': `${SchemaGenerator.BASE_URL}/#website`,
           url: SchemaGenerator.BASE_URL,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub'],
           potentialAction: {
             '@type': 'SearchAction',
             target: `${SchemaGenerator.BASE_URL}/buscar?q={search_term_string}`,
@@ -365,19 +374,31 @@ export class SchemaGenerator {
           '@type': 'ListItem',
           'position': 1,
           'name': 'Inicio',
-          'item': SchemaGenerator.BASE_URL
+          'item': {
+            '@type': 'Thing',
+            '@id': SchemaGenerator.BASE_URL,
+            name: 'Inicio'
+          }
         },
         {
           '@type': 'ListItem',
           'position': 2,
           'name': 'Eventos',
-          'item': `${SchemaGenerator.BASE_URL}/eventos`
+          'item': {
+            '@type': 'Thing',
+            '@id': `${SchemaGenerator.BASE_URL}/eventos`,
+            name: 'Eventos'
+          }
         },
         {
           '@type': 'ListItem',
           'position': 3,
           'name': eventData.name,
-          'item': eventUrl
+          'item': {
+            '@type': 'Thing',
+            '@id': eventUrl,
+            name: eventData.name
+          }
         }
       ]
     });
@@ -410,7 +431,7 @@ export class SchemaGenerator {
           '@id': websiteId,
           url: this.BASE_URL,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub'],
         },
         {
           '@type': 'Organization',
@@ -420,7 +441,7 @@ export class SchemaGenerator {
           logo: {
             '@type': 'ImageObject',
             '@id': `${SchemaGenerator.BASE_URL}/#logo`,
-            url: `${SchemaGenerator.BASE_URL}/icons/logo.png`,
+            url: `${this.BASE_URL}/icons/logo.png`,
             width: 600,
             height: 60,
           },
@@ -550,7 +571,7 @@ export class SchemaGenerator {
           '@id': websiteId,
           url: baseUrl,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub'],
         },
         {
           '@type': 'Organization',
@@ -638,7 +659,7 @@ export class SchemaGenerator {
           '@id': websiteId,
           url: baseUrl,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub'],
         },
         {
           '@type': 'Organization',
@@ -813,7 +834,7 @@ export class SchemaGenerator {
           '@id': websiteId,
           url: this.BASE_URL,
           name: 'Ravehub',
-          alternateName: ['Ravehub', 'www.ravehublatam.com'],
+          alternateName: ['Ravehub'],
         },
         {
           '@type': 'Organization',
@@ -951,6 +972,286 @@ export class SchemaGenerator {
         },
       ],
     };
+
+    return schema;
+  }
+
+  static generateDjProfile(djData: any): any {
+    const djUrl = `${this.BASE_URL}/djs/${djData.slug}`;
+    const websiteId = `${this.BASE_URL}/#website`;
+    const organizationId = `${this.BASE_URL}/#organization`;
+    const profilePageId = `${djUrl}#webpage`;
+    const personId = `${djUrl}#person`;
+
+    // Helper function to process social links
+    const getSocialLinks = (socialLinks: any) => {
+      const sameAs: string[] = [];
+      
+      if (socialLinks?.instagram) {
+        sameAs.push(
+          socialLinks.instagram.startsWith('http')
+            ? socialLinks.instagram
+            : `https://instagram.com/${socialLinks.instagram.replace('@', '')}`
+        );
+      }
+      if (socialLinks?.facebook) {
+        sameAs.push(
+          socialLinks.facebook.startsWith('http')
+            ? socialLinks.facebook
+            : `https://facebook.com/${socialLinks.facebook}`
+        );
+      }
+      if (socialLinks?.twitter) {
+        sameAs.push(
+          socialLinks.twitter.startsWith('http')
+            ? socialLinks.twitter
+            : `https://x.com/${socialLinks.twitter.replace('@', '')}`
+        );
+      }
+      if (socialLinks?.youtube) {
+        sameAs.push(
+          socialLinks.youtube.startsWith('http')
+            ? socialLinks.youtube
+            : `https://youtube.com/channel/${socialLinks.youtube}`
+        );
+      }
+      if (socialLinks?.spotify) {
+        sameAs.push(
+          socialLinks.spotify.startsWith('http')
+            ? socialLinks.spotify
+            : `https://open.spotify.com/artist/${socialLinks.spotify}`
+        );
+      }
+      if (socialLinks?.tiktok) {
+        sameAs.push(
+          socialLinks.tiktok.startsWith('http')
+            ? socialLinks.tiktok
+            : `https://www.tiktok.com/${socialLinks.tiktok}?lang=es`
+        );
+      }
+      if (socialLinks?.website) {
+        sameAs.push(socialLinks.website);
+      }
+      
+      return sameAs;
+    };
+
+    // Helper function to create event references (only if not empty)
+    const getEventReferences = (upcomingEvents: any[], pastEvents: any[]) => {
+      const eventRefs: Array<{ '@id': string }> = [];
+      
+      // Add upcoming events
+      if (upcomingEvents?.length > 0) {
+        upcomingEvents.forEach((event: any) => {
+          eventRefs.push({
+            '@id': `${this.BASE_URL}/eventos/${event.eventId}#event`
+          });
+        });
+      }
+      
+      // Add past events
+      if (pastEvents?.length > 0) {
+        pastEvents.forEach((event: any) => {
+          eventRefs.push({
+            '@id': `${this.BASE_URL}/eventos/${event.eventId}#event`
+          });
+        });
+      }
+      
+      return eventRefs;
+    };
+
+    // Helper function to format dates
+    const formatDate = (dateString: string) => {
+      if (!dateString || typeof dateString !== 'string') {
+        return new Date().toISOString();
+      }
+      
+      // Try to parse the date string
+      const parsedDate = new Date(dateString);
+      
+      // Check if the date is valid
+      if (isNaN(parsedDate.getTime())) {
+        // If invalid, return current date as fallback
+        console.warn(`Invalid date string: ${dateString}, using current date as fallback`);
+        return new Date().toISOString();
+      }
+      
+      return parsedDate.toISOString();
+    };
+
+    const schema = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        // Website
+        {
+          '@type': 'WebSite',
+          '@id': websiteId,
+          url: this.BASE_URL,
+          name: 'Ravehub',
+          alternateName: ['Ravehub'],
+        },
+        // Organization
+        {
+          '@type': 'Organization',
+          '@id': organizationId,
+          name: 'Ravehub',
+          url: this.BASE_URL,
+          logo: {
+            '@type': 'ImageObject',
+            '@id': `${this.BASE_URL}/#logo`,
+            url: `${this.BASE_URL}/icons/logo.png`,
+            width: 600,
+            height: 60,
+          },
+          sameAs: [
+            'https://www.instagram.com/ravehub.pe',
+            'https://www.facebook.com/ravehub'
+          ],
+        },
+        // ProfilePage
+        {
+          '@type': 'ProfilePage',
+          '@id': profilePageId,
+          url: djUrl,
+          name: `${djData.name} - Perfil del DJ`,
+          isPartOf: { '@id': websiteId },
+          publisher: { '@id': organizationId },
+          dateCreated: formatDate(djData.createdAt),
+          dateModified: formatDate(djData.updatedAt),
+          mainEntity: { '@id': personId }
+        },
+        // Person (DJ)
+        {
+          '@type': 'Person',
+          '@id': personId,
+          name: djData.name,
+          alternateName: djData.alternateName || [djData.name.split(' ')[0]], // First name as alternate
+          description: djData.description || djData.bio || `${djData.name} es un DJ especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
+          image: djData.imageUrl ? {
+            '@type': 'ImageObject',
+            url: djData.imageUrl.replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
+            caption: djData.name,
+            encodingFormat: 'image/jpeg'
+          } : undefined,
+          url: djData.socialLinks?.website || djUrl,
+          sameAs: getSocialLinks(djData.socialLinks),
+          nationality: djData.country ? {
+            '@type': 'Country',
+            name: djData.country
+          } : undefined,
+          hasOccupation: [
+            { '@type': 'Occupation', name: 'DJ' },
+            ...(djData.jobTitle || ['Music Producer']).filter((title: string) => title !== 'DJ').map((title: string) => ({
+              '@type': 'Occupation',
+              name: title
+            }))
+          ],
+          knowsAbout: djData.genres || [],
+          identifier: [
+            { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id },
+            { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug }
+          ],
+          mainEntityOfPage: { '@id': profilePageId }, // Point to ProfilePage @id
+          performerIn: undefined as any // Will be set later based on events
+        }
+      ]
+    };
+
+    // Only add performerIn if it has events
+    const eventRefs = getEventReferences(djData.upcomingEvents || [], djData.pastEvents || []);
+    if (eventRefs.length > 0) {
+      // Add event references if they exist
+      const personNode = schema['@graph'].find((node: any) => node['@type'] === 'Person');
+      if (personNode) {
+        personNode.performerIn = eventRefs;
+      }
+    }
+
+    // Add famous albums as MusicAlbum nodes
+    if (djData.famousAlbums?.length > 0) {
+      djData.famousAlbums.forEach((album: string, index: number) => {
+        (schema['@graph'] as any[]).push({
+          '@type': 'MusicAlbum',
+          '@id': `${djUrl}/albums/${index}#album`,
+          name: album,
+          byArtist: { '@id': personId },
+          genre: djData.genres || []
+        });
+      });
+    }
+
+    // Add famous tracks as MusicRecording nodes
+    if (djData.famousTracks?.length > 0) {
+      djData.famousTracks.forEach((track: string, index: number) => {
+        (schema['@graph'] as any[]).push({
+          '@type': 'MusicRecording',
+          name: track,
+          byArtist: { '@id': personId },
+          genre: djData.genres?.[0] || 'Electronic'
+        });
+      });
+    }
+
+    // Add event references as light nodes (only for upcoming events)
+    if (djData.upcomingEvents?.length > 0) {
+      djData.upcomingEvents.forEach((event: any) => {
+        (schema['@graph'] as any[]).push({
+          '@type': 'MusicEvent',
+          '@id': `${this.BASE_URL}/eventos/${event.eventId}#event`,
+          name: event.eventName,
+          url: `${this.BASE_URL}/eventos/${event.eventId}`
+        });
+      });
+    }
+
+    // Add BreadcrumbList with proper object structure
+    (schema['@graph'] as any[]).push({
+      '@type': 'BreadcrumbList',
+      'itemListElement': [
+        {
+          '@type': 'ListItem',
+          'position': 1,
+          'name': 'Inicio',
+          'item': {
+            '@type': 'Thing',
+            '@id': this.BASE_URL,
+            name: 'Inicio'
+          }
+        },
+        {
+          '@type': 'ListItem',
+          'position': 2,
+          'name': 'DJs',
+          'item': {
+            '@type': 'Thing',
+            '@id': `${this.BASE_URL}/djs`,
+            name: 'DJs'
+          }
+        },
+        {
+          '@type': 'ListItem',
+          'position': 3,
+          'name': djData.name,
+          'item': {
+            '@type': 'Thing',
+            '@id': djUrl,
+            name: djData.name
+          }
+        }
+      ]
+    });
+
+    // Filter out undefined values
+    schema['@graph'] = schema['@graph'].map((node: any) => {
+      const filtered: any = {};
+      Object.keys(node).forEach(key => {
+        if (node[key] !== undefined) {
+          filtered[key] = node[key];
+        }
+      });
+      return filtered;
+    });
 
     return schema;
   }

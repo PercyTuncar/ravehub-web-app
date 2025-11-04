@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Wand2, Image, Video, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ import { SchemaPreview } from '@/components/seo/SchemaPreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Combobox } from '@/components/ui/combobox';
 import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
+import { generateSlug } from '@/lib/utils/slug-generator';
 
 const STEPS = [
   { id: 'basic', title: 'Información Básica', description: 'Nombre, tipo y descripción' },
@@ -189,6 +190,13 @@ export default function EditEventPage() {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const generateSlugFromName = () => {
+    if (eventData.name) {
+      const slug = generateSlug(eventData.name);
+      updateEventData('slug', slug);
+    }
   };
 
   const nextStep = () => {
@@ -586,38 +594,244 @@ export default function EditEventPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium mb-4">Multimedia</h3>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Image className="h-5 w-5" />
+                Multimedia del Evento
+              </h3>
               <p className="text-muted-foreground mb-6">
-                Sube imágenes y contenido visual para el evento.
+                Sube imágenes y contenido visual que represente tu evento. Una buena multimedia mejora el SEO y atrae más asistentes.
               </p>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium mb-2">Imagen Principal *</Label>
-                <Input
-                  type="url"
-                  value={eventData.mainImageUrl || ''}
-                  onChange={(e) => updateEventData('mainImageUrl', e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  URL de la imagen principal del evento (recomendado: 1200x675px)
-                </p>
-              </div>
+            <div className="grid gap-6">
+              {/* Imagen Principal */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Imagen Principal *</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="block text-sm font-medium mb-2">URL de la Imagen Principal</Label>
+                    <Input
+                      type="url"
+                      value={eventData.mainImageUrl || ''}
+                      onChange={(e) => updateEventData('mainImageUrl', e.target.value)}
+                      placeholder="https://example.com/evento-principal.jpg"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Esta imagen aparecerá en resultados de búsqueda y redes sociales (recomendado: 1200x675px)
+                    </p>
+                  </div>
+                  {eventData.mainImageUrl && (
+                    <div className="mt-4">
+                      <Label className="block text-sm font-medium mb-2">Texto Alternativo (SEO)</Label>
+                      <Input
+                        value={eventData.imageAltTexts?.main || ''}
+                        onChange={(e) => updateEventData('imageAltTexts', {
+                          ...eventData.imageAltTexts,
+                          main: e.target.value
+                        })}
+                        placeholder={`${eventData.name || 'Evento'} - Imagen principal`}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Describe la imagen para motores de búsqueda y accesibilidad
+                      </p>
+                    </div>
+                  )}
+                  {eventData.mainImageUrl && (
+                    <div className="mt-4 border rounded-lg p-4 bg-gray-50">
+                      <img
+                        src={eventData.mainImageUrl}
+                        alt={eventData.imageAltTexts?.main || eventData.name || 'Imagen del evento'}
+                        className="w-full max-w-sm h-48 object-cover rounded"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-              <div>
-                <Label className="block text-sm font-medium mb-2">Imagen de Banner</Label>
-                <Input
-                  type="url"
-                  value={eventData.bannerImageUrl || ''}
-                  onChange={(e) => updateEventData('bannerImageUrl', e.target.value)}
-                  placeholder="https://example.com/banner.jpg"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  URL de la imagen de banner (opcional)
-                </p>
-              </div>
+              {/* Imagen de Banner */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Imagen de Banner</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="block text-sm font-medium mb-2">URL del Banner (Opcional)</Label>
+                    <Input
+                      type="url"
+                      value={eventData.bannerImageUrl || ''}
+                      onChange={(e) => updateEventData('bannerImageUrl', e.target.value)}
+                      placeholder="https://example.com/banner-evento.jpg"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Imagen amplia para la portada del evento (recomendado: 1920x1080px)
+                    </p>
+                  </div>
+                  {eventData.bannerImageUrl && (
+                    <div className="mt-4 border rounded-lg p-4 bg-gray-50">
+                      <img
+                        src={eventData.bannerImageUrl}
+                        alt={eventData.name || 'Banner del evento'}
+                        className="w-full max-w-lg h-32 object-cover rounded"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Galería de Imágenes */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Galería de Imágenes</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    {eventData.imageGallery?.map((imageUrl, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 border rounded">
+                        <div className="flex-1">
+                          <Input
+                            type="url"
+                            value={imageUrl}
+                            onChange={(e) => {
+                              const newGallery = [...(eventData.imageGallery || [])];
+                              newGallery[index] = e.target.value;
+                              updateEventData('imageGallery', newGallery);
+                            }}
+                            placeholder={`https://example.com/imagen-${index + 1}.jpg`}
+                          />
+                          <div className="mt-2">
+                            <Input
+                              value={eventData.imageAltTexts?.[`gallery-${index}`] || ''}
+                              onChange={(e) => updateEventData('imageAltTexts', {
+                                ...eventData.imageAltTexts,
+                                [`gallery-${index}`]: e.target.value
+                              })}
+                              placeholder={`Texto alternativo para imagen ${index + 1}`}
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const newGallery = (eventData.imageGallery || []).filter((_, i) => i !== index);
+                            updateEventData('imageGallery', newGallery);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const newGallery = [...(eventData.imageGallery || []), ''];
+                      updateEventData('imageGallery', newGallery);
+                    }}
+                    className="w-full"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Agregar Imagen a la Galería
+                  </Button>
+
+                  <p className="text-xs text-muted-foreground">
+                    Agrega más imágenes para mostrar diferentes aspectos de tu evento
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Videos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Contenido de Video
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="block text-sm font-medium mb-2">Video Principal (Opcional)</Label>
+                    <Input
+                      type="url"
+                      value={eventData.videoUrl || ''}
+                      onChange={(e) => updateEventData('videoUrl', e.target.value)}
+                      placeholder="https://youtube.com/watch?v=... o https://vimeo.com/..."
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      URL de YouTube, Vimeo u otra plataforma de video
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="block text-sm font-medium">Galería de Videos</Label>
+                    {eventData.videoGallery?.map((videoUrl, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 border rounded">
+                        <Input
+                          type="url"
+                          value={videoUrl}
+                          onChange={(e) => {
+                            const newGallery = [...(eventData.videoGallery || [])];
+                            newGallery[index] = e.target.value;
+                            updateEventData('videoGallery', newGallery);
+                          }}
+                          placeholder={`URL del video ${index + 1}`}
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const newGallery = (eventData.videoGallery || []).filter((_, i) => i !== index);
+                            updateEventData('videoGallery', newGallery);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const newGallery = [...(eventData.videoGallery || []), ''];
+                        updateEventData('videoGallery', newGallery);
+                      }}
+                      className="w-full"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Agregar Video
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* SEO Multimedia Info */}
+              <Card className="border-blue-200 bg-blue-50">
+                <CardHeader>
+                  <CardTitle className="text-base text-blue-800">💡 Tips para SEO</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Usa nombres de archivo descriptivos (ej: "ultra-chile-2026-main-stage.jpg")</li>
+                    <li>• Mantén las imágenes entre 100KB - 500KB para carga rápida</li>
+                    <li>• Los textos alternativos ayudan a la accesibilidad y SEO</li>
+                    <li>• Las imágenes de alta calidad aumentan el engagement</li>
+                    <li>• Un video principal puede aumentar las visualizaciones del evento</li>
+                  </ul>
+                </CardContent>
+              </Card>
             </div>
           </div>
         );
