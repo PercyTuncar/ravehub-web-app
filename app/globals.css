@@ -162,7 +162,7 @@
 }
 
 @layer components {
-  .hero-subtitle {
+  .text-base {
     @apply text-xl md:text-2xl text-gray-200;
   }
   

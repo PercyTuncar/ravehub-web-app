@@ -250,7 +250,7 @@
       "@type": "SpeakableSpecification",
       "cssSelector": [
         "h1",
-        ".hero-subtitle",
+        ".text-base",
         "h2"
       ]
     }
