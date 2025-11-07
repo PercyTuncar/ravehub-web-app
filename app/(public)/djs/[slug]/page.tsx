@@ -20,14 +20,17 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
   try {
     const { slug } = await params;
 
-    // First try to find in eventDjs collection
-    let dj = await eventDjsCollection.get(slug) as EventDj;
+    // First try to find in eventDjs collection by slug
+    let eventDjs = await eventDjsCollection.query([
+      { field: 'slug', operator: '==', value: slug }
+    ]);
+    let dj = eventDjs[0] as EventDj;
     let isInEventDjs = true;
 
-    // If not found, try to find by name in eventDjs
+    // If not found by slug, try to find by name in eventDjs
     if (!dj) {
       const nameFromSlug = slug.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
-      const eventDjs = await eventDjsCollection.query(
+      eventDjs = await eventDjsCollection.query(
         [{ field: 'name', operator: '==', value: nameFromSlug }]
       );
       dj = eventDjs[0] as EventDj;
@@ -105,14 +108,17 @@ export default async function DJPage({ params }: DJPageProps) {
   try {
     const { slug } = await params;
 
-    // First try to find in eventDjs collection
-    let dj = await eventDjsCollection.get(slug) as EventDj;
+    // First try to find in eventDjs collection by slug
+    let eventDjs = await eventDjsCollection.query([
+      { field: 'slug', operator: '==', value: slug }
+    ]);
+    let dj = eventDjs[0] as EventDj;
     let isInEventDjs = true;
 
-    // If not found, try to find by name in eventDjs
+    // If not found by slug, try to find by name in eventDjs
     if (!dj) {
       const nameFromSlug = slug.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
-      const eventDjs = await eventDjsCollection.query(
+      eventDjs = await eventDjsCollection.query(
         [{ field: 'name', operator: '==', value: nameFromSlug }]
       );
       dj = eventDjs[0] as EventDj;
@@ -120,31 +126,37 @@ export default async function DJPage({ params }: DJPageProps) {
 
     // If still not found, try djs collection for voting-eligible DJs
     if (!dj) {
-      dj = await djsCollection.get(slug) as any;
-      isInEventDjs = false;
+      const djs = await djsCollection.query([
+        { field: 'slug', operator: '==', value: slug }
+      ]);
       
-      // Convert Dj type to EventDj type for compatibility
-      if (dj) {
-        dj = {
-          ...dj,
-          description: dj.description || `Perfil de ${dj.name}`,
-          bio: dj.description || `Información sobre ${dj.name}`,
-          performerType: 'DJ',
-          genres: [],
-          jobTitle: ['DJ'],
-          famousTracks: [],
-          famousAlbums: [],
-          imageUrl: dj.imageUrl || '',
-          socialLinks: {
-            instagram: dj.instagramHandle ? `https://instagram.com/${dj.instagramHandle}` : undefined
-          },
-          approved: dj.approved,
-          createdAt: dj.createdAt,
-          createdBy: dj.createdBy || 'system',
-          updatedAt: dj.updatedAt,
-          upcomingEvents: [],
-          pastEvents: []
-        } as EventDj;
+      if (djs.length > 0) {
+        dj = djs[0] as any;
+        isInEventDjs = false;
+        
+        // Convert Dj type to EventDj type for compatibility
+        if (dj) {
+          dj = {
+            ...dj,
+            description: dj.description || `Perfil de ${dj.name}`,
+            bio: dj.description || `Información sobre ${dj.name}`,
+            performerType: 'DJ',
+            genres: [],
+            jobTitle: ['DJ'],
+            famousTracks: [],
+            famousAlbums: [],
+            imageUrl: dj.imageUrl || '',
+            socialLinks: {
+              instagram: dj.instagramHandle ? `https://instagram.com/${dj.instagramHandle}` : undefined
+            },
+            approved: dj.approved,
+            createdAt: dj.createdAt,
+            createdBy: dj.createdBy || 'system',
+            updatedAt: dj.updatedAt,
+            upcomingEvents: [],
+            pastEvents: []
+          } as EventDj;
+        }
       }
     }
 

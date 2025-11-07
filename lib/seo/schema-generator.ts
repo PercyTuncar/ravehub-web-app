@@ -1061,23 +1061,32 @@ export class SchemaGenerator {
       return eventRefs;
     };
 
-    // Helper function to format dates
-    const formatDate = (dateString: string) => {
-      if (!dateString || typeof dateString !== 'string') {
+    // Helper function to format dates - Handles Firestore Timestamps and regular dates
+    const formatDate = (dateValue: any) => {
+      if (!dateValue) {
         return new Date().toISOString();
       }
       
-      // Try to parse the date string
-      const parsedDate = new Date(dateString);
-      
-      // Check if the date is valid
-      if (isNaN(parsedDate.getTime())) {
-        // If invalid, return current date as fallback
-        console.warn(`Invalid date string: ${dateString}, using current date as fallback`);
+      try {
+        // Handle Firestore Timestamp objects
+        if (typeof dateValue === 'object' && dateValue.seconds !== undefined) {
+          return new Date(dateValue.seconds * 1000).toISOString();
+        }
+        
+        // Handle regular date strings or Date objects
+        const parsedDate = new Date(dateValue);
+        
+        // Check if the date is valid
+        if (isNaN(parsedDate.getTime())) {
+          console.warn(`Invalid date value: ${dateValue}, using current date as fallback`);
+          return new Date().toISOString();
+        }
+        
+        return parsedDate.toISOString();
+      } catch (error) {
+        console.error(`Error formatting date ${dateValue}:`, error);
         return new Date().toISOString();
       }
-      
-      return parsedDate.toISOString();
     };
 
     const schema = {

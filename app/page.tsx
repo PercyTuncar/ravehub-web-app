@@ -259,7 +259,7 @@ const jsonLd = (upcomingEvents: Event[]) => ({
       },
       "speakable": {
         "@type": "SpeakableSpecification",
-        "cssSelector": ["h1", ".hero-subtitle", "h2"]
+        "cssSelector": ["h1", ".text-base", "h2"]
       }
     },
     {

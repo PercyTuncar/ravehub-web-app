@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, EyeOff, Music, Star, Instagram, Globe, Calendar, Users, Award, Filter, CheckCircle, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, EyeOff, Music, Star, Instagram, Globe, Calendar, Users, Award, Filter, CheckCircle, ExternalLink, Upload, Download, FileText, AlertCircle, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,18 @@ export default function DjManagementPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [countries, setCountries] = useState<Country[]>([]);
+  
+  // Bulk upload states
+  const [activeTab, setActiveTab] = useState<'djs' | 'bulk-upload'>('djs');
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadResults, setUploadResults] = useState<any>(null);
+  const [duplicatesToHandle, setDuplicatesToHandle] = useState<any[]>([]);
+  
+  // Template download states
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState('');
 
   const [editForm, setEditForm] = useState<Partial<EventDj>>({
     name: '',
@@ -165,6 +177,71 @@ export default function DjManagementPage() {
       let savedDjId;
       const djSlug = generateSlug(editForm.name || '');
       
+      // Check for duplicates before saving (only for new DJs or when name/country changes)
+      if (!isEdit || (editForm.name !== selectedDj?.name || editForm.country !== selectedDj?.country)) {
+        const existingDjs = await eventDjsCollection.query([
+          { field: 'name', operator: '==', value: editForm.name },
+          { field: 'country', operator: '==', value: editForm.country }
+        ]);
+        
+        // Filter out the current DJ if we're editing
+        const duplicates = isEdit ?
+          existingDjs.filter(dj => dj.id !== selectedDj?.id) :
+          existingDjs;
+          
+        if (duplicates.length > 0) {
+          const duplicate = duplicates[0];
+          const confirmOverwrite = confirm(
+            `⚠️ DJ DUPLICADO DETECTADO\n\n` +
+            `Ya existe un DJ con el nombre "${editForm.name}" de ${editForm.country}.\n\n` +
+            `DJ existente:\n` +
+            `• Nombre: ${duplicate.name}\n` +
+            `• País: ${duplicate.country}\n` +
+            `• Slug: ${duplicate.slug}\n\n` +
+            `¿Desea sobrescribir el DJ existente?`
+          );
+          
+          if (!confirmOverwrite) {
+            return; // User cancelled
+          }
+          
+          // If overwriting, update the existing DJ instead of creating a new one
+          if (duplicates.length > 0) {
+            savedDjId = duplicate.id;
+            await eventDjsCollection.update(duplicate.id, {
+              ...editForm,
+              slug: djSlug,
+              updatedAt: new Date(),
+            });
+            
+            // Generate schema and SEO data for the updated DJ
+            try {
+              const updatedDjData = { ...duplicate, ...editForm, slug: djSlug, id: savedDjId };
+              const schema = SchemaGenerator.generate({
+                type: 'dj',
+                data: updatedDjData
+              });
+              
+              await eventDjsCollection.update(savedDjId, {
+                jsonLdSchema: schema,
+                seoTitle: `${editForm.name} - DJ Profile | Ravehub`,
+                seoDescription: editForm.description || `${editForm.name} is a professional DJ specializing in ${editForm.genres?.join(', ') || 'electronic music'}.`,
+                seoKeywords: editForm.genres || [],
+              });
+              
+              console.log('✅ Generated and saved JSONLD Schema for DJ (overwrite):', editForm.name);
+            } catch (schemaError) {
+              console.error('❌ Error generating DJ schema during overwrite:', schemaError);
+            }
+            
+            setIsEditDialogOpen(false);
+            setIsCreateDialogOpen(false);
+            await loadDjs();
+            return;
+          }
+        }
+      }
+      
       if (isEdit && selectedDj) {
         savedDjId = selectedDj.id;
         await eventDjsCollection.update(selectedDj.id, {
@@ -270,6 +347,402 @@ export default function DjManagementPage() {
     }));
   };
 
+  // Bulk upload functions
+  const downloadTemplate = useCallback(async () => {
+    setIsDownloading(true);
+    setDownloadStatus('Preparando plantilla...');
+    
+    try {
+      // Multi-layer approach for template download
+      let templateContent: string;
+      let templateBlob: Blob;
+      
+      // Layer 1: Try direct API call
+      try {
+        setDownloadStatus('Intentando generar plantilla desde API...');
+        const response = await fetch('/api/djs/template', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          cache: 'no-store'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        templateContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        
+      } catch (apiError) {
+        console.warn('❌ Template API failed, falling back to local generation:', apiError);
+        setDownloadStatus('Generando plantilla localmente...');
+        
+        // Layer 2: Local generation with real examples
+        // IMPORTANT: Generate array format, not object with property names
+        const templateData = [
+          {
+            "name": "Martin Garrix", // Nombre artístico del DJ (obligatorio)
+            "slug": "martin-garrix", // URL amigable del DJ, solo letras, números y guiones
+            "description": "DJ y productor holandés líder en la escena electrónica, conocido por sus hits como 'Animals' y 'Scared to Be Lonely'", // Descripción breve para listados (máximo 160 caracteres)
+            "bio": "Martin Garrix, cuyo nombre real es Martijn Gerard Garritsen, es un DJ y productor musical holandés nacido en 1996. Comenzó su carrera en la música electrónica a los 14 años y se convirtió en uno de los DJs más jóvenes y exitosos del mundo. Es conocido por sus tracks de electro house y progressive house, así como por sus colaboraciones con otros artistas de renombre. Ha ganado numerosos premios y ha sido nombrado varias veces en las listas de mejores DJs del mundo.", // Biografía completa para el perfil público
+            "country": "Netherlands", // País de origen del DJ
+            "genres": [
+              "Progressive House", // Género principal del DJ (obligatorio)
+              "Electro House",     // Género secundario
+              "Big Room",          // Género adicional
+              "Future House"       // Género adicional
+            ],
+            "jobTitle": [
+              "DJ", // Títulos laborales del DJ (opcional)
+              "Music Producer",    // Productor musical
+              "Remixer",           // Remixer
+              "Record Label Owner" // Dueño de sello discográfico
+            ],
+            "performerType": "DJ", // Tipo de performer (por defecto: DJ)
+            "birthDate": "1996-05-14", // Fecha de nacimiento en formato YYYY-MM-DD (opcional)
+            "alternateName": "Marten Garritsen", // Nombre alternativo o alias (opcional)
+            "imageUrl": "https://example.com/martin-garrix.jpg", // URL válida de la imagen del DJ (obligatorio)
+            "instagramHandle": "martingarrix", // Handle de Instagram (se extrae automáticamente de socialLinks.instagram, opcional)
+            "socialLinks": {
+              "instagram": "https://instagram.com/martingarrix", // Link obligatorio para extraer handle automáticamente
+              "facebook": "https://facebook.com/MartinGarrix",   // Enlace a Facebook (opcional)
+              "twitter": "https://twitter.com/MartinGarrix",     // Enlace a Twitter/X (opcional)
+              "youtube": "https://youtube.com/c/MartinGarrix",   // Enlace a YouTube (opcional)
+              "spotify": "https://open.spotify.com/artist/60nZcImufyMA1MKQY3dcCH", // Enlace a Spotify (opcional)
+              "tiktok": "https://tiktok.com/@martingarrix",     // Enlace a TikTok (opcional)
+              "website": "https://martingarrix.com"             // Sitio web oficial (opcional)
+            },
+            "famousTracks": [
+              "Animals (2013)",      // Track famoso con año (mínimo 5 recomendados)
+              "Scared to Be Lonely (2017)",  // Track famoso con año
+              "Don't Look Down (2015)",      // Track famoso con año
+              "Now I'm Fire (2014)",         // Track famoso con año
+              "Wizard (2014)",               // Track famoso con año
+              "Together (2018)",             // Track famoso con año
+              "Drown (2019)",                // Track famoso con año
+              "Millionaire (2020)"           // Track famoso con año
+            ],
+            "famousAlbums": [
+              "Artemis (2020)",                    // Álbum famoso con año (mínimo 3 recomendados)
+              "Seven (2023)",                      // Álbum famoso con año
+              "Martin Garrix Collection (2019)",   // Álbum famoso con año
+              "Break Through The Silence (2017)"   // Álbum famoso con año
+            ],
+            "approved": true, // true para visible públicamente, false para privado
+            "createdBy": "admin-bulk-upload"
+          },
+          {
+            "name": "David Guetta", // Nombre artístico del DJ (obligatorio)
+            "slug": "david-guetta", // URL amigable del DJ, solo letras, números y guiones
+            "description": "DJ y productor francés pionero de la música electrónica, creador de hits como 'Titanium' y 'Hey Mama'", // Descripción breve para listados (máximo 160 caracteres)
+            "bio": "David Pierre Guetta es un DJ y productor musical francés nacido en 1967. Es considerado uno de los pioneros de la música house francesa y ha sido fundamental en el desarrollo del electro house. Ha trabajado con artistas de todos los géneros, desde Sia y Rihanna hasta Bebe Rexha y The黑kness. Ha ganado múltiples premios Grammy y es conocido por su capacidad para crear hits comerciales que mantienen la esencia underground de la música electrónica.", // Biografía completa para el perfil público
+            "country": "France", // País de origen del DJ
+            "genres": [
+              "Electro House", // Género principal del DJ (obligatorio)
+              "Progressive House", // Género secundario
+              "Future House",      // Género adicional
+              "Pop House"          // Género adicional
+            ],
+            "jobTitle": [
+              "DJ", // Títulos laborales del DJ (opcional)
+              "Music Producer",    // Productor musical
+              "Remixer",           // Remixer
+              "Record Producer"    // Productor discográfico
+            ],
+            "performerType": "DJ", // Tipo de performer (por defecto: DJ)
+            "birthDate": "1967-11-07", // Fecha de nacimiento en formato YYYY-MM-DD (opcional)
+            "alternateName": "David Guetta", // Nombre alternativo o alias (opcional)
+            "imageUrl": "https://example.com/david-guetta.jpg", // URL válida de la imagen del DJ (obligatorio)
+            "instagramHandle": "davidguetta", // Handle de Instagram (se extrae automáticamente de socialLinks.instagram, opcional)
+            "socialLinks": {
+              "instagram": "https://instagram.com/davidguetta", // Link obligatorio para extraer handle automáticamente
+              "facebook": "https://facebook.com/DavidGuetta",   // Enlace a Facebook (opcional)
+              "twitter": "https://twitter.com/davidguetta",     // Enlace a Twitter/X (opcional)
+              "youtube": "https://youtube.com/user/DavidGuettaVEVO", // Enlace a YouTube (opcional)
+              "spotify": "https://open.spotify.com/artist/1Cs0zKBU1kc0i8ypKndBYY", // Enlace a Spotify (opcional)
+              "tiktok": "https://tiktok.com/@davidguetta",     // Enlace a TikTok (opcional)
+              "website": "https://davidguetta.com"             // Sitio web oficial (opcional)
+            },
+            "famousTracks": [
+              "Titanium (2011)",     // Track famoso con año (mínimo 5 recomendados)
+              "Hey Mama (2014)",     // Track famoso con año
+              "Without You (2011)",  // Track famoso con año
+              "Play Hard (2012)",    // Track famoso con año
+              "Memories (2019)",     // Track famoso con año
+              "Don't Stop (2018)",   // Track famoso con año
+              "Staying Up (2021)",   // Track famoso con año
+              "Love Don't Let Me Go (2020)" // Track famoso con año
+            ],
+            "famousAlbums": [
+              "Nothing But The Beat (2010)",    // Álbum famoso con año (mínimo 3 recomendados)
+              "Listen (2014)",                  // Álbum famoso con año
+              "7 (2018)",                       // Álbum famoso con año
+              "The Guetta Experiment (2009)"    // Álbum famoso con año
+            ],
+            "approved": true, // true para visible públicamente, false para privado
+            "createdBy": "admin-bulk-upload"
+          },
+          {
+            // === DJ_EJEMPLO_3: Usa esta plantilla para agregar un DJ adicional ===
+            "name": "", // Nombre artístico del DJ (obligatorio)
+            "slug": "", // URL amigable del DJ (se genera automáticamente si se deja vacío)
+            "description": "", // Descripción breve para listados (máximo 160 caracteres)
+            "bio": "", // Biografía completa para el perfil público
+            "country": "", // País de origen del DJ
+            "genres": [], // Array de géneros musicales (mínimo 1, máximo 5)
+            "jobTitle": ["DJ"], // Array de títulos laborales
+            "performerType": "DJ", // Tipo de performer
+            "birthDate": "", // Fecha de nacimiento en formato YYYY-MM-DD (opcional)
+            "alternateName": "", // Nombre alternativo o alias (opcional)
+            "imageUrl": "", // URL válida de la imagen del DJ (obligatorio)
+            "instagramHandle": "", // Handle de Instagram (opcional)
+            "socialLinks": {
+              "instagram": "", // Link a Instagram (obligatorio para extraer handle)
+              "facebook": "",  // Link a Facebook (opcional)
+              "twitter": "",   // Link a Twitter/X (opcional)
+              "youtube": "",   // Link a YouTube (opcional)
+              "spotify": "",   // Link a Spotify (opcional)
+              "tiktok": "",    // Link a TikTok (opcional)
+              "website": ""    // Sitio web oficial (opcional)
+            },
+            "famousTracks": [], // Array de tracks famosos (mínimo 5 recomendados)
+            "famousAlbums": [], // Array de álbumes famosos (mínimo 3 recomendados)
+            "approved": false, // true para visible públicamente, false para privado
+            "createdBy": "admin-bulk-upload"
+          }
+        ];
+        
+        // Convert to properly formatted JSON
+        templateContent = JSON.stringify(templateData, null, 2);
+        
+        // Add instructions as separate documentation file reference
+        const instructions = `
+// === INSTRUCCIONES DE USO ===
+// 1. Llena los campos obligatorios de cada DJ (name, description, bio, country, genres, imageUrl, approved)
+// 2. Los campos opcionales se pueden dejar vacíos o completar según sea necesario
+// 3. El slug se genera automáticamente si no se proporciona
+// 4. El handle de Instagram se extrae automáticamente de socialLinks.instagram
+// 5. Los géneros comunes incluyen: Progressive House, Electro House, Techno, House, Big Room, Future House, Trance, Dubstep, Drum & Bass, Pop House
+// 6. Los países válidos incluyen: Netherlands, France, Argentina, United States, Germany, United Kingdom, Belgium, Brazil, Mexico, Spain
+// 7. Los DJs duplicados se detectan por nombre y país
+// 8. Una vez completados los campos, elimina estos comentarios y sube el archivo JSON
+
+`;
+        
+        templateContent = instructions + templateContent;
+      }
+
+      setDownloadStatus('Creando archivo de descarga...');
+      
+      // Create and download the file
+      templateBlob = new Blob([templateContent], {
+        type: 'application/json;charset=utf-8'
+      });
+      
+      const url = window.URL.createObjectURL(templateBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ravehub-djs-template-${new Date().toISOString().split('T')[0]}.json`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      
+      // Show success notification
+      if ('Notification' in window) {
+        new Notification('Plantilla descargada', {
+          body: 'La plantilla JSON se ha descargado exitosamente. Lee las instrucciones incluidas.',
+          icon: '/icons/logo.png'
+        });
+      }
+      
+      console.log('✅ Template downloaded successfully');
+      
+    } catch (error) {
+      console.error('❌ Error downloading template:', error);
+      
+      // Final fallback: show manual instructions
+      const errorMessage = `Error al descargar plantilla: ${error instanceof Error ? error.message : 'Error desconocido'}`;
+      setDownloadStatus(`Error: ${errorMessage}`);
+      
+      // Show alert
+      alert(`❌ ${errorMessage}\n\nVerifica tu conexión a internet e intenta nuevamente.`);
+    } finally {
+      setIsDownloading(false);
+      setDownloadStatus('');
+    }
+  }, []);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file.name.endsWith('.json')) {
+      alert('Por favor, selecciona un archivo JSON válido.');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      setUploadResults(null);
+      
+      const fileContent = await file.text();
+      let jsonData;
+      
+      try {
+        jsonData = JSON.parse(fileContent);
+      } catch (parseError) {
+        throw new Error('El archivo JSON no es válido. Verifica la sintaxis.');
+      }
+
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 100);
+
+      // Send to bulk upload API
+      const response = await fetch('/api/djs/bulk-upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(jsonData),
+      });
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      const result = await response.json();
+      setUploadResults(result);
+
+      // Collect duplicates for handling
+      const duplicates = result.results.filter((r: any) => r.duplicate && !r.success);
+      setDuplicatesToHandle(duplicates);
+
+      // Refresh DJ list if successful uploads
+      if (result.summary.successful > 0) {
+        await loadDjs();
+      }
+
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert(`Error al procesar el archivo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleDuplicateAction = async (duplicateIndex: number, action: 'overwrite' | 'skip') => {
+    const duplicate = duplicatesToHandle[duplicateIndex];
+    if (!duplicate) {
+      console.warn('❌ Duplicate not found in state');
+      return;
+    }
+
+    try {
+      if (action === 'overwrite') {
+        console.log('🔄 Overwriting DJ:', duplicate.data.name);
+        
+        // Handle overwrite logic
+        const updatedData = {
+          ...duplicate.data,
+          // Add overwrite flag to indicate this should overwrite existing DJ
+          overwrite: true
+        };
+        
+        const response = await fetch('/api/djs/bulk-upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify([updatedData]),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        // Check if the operation was successful
+        if (result.results && result.results.length > 0) {
+          const overwriteResult = result.results[0];
+          
+          // Update the specific result in uploadResults
+          setUploadResults((prev: any) => {
+            if (!prev) return prev;
+            const updatedResults = [...prev.results];
+            // Find the original result by DJ name to update it
+            const originalIndex = updatedResults.findIndex((r: any) =>
+              r.data?.name === duplicate.data?.name && r.data?.country === duplicate.data?.country
+            );
+            if (originalIndex !== -1) {
+              updatedResults[originalIndex] = overwriteResult;
+            }
+            return { ...prev, results: updatedResults };
+          });
+        }
+      }
+
+      // Remove from duplicates to handle - use filter with index comparison
+      setDuplicatesToHandle(prev => prev.filter((_, index) => index !== duplicateIndex));
+
+      // Update summary
+      setUploadResults((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          summary: {
+            ...prev.summary,
+            duplicates: Math.max(0, prev.summary.duplicates - 1),
+            successful: prev.summary.successful + (action === 'overwrite' ? 1 : 0),
+            failed: prev.summary.failed + (action === 'skip' ? 1 : 0)
+          }
+        };
+      });
+
+      // If this was the last duplicate, refresh the DJ list
+      if (duplicatesToHandle.length === 1) {
+        console.log('✅ All duplicates processed, refreshing DJ list...');
+        await loadDjs();
+      }
+
+    } catch (error) {
+      console.error('❌ Error handling duplicate:', error);
+      alert(`Error procesando duplicado: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const jsonFile = files.find(file => file.name.endsWith('.json'));
+    
+    if (jsonFile) {
+      handleFileUpload(jsonFile);
+    } else {
+      alert('Por favor, arrastra un archivo JSON válido.');
+    }
+  };
+
   // Extract Instagram handle from URL
   const extractInstagramHandle = (url: string): string | null => {
     if (!url) return null;
@@ -304,11 +777,20 @@ export default function DjManagementPage() {
               Volver al Dashboard
             </Button>
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold text-foreground">Gestión de DJs</h1>
             <p className="text-muted-foreground">Administra la base de datos de DJs y artistas</p>
           </div>
         </div>
+
+        {/* Tab Navigation */}
+        <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="mb-8">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="djs">Lista de DJs</TabsTrigger>
+            <TabsTrigger value="bulk-upload">Carga Masiva</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="djs" className="space-y-6">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -394,10 +876,20 @@ export default function DjManagementPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleCreateDj} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Nuevo DJ
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button onClick={downloadTemplate} variant="outline" className="flex items-center gap-2">
+                  <Download className="h-4 w-4" />
+                  Plantilla
+                </Button>
+                <Button onClick={() => setActiveTab('bulk-upload')} variant="outline" className="flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Carga Masiva
+                </Button>
+                <Button onClick={handleCreateDj} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Nuevo DJ
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1209,6 +1701,294 @@ export default function DjManagementPage() {
             </div>
           </DialogContent>
         </Dialog>
+          </TabsContent>
+          
+          <TabsContent value="bulk-upload" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Carga Masiva de DJs
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Template Download */}
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-foreground">Plantilla de DJ</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Descarga la plantilla JSON para agregar múltiples DJs de una vez
+                      </p>
+                    </div>
+                    <Button onClick={downloadTemplate} variant="outline" className="flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      Descargar Plantilla
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Upload Area */}
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
+                    isDragOver
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50 hover:bg-muted/20'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div className="space-y-4">
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                      <Upload className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">
+                        Arrastra tu archivo JSON aquí
+                      </h3>
+                      <p className="text-muted-foreground">
+                        o haz clic para seleccionar un archivo
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = '.json';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) handleFileUpload(file);
+                        };
+                        input.click();
+                      }}
+                      disabled={isUploading}
+                      className="flex items-center gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Seleccionar Archivo JSON
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Upload Progress */}
+                {isUploading && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Procesando archivo...</span>
+                      <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload Results */}
+                {uploadResults && (
+                  <div className="space-y-4">
+                    {/* Summary */}
+                    <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                      <h3 className="font-semibold text-green-800 dark:text-green-200 mb-2">Resumen de Carga</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <span>Exitosos: {uploadResults.summary.successful}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4 text-yellow-600" />
+                          <span>Duplicados: {uploadResults.summary.duplicates}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <XCircle className="h-4 w-4 text-red-600" />
+                          <span>Fallidos: {uploadResults.summary.failed}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          <span>Total: {uploadResults.summary.total}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Results Table */}
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-foreground">Resultados Detallados</h4>
+                      <div className="max-h-64 overflow-y-auto border border-border rounded-lg">
+                        {uploadResults.results.map((result: any, index: number) => (
+                          <div
+                            key={index}
+                            className={`p-4 border-b border-border last:border-b-0 ${
+                              result.success ? 'bg-green-50 dark:bg-green-950/20' :
+                              result.duplicate ? 'bg-orange-50 dark:bg-orange-950/20 border-l-4 border-orange-400' :
+                              'bg-red-50 dark:bg-red-950/20'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                {result.success ? (
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                ) : result.duplicate ? (
+                                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                                ) : (
+                                  <XCircle className="h-4 w-4 text-red-600" />
+                                )}
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-foreground">
+                                      {result.data?.name || 'Sin nombre'}
+                                    </span>
+                                    {result.duplicate && (
+                                      <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/50 dark:text-orange-200 dark:border-orange-700">
+                                        🔄 DUPLICADO
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="mt-1">
+                                    {result.duplicate ? (
+                                      <div className="space-y-1">
+                                        <p className="text-xs font-medium text-orange-700 dark:text-orange-300">
+                                          ⚠️ Ya existe en la base de datos
+                                        </p>
+                                        <p className="text-xs text-orange-600 dark:text-orange-400">
+                                          {result.error || `DJ "${result.data?.name}" de ${result.data?.country} ya existe`}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          • Opciones: <button
+                                            onClick={() => {
+                                              const duplicateIndex = duplicatesToHandle.findIndex(d =>
+                                                d.data?.name === result.data?.name &&
+                                                d.data?.country === result.data?.country
+                                              );
+                                              if (duplicateIndex !== -1) {
+                                                handleDuplicateAction(duplicateIndex, 'overwrite');
+                                              } else {
+                                                console.warn('❌ Duplicate not found for overwrite action');
+                                              }
+                                            }}
+                                            className="text-blue-600 hover:underline font-medium"
+                                          >
+                                            Sobrescribir
+                                          </button> |
+                                          <button
+                                            onClick={() => {
+                                              const duplicateIndex = duplicatesToHandle.findIndex(d =>
+                                                d.data?.name === result.data?.name &&
+                                                d.data?.country === result.data?.country
+                                              );
+                                              if (duplicateIndex !== -1) {
+                                                handleDuplicateAction(duplicateIndex, 'skip');
+                                              } else {
+                                                console.warn('❌ Duplicate not found for skip action');
+                                              }
+                                            }}
+                                            className="text-gray-600 hover:underline font-medium ml-1"
+                                          >
+                                            Saltar
+                                          </button>
+                                        </p>
+                                      </div>
+                                    ) : result.success ? (
+                                      <p className="text-xs text-green-700 dark:text-green-300">
+                                        ✅ DJ agregado exitosamente
+                                      </p>
+                                    ) : (
+                                      <div className="space-y-1">
+                                        <p className="text-xs font-medium text-red-700 dark:text-red-300">
+                                          ❌ Error de validación
+                                        </p>
+                                        <p className="text-xs text-red-600 dark:text-red-400">
+                                          {result.error || 'Verificar campos obligatorios'}
+                                        </p>
+                                        {result.validationErrors && result.validationErrors.length > 0 && (
+                                          <div className="text-xs text-muted-foreground">
+                                            {result.validationErrors.slice(0, 2).map((err: any, errIndex: number) => (
+                                              <div key={errIndex}>
+                                                • {err.message}
+                                              </div>
+                                            ))}
+                                            {result.validationErrors.length > 2 && (
+                                              <div>• ... y {result.validationErrors.length - 2} más</div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-xs text-muted-foreground text-right">
+                                <div>{result.data?.country || 'Sin país'}</div>
+                                {result.data?.genres && result.data.genres.length > 0 && (
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    {result.data.genres.slice(0, 2).join(', ')}
+                                    {result.data.genres.length > 2 && '...'}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Duplicates handling buttons */}
+                            {result.duplicate && duplicatesToHandle.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-orange-200 dark:border-orange-800">
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={() => {
+                                      // Find the duplicate in duplicatesToHandle array
+                                      const duplicateIndex = duplicatesToHandle.findIndex(d =>
+                                        d.data?.name === result.data?.name &&
+                                        d.data?.country === result.data?.country
+                                      );
+                                      if (duplicateIndex !== -1) {
+                                        handleDuplicateAction(duplicateIndex, 'overwrite');
+                                      } else {
+                                        console.warn('❌ Duplicate not found for overwrite action');
+                                      }
+                                    }}
+                                    size="sm"
+                                    className="bg-orange-600 hover:bg-orange-700 text-white text-xs"
+                                  >
+                                    🔄 Sobrescribir existente
+                                  </Button>
+                                  <Button
+                                    onClick={() => {
+                                      // Find the duplicate in duplicatesToHandle array
+                                      const duplicateIndex = duplicatesToHandle.findIndex(d =>
+                                        d.data?.name === result.data?.name &&
+                                        d.data?.country === result.data?.country
+                                      );
+                                      if (duplicateIndex !== -1) {
+                                        handleDuplicateAction(duplicateIndex, 'skip');
+                                      } else {
+                                        console.warn('❌ Duplicate not found for skip action');
+                                      }
+                                    }}
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs"
+                                  >
+                                    ⏭️ Saltar
+                                  </Button>
+                                </div>
+                                {duplicatesToHandle.length > 1 && (
+                                  <div className="mt-2 text-xs text-muted-foreground">
+                                    {duplicatesToHandle.length} duplicados restantes por procesar
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AuthGuard>
   );
