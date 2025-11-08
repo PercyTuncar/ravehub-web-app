@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const { djId } = await request.json();
     
     // Obtener todos los eventos para crear un mapa
-    const events = await eventsCollection.query([]);
+    const events = await eventsCollection.query([]) as Event[];
     const eventsMap = new Map<string, Event>();
     events.forEach(event => {
       eventsMap.set(event.id, event);
