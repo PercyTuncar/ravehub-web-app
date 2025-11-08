@@ -28,6 +28,7 @@ import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
 import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart } from '@/lib/utils/date-timezone';
 import toast from 'react-hot-toast';
+import { useAutoSave } from '@/hooks/useAutoSave';
 import { revalidateSitemap } from '@/lib/revalidate';
 
 const STEPS = [
@@ -311,13 +312,49 @@ export default function EditEventPage() {
     }
   };
 
+  // Función helper para recalcular estados de fases antes de guardar
+  const recalculatePhaseStatuses = (phases: any[]): any[] => {
+    if (!phases || phases.length === 0) return phases;
+    
+    const now = new Date();
+    return phases.map((phase) => {
+      // Si tiene estado manual, mantenerlo
+      if (phase.manualStatus !== null && phase.manualStatus !== undefined) {
+        return {
+          ...phase,
+          status: phase.manualStatus === 'sold_out' ? 'sold_out' : 'active',
+        };
+      }
+      
+      // Calcular estado automático
+      if (!phase.startDate || !phase.endDate) {
+        return { ...phase, status: 'upcoming' };
+      }
+      
+      const startDate = new Date(phase.startDate);
+      const endDate = new Date(phase.endDate);
+      
+      if (now < startDate) {
+        return { ...phase, status: 'upcoming' };
+      } else if (now > endDate) {
+        return { ...phase, status: 'expired' };
+      } else {
+        return { ...phase, status: 'active' };
+      }
+    });
+  };
+
   const saveChanges = async () => {
     setSaving(true);
     const loadingToast = toast.loading('Guardando cambios...');
     
     try {
+      // Recalcular estados de fases antes de guardar
+      const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
+      
       const eventToUpdate = {
         ...eventData,
+        salesPhases: updatedPhases,
         artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
         updatedAt: new Date().toISOString(),
       };
@@ -345,6 +382,10 @@ export default function EditEventPage() {
       toast.dismiss(loadingToast);
       toast.success('Cambios guardados correctamente');
       
+      // Limpiar localStorage
+      localStorage.removeItem(`event_draft_${params.slug}`);
+      localStorage.removeItem(`event_draft_${params.slug}_timestamp`);
+      
       // Small delay to show success message before redirect
       setTimeout(() => {
         router.push(`/admin/events/${params.slug}`);
@@ -357,52 +398,86 @@ export default function EditEventPage() {
     }
   };
 
-  const publishEvent = async () => {
+  const handleStatusChange = async (newStatus: 'draft' | 'published' | 'cancelled' | 'finished') => {
     setSaving(true);
-    const loadingToast = toast.loading('Publicando evento...');
+    const loadingToast = toast.loading('Cambiando estado...');
     
     try {
+      // Recalcular estados de fases antes de guardar
+      const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
+      
       const eventToUpdate = {
         ...eventData,
-        eventStatus: 'published',
+        salesPhases: updatedPhases,
+        eventStatus: newStatus,
         artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
         updatedAt: new Date().toISOString(),
       };
 
       await eventsCollection.update(params.slug as string, eventToUpdate);
 
-      // Sync DJ events locally (immediate solution)
+      // Sync DJ events
       try {
         await syncEventWithDjs(params.slug as string);
-        // Keep old sync for backward compatibility
-        await syncEventDjsForEvent(params.slug as string);
+        if (newStatus === 'published') {
+          await syncEventDjsForEvent(params.slug as string);
+        }
       } catch (syncError) {
         console.error('Error syncing DJ events (non-blocking):', syncError);
-        // Don't block the publish process if sync fails
       }
 
-      // Revalidate event pages when event is published (non-blocking)
+      // Revalidate pages
       try {
         await revalidateEvent(params.slug as string);
         await revalidateEventsListing();
-        await revalidateSitemap();
+        if (newStatus === 'published') {
+          await revalidateSitemap();
+        }
       } catch (revalidateError) {
         console.error('Error revalidating pages (non-blocking):', revalidateError);
-        // Don't block the publish process if revalidation fails
       }
 
       toast.dismiss(loadingToast);
-      toast.success('Evento publicado correctamente');
+      toast.success(`Evento ${getStatusLabel(newStatus).toLowerCase()} correctamente`);
       
-      // Small delay to show success message before redirect
+      // Limpiar localStorage
+      localStorage.removeItem(`event_draft_${params.slug}`);
+      localStorage.removeItem(`event_draft_${params.slug}_timestamp`);
+      
       setTimeout(() => {
         router.push(`/admin/events/${params.slug}`);
       }, 500);
     } catch (error) {
-      console.error('Error publishing event:', error);
+      console.error('Error changing status:', error);
       toast.dismiss(loadingToast);
-      toast.error('Error al publicar el evento. Por favor, intenta nuevamente.');
+      toast.error('Error al cambiar el estado. Por favor, intenta nuevamente.');
       setSaving(false);
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'published': return 'Publicado';
+      case 'draft': return 'Borrador';
+      case 'cancelled': return 'Cancelado';
+      case 'finished': return 'Finalizado';
+      default: return status;
+    }
+  };
+
+  const publishEvent = async () => {
+    await handleStatusChange('published');
+  };
+
+  const cancelEvent = async () => {
+    if (confirm('¿Estás seguro de que quieres cancelar este evento?')) {
+      await handleStatusChange('cancelled');
+    }
+  };
+
+  const finishEvent = async () => {
+    if (confirm('¿Estás seguro de que quieres finalizar este evento?')) {
+      await handleStatusChange('finished');
     }
   };
 
@@ -2236,7 +2311,30 @@ export default function EditEventPage() {
               ← Anterior
             </Button>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
+              {/* Selector de Estado */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium text-muted-foreground">Estado:</Label>
+                <Select
+                  value={eventData.eventStatus || 'draft'}
+                  onValueChange={(value) => {
+                    const status = value as 'draft' | 'published' | 'cancelled' | 'finished';
+                    updateEventData('eventStatus', status);
+                  }}
+                >
+                  <SelectTrigger className="w-40 h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">📝 Borrador</SelectItem>
+                    <SelectItem value="published">✅ Publicar</SelectItem>
+                    <SelectItem value="cancelled">❌ Cancelar</SelectItem>
+                    <SelectItem value="finished">🏁 Finalizar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Botones de Acción */}
               <Button 
                 variant="outline" 
                 onClick={saveChanges} 
@@ -2244,17 +2342,39 @@ export default function EditEventPage() {
                 className="flex items-center gap-2 h-12 px-6 transition-all duration-200 hover:bg-muted/50"
               >
                 <Save className="h-4 w-4" />
-                {saving ? 'Guardando...' : 'Guardar Cambios'}
+                {saving ? 'Guardando...' : 'Guardar'}
               </Button>
 
-              {originalEvent?.eventStatus === 'draft' && (
+              {eventData.eventStatus === 'published' && (
                 <Button 
                   onClick={publishEvent} 
                   disabled={saving}
                   className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
                 >
                   <Eye className="h-4 w-4" />
-                  {saving ? 'Publicando...' : 'Publicar Evento'}
+                  {saving ? 'Publicando...' : 'Publicar'}
+                </Button>
+              )}
+
+              {eventData.eventStatus === 'cancelled' && (
+                <Button 
+                  onClick={cancelEvent} 
+                  disabled={saving}
+                  className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
+                >
+                  ❌
+                  {saving ? 'Cancelando...' : 'Cancelar'}
+                </Button>
+              )}
+
+              {eventData.eventStatus === 'finished' && (
+                <Button 
+                  onClick={finishEvent} 
+                  disabled={saving}
+                  className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
+                >
+                  🏁
+                  {saving ? 'Finalizando...' : 'Finalizar'}
                 </Button>
               )}
 

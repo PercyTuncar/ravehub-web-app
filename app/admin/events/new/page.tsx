@@ -26,6 +26,7 @@ import { generateSlug } from '@/lib/utils/slug-generator';
 import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
 import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart } from '@/lib/utils/date-timezone';
+import { useAutoSave } from '@/hooks/useAutoSave';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -174,6 +175,7 @@ export default function NewEventPage() {
   });
   const [saving, setSaving] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [tempEventId, setTempEventId] = useState<string | null>(null); // ID temporal para auto-guardado
 
   // Load countries on component mount
   useEffect(() => {
@@ -321,20 +323,106 @@ export default function NewEventPage() {
     }
   };
 
+  // Función helper para recalcular estados de fases antes de guardar
+  const recalculatePhaseStatuses = (phases: any[]): any[] => {
+    if (!phases || phases.length === 0) return phases;
+    
+    const now = new Date();
+    return phases.map((phase) => {
+      // Si tiene estado manual, mantenerlo
+      if (phase.manualStatus !== null && phase.manualStatus !== undefined) {
+        return {
+          ...phase,
+          status: phase.manualStatus === 'sold_out' ? 'sold_out' : 'active',
+        };
+      }
+      
+      // Calcular estado automático
+      if (!phase.startDate || !phase.endDate) {
+        return { ...phase, status: 'upcoming' };
+      }
+      
+      const startDate = new Date(phase.startDate);
+      const endDate = new Date(phase.endDate);
+      
+      if (now < startDate) {
+        return { ...phase, status: 'upcoming' };
+      } else if (now > endDate) {
+        return { ...phase, status: 'expired' };
+      } else {
+        return { ...phase, status: 'active' };
+      }
+    });
+  };
+
+  // Función de auto-guardado
+  const handleAutoSave = async (dataToSave: Partial<Event>) => {
+    try {
+      // Recalcular estados de fases antes de guardar
+      const updatedPhases = recalculatePhaseStatuses(dataToSave.salesPhases || []);
+      
+      const eventToSave = {
+        ...dataToSave,
+        salesPhases: updatedPhases,
+        eventStatus: dataToSave.eventStatus || 'draft',
+        artistLineupIds: generateArtistLineupIds(dataToSave.artistLineup || []),
+        createdBy: 'admin', // TODO: Get from auth context
+      };
+
+      if (tempEventId) {
+        // Actualizar evento existente
+        await eventsCollection.update(tempEventId, eventToSave);
+      } else {
+        // Crear nuevo evento temporal
+        const eventId = await eventsCollection.create(eventToSave);
+        setTempEventId(eventId);
+      }
+    } catch (error) {
+      console.error('Error in auto-save:', error);
+      throw error;
+    }
+  };
+
+  // Hook de auto-guardado
+  useAutoSave({
+    data: eventData,
+    onSave: handleAutoSave,
+    storageKey: 'event_draft_new',
+    interval: 30000, // 30 segundos
+    enabled: true,
+  });
+
   const saveAsDraft = async () => {
     setSaving(true);
     try {
+      // Recalcular estados de fases antes de guardar
+      const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
+      
       const eventToSave = {
         ...eventData,
-        eventStatus: 'draft',
+        salesPhases: updatedPhases,
+        eventStatus: eventData.eventStatus || 'draft',
         artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
         createdBy: 'admin', // TODO: Get from auth context
       };
       
-      const eventId = await eventsCollection.create(eventToSave);
+      let eventId = tempEventId;
+      
+      if (eventId) {
+        // Actualizar evento existente
+        await eventsCollection.update(eventId, eventToSave);
+      } else {
+        // Crear nuevo evento
+        eventId = await eventsCollection.create(eventToSave);
+        setTempEventId(eventId);
+      }
       
       // Sync DJ events for drafts too
       await syncEventWithDjs(eventId);
+      
+      // Limpiar localStorage
+      localStorage.removeItem('event_draft_new');
+      localStorage.removeItem('event_draft_new_timestamp');
       
       router.push(`/admin/events/${eventId}`);
     } catch (error) {
@@ -344,32 +432,69 @@ export default function NewEventPage() {
     }
   };
 
-  const publishEvent = async () => {
+  const handleStatusChange = async (newStatus: 'draft' | 'published' | 'cancelled' | 'finished') => {
     setSaving(true);
     try {
+      // Recalcular estados de fases antes de guardar
+      const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
+      
       const eventToSave = {
         ...eventData,
-        eventStatus: 'published',
+        salesPhases: updatedPhases,
+        eventStatus: newStatus,
         artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
         createdBy: 'admin', // TODO: Get from auth context
       };
 
-      const eventId = await eventsCollection.create(eventToSave);
+      let eventId = tempEventId;
+      
+      if (eventId) {
+        // Actualizar evento existente
+        await eventsCollection.update(eventId, eventToSave);
+      } else {
+        // Crear nuevo evento
+        eventId = await eventsCollection.create(eventToSave);
+        setTempEventId(eventId);
+      }
 
-      // Sync DJ events locally (immediate solution)
+      // Sync DJ events
       await syncEventWithDjs(eventId);
 
-      // Keep old sync for backward compatibility
-      await syncEventDjsForEvent(eventId);
+      // Si se publica, hacer sync adicional y revalidar
+      if (newStatus === 'published') {
+        await syncEventDjsForEvent(eventId);
+        await revalidateSitemap();
+      }
 
-      // Revalidate sitemap when event is published
-      await revalidateSitemap();
+      // Limpiar localStorage
+      localStorage.removeItem('event_draft_new');
+      localStorage.removeItem('event_draft_new_timestamp');
 
-      router.push(`/admin/events/${eventId}`);
+      if (newStatus === 'published' || newStatus === 'cancelled' || newStatus === 'finished') {
+        router.push(`/admin/events/${eventId}`);
+      } else {
+        updateEventData('eventStatus', newStatus);
+      }
     } catch (error) {
-      console.error('Error publishing event:', error);
+      console.error('Error changing status:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const publishEvent = async () => {
+    await handleStatusChange('published');
+  };
+
+  const cancelEvent = async () => {
+    if (confirm('¿Estás seguro de que quieres cancelar este evento?')) {
+      await handleStatusChange('cancelled');
+    }
+  };
+
+  const finishEvent = async () => {
+    if (confirm('¿Estás seguro de que quieres finalizar este evento?')) {
+      await handleStatusChange('finished');
     }
   };
 
@@ -2254,7 +2379,30 @@ export default function NewEventPage() {
               ← Anterior
             </Button>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
+              {/* Selector de Estado */}
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium text-muted-foreground">Estado:</Label>
+                <Select
+                  value={eventData.eventStatus || 'draft'}
+                  onValueChange={(value) => {
+                    const status = value as 'draft' | 'published' | 'cancelled' | 'finished';
+                    updateEventData('eventStatus', status);
+                  }}
+                >
+                  <SelectTrigger className="w-40 h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">📝 Borrador</SelectItem>
+                    <SelectItem value="published">✅ Publicar</SelectItem>
+                    <SelectItem value="cancelled">❌ Cancelar</SelectItem>
+                    <SelectItem value="finished">🏁 Finalizar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Botones de Acción */}
               <Button 
                 variant="outline" 
                 onClick={saveAsDraft} 
@@ -2262,19 +2410,43 @@ export default function NewEventPage() {
                 className="flex items-center gap-2 h-12 px-6 transition-all duration-200 hover:bg-muted/50"
               >
                 <Save className="h-4 w-4" />
-                {saving ? 'Guardando...' : 'Guardar Borrador'}
+                {saving ? 'Guardando...' : 'Guardar'}
               </Button>
 
-              {currentStep === STEPS.length - 1 ? (
+              {eventData.eventStatus === 'published' && (
                 <Button 
                   onClick={publishEvent} 
                   disabled={saving}
                   className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
                 >
                   <Eye className="h-4 w-4" />
-                  {saving ? 'Publicando...' : 'Publicar Evento'}
+                  {saving ? 'Publicando...' : 'Publicar'}
                 </Button>
-              ) : (
+              )}
+
+              {eventData.eventStatus === 'cancelled' && (
+                <Button 
+                  onClick={cancelEvent} 
+                  disabled={saving}
+                  className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
+                >
+                  ❌
+                  {saving ? 'Cancelando...' : 'Cancelar'}
+                </Button>
+              )}
+
+              {eventData.eventStatus === 'finished' && (
+                <Button 
+                  onClick={finishEvent} 
+                  disabled={saving}
+                  className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
+                >
+                  🏁
+                  {saving ? 'Finalizando...' : 'Finalizar'}
+                </Button>
+              )}
+
+              {currentStep < STEPS.length - 1 && (
                 <Button 
                   onClick={nextStep}
                   className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
