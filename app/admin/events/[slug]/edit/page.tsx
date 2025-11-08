@@ -25,21 +25,8 @@ import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
 import { generateSlug } from '@/lib/utils/slug-generator';
 import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
-
-// Helper function to revalidate sitemap
-async function revalidateSitemap() {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
-    const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
-    await fetch(`${baseUrl}/api/revalidate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, path: '/sitemap.xml' }),
-    });
-  } catch (error) {
-    console.error('Error revalidating sitemap:', error);
-  }
-}
+import toast from 'react-hot-toast';
+import { revalidateSitemap } from '@/lib/revalidate';
 
 const STEPS = [
   { id: 'basic', title: 'Información Básica', description: 'Nombre, tipo y descripción' },
@@ -230,6 +217,8 @@ export default function EditEventPage() {
 
   const saveChanges = async () => {
     setSaving(true);
+    const loadingToast = toast.loading('Guardando cambios...');
+    
     try {
       const eventToUpdate = {
         ...eventData,
@@ -240,25 +229,42 @@ export default function EditEventPage() {
       await eventsCollection.update(params.slug as string, eventToUpdate);
 
       // Sync DJ events locally
-      await syncEventWithDjs(params.slug as string);
+      try {
+        await syncEventWithDjs(params.slug as string);
+      } catch (syncError) {
+        console.error('Error syncing DJ events (non-blocking):', syncError);
+        // Don't block the save process if sync fails
+      }
 
-      // Revalidate event pages when event is updated
-      await revalidateEvent(params.slug as string);
-      await revalidateEventsListing();
+      // Revalidate event pages when event is updated (non-blocking)
+      try {
+        await revalidateEvent(params.slug as string);
+        await revalidateEventsListing();
+        await revalidateSitemap();
+      } catch (revalidateError) {
+        console.error('Error revalidating pages (non-blocking):', revalidateError);
+        // Don't block the save process if revalidation fails
+      }
+
+      toast.dismiss(loadingToast);
+      toast.success('Cambios guardados correctamente');
       
-      // Revalidate sitemap when event is updated
-      await revalidateSitemap();
-
-      router.push(`/admin/events/${params.slug}`);
+      // Small delay to show success message before redirect
+      setTimeout(() => {
+        router.push(`/admin/events/${params.slug}`);
+      }, 500);
     } catch (error) {
       console.error('Error saving event:', error);
-    } finally {
+      toast.dismiss(loadingToast);
+      toast.error('Error al guardar los cambios. Por favor, intenta nuevamente.');
       setSaving(false);
     }
   };
 
   const publishEvent = async () => {
     setSaving(true);
+    const loadingToast = toast.loading('Publicando evento...');
+    
     try {
       const eventToUpdate = {
         ...eventData,
@@ -270,22 +276,36 @@ export default function EditEventPage() {
       await eventsCollection.update(params.slug as string, eventToUpdate);
 
       // Sync DJ events locally (immediate solution)
-      await syncEventWithDjs(params.slug as string);
+      try {
+        await syncEventWithDjs(params.slug as string);
+        // Keep old sync for backward compatibility
+        await syncEventDjsForEvent(params.slug as string);
+      } catch (syncError) {
+        console.error('Error syncing DJ events (non-blocking):', syncError);
+        // Don't block the publish process if sync fails
+      }
 
-      // Keep old sync for backward compatibility
-      await syncEventDjsForEvent(params.slug as string);
+      // Revalidate event pages when event is published (non-blocking)
+      try {
+        await revalidateEvent(params.slug as string);
+        await revalidateEventsListing();
+        await revalidateSitemap();
+      } catch (revalidateError) {
+        console.error('Error revalidating pages (non-blocking):', revalidateError);
+        // Don't block the publish process if revalidation fails
+      }
 
-      // Revalidate event pages when event is published
-      await revalidateEvent(params.slug as string);
-      await revalidateEventsListing();
+      toast.dismiss(loadingToast);
+      toast.success('Evento publicado correctamente');
       
-      // Revalidate sitemap when event is published
-      await revalidateSitemap();
-
-      router.push(`/admin/events/${params.slug}`);
+      // Small delay to show success message before redirect
+      setTimeout(() => {
+        router.push(`/admin/events/${params.slug}`);
+      }, 500);
     } catch (error) {
       console.error('Error publishing event:', error);
-    } finally {
+      toast.dismiss(loadingToast);
+      toast.error('Error al publicar el evento. Por favor, intenta nuevamente.');
       setSaving(false);
     }
   };

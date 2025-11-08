@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -16,6 +17,12 @@ export function MainNavbar() {
   const { user, logout } = useAuth();
   const { getTotalItems } = useCart();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isActive = (path: string) => pathname === path;
 
@@ -150,10 +157,10 @@ export function MainNavbar() {
             <CartDropdown />
             
             {/* Notification Bell - Only for authenticated users */}
-            {user && <NotificationBell />}
+            {mounted && user && <NotificationBell />}
             
             {/* Auth buttons */}
-            {user ? (
+            {mounted && user ? (
               <div className="relative group">
                 <Button variant="ghost" size="sm" className="flex items-center text-gray-700 hover:bg-gray-100">
                   <User className="h-4 w-4 mr-2" />

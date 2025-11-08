@@ -42,9 +42,17 @@ export function CurrencySelector() {
     setIsOpen(false);
   };
 
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const currentCurrency = SUPPORTED_CURRENCIES[currency as keyof typeof SUPPORTED_CURRENCIES];
 
-  if (isLoading) {
+  // During SSR, render a consistent state
+  if (!mounted || isLoading) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500">
         <Globe className="h-4 w-4 animate-pulse" />

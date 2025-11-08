@@ -8,6 +8,7 @@ import { NotificationsProvider } from '@/lib/contexts/NotificationsContext'
 import { MainNavbar } from '@/components/layout/MainNavbar'
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
 const inter = Inter({
@@ -86,6 +87,30 @@ export default function RootLayout({
             </NotificationsProvider>
           </AuthProvider>
         </ThemeProvider> 
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 4000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
         <SpeedInsights />
         <Analytics />
       </body>

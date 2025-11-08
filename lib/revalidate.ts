@@ -2,64 +2,175 @@
  * Utility functions for on-demand revalidation
  */
 
-const REVALIDATE_TOKEN = process.env.REVALIDATE_TOKEN || 'your-secret-token';
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const REVALIDATE_TOKEN = process.env.REVALIDATE_TOKEN || process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+
+/**
+ * Get the base URL for API calls
+ * Works in both client and server environments
+ */
+function getBaseUrl(): string {
+  // In client environment, use window.location.origin if available
+  if (typeof window !== 'undefined') {
+    return process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+  }
+  
+  // In server environment, use environment variable or default
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+}
 
 /**
  * Revalidate a specific path
+ * This function is non-blocking and will never throw errors
  */
 export async function revalidatePath(path: string): Promise<{ success: boolean; message: string }> {
+  // Silently fail if path is invalid
+  if (!path || typeof path !== 'string') {
+    return { success: false, message: 'Invalid path' };
+  }
+
   try {
-    const response = await fetch(`${BASE_URL}/api/revalidate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token: REVALIDATE_TOKEN,
-        path,
-      }),
-    });
+    const baseUrl = getBaseUrl();
+    
+    // Validate URL before attempting fetch
+    if (!baseUrl || baseUrl === 'undefined') {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Revalidation skipped: Invalid base URL');
+      }
+      return { success: false, message: 'Invalid base URL' };
+    }
 
-    const data = await response.json();
+    const url = `${baseUrl}/api/revalidate`;
+    
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-    if (response.ok) {
-      return { success: true, message: data.message };
-    } else {
-      return { success: false, message: data.error || 'Revalidation failed' };
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: REVALIDATE_TOKEN,
+          path,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // Check if response is ok before trying to parse JSON
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Revalidation API error:', response.status, errorText);
+        }
+        return { success: false, message: `Revalidation failed: ${response.status}` };
+      }
+
+      const data = await response.json().catch(() => ({ message: 'Revalidated' }));
+
+      return { success: true, message: data.message || 'Path revalidated successfully' };
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      // Handle abort (timeout)
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Revalidation timeout for path:', path);
+        }
+        return { success: false, message: 'Revalidation timeout' };
+      }
+      
+      throw fetchError; // Re-throw to be caught by outer catch
     }
   } catch (error) {
-    console.error('Revalidation error:', error);
-    return { success: false, message: 'Network error during revalidation' };
+    // Silently fail - only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Revalidation error (non-blocking):', error);
+    }
+    
+    // Return failure but don't throw - this is intentional
+    return { success: false, message: 'Revalidation failed silently' };
   }
 }
 
 /**
  * Revalidate by tag
+ * This function is non-blocking and will never throw errors
  */
 export async function revalidateTag(tag: string): Promise<{ success: boolean; message: string }> {
+  // Silently fail if tag is invalid
+  if (!tag || typeof tag !== 'string') {
+    return { success: false, message: 'Invalid tag' };
+  }
+
   try {
-    const response = await fetch(`${BASE_URL}/api/revalidate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token: REVALIDATE_TOKEN,
-        tag,
-      }),
-    });
+    const baseUrl = getBaseUrl();
+    
+    // Validate URL before attempting fetch
+    if (!baseUrl || baseUrl === 'undefined') {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Revalidation skipped: Invalid base URL');
+      }
+      return { success: false, message: 'Invalid base URL' };
+    }
 
-    const data = await response.json();
+    const url = `${baseUrl}/api/revalidate`;
+    
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-    if (response.ok) {
-      return { success: true, message: data.message };
-    } else {
-      return { success: false, message: data.error || 'Revalidation failed' };
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: REVALIDATE_TOKEN,
+          tag,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // Check if response is ok before trying to parse JSON
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Revalidation API error:', response.status, errorText);
+        }
+        return { success: false, message: `Revalidation failed: ${response.status}` };
+      }
+
+      const data = await response.json().catch(() => ({ message: 'Revalidated' }));
+
+      return { success: true, message: data.message || 'Tag revalidated successfully' };
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      // Handle abort (timeout)
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Revalidation timeout for tag:', tag);
+        }
+        return { success: false, message: 'Revalidation timeout' };
+      }
+      
+      throw fetchError; // Re-throw to be caught by outer catch
     }
   } catch (error) {
-    console.error('Revalidation error:', error);
-    return { success: false, message: 'Network error during revalidation' };
+    // Silently fail - only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Revalidation error (non-blocking):', error);
+    }
+    
+    // Return failure but don't throw - this is intentional
+    return { success: false, message: 'Revalidation failed silently' };
   }
 }
 

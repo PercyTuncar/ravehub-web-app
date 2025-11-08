@@ -7,6 +7,40 @@ import { Event, EventDj } from '@/lib/types';
  */
 
 /**
+ * Remove undefined values from an object recursively
+ * Firebase doesn't accept undefined values in documents
+ */
+function removeUndefinedValues<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  // Handle Date objects - keep them as is
+  if (obj instanceof Date) {
+    return obj;
+  }
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => removeUndefinedValues(item)) as T;
+  }
+
+  // Handle plain objects
+  if (typeof obj === 'object' && obj.constructor === Object) {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = removeUndefinedValues(value);
+      }
+    }
+    return cleaned as T;
+  }
+
+  // Return primitives and other objects as-is
+  return obj;
+}
+
+/**
  * Sync all DJs with event lineup changes
  */
 export async function syncEventWithDjs(eventId: string): Promise<void> {
@@ -74,11 +108,19 @@ async function syncDjWithEvent(
       // Update existing event
       updatedEventsSummary = [...currentEventsSummary];
       const artistInfo = newEvent.artistLineup.find(artist => artist.eventDjId === djId);
-      updatedEventsSummary[existingIndex] = {
+      
+      // Merge with existing summary, only updating fields that have values
+      const updatedSummary: any = {
         ...eventSummary,
-        stage: artistInfo?.stage,
         isHeadliner: artistInfo?.isHeadliner || false
       };
+      
+      // Only add stage if it has a value
+      if (artistInfo?.stage) {
+        updatedSummary.stage = artistInfo.stage;
+      }
+      
+      updatedEventsSummary[existingIndex] = updatedSummary;
     } else {
       // Add new event
       updatedEventsSummary = [...currentEventsSummary, eventSummary];
@@ -89,11 +131,16 @@ async function syncDjWithEvent(
       return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
     });
 
+    // Clean undefined values before updating
+    const cleanedSummary = removeUndefinedValues(updatedEventsSummary);
+    
     // Update DJ document
-    await eventDjsCollection.update(djId, {
-      eventsSummary: updatedEventsSummary,
+    const updateData = removeUndefinedValues({
+      eventsSummary: cleanedSummary,
       updatedAt: new Date(),
     });
+
+    await eventDjsCollection.update(djId, updateData);
 
     console.log(`Updated DJ ${djId} with event ${eventId}`);
 
@@ -119,10 +166,14 @@ async function removeEventFromDj(djId: string, eventId: string, eventName: strin
       summary => summary.eventId !== eventId
     );
 
-    await eventDjsCollection.update(djId, {
-      eventsSummary: updatedEventsSummary,
+    // Clean undefined values before updating
+    const cleanedSummary = removeUndefinedValues(updatedEventsSummary);
+    const updateData = removeUndefinedValues({
+      eventsSummary: cleanedSummary,
       updatedAt: new Date(),
     });
+
+    await eventDjsCollection.update(djId, updateData);
 
     console.log(`Removed event ${eventId} from DJ ${djId}`);
 
@@ -134,6 +185,7 @@ async function removeEventFromDj(djId: string, eventId: string, eventName: strin
 
 /**
  * Create event summary for a specific DJ
+ * Only includes fields that have values (no undefined)
  */
 function createEventSummary(event: Event, djId: string) {
   const artistInfo = event.artistLineup.find(artist => artist.eventDjId === djId);
@@ -146,18 +198,33 @@ function createEventSummary(event: Event, djId: string) {
   const eventEndDate = event.endDate || event.startDate;
   const isPast = new Date(eventEndDate) < now;
 
-  return {
+  // Build summary object, only including fields that have values
+  const summary: any = {
     eventId: event.id,
     eventName: event.name,
-    slug: event.slug,
     startDate: event.startDate,
-    endDate: event.endDate,
     venue: event.location?.venue || '',
-    city: event.location?.city || '',
     country: event.location?.country || event.country || '',
-    stage: artistInfo.stage,
     isHeadliner: artistInfo.isHeadliner || false,
     isPast,
-    mainImageUrl: event.mainImageUrl
   };
+
+  // Only add optional fields if they have values
+  if (event.slug) {
+    summary.slug = event.slug;
+  }
+  if (event.endDate) {
+    summary.endDate = event.endDate;
+  }
+  if (event.location?.city) {
+    summary.city = event.location.city;
+  }
+  if (artistInfo.stage) {
+    summary.stage = artistInfo.stage;
+  }
+  if (event.mainImageUrl) {
+    summary.mainImageUrl = event.mainImageUrl;
+  }
+
+  return summary;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, X, Plus, Minus, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,9 +18,24 @@ import { ConvertedPrice } from '@/components/common/ConvertedPrice';
 export function CartDropdown() {
   const { items, getTotalItems, getTotalAmount, updateQuantity, removeItem } = useCart();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const totalItems = getTotalItems();
   const totalAmount = getTotalAmount();
+
+  // During SSR, always render the dropdown structure to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" className="relative">
+        <ShoppingCart className="h-5 w-5" />
+      </Button>
+    );
+  }
 
   if (totalItems === 0) {
     return (
