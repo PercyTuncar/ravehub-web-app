@@ -409,3 +409,4 @@ NEXT_PUBLIC_CURRENCYFREAKS_KEY=tu_key
 Si necesitas crear un formulario de admin para productos, lo puedo desarrollar siguiendo el mismo patrón que los eventos y blog posts.
 
 
+

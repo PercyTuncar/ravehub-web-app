@@ -150,6 +150,8 @@ export interface Event {
     name: string;
     startDate: string;
     endDate: string;
+    status?: 'upcoming' | 'active' | 'sold_out' | 'expired'; // Estado de la fase
+    manualStatus?: 'active' | 'sold_out' | null; // Estado manual (null = automático)
     prices?: Array<{
       zoneId: string;
       zoneName: string;

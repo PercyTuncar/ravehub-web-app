@@ -50,3 +50,4 @@ if (typeof window !== 'undefined') {
   console.log('📝 Script cargado. Ejecuta syncBorisEvent() para sincronizar.');
 }
 
+

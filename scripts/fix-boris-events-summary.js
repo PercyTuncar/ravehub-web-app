@@ -49,3 +49,4 @@ if (typeof window !== 'undefined') {
   console.log('📝 Script cargado. Ejecuta fixBorisEventsSummary() para corregir los datos.');
 }
 
+

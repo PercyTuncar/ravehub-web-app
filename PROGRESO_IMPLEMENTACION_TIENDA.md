@@ -365,3 +365,4 @@ Crear 3 páginas simples con:
 **¡Estás muy cerca de completar el sistema!** Solo falta la integración con Mercado Pago y las notificaciones para tener una tienda 100% profesional y funcional.
 
 
+

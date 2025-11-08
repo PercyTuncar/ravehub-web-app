@@ -1334,9 +1334,14 @@ export default function NewEventPage() {
               </div>
 
               {/* Sales Phases Management */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">Fases de Venta</h3>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Fases de Venta</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Configura las fases de venta con fechas, precios y estados. El estado se calcula automáticamente según las fechas.
+                    </p>
+                  </div>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -1345,6 +1350,7 @@ export default function NewEventPage() {
                         name: '',
                         startDate: '',
                         endDate: '',
+                        manualStatus: null,
                         zonesPricing: [],
                       };
                       updateEventData('salesPhases', [...(eventData.salesPhases || []), newPhase]);
@@ -1357,13 +1363,56 @@ export default function NewEventPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {eventData.salesPhases?.map((phase, phaseIndex) => (
-                    <Card key={phase.id} className="border-2 border-orange-200/50 dark:border-orange-800/50">
-                      <CardContent className="p-6">
-                        <div className="space-y-4">
-                          <div className="grid md:grid-cols-3 gap-4">
+                  {eventData.salesPhases?.map((phase, phaseIndex) => {
+                    // Función helper para calcular el estado automático
+                    const calculatePhaseStatus = (phase: any): 'upcoming' | 'active' | 'sold_out' | 'expired' => {
+                      if (phase.manualStatus === 'sold_out') return 'sold_out';
+                      if (!phase.startDate || !phase.endDate) return 'upcoming';
+                      
+                      const now = new Date();
+                      const startDate = new Date(phase.startDate);
+                      const endDate = new Date(phase.endDate);
+                      
+                      if (now < startDate) return 'upcoming';
+                      if (now > endDate) return 'expired';
+                      if (phase.manualStatus === 'active') return 'active';
+                      if (now >= startDate && now <= endDate) return 'active';
+                      
+                      return 'upcoming';
+                    };
+
+                    const currentStatus = calculatePhaseStatus(phase);
+                    const statusConfig = {
+                      upcoming: { label: 'Próximamente', color: 'bg-blue-500', textColor: 'text-blue-700 dark:text-blue-300', borderColor: 'border-blue-300 dark:border-blue-700', icon: '⏳' },
+                      active: { label: 'Activa', color: 'bg-green-500', textColor: 'text-green-700 dark:text-green-300', borderColor: 'border-green-300 dark:border-green-700', icon: '✅' },
+                      sold_out: { label: 'Agotada', color: 'bg-red-500', textColor: 'text-red-700 dark:text-red-300', borderColor: 'border-red-300 dark:border-red-700', icon: '🔴' },
+                      expired: { label: 'Expirada', color: 'bg-gray-500', textColor: 'text-gray-700 dark:text-gray-300', borderColor: 'border-gray-300 dark:border-gray-700', icon: '⏰' },
+                    };
+                    const status = statusConfig[currentStatus];
+
+                    return (
+                      <Card key={phase.id} className={`border-2 ${status.borderColor} bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 shadow-lg transition-all duration-300 hover:shadow-xl`}>
+                        <CardHeader className="pb-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-3 h-3 rounded-full ${status.color} animate-pulse`} />
+                              <CardTitle className="text-lg font-bold">{phase.name || `Fase ${phaseIndex + 1}`}</CardTitle>
+                              <Badge className={`${status.color} text-white border-0`}>
+                                {status.icon} {status.label}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">Fase {phaseIndex + 1}</span>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <div className="grid md:grid-cols-4 gap-4">
                             <div className="space-y-2">
-                              <Label className="text-sm font-semibold text-foreground">Nombre de Fase *</Label>
+                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                Nombre de Fase *
+                                {!phase.name && <span className="text-red-500">*</span>}
+                              </Label>
                               <Input
                                 value={phase.name}
                                 onChange={(e) => {
@@ -1376,80 +1425,170 @@ export default function NewEventPage() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-sm font-semibold text-foreground">Fecha Inicio *</Label>
+                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                Fecha Inicio *
+                                {!phase.startDate && <span className="text-red-500">*</span>}
+                              </Label>
                               <Input
                                 type="datetime-local"
                                 value={phase.startDate ? new Date(phase.startDate).toISOString().slice(0, 16) : ''}
                                 onChange={(e) => {
                                   const newPhases = [...(eventData.salesPhases || [])];
-                                  newPhases[phaseIndex] = { ...phase, startDate: new Date(e.target.value).toISOString() };
+                                  const updatedPhase = { ...phase, startDate: new Date(e.target.value).toISOString() };
+                                  // Recalcular estado automáticamente
+                                  const now = new Date();
+                                  const startDate = new Date(e.target.value);
+                                  const endDate = phase.endDate ? new Date(phase.endDate) : null;
+                                  
+                                  if (updatedPhase.manualStatus === null) {
+                                    if (endDate && now > endDate) {
+                                      updatedPhase.status = 'expired';
+                                    } else if (now < startDate) {
+                                      updatedPhase.status = 'upcoming';
+                                    } else if (endDate && now >= startDate && now <= endDate) {
+                                      updatedPhase.status = 'active';
+                                    }
+                                  }
+                                  
+                                  newPhases[phaseIndex] = updatedPhase;
                                   updateEventData('salesPhases', newPhases);
                                 }}
                                 className="h-12"
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-sm font-semibold text-foreground">Fecha Fin *</Label>
+                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                Fecha Fin *
+                                {!phase.endDate && <span className="text-red-500">*</span>}
+                              </Label>
                               <Input
                                 type="datetime-local"
                                 value={phase.endDate ? new Date(phase.endDate).toISOString().slice(0, 16) : ''}
                                 onChange={(e) => {
                                   const newPhases = [...(eventData.salesPhases || [])];
-                                  newPhases[phaseIndex] = { ...phase, endDate: new Date(e.target.value).toISOString() };
+                                  const updatedPhase = { ...phase, endDate: new Date(e.target.value).toISOString() };
+                                  // Recalcular estado automáticamente
+                                  const now = new Date();
+                                  const startDate = phase.startDate ? new Date(phase.startDate) : null;
+                                  const endDate = new Date(e.target.value);
+                                  
+                                  if (updatedPhase.manualStatus === null) {
+                                    if (now > endDate) {
+                                      updatedPhase.status = 'expired';
+                                    } else if (startDate && now < startDate) {
+                                      updatedPhase.status = 'upcoming';
+                                    } else if (startDate && now >= startDate && now <= endDate) {
+                                      updatedPhase.status = 'active';
+                                    }
+                                  }
+                                  
+                                  newPhases[phaseIndex] = updatedPhase;
                                   updateEventData('salesPhases', newPhases);
                                 }}
                                 className="h-12"
                               />
                             </div>
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold text-foreground">Estado Manual</Label>
+                              <Select
+                                value={phase.manualStatus || 'auto'}
+                                onValueChange={(value) => {
+                                  const newPhases = [...(eventData.salesPhases || [])];
+                                  const updatedPhase = { ...phase };
+                                  
+                                  if (value === 'auto') {
+                                    updatedPhase.manualStatus = null;
+                                    // Recalcular automáticamente
+                                    const now = new Date();
+                                    const startDate = phase.startDate ? new Date(phase.startDate) : null;
+                                    const endDate = phase.endDate ? new Date(phase.endDate) : null;
+                                    
+                                    if (startDate && endDate) {
+                                      if (now > endDate) {
+                                        updatedPhase.status = 'expired';
+                                      } else if (now < startDate) {
+                                        updatedPhase.status = 'upcoming';
+                                      } else {
+                                        updatedPhase.status = 'active';
+                                      }
+                                    }
+                                  } else {
+                                    updatedPhase.manualStatus = value as 'active' | 'sold_out';
+                                    updatedPhase.status = value as 'active' | 'sold_out';
+                                  }
+                                  
+                                  newPhases[phaseIndex] = updatedPhase;
+                                  updateEventData('salesPhases', newPhases);
+                                }}
+                              >
+                                <SelectTrigger className="h-12">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="auto">🔄 Automático (por fecha)</SelectItem>
+                                  <SelectItem value="active">✅ Activa (forzar)</SelectItem>
+                                  <SelectItem value="sold_out">🔴 Agotada (forzar)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <p className="text-xs text-muted-foreground">
+                                {phase.manualStatus === null 
+                                  ? 'El estado se calcula automáticamente según las fechas'
+                                  : 'Estado manual activado - ignora las fechas'}
+                              </p>
+                            </div>
                           </div>
 
                           {/* Zone Pricing for this phase */}
                           {eventData.zones && eventData.zones.length > 0 && (
-                            <div className="space-y-2">
-                              <Label className="text-sm font-semibold text-foreground">Precios por Zona</Label>
+                            <div className="space-y-3 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                💰 Precios por Zona
+                              </Label>
                               <div className="space-y-2">
                                 {eventData.zones.map((zone) => {
                                   const existingPricing = phase.zonesPricing?.find(p => p.zoneId === zone.id);
                                   return (
-                                    <div key={zone.id} className="flex items-center gap-4 p-3 border rounded-lg">
-                                      <span className="font-medium min-w-0 flex-1">{zone.name}</span>
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="Precio"
-                                        value={existingPricing?.price || ''}
-                                        onChange={(e) => {
-                                          const newPhases = [...(eventData.salesPhases || [])];
-                                          const currentPhase = newPhases[phaseIndex];
-                                          const currentPricing = currentPhase.zonesPricing || [];
+                                    <div key={zone.id} className="flex items-center gap-4 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow">
+                                      <span className="font-medium min-w-0 flex-1 text-foreground">{zone.name}</span>
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          placeholder="0.00"
+                                          value={existingPricing?.price || ''}
+                                          onChange={(e) => {
+                                            const newPhases = [...(eventData.salesPhases || [])];
+                                            const currentPhase = newPhases[phaseIndex];
+                                            const currentPricing = currentPhase.zonesPricing || [];
 
-                                          const existingIndex = currentPricing.findIndex(p => p.zoneId === zone.id);
-                                          const newPrice = parseFloat(e.target.value) || 0;
+                                            const existingIndex = currentPricing.findIndex(p => p.zoneId === zone.id);
+                                            const newPrice = parseFloat(e.target.value) || 0;
 
-                                          if (existingIndex >= 0) {
-                                            currentPricing[existingIndex] = {
-                                              ...currentPricing[existingIndex],
-                                              price: newPrice,
-                                            };
-                                          } else {
-                                            currentPricing.push({
-                                              zoneId: zone.id,
-                                              price: newPrice,
-                                              available: zone.capacity,
-                                              sold: 0,
-                                              phaseId: phase.id,
-                                            });
-                                          }
+                                            if (existingIndex >= 0) {
+                                              currentPricing[existingIndex] = {
+                                                ...currentPricing[existingIndex],
+                                                price: newPrice,
+                                              };
+                                            } else {
+                                              currentPricing.push({
+                                                zoneId: zone.id,
+                                                price: newPrice,
+                                                available: zone.capacity,
+                                                sold: 0,
+                                                phaseId: phase.id,
+                                              });
+                                            }
 
-                                          newPhases[phaseIndex] = { ...currentPhase, zonesPricing: currentPricing };
-                                          updateEventData('salesPhases', newPhases);
-                                        }}
-                                        className="w-32"
-                                      />
-                                      <span className="text-sm text-muted-foreground min-w-[60px]">
-                                        {getCurrencySymbol(eventData.currency || 'CLP')}
-                                      </span>
+                                            newPhases[phaseIndex] = { ...currentPhase, zonesPricing: currentPricing };
+                                            updateEventData('salesPhases', newPhases);
+                                          }}
+                                          className="w-32 h-10"
+                                        />
+                                        <span className="text-sm font-medium text-muted-foreground min-w-[60px]">
+                                          {getCurrencySymbol(eventData.currency || 'CLP')}
+                                        </span>
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -1457,7 +1596,13 @@ export default function NewEventPage() {
                             </div>
                           )}
 
-                          <div className="flex justify-end">
+                          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span className="font-medium">Estado actual:</span>
+                              <Badge variant="outline" className={status.textColor}>
+                                {status.icon} {status.label}
+                              </Badge>
+                            </div>
                             <Button
                               variant="destructive"
                               size="sm"
@@ -1465,35 +1610,48 @@ export default function NewEventPage() {
                                 const newPhases = (eventData.salesPhases || []).filter((_, i) => i !== phaseIndex);
                                 updateEventData('salesPhases', newPhases);
                               }}
+                              className="flex items-center gap-2"
                             >
-                              <X className="h-4 w-4 mr-2" />
+                              <X className="h-4 w-4" />
                               Eliminar Fase
                             </Button>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                   {(!eventData.salesPhases || eventData.salesPhases.length === 0) && (
-                    <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
-                      <CardContent className="p-8 text-center">
-                        <p className="text-muted-foreground mb-4">No hay fases de venta configuradas aún</p>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            const newPhase = {
-                              id: `phase-${Date.now()}`,
-                              name: '',
-                              startDate: '',
-                              endDate: '',
-                              zonesPricing: [],
-                            };
-                            updateEventData('salesPhases', [...(eventData.salesPhases || []), newPhase]);
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Agregar Primera Fase
-                        </Button>
+                    <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+                      <CardContent className="p-12 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <Plus className="h-8 w-8 text-gray-400" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-semibold text-foreground mb-2">No hay fases de venta configuradas</p>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Agrega fases de venta para organizar los precios y disponibilidad de tickets
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const newPhase = {
+                                id: `phase-${Date.now()}`,
+                                name: '',
+                                startDate: '',
+                                endDate: '',
+                                manualStatus: null,
+                                zonesPricing: [],
+                              };
+                              updateEventData('salesPhases', [...(eventData.salesPhases || []), newPhase]);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Agregar Primera Fase
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   )}
