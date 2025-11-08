@@ -156,11 +156,27 @@ export function MainNavbar() {
             {/* Cart Dropdown */}
             <CartDropdown />
             
-            {/* Notification Bell - Only for authenticated users */}
+            {/* Notification Bell - Only for authenticated users (client-only) */}
             {mounted && user && <NotificationBell />}
             
-            {/* Auth buttons */}
-            {mounted && user ? (
+            {/* Auth buttons - Always render links for SEO, but show user info only after mount */}
+            {!mounted ? (
+              // SSR: Always show login/register links for SEO
+              <div className="flex items-center space-x-2">
+                <Link href="/login">
+                  <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white">
+                    Registrarse
+                  </Button>
+                </Link>
+              </div>
+            ) : user ? (
+              // Client: Show user menu if authenticated
               <div className="relative group">
                 <Button variant="ghost" size="sm" className="flex items-center text-gray-700 hover:bg-gray-100">
                   <User className="h-4 w-4 mr-2" />
@@ -220,6 +236,7 @@ export function MainNavbar() {
                 </div>
               </div>
             ) : (
+              // Client: Show login/register if not authenticated
               <div className="flex items-center space-x-2">
                 <Link href="/login">
                   <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100">
