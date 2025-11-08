@@ -525,11 +525,11 @@ export default async function HomePage() {
   const upcomingEvents = await getUpcomingEvents(12); // Obtener más eventos para el carousel
 
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-white">
       {/* JSON-LD for SEO */}
       <JsonLd id="homepage-jsonld" data={jsonLd(upcomingEvents)} />
 
-      {/* Premium Hero Section with Video */}
+      {/* Hero Section */}
       <HeroVideo
         title="Vive la música electrónica en Latinoamérica"
         subtitle="La plataforma líder en eventos de música electrónica"
@@ -557,36 +557,36 @@ export default async function HomePage() {
         ]}
       />
 
-      {/* Premium Events Carousel */}
+      {/* Events Carousel */}
       <EventCarousel
         events={upcomingEvents}
         title="Próximos eventos destacados"
         subtitle="Descubre los sets imperdibles que vienen a tu ciudad. Compra con anticipación y asegura tu lugar en la pista."
-        className="bg-gradient-to-b from-black via-gray-900 to-black"
       />
 
-      {/* Premium Country Selector */}
+      {/* Country Selector */}
       <CountrySelector />
 
-      {/* Premium How It Works Section */}
+      {/* How It Works Section */}
       <HowItWorks />
 
-      {/* Premium Newsletter Section */}
+      {/* Newsletter Section */}
       <Newsletter />
 
-      {/* Additional Premium Sections */}
-      
-      {/* FAQ Section with Premium Design */}
-      <section className="py-20 px-4 bg-gradient-to-b from-black to-gray-900">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-white">
-            Preguntas{' '}
-            <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-              Frecuentes
-            </span>
-          </h2>
+      {/* FAQ Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+          <div className="mb-16">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
+              Preguntas frecuentes
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-600">
+              Todo lo que necesitas saber sobre Ravehub
+            </p>
+          </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {[
               {
                 question: "¿Cómo funcionan los e-tickets?",
@@ -605,89 +605,78 @@ export default async function HomePage() {
                 answer: "Inicia sesión en ravehublatam.com y dirígete a la sección 'Mis Tickets' en tu perfil. Ahí encontrarás todas tus entradas activas, historial de compras y podrás descargar los códigos QR."
               }
             ].map((faq, index) => (
-              <details 
-                key={index} 
-                className="group bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 hover:border-orange-500/50 transition-all duration-300"
+              <details
+                key={index}
+                className="group bg-white border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-200"
               >
-                <summary className="font-semibold text-lg text-white cursor-pointer list-none flex items-center justify-between hover:text-orange-300 transition-colors">
+                <summary className="font-semibold text-lg text-gray-900 cursor-pointer list-none flex items-center justify-between">
                   <span>{faq.question}</span>
-                  <div className="w-6 h-6 bg-orange-500/20 rounded-full flex items-center justify-center group-open:rotate-180 transition-transform">
-                    <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
+                  <svg 
+                    className="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </summary>
-                <div className="mt-4 text-gray-300 leading-relaxed animate-slide-in-up">
+                <div className="mt-4 text-gray-600 leading-relaxed">
                   {faq.answer}
                 </div>
               </details>
             ))}
           </div>
+          </div>
         </div>
       </section>
 
-      {/* Premium Organizers CTA Section */}
-      <section className="py-24 px-4 bg-gradient-to-b from-gray-900 to-black relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-1/4 w-72 h-72 bg-orange-500/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse animation-delay-2000" />
-        </div>
-
-        {/* Main Content */}
-        <div className="max-w-6xl mx-auto relative z-10">
+      {/* Organizers CTA Section */}
+      <section className="py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Content */}
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  </div>
-                  <span className="text-orange-400 font-medium text-sm uppercase tracking-wider">Para Organizadores</span>
-                </div>
-                
-                <h2 className="text-4xl md:text-6xl font-bold leading-tight">
-                  <span className="text-white">¿Organizas</span>{' '}
-                  <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-                    eventos?
-                  </span>
-                </h2>
-                
-                <p className="text-xl text-gray-300 leading-relaxed">
-                  Únete a la plataforma líder de música electrónica en Latinoamérica.
-                  Gestiona tus eventos, vende entradas y conecta con miles de ravers.
-                </p>
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg mb-6">
+                <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span className="text-sm font-medium text-gray-600">Para Organizadores</span>
               </div>
+              
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
+                ¿Organizas eventos?
+              </h2>
+              
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                Únete a la plataforma líder de música electrónica en Latinoamérica.
+                Gestiona tus eventos, vende entradas y conecta con miles de ravers.
+              </p>
 
               {/* Benefits */}
-              <div className="space-y-4">
+              <div className="space-y-4 mb-8">
                 {[
                   {
-                    icon: "📊",
                     title: "Analytics avanzados",
                     description: "Reportes en tiempo real de ventas y asistencia"
                   },
                   {
-                    icon: "💳",
                     title: "Pagos seguros",
                     description: "Procesamiento automático con múltiples métodos"
                   },
                   {
-                    icon: "🎯",
                     title: "Marketing incluido",
                     description: "Promoción automática en nuestra red de fans"
                   }
                 ].map((benefit, index) => (
-                  <div key={index} className="flex items-center gap-4 group">
-                    <div className="w-10 h-10 bg-gray-800/50 rounded-lg flex items-center justify-center group-hover:bg-orange-500/20 transition-all duration-300">
-                      <span className="text-lg">{benefit.icon}</span>
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">{benefit.title}</h3>
-                      <p className="text-gray-400 text-sm">{benefit.description}</p>
+                      <h3 className="font-semibold text-gray-900 mb-1">{benefit.title}</h3>
+                      <p className="text-sm text-gray-600">{benefit.description}</p>
                     </div>
                   </div>
                 ))}
@@ -695,84 +684,59 @@ export default async function HomePage() {
             </div>
 
             {/* Right: CTA Card */}
-            <div className="relative">
-              {/* Glass morphism card */}
-              <div className="bg-gray-900/50 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50 hover:border-orange-500/30 transition-all duration-500 group">
-                {/* Background glow */}
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-purple-500/5 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
-                
-                <div className="relative z-10 text-center space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-bold text-white">
-                      Comienza hoy mismo
-                    </h3>
-                    <p className="text-gray-400">
-                      Más de 1,030+ eventos ya confían en nuestra plataforma
-                    </p>
-                  </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-8">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    Comienza hoy mismo
+                  </h3>
+                  <p className="text-gray-600">
+                    Más de 1,030+ eventos ya confían en nuestra plataforma
+                  </p>
+                </div>
 
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-4 py-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-400">98%</div>
-                      <div className="text-xs text-gray-400">Satisfacción</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-400">24/7</div>
-                      <div className="text-xs text-gray-400">Soporte</div>
-                    </div>
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-6 py-6 border-y border-gray-200">
+                  <div>
+                    <div className="text-3xl font-bold text-gray-900 mb-1">98%</div>
+                    <div className="text-sm text-gray-600">Satisfacción</div>
                   </div>
-
-                  {/* CTA Buttons */}
-                  <div className="space-y-3">
-                    <Link
-                      href="/contact"
-                      className="w-full inline-flex items-center justify-center px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group"
-                    >
-                      <svg className="h-5 w-5 mr-2 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      Contactar Ventas
-                    </Link>
-                    
-                    <Link
-                      href="/eventos"
-                      className="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-600 hover:border-orange-400/50 text-gray-300 hover:text-white font-medium rounded-xl backdrop-blur-sm bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300"
-                    >
-                      Ver Eventos Existentes
-                      <svg className="h-4 w-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
-                    </Link>
-                  </div>
-
-                  {/* Trust indicator */}
-                  <div className="flex items-center justify-center gap-2 text-xs text-gray-500 pt-4 border-t border-gray-700/50">
-                    <svg className="h-4 w-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span>Setup gratuito • Sin comisiones por configuración</span>
+                  <div>
+                    <div className="text-3xl font-bold text-gray-900 mb-1">24/7</div>
+                    <div className="text-sm text-gray-600">Soporte</div>
                   </div>
                 </div>
 
-                {/* Floating elements */}
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-orange-500/20 rounded-full blur-sm animate-float" />
-                <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-purple-500/20 rounded-full blur-sm animate-float-delay" />
+                {/* CTA Buttons */}
+                <div className="space-y-3">
+                  <Link
+                    href="/contact"
+                    className="w-full inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    Contactar Ventas
+                  </Link>
+                  
+                  <Link
+                    href="/eventos"
+                    className="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Ver Eventos Existentes
+                  </Link>
+                </div>
+
+                {/* Trust indicator */}
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-500 pt-4 border-t border-gray-200">
+                  <svg className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Setup gratuito • Sin comisiones por configuración</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Bottom wave separator */}
-        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black to-transparent pointer-events-none" />
       </section>
 
-      {/* Accessibility Skip Links */}
-      <div className="sr-only">
-        <a href="#main-content" className="focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-orange-500 text-white px-4 py-2 rounded z-50">
-          Saltar al contenido principal
-        </a>
-      </div>
     </main>
   )
 }

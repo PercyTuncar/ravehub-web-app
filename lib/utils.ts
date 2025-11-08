@@ -1,39 +1,34 @@
-// Currency utilities
+// Currency utilities - Compatible con el nuevo sistema de conversión
+import { SUPPORTED_CURRENCIES, getCurrencySymbol as getSymbol, getCurrencyName as getName, formatPrice as format } from '@/lib/utils/currency-converter';
+
+// Exportar lista de monedas para compatibilidad con código existente
 export const SOUTH_AMERICAN_CURRENCIES: Array<{
   code: string;
   name: string;
   symbol: string;
   region: string;
-}> = [
-  // South American currencies
-  { code: 'ARS', name: 'Argentine Peso', symbol: '$', region: 'South America' },
-  { code: 'BOB', name: 'Bolivian Boliviano', symbol: 'Bs.', region: 'South America' },
-  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', region: 'South America' },
-  { code: 'CLP', name: 'Chilean Peso', symbol: '$', region: 'South America' },
-  { code: 'COP', name: 'Colombian Peso', symbol: '$', region: 'South America' },
-  { code: 'GYD', name: 'Guyanese Dollar', symbol: '$', region: 'South America' },
-  { code: 'PYG', name: 'Paraguayan Guarani', symbol: '₲', region: 'South America' },
-  { code: 'PEN', name: 'Peruvian Sol', symbol: 'S/', region: 'South America' },
-  { code: 'SRD', name: 'Surinamese Dollar', symbol: '$', region: 'South America' },
-  { code: 'UYU', name: 'Uruguayan Peso', symbol: '$', region: 'South America' },
-  { code: 'VES', name: 'Venezuelan Bolívar', symbol: 'Bs.', region: 'South America' },
-  // USD for international events
-  { code: 'USD', name: 'US Dollar', symbol: '$', region: 'International' },
-];
+}> = Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => ({
+  code,
+  name: info.name,
+  symbol: info.symbol,
+  region: info.countries.some(c => ['AR', 'BO', 'BR', 'CL', 'CO', 'EC', 'GY', 'PE', 'PY', 'SR', 'UY', 'VE'].includes(c)) 
+    ? 'South America' 
+    : info.countries.includes('MX') 
+      ? 'Mexico' 
+      : 'International',
+}));
 
+// Re-exportar funciones del nuevo sistema para compatibilidad
 export const getCurrencySymbol = (currencyCode: string): string => {
-  const currency = SOUTH_AMERICAN_CURRENCIES.find(c => c.code === currencyCode);
-  return currency?.symbol || currencyCode;
+  return getSymbol(currencyCode);
 };
 
 export const getCurrencyName = (currencyCode: string): string => {
-  const currency = SOUTH_AMERICAN_CURRENCIES.find(c => c.code === currencyCode);
-  return currency?.name || currencyCode;
+  return getName(currencyCode);
 };
 
 export const formatPrice = (price: number, currencyCode: string): string => {
-  const symbol = getCurrencySymbol(currencyCode);
-  return `${symbol}${price.toLocaleString()}`;
+  return format(price, currencyCode);
 };
 
 // Existing utility functions

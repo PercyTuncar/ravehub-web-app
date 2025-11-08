@@ -10,8 +10,8 @@ export interface ImageKitConfig {
 
 // Configuración de ImageKit
 export const imagekitConfig: ImageKitConfig = {
-  publicKey: "public_j9JZyFZiCiTq7HgEdMrUintoFJw=",
-  urlEndpoint: "https://ik.imagekit.io/tuncar"
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY || "public_j9JZyFZiCiTq7HgEdMrUintoFJw=",
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || "https://ik.imagekit.io/tuncar"
 };
 
 /**
@@ -42,12 +42,12 @@ export function optimizeImageUrl(
   // Si ya es una URL de ImageKit, simplemente agrega parámetros
   if (originalUrl.includes(imagekitConfig.urlEndpoint)) {
     const separator = originalUrl.includes('?') ? '&' : '?';
-    let transformation = 'tr:';
+    let transformation = 'tr=';
     
     if (width) transformation += `w-${width},`;
     if (height) transformation += `h-${height},`;
     if (quality) transformation += `q-${quality},`;
-    if (format) transformation += `fo-${format},`;
+    if (format) transformation += `f-${format},`;
     if (progressive) transformation += `pr-true,`;
     if (blur) transformation += `bl-${blur},`;
     
@@ -67,12 +67,12 @@ export function optimizeImageUrl(
     // Decodificar URL
     const decodedPath = decodeURIComponent(filePath);
     
-    let transformation = 'tr:';
+    let transformation = 'tr=';
     
     if (width) transformation += `w-${width},`;
     if (height) transformation += `h-${height},`;
     if (quality) transformation += `q-${quality},`;
-    if (format) transformation += `fo-${format},`;
+    if (format) transformation += `f-${format},`;
     if (progressive) transformation += `pr-true,`;
     if (blur) transformation += `bl-${blur},`;
     
@@ -84,12 +84,12 @@ export function optimizeImageUrl(
 
   // Para otros tipos de URLs, intentar procesarlas
   const separator = originalUrl.includes('?') ? '&' : '?';
-  let transformation = 'tr:';
+  let transformation = 'tr=';
   
   if (width) transformation += `w-${width},`;
   if (height) transformation += `h-${height},`;
   if (quality) transformation += `q-${quality},`;
-  if (format) transformation += `fo-${format},`;
+  if (format) transformation += `f-${format},`;
   if (progressive) transformation += `pr-true,`;
   if (blur) transformation += `bl-${blur},`;
   
@@ -232,16 +232,16 @@ export function getImageOptimizationInfo(originalUrl: string) {
 export const IMAGEKIT_TRANSFORMATIONS = {
   // Formatos
   FORMAT: {
-    WEBP: 'fo-webp',
-    AVIF: 'fo-avif', 
-    JPEG: 'fo-jpeg',
-    PNG: 'fo-png'
+    WEBP: 'f-webp',
+    AVIF: 'f-avif',
+    JPEG: 'f-jpeg',
+    PNG: 'f-png'
   },
   
   // Calidad
   QUALITY: {
     HIGH: 'q-90',
-    MEDIUM: 'q-80', 
+    MEDIUM: 'q-80',
     LOW: 'q-70',
     THUMBNAIL: 'q-75'
   },

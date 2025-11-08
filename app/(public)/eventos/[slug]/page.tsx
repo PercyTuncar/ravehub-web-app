@@ -101,7 +101,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
   if (!data) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Evento no encontrado</h1>
           <p className="text-muted-foreground mb-6">
@@ -172,7 +172,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             />
             <div className="absolute inset-0 bg-black/40" />
             <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-              <div className="container mx-auto">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Badge className={getEventTypeColor(event.eventType)}>
                     {getEventTypeLabel(event.eventType)}
@@ -209,7 +209,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">

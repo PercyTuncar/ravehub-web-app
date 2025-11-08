@@ -17,6 +17,8 @@ import { eventsCollection } from '@/lib/firebase/collections';
 import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { ConvertedPrice } from '@/components/common/ConvertedPrice';
+import { useCurrency } from '@/lib/contexts/CurrencyContext';
 
 interface TicketSelection {
   zoneId: string;
@@ -29,6 +31,7 @@ interface TicketSelection {
 export default function BuyTicketsPage() {
   const params = useParams();
   const router = useRouter();
+  const { currency: selectedCurrency } = useCurrency();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPhase, setSelectedPhase] = useState<string>('');
@@ -168,7 +171,7 @@ export default function BuyTicketsPage() {
 
   if (!event) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Evento no encontrado</h1>
           <Link href="/eventos">
@@ -188,7 +191,7 @@ export default function BuyTicketsPage() {
   const installmentOptions = getInstallmentOptions();
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Link href={`/eventos/${event.slug}`}>
@@ -253,15 +256,20 @@ export default function BuyTicketsPage() {
                     const zone = event.zones?.find(z => z.id === selection.zoneId);
 
                     return (
-                      <div key={selection.zoneId} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={selection.zoneId} className="flex items-center justify-between p-4 border rounded-lg hover:border-orange-300 transition-colors">
                         <div className="flex-1">
                           <h4 className="font-medium">{selection.zoneName}</h4>
                           {zone?.description && (
                             <p className="text-sm text-muted-foreground">{zone.description}</p>
                           )}
-                          <p className="text-lg font-bold text-primary">
-                            ${selection.price.toLocaleString()} {event.currency}
-                          </p>
+                          <div className="text-lg font-bold">
+                            <ConvertedPrice 
+                              amount={selection.price}
+                              currency={event.currency}
+                              showOriginal={false}
+                              className="text-orange-600"
+                            />
+                          </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <Button
@@ -353,7 +361,15 @@ export default function BuyTicketsPage() {
                       <SelectContent>
                         {installmentOptions.map((num) => (
                           <SelectItem key={num} value={num.toString()}>
-                            {num} cuota{num > 1 ? 's' : ''} de ${(totalAmount / num).toLocaleString()} {event.currency}
+                            <span className="flex items-center gap-2">
+                              {num} cuota{num > 1 ? 's' : ''} de{' '}
+                              <ConvertedPrice 
+                                amount={totalAmount / num}
+                                currency={event.currency}
+                                showOriginal={false}
+                                className="inline"
+                              />
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -419,20 +435,35 @@ export default function BuyTicketsPage() {
                       <span>
                         {selection.quantity}x {selection.zoneName}
                       </span>
-                      <span>${(selection.quantity * selection.price).toLocaleString()} {event.currency}</span>
+                      <ConvertedPrice 
+                        amount={selection.quantity * selection.price}
+                        currency={event.currency}
+                        showOriginal={false}
+                      />
                     </div>
                   ))}
 
                 <Separator />
 
-                <div className="flex justify-between font-medium">
+                <div className="flex justify-between font-medium text-lg">
                   <span>Total</span>
-                  <span>${totalAmount.toLocaleString()} {event.currency}</span>
+                  <ConvertedPrice 
+                    amount={totalAmount}
+                    currency={event.currency}
+                    showOriginal={false}
+                    className="font-bold"
+                  />
                 </div>
 
                 {paymentMethod === 'online' && installments > 1 && (
-                  <div className="text-sm text-muted-foreground">
-                    {installments} cuotas de ${(totalAmount / installments).toLocaleString()} {event.currency}
+                  <div className="text-sm text-muted-foreground flex items-center gap-2">
+                    <span>{installments} cuotas de</span>
+                    <ConvertedPrice 
+                      amount={totalAmount / installments}
+                      currency={event.currency}
+                      showOriginal={false}
+                      className="inline"
+                    />
                   </div>
                 )}
 

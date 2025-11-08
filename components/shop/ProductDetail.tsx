@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Product, ProductCategory, ProductReview } from '@/lib/types';
 import { useCart } from '@/lib/contexts/CartContext';
+import { ConvertedPrice } from '@/components/common/ConvertedPrice';
 
 interface ProductDetailProps {
   product: Product;
@@ -132,11 +133,20 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
           <div className="flex items-center gap-3">
             {product.discountPercentage && product.discountPercentage > 0 ? (
               <>
-                <span className="text-3xl font-bold text-primary">
-                  ${(product.price * (1 - product.discountPercentage / 100)).toLocaleString()} {product.currency}
+                <span className="text-3xl font-bold">
+                  <ConvertedPrice
+                    amount={product.price * (1 - product.discountPercentage / 100)}
+                    currency={product.currency}
+                    showOriginal={false}
+                    className="text-orange-600"
+                  />
                 </span>
                 <span className="text-lg text-muted-foreground line-through">
-                  ${product.price.toLocaleString()} {product.currency}
+                  <ConvertedPrice
+                    amount={product.price}
+                    currency={product.currency}
+                    showOriginal={false}
+                  />
                 </span>
                 <Badge variant="destructive">
                   -{product.discountPercentage}%
@@ -144,7 +154,11 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
               </>
             ) : (
               <span className="text-3xl font-bold">
-                ${product.price.toLocaleString()} {product.currency}
+                <ConvertedPrice
+                  amount={product.price}
+                  currency={product.currency}
+                  showOriginal={false}
+                />
               </span>
             )}
           </div>

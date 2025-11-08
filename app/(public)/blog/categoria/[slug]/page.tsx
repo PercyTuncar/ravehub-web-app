@@ -81,7 +81,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <div className="min-h-screen bg-background">
         <BlogHeader />
 
-        <div className="container mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Sidebar with filters */}
             <aside className="lg:col-span-1">

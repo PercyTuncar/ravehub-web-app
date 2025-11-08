@@ -1,3 +1,18 @@
+// Address types
+export interface Address {
+  id: string;
+  fullName: string;
+  phone: string;
+  address: string;
+  city: string;
+  region: string;
+  country: string;
+  postalCode: string;
+  additionalInfo?: string;
+  isDefault: boolean;
+  createdAt: string;
+}
+
 // User types
 export interface User {
   id: string;
@@ -12,6 +27,9 @@ export interface User {
   preferredCurrency: string;
   role: 'user' | 'admin' | 'moderator';
   photoURL: string;
+
+  // Shipping addresses
+  addresses?: Address[];
 
   authProvider: 'email' | 'google' | 'email+google';
   googleLinked?: boolean;
@@ -115,6 +133,9 @@ export interface Event {
     imageUrl?: string;
     isHeadliner?: boolean;
   }>;
+
+  // Array of DJ IDs for efficient querying
+  artistLineupIds?: string[];
 
   subEvents: Array<{
     name: string;
@@ -307,6 +328,37 @@ export interface Currency {
   name: string;
   symbol: string;
   region: string;
+  decimals?: number;
+  countries?: string[];
+}
+
+// Geolocation types
+export interface GeolocationResult {
+  countryCode: string;
+  countryName: string;
+  currency?: string;
+  ip?: string;
+  city?: string;
+  region?: string;
+  timezone?: string;
+  provider?: string;
+}
+
+// Exchange rate types
+export interface ExchangeRates {
+  base: string;
+  rates: Record<string, number>;
+  timestamp: number;
+  provider?: string;
+}
+
+export interface CurrencyConversionResult {
+  amount: number;
+  fromCurrency: string;
+  toCurrency: string;
+  originalAmount: number;
+  rate: number;
+  timestamp: number;
 }
 
 // Config types
@@ -404,6 +456,23 @@ export interface EventDj {
   createdBy: string;
   updatedAt: Date;
 
+  // Enhanced event summary for automatic synchronization
+  eventsSummary?: Array<{
+    eventId: string;
+    eventName: string;
+    slug?: string;
+    startDate: string;
+    endDate?: string;
+    venue: string;
+    city?: string;
+    country: string;
+    stage?: string;
+    isHeadliner?: boolean;
+    isPast: boolean;
+    mainImageUrl?: string;
+  }>;
+
+  // Legacy fields for backward compatibility
   upcomingEvents?: Array<{
     eventId: string;
     eventName: string;
@@ -504,6 +573,7 @@ export interface Order {
     name: string;
     quantity: number;
     price: number;
+    currency: string;
   }>;
   totalAmount: number;
   currency: string;
@@ -511,23 +581,56 @@ export interface Order {
   paymentStatus: 'pending' | 'approved' | 'rejected';
   offlinePaymentMethod?: string;
   paymentProofUrl?: string;
-  status: string;
+  // Estados: pending → payment_approved → preparing → shipped → delivered → cancelled
+  status: 'pending' | 'payment_approved' | 'preparing' | 'shipped' | 'delivered' | 'cancelled';
+  statusHistory?: Array<{
+    status: string;
+    timestamp: Date | string;
+    updatedBy?: string;
+    notes?: string;
+  }>;
   notes?: string;
+  adminNotes?: string;
   shippingAddress: {
     fullName?: string;
+    email?: string;
     phone?: string;
     address?: string;
     city?: string;
     region?: string;
+    state?: string;
+    district?: string;
     postalCode?: string;
     country?: string;
+    countryCode?: string;
     notes?: string;
   };
   shippingCost?: number;
+  shippingMethod?: 'home_delivery' | 'store_pickup';
+  estimatedDeliveryDays?: number;
+  trackingNumber?: string;
+  mercadoPagoPaymentId?: string;
+  mercadoPagoPreferenceId?: string;
+  mercadoPagoStatus?: string;
   orderDate?: Date | string;
   reviewedBy?: string;
-  reviewedAt?: Date;
+  reviewedAt?: Date | string;
+  createdAt: Date | string;
   updatedAt?: Date | string;
+}
+
+// Product Shipping Configuration
+export interface ShippingZone {
+  id: string;
+  country: string;
+  countryCode: string;
+  state?: string;
+  stateCode?: string;
+  district?: string;
+  districtCode?: string;
+  shippingCost: number;
+  isFreeShipping: boolean;
+  estimatedDays: number;
 }
 
 // Product types (for e-commerce)
@@ -546,6 +649,24 @@ export interface Product {
   artist?: string;
   brand?: string;
   gender?: string;
+  // Configuración de envíos
+  shippingEnabled: boolean;
+  shippingType: 'by_zone' | 'nationwide' | 'store_pickup_only';
+  storePickupEnabled: boolean;
+  storePickupAddress?: string;
+  // Envío por zonas específicas
+  shippingZones?: ShippingZone[];
+  // Envío a todo el país
+  nationwideShipping?: {
+    country: string;
+    countryCode: string;
+    shippingCost: number;
+    isFreeShipping: boolean;
+    estimatedDays: number;
+  };
+  // Costo de envío por defecto (10% del precio del producto)
+  defaultShippingPercentage: number;
+  defaultShippingDays: number;
   eligibleRegions?: string[];
   shippingDetails?: {
     weight?: number;

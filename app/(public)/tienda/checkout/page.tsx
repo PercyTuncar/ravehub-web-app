@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CreditCard, Banknote, Truck, LogIn, UserPlus } from 'lucide-react';
+import { ArrowLeft, CreditCard, Banknote, Truck, LogIn, UserPlus, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,11 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCart } from '@/lib/contexts/CartContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { ConvertedPrice } from '@/components/common/ConvertedPrice';
+import { FileUpload } from '@/components/common/FileUpload';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { usersCollection } from '@/lib/firebase/collections';
+import { Address } from '@/lib/types';
 
 export default function CheckoutPage() {
   const { items, getTotalAmount, clearCart } = useCart();
@@ -22,6 +27,13 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline'>('online');
+  const [paymentProof, setPaymentProof] = useState<string>('');
+  const [offlinePaymentMethod, setOfflinePaymentMethod] = useState<string>('bank_transfer');
+  
+  // Addresses
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('new');
+  
   const [shippingInfo, setShippingInfo] = useState({
     fullName: '',
     email: '',
@@ -30,23 +42,94 @@ export default function CheckoutPage() {
     city: '',
     region: '',
     postalCode: '',
+    country: '',
     notes: '',
   });
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
-  // Pre-fill user data if logged in
+  // Load user addresses
   useEffect(() => {
     if (user && !authLoading) {
-      setShippingInfo(prev => ({
-        ...prev,
-        fullName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '',
-        email: user.email || '',
-        phone: user.phone || '',
-      }));
+      loadUserAddresses();
     }
   }, [user, authLoading]);
+
+  const loadUserAddresses = async () => {
+    if (!user) return;
+    try {
+      const userData = await usersCollection.get(user.id);
+      if (userData && userData.addresses) {
+        setSavedAddresses(userData.addresses);
+        
+        // Auto-select default address
+        const defaultAddress = userData.addresses.find((addr: Address) => addr.isDefault);
+        if (defaultAddress) {
+          setSelectedAddressId(defaultAddress.id);
+          fillAddressForm(defaultAddress);
+        } else {
+          // Pre-fill with user data
+          setShippingInfo(prev => ({
+            ...prev,
+            fullName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '',
+            email: user.email || '',
+            phone: user.phone || '',
+            country: user.country || '',
+          }));
+        }
+      } else {
+        // Pre-fill with user data
+        setShippingInfo(prev => ({
+          ...prev,
+          fullName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '',
+          email: user.email || '',
+          phone: user.phone || '',
+          country: user.country || '',
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading addresses:', error);
+    }
+  };
+
+  const fillAddressForm = (address: Address) => {
+    setShippingInfo({
+      fullName: address.fullName,
+      email: user?.email || '',
+      phone: address.phone,
+      address: address.address,
+      city: address.city,
+      region: address.region,
+      postalCode: address.postalCode,
+      country: address.country,
+      notes: address.additionalInfo || '',
+    });
+  };
+
+  const handleAddressSelect = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    if (addressId === 'new') {
+      // Clear form for new address
+      setShippingInfo({
+        fullName: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        address: '',
+        city: '',
+        region: '',
+        postalCode: '',
+        country: user?.country || '',
+        notes: '',
+      });
+    } else {
+      // Fill form with selected address
+      const address = savedAddresses.find(addr => addr.id === addressId);
+      if (address) {
+        fillAddressForm(address);
+      }
+    }
+  };
 
   const handleShippingInfoChange = (field: string, value: string) => {
     setShippingInfo(prev => ({ ...prev, [field]: value }));
@@ -61,8 +144,15 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Validar comprobante para pagos offline
+    if (paymentMethod === 'offline' && !paymentProof) {
+      alert('Por favor sube tu comprobante de pago');
+      return;
+    }
+
     setProcessing(true);
     try {
+      // Crear orden
       const orderData = {
         userId: user.id,
         orderItems: items.map(item => ({
@@ -71,11 +161,16 @@ export default function CheckoutPage() {
           name: item.name,
           quantity: item.quantity,
           price: item.price,
+          currency: item.currency,
         })),
         totalAmount: getTotalAmount(),
-        currency: items[0]?.currency || 'CLP',
+        currency: items[0]?.currency || 'PEN',
         paymentMethod,
         shippingAddress: shippingInfo,
+        shippingCost: shippingCost,
+        shippingMethod: 'home_delivery',
+        estimatedDeliveryDays: 5,
+        notes: shippingInfo.notes,
       };
 
       const response = await fetch('/api/orders/create', {
@@ -87,12 +182,63 @@ export default function CheckoutPage() {
       const result = await response.json();
 
       if (response.ok) {
-        clearCart();
-        if (paymentMethod === 'online' && result.paymentUrl) {
-          window.location.href = result.paymentUrl;
-        } else {
-          alert('Pedido creado exitosamente. Revisa tu perfil para el estado.');
-          router.push('/profile/orders');
+        const orderId = result.orderId;
+
+        // Si es pago offline, subir comprobante
+        if (paymentMethod === 'offline' && paymentProof) {
+          const proofResponse = await fetch(`/api/orders/${orderId}/upload-proof`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              paymentProofUrl: paymentProof,
+              offlinePaymentMethod: offlinePaymentMethod,
+            }),
+          });
+
+          if (proofResponse.ok) {
+            clearCart();
+            alert('Pedido creado exitosamente. Tu comprobante será revisado pronto.');
+            router.push(`/profile/orders`);
+          } else {
+            alert('Error al subir el comprobante. Por favor contacta con soporte.');
+          }
+        } else if (paymentMethod === 'online') {
+          // Integrar con Mercado Pago
+          console.log('💳 [CHECKOUT] Creando preferencia de Mercado Pago...');
+          
+          const mpResponse = await fetch('/api/mercadopago/create-preference', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId,
+              orderItems: items,
+              totalAmount: finalTotal,
+              currency: items[0]?.currency || 'PEN',
+              buyerEmail: shippingInfo.email,
+              buyerName: shippingInfo.fullName,
+              buyerPhone: shippingInfo.phone,
+            }),
+          });
+
+          if (mpResponse.ok) {
+            const mpData = await mpResponse.json();
+            console.log('✅ [CHECKOUT] Preferencia creada:', mpData.preferenceId);
+            
+            // Limpiar carrito antes de redirigir
+            clearCart();
+            
+            // Redirigir a Mercado Pago
+            const redirectUrl = process.env.NODE_ENV === 'production' 
+              ? mpData.initPoint 
+              : mpData.sandboxInitPoint || mpData.initPoint;
+            
+            console.log('🔗 [CHECKOUT] Redirigiendo a:', redirectUrl);
+            window.location.href = redirectUrl;
+          } else {
+            const mpError = await mpResponse.json();
+            console.error('❌ [CHECKOUT] Error creando preferencia:', mpError);
+            alert('Error al conectar con Mercado Pago. Por favor intenta nuevamente.');
+          }
         }
       } else {
         alert(`Error: ${result.error}`);
@@ -114,7 +260,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Carrito vacío</h1>
           <p className="text-muted-foreground mb-6">No hay productos en tu carrito para procesar.</p>
@@ -131,7 +277,7 @@ export default function CheckoutPage() {
   const finalTotal = totalAmount + shippingCost;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Link href="/tienda/carrito">
@@ -210,6 +356,49 @@ export default function CheckoutPage() {
                     Si tienes una cuenta, tus datos se completarán automáticamente.
                   </p>
                 </div>
+              )}
+
+              {/* Address Selector */}
+              {user && savedAddresses.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Seleccionar Dirección</Label>
+                  <Select value={selectedAddressId} onValueChange={handleAddressSelect}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">
+                        + Usar nueva dirección
+                      </SelectItem>
+                      {savedAddresses.map((address) => (
+                        <SelectItem key={address.id} value={address.id}>
+                          {address.fullName} - {address.address.substring(0, 30)}...
+                          {address.isDefault && ' (Predeterminada)'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Link
+                    href="/profile/addresses"
+                    className="text-xs text-primary hover:underline inline-block"
+                  >
+                    Gestionar mis direcciones
+                  </Link>
+                </div>
+              )}
+
+              {user && savedAddresses.length === 0 && (
+                <Alert>
+                  <AlertDescription>
+                    <p className="text-sm">
+                      No tienes direcciones guardadas.{' '}
+                      <Link href="/profile/addresses" className="text-primary hover:underline font-medium">
+                        Agregar una dirección
+                      </Link>
+                      {' '}para futuros pedidos más rápidos.
+                    </p>
+                  </AlertDescription>
+                </Alert>
               )}
               
               <div className="grid grid-cols-2 gap-4">
@@ -345,6 +534,79 @@ export default function CheckoutPage() {
             </CardContent>
           </Card>
 
+          {/* Offline Payment Upload */}
+          {paymentMethod === 'offline' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Comprobante de Pago
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <AlertDescription>
+                    <p className="font-medium mb-2">Realiza el pago a:</p>
+                    <div className="space-y-1 text-sm">
+                      <p><strong>Banco:</strong> BCP</p>
+                      <p><strong>Cuenta Corriente:</strong> 193-2567890-0-12</p>
+                      <p><strong>CCI:</strong> 00219300256789001213</p>
+                      <p><strong>Titular:</strong> RaveHub Perú SAC</p>
+                      <p><strong>RUC:</strong> 20123456789</p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+
+                <div>
+                  <Label>Método de Pago Offline</Label>
+                  <Select
+                    value={offlinePaymentMethod}
+                    onValueChange={setOfflinePaymentMethod}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bank_transfer">Transferencia Bancaria</SelectItem>
+                      <SelectItem value="bank_deposit">Depósito Bancario</SelectItem>
+                      <SelectItem value="yape">Yape</SelectItem>
+                      <SelectItem value="plin">Plin</SelectItem>
+                      <SelectItem value="tunki">Tunki</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-base">Sube tu Comprobante *</Label>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Sube una foto o PDF de tu comprobante de pago (transferencia, depósito, captura de Yape/Plin, etc.)
+                  </p>
+                  <FileUpload
+                    onUploadComplete={(url) => setPaymentProof(url)}
+                    currentUrl={paymentProof}
+                    onClear={() => setPaymentProof('')}
+                    accept="image/*,application/pdf"
+                    maxSize={5}
+                    folder="payment-proofs"
+                    variant="default"
+                  />
+                  {!paymentProof && (
+                    <p className="text-xs text-red-600 mt-2">
+                      * El comprobante de pago es obligatorio para pagos offline
+                    </p>
+                  )}
+                </div>
+
+                <Alert>
+                  <AlertDescription className="text-sm">
+                    <p className="font-medium mb-1">⏱️ Tiempo de verificación:</p>
+                    <p>Tu pago será revisado en un plazo de 24-48 horas. Recibirás una notificación una vez que tu pedido sea aprobado.</p>
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Terms and Conditions */}
           <Card>
             <CardContent className="pt-6">
@@ -380,12 +642,20 @@ export default function CheckoutPage() {
                       {item.variant && (
                         <p className="text-sm text-muted-foreground">{item.variant}</p>
                       )}
-                      <p className="text-sm text-muted-foreground">
-                        {item.quantity}x ${item.price.toLocaleString()} {item.currency}
-                      </p>
+                      <div className="text-sm text-muted-foreground">
+                        {item.quantity}x <ConvertedPrice
+                          amount={item.price}
+                          currency={item.currency}
+                          showOriginal={false}
+                        />
+                      </div>
                     </div>
                     <span className="font-medium">
-                      ${(item.price * item.quantity).toLocaleString()} {item.currency}
+                      <ConvertedPrice
+                        amount={item.price * item.quantity}
+                        currency={item.currency}
+                        showOriginal={false}
+                      />
                     </span>
                   </div>
                 ))}
@@ -396,16 +666,36 @@ export default function CheckoutPage() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>${totalAmount.toLocaleString()} {items[0]?.currency}</span>
+                  <span>
+                    <ConvertedPrice
+                      amount={totalAmount}
+                      currency={items[0]?.currency || 'CLP'}
+                      showOriginal={false}
+                    />
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Envío</span>
-                  <span>{shippingCost === 0 ? 'Gratis' : `$${shippingCost.toLocaleString()} ${items[0]?.currency}`}</span>
+                  <span>
+                    {shippingCost === 0 ? 'Gratis' : (
+                      <ConvertedPrice
+                        amount={shippingCost}
+                        currency={items[0]?.currency || 'CLP'}
+                        showOriginal={false}
+                      />
+                    )}
+                  </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total</span>
-                  <span>${finalTotal.toLocaleString()} {items[0]?.currency}</span>
+                  <span>
+                    <ConvertedPrice
+                      amount={finalTotal}
+                      currency={items[0]?.currency || 'CLP'}
+                      showOriginal={false}
+                    />
+                  </span>
                 </div>
               </div>
 
@@ -425,7 +715,7 @@ export default function CheckoutPage() {
               >
                 {processing ? 'Procesando...' : 
                  !user ? `Proceder al pago (sin registro)` :
-                 `Pagar $${finalTotal.toLocaleString()} ${items[0]?.currency}`}
+                 `Proceder al pago`}
               </Button>
             </CardContent>
           </Card>

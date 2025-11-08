@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, CheckCircle, Users, Music, Star, TrendingUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Mail, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
@@ -18,7 +17,6 @@ export default function Newsletter() {
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError('Por favor ingresa un email válido');
@@ -29,14 +27,9 @@ export default function Newsletter() {
     setError('');
 
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulate success
       setIsSuccess(true);
       setEmail('');
-      
-      // Reset success state after 5 seconds
       setTimeout(() => {
         setIsSuccess(false);
       }, 5000);
@@ -48,21 +41,9 @@ export default function Newsletter() {
   };
 
   const benefits = [
-    {
-      icon: Music,
-      title: 'Lineups exclusivos',
-      description: 'Sé el primero en conocer los artistas y fechas de festivales'
-    },
-    {
-      icon: Star,
-      title: 'Preventas especiales',
-      description: 'Acceso anticipado a entradas con descuentos exclusivos'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Tendencias EDM',
-      description: 'Mantente al día con las últimas noticias del mundo electrónico'
-    }
+    'Lineups exclusivos antes que nadie',
+    'Preventas especiales con descuentos',
+    'Tendencias EDM y noticias del mundo electrónico'
   ];
 
   const stats = [
@@ -72,173 +53,111 @@ export default function Newsletter() {
   ];
 
   return (
-    <section className="py-20 px-4 bg-gradient-to-b from-gray-900 via-black to-gray-900">
-      <div className="max-w-6xl mx-auto">
+    <section className="py-24 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-              No te pierdas el próximo rave
-            </span>
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
+            No te pierdas el próximo rave
           </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
             Recibe preventas, lineups y noticias exclusivas directamente en tu inbox
           </p>
-          
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8 text-sm text-gray-400 mb-12">
-            {stats.map((stat, index) => (
-              <div key={index} className="flex flex-col items-center text-center p-4 bg-gray-800/30 rounded-xl border border-gray-700/30">
-                <span className="text-orange-400 font-bold text-xl md:text-2xl mb-1">{stat.value}</span>
-                <span className="text-xs md:text-sm">{stat.label}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Newsletter Form */}
-          <div className="relative order-2 lg:order-1">
-            {/* Glass morphism container */}
-            <div className="relative bg-gray-900/50 backdrop-blur-xl rounded-2xl lg:rounded-3xl p-6 lg:p-8 border border-gray-700/50">
-              {/* Background glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-orange-600/10 rounded-2xl lg:rounded-3xl blur-xl" />
-              
-              <div className="relative z-10">
-                {!isSuccess ? (
-                  <>
-                    <div className="flex flex-col sm:flex-row items-center gap-3 lg:gap-4 mb-6 lg:mb-6 text-center sm:text-left">
-                      <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Mail className="h-6 w-6 text-orange-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-1">
-                          Suscríbete gratis
-                        </h3>
-                        <p className="text-gray-400 text-sm">
-                          Recibe nuestras mejores ofertas
-                        </p>
-                      </div>
+          <div>
+            {!isSuccess ? (
+              <div className="bg-white border border-gray-200 rounded-xl p-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="tu@email.com"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
+                        required
+                      />
+                      <Mail className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div>
-                        <label htmlFor="email" className="sr-only">
-                          Email address
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Tu email"
-                            className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-                            required
-                          />
-                          <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        </div>
-                        {error && (
-                          <p className="text-red-400 text-sm mt-2">{error}</p>
-                        )}
-                      </div>
-
-                      <Button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                      >
-                        {isLoading ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            <span className="text-sm">Suscribiendo...</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center gap-2">
-                            <Mail className="h-4 w-4" />
-                            <span className="text-sm">Quiero recibir novedades</span>
-                          </div>
-                        )}
-                      </Button>
-                    </form>
-
-                    <div className="mt-6 text-center">
-                      <p className="text-xs text-gray-400">
-                        Sin spam. Cancela cuando quieras.{' '}
-                        <span className="text-orange-400">Política de privacidad</span>
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  /* Success State */
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CheckCircle className="h-8 w-8 text-green-400" />
-                    </div>
-                    <h3 className="text-xl lg:text-2xl font-bold text-white mb-4">
-                      ¡Bienvenido a la familia Ravehub!
-                    </h3>
-                    <p className="text-gray-300 text-sm lg:text-base mb-6">
-                      Revisa tu email para confirmar tu suscripción y recibir nuestras últimas novedades.
-                    </p>
-                    <div className="flex items-center justify-center gap-2 text-green-400">
-                      <CheckCircle className="h-4 w-4" />
-                      <span className="text-sm font-medium">Suscripción exitosa</span>
-                    </div>
+                    {error && (
+                      <p className="text-sm text-red-600 mt-2">{error}</p>
+                    )}
                   </div>
-                )}
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Suscribiendo...</span>
+                      </div>
+                    ) : (
+                      <>
+                        Suscribirse
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <p className="text-sm text-gray-500 mt-6 text-center">
+                  Sin spam. Cancela cuando quieras.
+                </p>
               </div>
-            </div>
+            ) : (
+              <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
+                <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  ¡Bienvenido a la familia Ravehub!
+                </h3>
+                <p className="text-gray-600">
+                  Revisa tu email para confirmar tu suscripción.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Benefits */}
-          <div className="space-y-6 order-1 lg:order-2">
-            <div className="mb-6 lg:mb-8 text-center lg:text-left">
-              <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4">
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 ¿Por qué suscribirte?
               </h3>
-              <p className="text-gray-300 text-sm lg:text-base">
-                Únete a miles de ravers que ya reciben las mejores ofertas y novedades del mundo electrónico.
-              </p>
+              <div className="space-y-4">
+                {benefits.map((benefit, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-gray-900 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700">{benefit}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-4 lg:space-y-6">
-              {benefits.map((benefit, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col sm:flex-row items-start gap-4 p-4 lg:p-6 bg-gray-900/30 rounded-xl border border-gray-700/30 hover:border-gray-600/50 transition-all duration-300"
-                >
-                  <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <benefit.icon className="h-5 w-5 text-orange-400" />
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4 pt-8 border-t border-gray-200">
+              {stats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-2xl font-bold text-gray-900 mb-1">
+                    {stat.value}
                   </div>
-                  <div className="flex-1 text-center sm:text-left">
-                    <h4 className="font-semibold text-white mb-1">
-                      {benefit.title}
-                    </h4>
-                    <p className="text-gray-400 text-sm">
-                      {benefit.description}
-                    </p>
+                  <div className="text-sm text-gray-600">
+                    {stat.label}
                   </div>
                 </div>
               ))}
-            </div>
-
-            {/* Social Proof */}
-            <div className="mt-6 lg:mt-8 p-4 lg:p-6 bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-xl border border-gray-700/50">
-              <div className="flex flex-col sm:flex-row items-center gap-3 mb-3 text-center sm:text-left">
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-orange-400 text-orange-400" />
-                  ))}
-                </div>
-                <span className="text-white font-semibold">4.9/5</span>
-              </div>
-              <p className="text-gray-300 text-sm mb-2 text-center lg:text-left">
-                "Las mejores ofertas de festivales y excelente atención al cliente"
-              </p>
-              <p className="text-gray-400 text-xs text-center lg:text-left">
-                - María S., Lima
-              </p>
             </div>
           </div>
         </div>

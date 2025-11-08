@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Upload, X, CheckCircle, AlertCircle, Image as ImageIcon, Zap, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { imagePresets, optimizeImageUrl, getImageOptimizationInfo, isOptimizableUrl } from '@/lib/utils/imagekit-optimization';
+// No longer using ImageKit optimization - Firebase Storage only
 
 interface FileUploadProps {
   onUploadComplete: (url: string) => void;
@@ -26,7 +26,7 @@ export function FileUpload({
   onClear,
   accept = 'image/*',
   maxSize = 10, // 10MB default
-  folder = 'events',
+  folder = 'djs',
   className = '',
   variant = 'default'
 }: FileUploadProps) {
@@ -35,10 +35,10 @@ export function FileUpload({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [optimizedUrl, setOptimizedUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (file: File) => {
+    console.log('📁 File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
     setError(null);
 
     // Validate file size
@@ -55,63 +55,71 @@ export function FileUpload({
 
     setUploading(true);
     setProgress(0);
+    setOptimizing(false);
 
     // Create unique filename
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(7);
-    const extension = file.name.split('.').pop();
+    const extension = file.name.split('.').pop() || 'jpg';
     const fileName = `${timestamp}_${randomString}.${extension}`;
     const filePath = `${folder}/${fileName}`;
 
-    // Create storage reference
-    const storageRef = ref(storage, filePath);
+    console.log('🚀 Uploading to Firebase path:', filePath);
 
-    // Upload file with progress tracking
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      // Create storage reference
+      const storageRef = ref(storage, filePath);
 
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-        setProgress(progress);
-      },
-      (error) => {
-        console.error('Upload error:', error);
-        setError('Error al subir el archivo. Inténtalo de nuevo.');
-        setUploading(false);
-      },
-      async () => {
-        try {
-          // Upload completed successfully
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          
-          // Start optimization with ImageKit
-          setOptimizing(true);
-          setProgress(90);
-          
-          // Get optimized URL for this variant
-          let optimizedVersion = downloadURL;
-          if (isOptimizableUrl(downloadURL)) {
-            const preset = variant === 'banner' ? imagePresets.banner : imagePresets.mainEvent;
-            optimizedVersion = optimizeImageUrl(downloadURL, preset);
+      // Upload file with progress tracking
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          console.log('📊 Upload progress:', snapshot.bytesTransferred, '/', snapshot.totalBytes);
+          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          setProgress(Math.min(progress, 90));
+        },
+        (error) => {
+          console.error('❌ Upload error:', error);
+          setError(`Error al subir el archivo: ${error.message}`);
+          setUploading(false);
+          setOptimizing(false);
+          setProgress(0);
+        },
+        async () => {
+          try {
+            console.log('✅ Upload completed, getting download URL...');
+            // Upload completed successfully
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log('🔗 Download URL:', downloadURL);
+            
+            setProgress(100);
+            
+            // Use Firebase URL directly (no ImageKit optimization)
+            console.log('✨ Using Firebase Storage URL directly');
+            
+            // Call callback with Firebase URL
+            onUploadComplete(downloadURL);
+            
+            setUploading(false);
+            setOptimizing(false);
+          } catch (error) {
+            console.error('❌ Get download URL error:', error);
+            setError('Error al obtener la URL del archivo');
+            setUploading(false);
+            setOptimizing(false);
+            setProgress(0);
           }
-          
-          setOptimizedUrl(optimizedVersion);
-          setProgress(100);
-          
-          // Call callback with optimized URL
-          onUploadComplete(optimizedVersion);
-          
-          setUploading(false);
-          setOptimizing(false);
-        } catch (error) {
-          console.error('Get download URL error:', error);
-          setError('Error al obtener la URL del archivo');
-          setUploading(false);
-          setOptimizing(false);
         }
-      }
-    );
+      );
+    } catch (error) {
+      console.error('❌ Upload setup error:', error);
+      setError(`Error configurando upload: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      setUploading(false);
+      setOptimizing(false);
+      setProgress(0);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,6 +196,7 @@ export function FileUpload({
                     alt="Preview"
                     className="w-full max-w-xs h-32 object-cover rounded-xl border-2 border-border shadow-sm"
                     onError={(e) => {
+                      console.error('🖼️ Image preview error for URL:', currentUrl);
                       e.currentTarget.style.display = 'none';
                     }}
                   />

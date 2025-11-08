@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 export function BlogHeader() {
   return (
     <header className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b">
-      <div className="container mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center max-w-3xl mx-auto">
           <div className="flex items-center justify-center gap-2 mb-4">
             <BookOpen className="h-8 w-8 text-primary" />

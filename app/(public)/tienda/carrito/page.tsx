@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/lib/contexts/CartContext';
+import { ConvertedPrice } from '@/components/common/ConvertedPrice';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, getTotalAmount, clearCart } = useCart();
@@ -51,7 +52,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
@@ -95,9 +96,13 @@ export default function CartPage() {
                         {item.variant}
                       </Badge>
                     )}
-                    <p className="text-sm text-muted-foreground">
-                      ${item.price.toLocaleString()} {item.currency} c/u
-                    </p>
+                    <div className="text-sm text-muted-foreground">
+                      <ConvertedPrice
+                        amount={item.price}
+                        currency={item.currency}
+                        showOriginal={false}
+                      /> c/u
+                    </div>
                   </div>
 
                   {/* Quantity Controls */}
@@ -122,7 +127,11 @@ export default function CartPage() {
                   {/* Subtotal */}
                   <div className="text-right">
                     <p className="font-semibold">
-                      ${(item.price * item.quantity).toLocaleString()} {item.currency}
+                      <ConvertedPrice
+                        amount={item.price * item.quantity}
+                        currency={item.currency}
+                        showOriginal={false}
+                      />
                     </p>
                     <Button
                       variant="ghost"
@@ -149,7 +158,13 @@ export default function CartPage() {
             <CardContent className="space-y-4">
               <div className="flex justify-between">
                 <span>Subtotal ({items.reduce((sum, item) => sum + item.quantity, 0)} productos)</span>
-                <span>${getTotalAmount().toLocaleString()} {items[0]?.currency}</span>
+                <span>
+                  <ConvertedPrice
+                    amount={getTotalAmount()}
+                    currency={items[0]?.currency || 'CLP'}
+                    showOriginal={false}
+                  />
+                </span>
               </div>
 
               <div className="flex justify-between">
@@ -161,7 +176,13 @@ export default function CartPage() {
 
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span>${getTotalAmount().toLocaleString()} {items[0]?.currency}</span>
+                <span>
+                  <ConvertedPrice
+                    amount={getTotalAmount()}
+                    currency={items[0]?.currency || 'CLP'}
+                    showOriginal={false}
+                  />
+                </span>
               </div>
 
               <Link href="/tienda/checkout" className="w-full">

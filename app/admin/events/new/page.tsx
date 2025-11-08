@@ -23,6 +23,8 @@ import { Combobox } from '@/components/ui/combobox';
 import { FileUpload } from '@/components/common/FileUpload';
 import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
 import { generateSlug } from '@/lib/utils/slug-generator';
+import { generateArtistLineupIds } from '@/lib/data/dj-events';
+import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
 
 const STEPS = [
   { 
@@ -306,11 +308,18 @@ export default function NewEventPage() {
   const saveAsDraft = async () => {
     setSaving(true);
     try {
-      const eventId = await eventsCollection.create({
+      const eventToSave = {
         ...eventData,
         eventStatus: 'draft',
+        artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
         createdBy: 'admin', // TODO: Get from auth context
-      });
+      };
+      
+      const eventId = await eventsCollection.create(eventToSave);
+      
+      // Sync DJ events for drafts too
+      await syncEventWithDjs(eventId);
+      
       router.push(`/admin/events/${eventId}`);
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -322,13 +331,19 @@ export default function NewEventPage() {
   const publishEvent = async () => {
     setSaving(true);
     try {
-      const eventId = await eventsCollection.create({
+      const eventToSave = {
         ...eventData,
         eventStatus: 'published',
+        artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
         createdBy: 'admin', // TODO: Get from auth context
-      });
+      };
 
-      // Sync eventDjs after publishing
+      const eventId = await eventsCollection.create(eventToSave);
+
+      // Sync DJ events locally (immediate solution)
+      await syncEventWithDjs(eventId);
+
+      // Keep old sync for backward compatibility
       await syncEventDjsForEvent(eventId);
 
       router.push(`/admin/events/${eventId}`);

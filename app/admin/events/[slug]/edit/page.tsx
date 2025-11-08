@@ -23,6 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Combobox } from '@/components/ui/combobox';
 import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
 import { generateSlug } from '@/lib/utils/slug-generator';
+import { generateArtistLineupIds } from '@/lib/data/dj-events';
+import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
 
 const STEPS = [
   { id: 'basic', title: 'Información Básica', description: 'Nombre, tipo y descripción' },
@@ -214,10 +216,16 @@ export default function EditEventPage() {
   const saveChanges = async () => {
     setSaving(true);
     try {
-      await eventsCollection.update(params.slug as string, {
+      const eventToUpdate = {
         ...eventData,
+        artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
         updatedAt: new Date().toISOString(),
-      });
+      };
+
+      await eventsCollection.update(params.slug as string, eventToUpdate);
+
+      // Sync DJ events locally
+      await syncEventWithDjs(params.slug as string);
 
       // Revalidate event pages when event is updated
       await revalidateEvent(params.slug as string);
@@ -234,13 +242,19 @@ export default function EditEventPage() {
   const publishEvent = async () => {
     setSaving(true);
     try {
-      await eventsCollection.update(params.slug as string, {
+      const eventToUpdate = {
         ...eventData,
         eventStatus: 'published',
+        artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
         updatedAt: new Date().toISOString(),
-      });
+      };
 
-      // Sync eventDjs after publishing
+      await eventsCollection.update(params.slug as string, eventToUpdate);
+
+      // Sync DJ events locally (immediate solution)
+      await syncEventWithDjs(params.slug as string);
+
+      // Keep old sync for backward compatibility
       await syncEventDjsForEvent(params.slug as string);
 
       // Revalidate event pages when event is published

@@ -1,0 +1,83 @@
+# ====================================
+# RAVEHUB - Variables de Entorno
+# Copia este archivo a .env.local y completa los valores
+# ====================================
+
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key_here
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
+
+# Firebase Admin SDK (Server-side)
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your_project_id.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----\n"
+
+# ====================================
+# GEOLOCATION APIs (Sistema de Conversión de Divisas)
+# ====================================
+
+# IPinfo (Principal) - https://ipinfo.io/
+# Free tier: 50,000 requests/month
+NEXT_PUBLIC_IPINFO_TOKEN=your_ipinfo_token_here
+
+# BigDataCloud (Terciario) - https://www.bigdatacloud.com/
+# Free tier: 10,000 requests/month
+NEXT_PUBLIC_BDC_KEY=your_bigdatacloud_key_here
+
+# ipgeolocation.io (Cuaternario) - https://ipgeolocation.io/
+# Free tier: 1,000 requests/day
+NEXT_PUBLIC_IPGEO_KEY=your_ipgeolocation_key_here
+
+# ====================================
+# CURRENCY EXCHANGE APIs (Sistema de Conversión de Divisas)
+# ====================================
+
+# Open Exchange Rates (Primario) - https://openexchangerates.org/
+# Free tier: 1,000 requests/month
+NEXT_PUBLIC_OPENEXCHANGE_APP_ID=your_openexchangerates_app_id_here
+
+# ExchangeRate-API (Secundario) - https://www.exchangerate-api.com/
+# Free tier: 1,500 requests/month
+NEXT_PUBLIC_EXCHANGERATE_KEY=your_exchangerate_api_key_here
+
+# CurrencyFreaks (Terciario) - https://currencyfreaks.com/
+# Free tier: 1,000 requests/month
+NEXT_PUBLIC_CURRENCYFREAKS_KEY=your_currencyfreaks_key_here
+
+# ====================================
+# INSTRUCCIONES DE CONFIGURACIÓN
+# ====================================
+#
+# 🚨 IMPORTANTE: Frankfurter (proveedor sin API key) NO soporta monedas LATAM
+# - ❌ NO soporta: PEN, CLP, COP, ARS, PYG, UYU
+# - ✅ Solo soporta: BRL, MXN de LATAM
+#
+# ⚠️ ACCIÓN REQUERIDA: Configura AL MENOS una de estas APIs:
+#   - Open Exchange Rates (RECOMENDADA) ⭐
+#   - ExchangeRate-API
+#   - CurrencyFreaks
+#
+# Sin estas APIs configuradas, las conversiones de PEN, CLP, COP, ARS no funcionarán.
+#
+# Pasos para configurar (5 minutos):
+# 1. Registrarte en Open Exchange Rates: https://openexchangerates.org/signup/free
+# 2. Copiar tu App ID
+# 3. Crear archivo .env.local en la raíz del proyecto
+# 4. Agregar: NEXT_PUBLIC_OPENEXCHANGE_APP_ID=tu_app_id_aqui
+# 5. Reiniciar el servidor: Ctrl+C y luego npm run dev
+# 6. Limpiar cache: localStorage.removeItem('ravehub_exchange_rates')
+#
+# Monedas Soportadas (con APIs configuradas):
+# - USD, EUR, MXN, BRL, CLP, COP, ARS, PEN, PYG, UYU
+#
+# Cache:
+# - Geolocalización: 24 horas
+# - Tasas de cambio: 1 hora
+#
+# Para más información, ver: SOLUCION_RAPIDA.md o CURRENCY_API_SETUP.md
+

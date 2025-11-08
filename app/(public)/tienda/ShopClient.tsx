@@ -12,6 +12,7 @@ import { ShoppingCart, Package, Star, Heart, Search, Filter, Plus, Minus } from 
 import { productsCollection, productCategoriesCollection } from '@/lib/firebase/collections';
 import { Product, ProductCategory } from '@/lib/types';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { ConvertedPrice } from '@/components/common/ConvertedPrice';
 
 interface ShopClientProps {
   initialProducts: Product[];
@@ -104,10 +105,10 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">Tienda Ravehub</h1>
+      <div className="mb-12">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">Tienda Ravehub</h1>
         <p className="text-muted-foreground text-lg">
           Merchandising oficial de los mejores eventos electrónicos
         </p>
@@ -234,16 +235,29 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                     <div className="flex items-center gap-2">
                       {product.discountPercentage && product.discountPercentage > 0 ? (
                         <>
-                          <span className="text-lg font-bold text-primary">
-                            ${(product.price * (1 - product.discountPercentage / 100)).toLocaleString()} {product.currency}
+                          <span className="text-lg font-bold">
+                            <ConvertedPrice
+                              amount={product.price * (1 - product.discountPercentage / 100)}
+                              currency={product.currency}
+                              showOriginal={false}
+                              className="text-orange-600"
+                            />
                           </span>
                           <span className="text-sm text-muted-foreground line-through">
-                            ${product.price.toLocaleString()} {product.currency}
+                            <ConvertedPrice
+                              amount={product.price}
+                              currency={product.currency}
+                              showOriginal={false}
+                            />
                           </span>
                         </>
                       ) : (
                         <span className="text-lg font-bold">
-                          ${product.price.toLocaleString()} {product.currency}
+                          <ConvertedPrice
+                            amount={product.price}
+                            currency={product.currency}
+                            showOriginal={false}
+                          />
                         </span>
                       )}
                     </div>

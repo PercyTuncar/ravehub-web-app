@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google'
 import { ThemeProvider } from '@/lib/contexts/ThemeContext'
 import { AuthProvider } from '@/lib/contexts/AuthContext'
 import { CartProvider } from '@/lib/contexts/CartContext'
+import { CurrencyProvider } from '@/lib/contexts/CurrencyContext'
+import { NotificationsProvider } from '@/lib/contexts/NotificationsContext'
 import { MainNavbar } from '@/components/layout/MainNavbar'
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -72,10 +74,16 @@ export default function RootLayout({
       <body className={`${inter.variable} ${inter.className}`}>
         <ThemeProvider>
           <AuthProvider>
-            <CartProvider>
-              <MainNavbar />
-              {children}
-            </CartProvider>
+            <NotificationsProvider>
+              <CurrencyProvider>
+                <CartProvider>
+                  <MainNavbar />
+                  <div className="pt-16">
+                    {children}
+                  </div>
+                </CartProvider>
+              </CurrencyProvider>
+            </NotificationsProvider>
           </AuthProvider>
         </ThemeProvider> 
         <SpeedInsights />

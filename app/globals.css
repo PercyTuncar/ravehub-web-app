@@ -41,27 +41,27 @@
 
 @layer base {
   :root {
-    /* Ravehub Orange-based Color Palette - Light Mode */
+    /* Modern Light Mode Color Palette - Vercel/HeroUI Inspired */
     --background: 0 0% 100%;
-    --foreground: 20 14% 9%;
+    --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 20 14% 9%;
+    --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 20 14% 9%;
+    --popover-foreground: 0 0% 3.9%;
 
-    /* Primary: Ravehub Orange */
+    /* Primary: Orange - Clean and Modern */
     --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Darker orange */
-    --secondary: 24 45% 25%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary: Neutral gray for depth */
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
 
-    /* Muted: Light orange tint */
-    --muted: 24 20% 95%;
-    --muted-foreground: 24 10% 46%;
+    /* Muted: Subtle gray */
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
 
-    /* Accent: Bright orange */
+    /* Accent: Orange accent */
     --accent: 24 95% 53%;
     --accent-foreground: 0 0% 100%;
 
@@ -81,56 +81,57 @@
     --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
 
-    --border: 24 20% 90%;
-    --input: 24 20% 90%;
+    /* Border: Subtle gray */
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
     --ring: 24 95% 53%;
     --radius: 0.5rem;
   }
 
   .dark {
-    /* Ravehub Orange-based Color Palette - Dark Mode */
-    --background: 20 14% 9%;
-    --foreground: 24 20% 95%;
-    --card: 20 14% 9%;
-    --card-foreground: 24 20% 95%;
-    --popover: 20 14% 9%;
-    --popover-foreground: 24 20% 95%;
+    /* AWS Orange-based Color Palette - Darker Light Mode */
+    --background: 30 15% 94%;
+    --foreground: 30 20% 10%;
+    --card: 30 10% 96%;
+    --card-foreground: 30 20% 10%;
+    --popover: 30 10% 96%;
+    --popover-foreground: 30 20% 10%;
 
-    /* Primary: Ravehub Orange (same in dark) */
-    --primary: 24 95% 53%;
-    --primary-foreground: 20 14% 9%;
+    /* Primary: AWS Orange (same in both modes) */
+    --primary: 30 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Lighter orange for dark backgrounds */
-    --secondary: 24 30% 20%;
-    --secondary-foreground: 24 20% 95%;
+    /* Secondary: Lighter orange for subtle backgrounds */
+    --secondary: 30 60% 45%;
+    --secondary-foreground: 0 0% 100%;
 
-    /* Muted: Dark orange tint */
-    --muted: 24 15% 15%;
-    --muted-foreground: 24 10% 65%;
+    /* Muted: Light orange tint */
+    --muted: 30 25% 90%;
+    --muted-foreground: 30 15% 40%;
 
     /* Accent: Bright orange */
-    --accent: 24 95% 53%;
-    --accent-foreground: 20 14% 9%;
+    --accent: 30 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Success: Green (adjusted for dark) */
-    --success: 142 76% 45%;
+    /* Success: Green */
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning: Orange/Yellow (adjusted for dark) */
-    --warning: 38 92% 55%;
-    --warning-foreground: 20 14% 9%;
+    /* Warning: Orange/Yellow */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    /* Error/Destructive: Red (adjusted for dark) */
-    --destructive: 0 75% 65%;
+    /* Error/Destructive: Red */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Info: Blue (adjusted for dark) */
-    --info: 217 91% 65%;
+    /* Info: Blue */
+    --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
 
-    --border: 24 15% 20%;
-    --input: 24 15% 20%;
-    --ring: 24 95% 53%;
+    --border: 30 20% 85%;
+    --input: 30 20% 85%;
+    --ring: 30 100% 50%;
   }
 }
 
@@ -146,6 +147,40 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Smooth font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Consistent container max-width for all sections */
+  .container-content {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Typography scale - 8px based spacing */
+  h1 {
+    @apply text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight;
+    line-height: 1.1;
+  }
+  
+  h2 {
+    @apply text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    @apply text-2xl sm:text-3xl font-semibold tracking-tight;
+    line-height: 1.3;
+  }
+  
+  h4 {
+    @apply text-xl sm:text-2xl font-semibold;
+    line-height: 1.4;
+  }
+  
+  /* Section spacing - consistent 8px scale */
+  .section-spacing {
+    @apply py-16 sm:py-20 md:py-24 lg:py-32;
   }
   
   /* Accessibility improvements */
@@ -163,7 +198,7 @@
 
 @layer components {
   .text-base {
-    @apply text-xl md:text-2xl text-gray-200;
+    @apply text-xl md:text-2xl text-gray-700;
   }
   
   /* Premium animations */
@@ -187,9 +222,9 @@
     animation-delay: 2s;
   }
   
-  /* Loading states */
+  /* Loading states - Light mode optimized */
   .skeleton {
-    @apply animate-pulse bg-gray-800 rounded;
+    @apply animate-pulse bg-gray-200 rounded;
   }
   
   .skeleton-text {
@@ -204,42 +239,42 @@
     @apply skeleton rounded-full;
   }
   
-  /* Custom scrollbar */
+  /* Custom scrollbar - Light mode */
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-gray-800 rounded-lg;
+    @apply bg-gray-100 rounded-lg;
   }
   
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-orange-500 rounded-lg hover:bg-orange-400;
   }
   
-  /* Glass effect */
+  /* Glass effect - Light mode adapted */
   .glass {
-    @apply backdrop-blur-lg bg-white/10 border border-white/20;
+    @apply backdrop-blur-lg bg-white/70 border border-gray-200/50;
   }
   
-  /* Gradient text */
+  /* Gradient text - AWS Orange */
   .gradient-text {
-    @apply bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent;
   }
   
-  /* Premium shadows */
+  /* Premium shadows - Light mode */
   .shadow-glow {
-    box-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
+    box-shadow: 0 0 20px rgba(255, 153, 0, 0.25);
   }
   
   .shadow-glow-lg {
-    box-shadow: 0 0 40px rgba(249, 115, 22, 0.4);
+    box-shadow: 0 0 40px rgba(255, 153, 0, 0.3);
   }
   
-  /* Text effects */
+  /* Text effects - Light mode */
   .text-glow {
-    text-shadow: 0 0 20px rgba(249, 115, 22, 0.5);
+    text-shadow: 0 0 20px rgba(255, 153, 0, 0.4);
   }
   
   /* Line clamping utilities */
@@ -284,9 +319,9 @@
     }
   }
   
-  /* Focus visible improvements */
+  /* Focus visible improvements - Light mode */
   .focus-visible:focus-visible {
-    @apply outline-none ring-2 ring-orange-500 ring-offset-2 ring-offset-background;
+    @apply outline-none ring-2 ring-orange-500 ring-offset-2 ring-offset-white;
   }
 }
 
@@ -372,11 +407,149 @@ img {
   contain-intrinsic-size: 200px;
 }
 
-/* Font loading optimization */
+/* Font loading optimization - Inter Font Family */
 @font-face {
   font-family: 'Inter';
   font-display: swap;
-  src: url('/fonts/inter.woff2') format('woff2');
+  font-weight: 100;
+  font-style: normal;
+  src: url('/fonts/Inter_18pt-Thin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 100;
+  font-style: italic;
+  src: url('/fonts/Inter_18pt-ThinItalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 200;
+  font-style: normal;
+  src: url('/fonts/Inter_18pt-ExtraLight.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 200;
+  font-style: italic;
+  src: url('/fonts/Inter_18pt-ExtraLightItalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 300;
+  font-style: normal;
+  src: url('/fonts/Inter_18pt-Light.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 300;
+  font-style: italic;
+  src: url('/fonts/Inter_18pt-LightItalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+  src: url('/fonts/Inter_18pt-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 400;
+  font-style: italic;
+  src: url('/fonts/Inter_18pt-Italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 500;
+  font-style: normal;
+  src: url('/fonts/Inter_18pt-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 500;
+  font-style: italic;
+  src: url('/fonts/Inter_18pt-MediumItalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 600;
+  font-style: normal;
+  src: url('/fonts/Inter_18pt-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 600;
+  font-style: italic;
+  src: url('/fonts/Inter_18pt-SemiBoldItalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 700;
+  font-style: normal;
+  src: url('/fonts/Inter_18pt-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 700;
+  font-style: italic;
+  src: url('/fonts/Inter_18pt-BoldItalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 800;
+  font-style: normal;
+  src: url('/fonts/Inter_18pt-ExtraBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 800;
+  font-style: italic;
+  src: url('/fonts/Inter_18pt-ExtraBoldItalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 900;
+  font-style: normal;
+  src: url('/fonts/Inter_18pt-Black.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+  font-weight: 900;
+  font-style: italic;
+  src: url('/fonts/Inter_18pt-BlackItalic.woff2') format('woff2');
 }
 
 /* Print styles */
