@@ -108,6 +108,9 @@ export function LineupSelector({
       performanceDate: startDate,
       imageUrl: dj.imageUrl,
       isHeadliner: false,
+      // Include all relevant DJ fields for consistency
+      stage: '',
+      performanceTime: '',
     };
 
     onChange([...lineup, newArtist]);
@@ -186,18 +189,26 @@ export function LineupSelector({
             </div>
           ) : (
             <div className="space-y-3">
-              {lineup.map((artist, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow">
+              {lineup.map((artist, index) => {
+                // Find the full DJ data if eventDjId exists
+                const fullDjData = artist.eventDjId 
+                  ? availableDjs.find(dj => dj.id === artist.eventDjId)
+                  : null;
+                
+                return (
+                <Card key={index} className="hover:shadow-md transition-shadow border-2 border-blue-100 dark:border-blue-900">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      {/* Left section: Image, controls, and info */}
+                      <div className="flex items-start gap-4 flex-1 min-w-0">
+                        {/* Move controls - vertical layout */}
+                        <div className="flex flex-col gap-1.5 pt-0.5">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => moveArtist(index, Math.max(0, index - 1))}
                             disabled={index === 0}
-                            className="hover:bg-muted"
+                            className="h-7 w-7 p-0 hover:bg-muted"
                           >
                             ↑
                           </Button>
@@ -206,47 +217,111 @@ export function LineupSelector({
                             size="sm"
                             onClick={() => moveArtist(index, Math.min(lineup.length - 1, index + 1))}
                             disabled={index === lineup.length - 1}
-                            className="hover:bg-muted"
+                            className="h-7 w-7 p-0 hover:bg-muted"
                           >
                             ↓
                           </Button>
                         </div>
 
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
-                          {artist.name.charAt(0).toUpperCase()}
+                        {/* DJ Image */}
+                        <div className="flex-shrink-0 pt-0.5">
+                          {artist.imageUrl || fullDjData?.imageUrl ? (
+                            <img 
+                              src={artist.imageUrl || fullDjData?.imageUrl || ''} 
+                              alt={artist.name}
+                              className="w-16 h-16 rounded-full object-cover border-2 border-purple-200 dark:border-purple-800 shadow-sm"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                if (fallback) fallback.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg border-2 border-purple-200 dark:border-purple-800 shadow-sm ${artist.imageUrl || fullDjData?.imageUrl ? 'hidden' : ''}`}>
+                            {artist.name.charAt(0).toUpperCase()}
+                          </div>
                         </div>
 
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-foreground">{artist.name}</span>
-                            {artist.isHeadliner && <Badge variant="default" className="text-xs">⭐ Headliner</Badge>}
-                            <Badge variant="outline" className="text-xs">#{artist.order}</Badge>
-                            {artist.eventDjId && (
-                              <Badge variant="secondary" className="text-xs">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                DJ Registrado
-                              </Badge>
-                            )}
+                        {/* DJ Info */}
+                        <div className="flex-1 min-w-0 pt-1">
+                          {/* Name and badges section */}
+                          <div className="mb-3">
+                            <div className="mb-2">
+                              <div className="flex flex-wrap items-baseline gap-2 mb-1.5">
+                                <span className="font-semibold text-foreground text-lg leading-tight">{artist.name}</span>
+                                {fullDjData?.alternateName && (
+                                  <span className="text-xs text-muted-foreground font-normal">({fullDjData.alternateName})</span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {artist.isHeadliner && (
+                                  <Badge variant="default" className="text-xs px-2 py-0.5">⭐ Headliner</Badge>
+                                )}
+                                <Badge variant="outline" className="text-xs px-2 py-0.5">#{artist.order}</Badge>
+                                {artist.eventDjId && (
+                                  <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    DJ Registrado
+                                  </Badge>
+                                )}
+                                {fullDjData?.famousTracks && fullDjData.famousTracks.length > 0 && (
+                                  <Badge variant="outline" className="text-xs px-2 py-0.5">
+                                    <Award className="h-3 w-3 mr-1" />
+                                    {fullDjData.famousTracks.length} tracks
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           </div>
 
+                          {/* DJ details section */}
+                          {fullDjData && (
+                            <div className="mb-3 pb-2 border-b border-border/30">
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                                {fullDjData.genres && fullDjData.genres.length > 0 && (
+                                  <div className="flex items-center gap-1.5">
+                                    <Music className="h-4 w-4 flex-shrink-0 text-purple-500" />
+                                    <span className="truncate max-w-[200px] font-medium">
+                                      {fullDjData.genres.slice(0, 2).join(', ')}
+                                      {fullDjData.genres.length > 2 && ` +${fullDjData.genres.length - 2}`}
+                                    </span>
+                                  </div>
+                                )}
+                                {fullDjData.country && (
+                                  <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                    <span className="text-base">🌍</span>
+                                    <span className="font-medium">{fullDjData.country}</span>
+                                  </div>
+                                )}
+                                {fullDjData.performerType && (
+                                  <div className="whitespace-nowrap text-xs bg-muted/60 px-2.5 py-1 rounded-md font-medium">
+                                    {fullDjData.performerType}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Performance details section */}
                           {(artist.performanceDate || artist.stage || artist.performanceTime) && (
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                               {artist.performanceDate && (
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {new Date(artist.performanceDate).toLocaleDateString()}
+                                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                  <Calendar className="h-4 w-4 flex-shrink-0 text-blue-500" />
+                                  <span className="font-medium">{new Date(artist.performanceDate).toLocaleDateString()}</span>
                                 </div>
                               )}
                               {artist.performanceTime && (
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {artist.performanceTime}
+                                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                  <Clock className="h-4 w-4 flex-shrink-0 text-blue-500" />
+                                  <span className="font-medium">{artist.performanceTime}</span>
                                 </div>
                               )}
                               {artist.stage && (
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
-                                  {artist.stage}
+                                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                  <MapPin className="h-4 w-4 flex-shrink-0 text-green-500" />
+                                  <span className="font-semibold">{artist.stage}</span>
                                 </div>
                               )}
                             </div>
@@ -254,12 +329,14 @@ export function LineupSelector({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      {/* Right section: Controls */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2 flex-shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => updateArtist(index, { isHeadliner: !artist.isHeadliner })}
-                          className="hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
+                          className="h-8 w-8 p-0 hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
+                          title={artist.isHeadliner ? "Quitar como Headliner" : "Marcar como Headliner"}
                         >
                           <Star className={`h-4 w-4 ${artist.isHeadliner ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                         </Button>
@@ -269,7 +346,7 @@ export function LineupSelector({
                             value={artist.performanceDate || ''}
                             onValueChange={(value) => updateArtist(index, { performanceDate: value })}
                           >
-                            <SelectTrigger className="w-40">
+                            <SelectTrigger className="w-36 h-8 text-xs">
                               <SelectValue placeholder="Fecha" />
                             </SelectTrigger>
                             <SelectContent>
@@ -291,14 +368,15 @@ export function LineupSelector({
                           placeholder="Escenario"
                           value={artist.stage || ''}
                           onChange={(e) => updateArtist(index, { stage: e.target.value })}
-                          className="w-28"
+                          className="w-28 h-8 text-xs"
                         />
 
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => removeFromLineup(index)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                          title="Eliminar del lineup"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -306,7 +384,8 @@ export function LineupSelector({
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -486,12 +565,28 @@ export function LineupSelector({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        {dj.imageUrl ? (
+                          <img 
+                            src={dj.imageUrl} 
+                            alt={dj.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm ${dj.imageUrl ? 'hidden' : ''}`}>
                           {dj.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-foreground">{dj.name}</span>
+                            {dj.alternateName && (
+                              <span className="text-xs text-muted-foreground">({dj.alternateName})</span>
+                            )}
                             <Badge variant={dj.approved ? "default" : "secondary"} className="text-xs">
                               {dj.approved ? "Aprobado" : "Pendiente"}
                             </Badge>
@@ -502,15 +597,26 @@ export function LineupSelector({
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1">
                               <Music className="h-3 w-3" />
                               {dj.genres.slice(0, 2).join(', ')}
+                              {dj.genres.length > 2 && ` +${dj.genres.length - 2}`}
                             </span>
                             <span className="flex items-center gap-1">
                               🌍 {dj.country}
                             </span>
+                            {dj.performerType && (
+                              <span className="text-xs">
+                                {dj.performerType}
+                              </span>
+                            )}
                           </div>
+                          {dj.description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                              {dj.description}
+                            </p>
+                          )}
                         </div>
                       </div>
                       {dj.approved && (

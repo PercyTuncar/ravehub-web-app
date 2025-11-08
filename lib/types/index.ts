@@ -117,6 +117,7 @@ export interface Event {
 
   mainImageUrl: string;
   bannerImageUrl?: string;
+  stageMapUrl?: string; // Mapa del stage/escenario
   imageGallery?: string[]; // Galería de imágenes adicionales
   imageAltTexts?: Record<string, string>; // Textos alternativos para SEO
   videoUrl?: string; // Video principal del evento

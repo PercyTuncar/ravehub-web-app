@@ -25,6 +25,7 @@ import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
 import { generateSlug } from '@/lib/utils/slug-generator';
 import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
+import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart } from '@/lib/utils/date-timezone';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -554,19 +555,45 @@ export default function NewEventPage() {
                   <Label className="text-sm font-semibold text-foreground">Fecha de Inicio *</Label>
                   <Input
                     type="date"
-                    value={eventData.startDate || ''}
-                    onChange={(e) => updateEventData('startDate', e.target.value)}
+                    min={getMinDate()}
+                    value={formatDateForInput(eventData.startDate)}
+                    onChange={(e) => {
+                      const selectedDate = e.target.value;
+                      if (isDateInPast(selectedDate)) {
+                        alert('No puedes seleccionar una fecha pasada');
+                        return;
+                      }
+                      updateEventData('startDate', selectedDate);
+                    }}
                     className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                   />
+                  {eventData.startDate && isDateInPast(eventData.startDate) && (
+                    <p className="text-xs text-red-600 dark:text-red-400">
+                      ⚠️ No puedes seleccionar una fecha pasada
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-foreground">Fecha de Fin</Label>
                   <Input
                     type="date"
-                    value={eventData.endDate || ''}
-                    onChange={(e) => updateEventData('endDate', e.target.value)}
+                    min={eventData.startDate || getMinDate()}
+                    value={formatDateForInput(eventData.endDate)}
+                    onChange={(e) => {
+                      const selectedDate = e.target.value;
+                      if (eventData.startDate && isEndDateBeforeStart(eventData.startDate, selectedDate)) {
+                        alert('La fecha de fin debe ser posterior a la fecha de inicio');
+                        return;
+                      }
+                      updateEventData('endDate', selectedDate);
+                    }}
                     className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                   />
+                  {eventData.endDate && eventData.startDate && isEndDateBeforeStart(eventData.startDate, eventData.endDate) && (
+                    <p className="text-xs text-red-600 dark:text-red-400">
+                      ⚠️ La fecha de fin debe ser posterior a la fecha de inicio
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -575,19 +602,25 @@ export default function NewEventPage() {
                   <Label className="text-sm font-semibold text-foreground">Hora de Inicio *</Label>
                   <Input
                     type="time"
-                    value={eventData.startTime || ''}
+                    value={formatTimeForInput(eventData.startTime)}
                     onChange={(e) => updateEventData('startTime', e.target.value)}
                     className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Hora local del país seleccionado ({timezone || 'UTC'})
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-foreground">Hora de Fin</Label>
                   <Input
                     type="time"
-                    value={eventData.endTime || ''}
+                    value={formatTimeForInput(eventData.endTime)}
                     onChange={(e) => updateEventData('endTime', e.target.value)}
                     className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Hora local del país seleccionado ({timezone || 'UTC'})
+                  </p>
                 </div>
               </div>
 
@@ -595,10 +628,13 @@ export default function NewEventPage() {
                 <Label className="text-sm font-semibold text-foreground">Hora de Puertas</Label>
                 <Input
                   type="time"
-                  value={eventData.doorTime || ''}
+                  value={formatTimeForInput(eventData.doorTime)}
                   onChange={(e) => updateEventData('doorTime', e.target.value)}
                   className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Hora local del país seleccionado ({timezone || 'UTC'})
+                </p>
               </div>
 
               <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
@@ -977,6 +1013,80 @@ export default function NewEventPage() {
                 </CardContent>
               </Card>
 
+              {/* Mapa del Stage */}
+              <Card className="border-2 border-purple-200/50 dark:border-purple-800/50 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-3">
+                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                      🗺️
+                    </div>
+                    Mapa del Stage
+                    {eventData.stageMapUrl && (
+                      <Badge variant="default" className="text-xs bg-green-500">Agregado</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">Subir Archivo (Recomendado)</Label>
+                      <FileUpload
+                        onUploadComplete={(url: string) => updateEventData('stageMapUrl', url)}
+                        currentUrl={eventData.stageMapUrl}
+                        onClear={() => updateEventData('stageMapUrl', '')}
+                        accept="image/jpeg,image/png,image/webp"
+                        maxSize={10}
+                        folder="events/stage-maps"
+                        variant="default"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
+                      <Input
+                        type="url"
+                        value={eventData.stageMapUrl || ''}
+                        onChange={(e) => updateEventData('stageMapUrl', e.target.value)}
+                        placeholder="https://example.com/mapa-stage.jpg"
+                        className="h-12"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Si ya tienes el mapa en un servidor externo
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800/50">
+                    <p className="text-xs text-purple-700 dark:text-purple-300">
+                      📐 Recomendado: 1200x1200px (1:1) o 1920x1080px (16:9) • Formatos: JPG, PNG, WebP • Máximo: 10MB
+                    </p>
+                  </div>
+
+                  {eventData.stageMapUrl && (
+                    <div className="border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-lg p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
+                      <div className="flex justify-between items-center mb-3">
+                        <Label className="block text-sm font-semibold text-purple-800 dark:text-purple-200">
+                          🎯 Vista Previa del Mapa del Stage
+                        </Label>
+                      </div>
+                      <div className="border-2 border-purple-200 dark:border-purple-800 rounded-lg p-2 bg-white dark:bg-gray-900">
+                        <img
+                          src={eventData.stageMapUrl}
+                          alt={`Mapa del stage - ${eventData.name || 'Evento'}`}
+                          className="w-full max-w-lg h-auto object-contain rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
+                        Este mapa mostrará la distribución de escenarios y zonas del evento
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* SEO Tips */}
               <Card className="border-2 border-blue-200/50 dark:border-blue-800/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
                 <CardHeader>
@@ -1086,33 +1196,308 @@ export default function NewEventPage() {
                 )}
               </div>
 
-              {/* Placeholder sections for future implementation */}
-              <div className="grid md:grid-cols-2 gap-8">
-                <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
-                  <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                      🏟️
-                    </div>
-                    <h4 className="text-lg font-semibold text-foreground mb-2">Zonas y Capacidad</h4>
-                    <p className="text-muted-foreground mb-4">
-                      Gestión de zonas próximamente - permitirá agregar zonas con capacidad y características
-                    </p>
-                    <Badge variant="outline" className="animate-pulse">Próximamente</Badge>
-                  </CardContent>
-                </Card>
+              {/* Zones Management */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">Zonas y Capacidad</h3>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const newZone = {
+                        id: `zone-${Date.now()}`,
+                        name: '',
+                        capacity: 0,
+                        description: '',
+                        category: 'general',
+                        features: [],
+                      };
+                      updateEventData('zones', [...(eventData.zones || []), newZone]);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Agregar Zona
+                  </Button>
+                </div>
 
-                <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
-                  <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                      💰
-                    </div>
-                    <h4 className="text-lg font-semibold text-foreground mb-2">Fases de Venta</h4>
-                    <p className="text-muted-foreground mb-4">
-                      Gestión de fases próximamente - permitirá configurar fases con precios dinámicos
-                    </p>
-                    <Badge variant="outline" className="animate-pulse">Próximamente</Badge>
-                  </CardContent>
-                </Card>
+                <div className="space-y-4">
+                  {eventData.zones?.map((zone, index) => (
+                    <Card key={zone.id} className="border-2 border-yellow-200/50 dark:border-yellow-800/50">
+                      <CardContent className="p-6">
+                        <div className="grid md:grid-cols-2 gap-4 mb-4">
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold text-foreground">Nombre de Zona *</Label>
+                            <Input
+                              value={zone.name}
+                              onChange={(e) => {
+                                const newZones = [...(eventData.zones || [])];
+                                newZones[index] = { ...zone, name: e.target.value };
+                                updateEventData('zones', newZones);
+                              }}
+                              placeholder="VIP, General, etc."
+                              className="h-12"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold text-foreground">Capacidad *</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={zone.capacity}
+                              onChange={(e) => {
+                                const newZones = [...(eventData.zones || [])];
+                                newZones[index] = { ...zone, capacity: parseInt(e.target.value) || 0 };
+                                updateEventData('zones', newZones);
+                              }}
+                              placeholder="100"
+                              className="h-12"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4 mb-4">
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold text-foreground">Categoría</Label>
+                            <Select
+                              value={zone.category || 'general'}
+                              onValueChange={(value) => {
+                                const newZones = [...(eventData.zones || [])];
+                                newZones[index] = { ...zone, category: value };
+                                updateEventData('zones', newZones);
+                              }}
+                            >
+                              <SelectTrigger className="h-12">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="general">General</SelectItem>
+                                <SelectItem value="vip">VIP</SelectItem>
+                                <SelectItem value="premium">Premium</SelectItem>
+                                <SelectItem value="backstage">Backstage</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold text-foreground">Descripción</Label>
+                            <Input
+                              value={zone.description || ''}
+                              onChange={(e) => {
+                                const newZones = [...(eventData.zones || [])];
+                                newZones[index] = { ...zone, description: e.target.value };
+                                updateEventData('zones', newZones);
+                              }}
+                              placeholder="Descripción opcional"
+                              className="h-12"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              const newZones = (eventData.zones || []).filter((_, i) => i !== index);
+                              updateEventData('zones', newZones);
+                            }}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Eliminar Zona
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {(!eventData.zones || eventData.zones.length === 0) && (
+                    <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
+                      <CardContent className="p-8 text-center">
+                        <p className="text-muted-foreground mb-4">No hay zonas configuradas aún</p>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            const newZone = {
+                              id: `zone-${Date.now()}`,
+                              name: '',
+                              capacity: 0,
+                              description: '',
+                              category: 'general',
+                              features: [],
+                            };
+                            updateEventData('zones', [...(eventData.zones || []), newZone]);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Agregar Primera Zona
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+
+              {/* Sales Phases Management */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">Fases de Venta</h3>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const newPhase = {
+                        id: `phase-${Date.now()}`,
+                        name: '',
+                        startDate: '',
+                        endDate: '',
+                        zonesPricing: [],
+                      };
+                      updateEventData('salesPhases', [...(eventData.salesPhases || []), newPhase]);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Agregar Fase
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {eventData.salesPhases?.map((phase, phaseIndex) => (
+                    <Card key={phase.id} className="border-2 border-orange-200/50 dark:border-orange-800/50">
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          <div className="grid md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold text-foreground">Nombre de Fase *</Label>
+                              <Input
+                                value={phase.name}
+                                onChange={(e) => {
+                                  const newPhases = [...(eventData.salesPhases || [])];
+                                  newPhases[phaseIndex] = { ...phase, name: e.target.value };
+                                  updateEventData('salesPhases', newPhases);
+                                }}
+                                placeholder="Preventa 1, General, etc."
+                                className="h-12"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold text-foreground">Fecha Inicio *</Label>
+                              <Input
+                                type="datetime-local"
+                                value={phase.startDate ? new Date(phase.startDate).toISOString().slice(0, 16) : ''}
+                                onChange={(e) => {
+                                  const newPhases = [...(eventData.salesPhases || [])];
+                                  newPhases[phaseIndex] = { ...phase, startDate: new Date(e.target.value).toISOString() };
+                                  updateEventData('salesPhases', newPhases);
+                                }}
+                                className="h-12"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold text-foreground">Fecha Fin *</Label>
+                              <Input
+                                type="datetime-local"
+                                value={phase.endDate ? new Date(phase.endDate).toISOString().slice(0, 16) : ''}
+                                onChange={(e) => {
+                                  const newPhases = [...(eventData.salesPhases || [])];
+                                  newPhases[phaseIndex] = { ...phase, endDate: new Date(e.target.value).toISOString() };
+                                  updateEventData('salesPhases', newPhases);
+                                }}
+                                className="h-12"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Zone Pricing for this phase */}
+                          {eventData.zones && eventData.zones.length > 0 && (
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold text-foreground">Precios por Zona</Label>
+                              <div className="space-y-2">
+                                {eventData.zones.map((zone) => {
+                                  const existingPricing = phase.zonesPricing?.find(p => p.zoneId === zone.id);
+                                  return (
+                                    <div key={zone.id} className="flex items-center gap-4 p-3 border rounded-lg">
+                                      <span className="font-medium min-w-0 flex-1">{zone.name}</span>
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="Precio"
+                                        value={existingPricing?.price || ''}
+                                        onChange={(e) => {
+                                          const newPhases = [...(eventData.salesPhases || [])];
+                                          const currentPhase = newPhases[phaseIndex];
+                                          const currentPricing = currentPhase.zonesPricing || [];
+
+                                          const existingIndex = currentPricing.findIndex(p => p.zoneId === zone.id);
+                                          const newPrice = parseFloat(e.target.value) || 0;
+
+                                          if (existingIndex >= 0) {
+                                            currentPricing[existingIndex] = {
+                                              ...currentPricing[existingIndex],
+                                              price: newPrice,
+                                            };
+                                          } else {
+                                            currentPricing.push({
+                                              zoneId: zone.id,
+                                              price: newPrice,
+                                              available: zone.capacity,
+                                              sold: 0,
+                                              phaseId: phase.id,
+                                            });
+                                          }
+
+                                          newPhases[phaseIndex] = { ...currentPhase, zonesPricing: currentPricing };
+                                          updateEventData('salesPhases', newPhases);
+                                        }}
+                                        className="w-32"
+                                      />
+                                      <span className="text-sm text-muted-foreground min-w-[60px]">
+                                        {getCurrencySymbol(eventData.currency || 'CLP')}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex justify-end">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                const newPhases = (eventData.salesPhases || []).filter((_, i) => i !== phaseIndex);
+                                updateEventData('salesPhases', newPhases);
+                              }}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Eliminar Fase
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {(!eventData.salesPhases || eventData.salesPhases.length === 0) && (
+                    <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
+                      <CardContent className="p-8 text-center">
+                        <p className="text-muted-foreground mb-4">No hay fases de venta configuradas aún</p>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            const newPhase = {
+                              id: `phase-${Date.now()}`,
+                              name: '',
+                              startDate: '',
+                              endDate: '',
+                              zonesPricing: [],
+                            };
+                            updateEventData('salesPhases', [...(eventData.salesPhases || []), newPhase]);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Agregar Primera Fase
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </div>
             </div>
           </div>
