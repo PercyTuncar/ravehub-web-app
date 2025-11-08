@@ -366,6 +366,40 @@ export class SchemaGenerator {
       schema['@graph'].push(...subEvents);
     }
 
+    // Add FAQPage schema if faqSection exists
+    if (eventData.faqSection && eventData.faqSection.length > 0) {
+      // Add mainEntity to the main event for FAQ
+      const mainEventIndex = schema['@graph'].findIndex((node: any) => 
+        node['@type'] === eventData.schemaType || node['@type'] === 'MusicFestival' || node['@type'] === 'MusicEvent'
+      );
+      
+      if (mainEventIndex >= 0) {
+        const mainEvent = schema['@graph'][mainEventIndex];
+        mainEvent.mainEntity = eventData.faqSection.map((faq: { question: string; answer: string }) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer,
+          },
+        }));
+      }
+
+      // Add FAQPage to the WebPage
+      const webPageIndex = schema['@graph'].findIndex((node: any) => node['@type'] === 'WebPage');
+      if (webPageIndex >= 0) {
+        const webPage = schema['@graph'][webPageIndex];
+        webPage.mainEntity = eventData.faqSection.map((faq: { question: string; answer: string }) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer,
+          },
+        }));
+      }
+    }
+
     // Add BreadcrumbList
     schema['@graph'].push({
       '@type': 'BreadcrumbList',

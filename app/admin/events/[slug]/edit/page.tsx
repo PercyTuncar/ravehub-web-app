@@ -2327,6 +2327,101 @@ export default function EditEventPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Preguntas Frecuentes (FAQ) */}
+              <Card className="border-2 border-amber-200/50 dark:border-amber-800/50 bg-gradient-to-br from-amber-50/50 to-yellow-50/50 dark:from-amber-950/20 dark:to-yellow-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                    ❓ Preguntas Frecuentes (FAQ)
+                    {eventData.faqSection && eventData.faqSection.length > 0 && (
+                      <Badge variant="default" className="text-xs">
+                        {eventData.faqSection.length} {eventData.faqSection.length === 1 ? 'pregunta' : 'preguntas'}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Agrega preguntas frecuentes que ayudarán a los usuarios y mejorarán el SEO con datos estructurados
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {eventData.faqSection && eventData.faqSection.length > 0 && (() => {
+                    const faqSection = eventData.faqSection || [];
+                    return (
+                      <div className="space-y-4">
+                        {faqSection.map((faq: { question: string; answer: string }, index: number) => (
+                          <Card key={index} className="border border-amber-200 dark:border-amber-800">
+                            <CardContent className="p-4 space-y-4">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1 space-y-4">
+                                  <div className="space-y-2">
+                                    <Label className="text-sm font-semibold text-foreground">
+                                      Pregunta {index + 1} *
+                                    </Label>
+                                    <Input
+                                      value={faq.question || ''}
+                                      onChange={(e) => {
+                                        const newFaq = [...faqSection];
+                                        newFaq[index] = { ...newFaq[index], question: e.target.value };
+                                        updateEventData('faqSection', newFaq);
+                                      }}
+                                      placeholder="Ej: ¿Cuál es la política de reembolso?"
+                                      className="h-12"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label className="text-sm font-semibold text-foreground">
+                                      Respuesta {index + 1} *
+                                    </Label>
+                                    <Textarea
+                                      value={faq.answer || ''}
+                                      onChange={(e) => {
+                                        const newFaq = [...faqSection];
+                                        newFaq[index] = { ...newFaq[index], answer: e.target.value };
+                                        updateEventData('faqSection', newFaq);
+                                      }}
+                                      placeholder="Ej: Las entradas son reembolsables hasta 30 días antes del evento..."
+                                      rows={3}
+                                      className="resize-none"
+                                    />
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newFaq = faqSection.filter((_: any, i: number) => i !== index);
+                                    updateEventData('faqSection', newFaq);
+                                  }}
+                                  className="ml-4 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const newFaq = [...(eventData.faqSection || []), { question: '', answer: '' }];
+                      updateEventData('faqSection', newFaq);
+                    }}
+                    className="w-full flex items-center gap-2 border-2 border-dashed border-amber-300 dark:border-amber-700 hover:border-amber-400 dark:hover:border-amber-600"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Agregar Pregunta Frecuente
+                  </Button>
+                  {(!eventData.faqSection || eventData.faqSection.length === 0) && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      Las preguntas frecuentes mejoran el SEO y ayudan a los usuarios a encontrar respuestas rápidamente
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
         );
