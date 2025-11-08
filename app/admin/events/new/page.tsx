@@ -28,6 +28,7 @@ import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
 import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart } from '@/lib/utils/date-timezone';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { revalidateEventsListing } from '@/lib/revalidate';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -465,6 +466,8 @@ export default function NewEventPage() {
       if (newStatus === 'published') {
         await syncEventDjsForEvent(eventId);
         await revalidateSitemap();
+        // Revalidar la página de eventos públicos para que aparezca inmediatamente
+        await revalidateEventsListing();
       }
 
       // Limpiar localStorage

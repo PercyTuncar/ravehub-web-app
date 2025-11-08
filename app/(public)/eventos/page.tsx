@@ -24,7 +24,7 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
   const currentPage = Math.max(1, parseInt(pageParam || '1', 10));
 
   try {
-    const allEvents = await eventsCollection.query([{ field: 'status', operator: '==', value: 'published' }]);
+    const allEvents = await eventsCollection.query([{ field: 'eventStatus', operator: '==', value: 'published' }]);
     const totalEvents = allEvents.length;
     const totalPages = Math.ceil(totalEvents / 12);
 
@@ -89,7 +89,7 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
 async function getEvents(): Promise<Event[]> {
   try {
     // Only load published events
-    const conditions = [{ field: 'status', operator: '==', value: 'published' }];
+    const conditions = [{ field: 'eventStatus', operator: '==', value: 'published' }];
     const allEvents = await eventsCollection.query(conditions);
     return allEvents as Event[];
   } catch (error) {

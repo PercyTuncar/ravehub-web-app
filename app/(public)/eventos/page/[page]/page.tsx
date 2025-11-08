@@ -40,7 +40,7 @@ export async function generateMetadata({ params, searchParams }: EventsPageProps
   }
 
   try {
-    const allEvents = await eventsCollection.query([{ field: 'status', operator: '==', value: 'published' }]);
+    const allEvents = await eventsCollection.query([{ field: 'eventStatus', operator: '==', value: 'published' }]);
     const totalEvents = allEvents.length;
     const totalPages = Math.ceil(totalEvents / 12);
 
@@ -101,7 +101,7 @@ export async function generateMetadata({ params, searchParams }: EventsPageProps
 
 async function getEvents(): Promise<Event[]> {
   try {
-    const conditions = [{ field: 'status', operator: '==', value: 'published' }];
+    const conditions = [{ field: 'eventStatus', operator: '==', value: 'published' }];
     const allEvents = await eventsCollection.query(conditions);
     return allEvents as Event[];
   } catch (error) {

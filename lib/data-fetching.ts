@@ -55,9 +55,8 @@ export async function getEventsByCountry(countryCode: string, filters?: {
     // Filter by country in location
     conditions.push({ field: 'location.countryCode', operator: '==', value: countryCode.toUpperCase() });
 
-    if (filters?.status) {
-      conditions.push({ field: 'status', operator: '==', value: filters.status });
-    }
+    // Note: filters.status is not used since we always filter by published
+    // If needed in the future, it should use 'eventStatus' not 'status'
 
     const limit = filters?.limit || 50; // Higher limit for country pages
     const offset = filters?.offset || 0;
