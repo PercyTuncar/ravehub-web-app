@@ -113,23 +113,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     // Add DJs (using eventDjsCollection which is the main collection for DJ profiles)
-    const djs = await eventDjsCollection.query(
-      [{ field: 'approved', operator: '==', value: true }],
-      'updatedAt',
-      'desc'
-    );
+    try {
+      // Query without ordering to avoid index issues, same as djs page
+      const djs = await eventDjsCollection.query(
+        [{ field: 'approved', operator: '==', value: true }]
+      );
 
-    djs.forEach((dj: any) => {
-      if (dj.slug) {
-        const lastModified = toValidDate(dj.updatedAt || dj.createdAt);
-        sitemap.push({
-          url: `${baseUrl}/djs/${dj.slug}`,
-          lastModified,
-          changeFrequency: 'weekly',
-          priority: 0.7,
-        });
-      }
-    });
+      console.log(`[Sitemap] Found ${djs.length} approved DJs`);
+
+      let addedCount = 0;
+      djs.forEach((dj: any) => {
+        // Only add DJs that have a valid slug
+        if (dj.slug && typeof dj.slug === 'string' && dj.slug.trim() !== '') {
+          const lastModified = toValidDate(dj.updatedAt || dj.createdAt);
+          sitemap.push({
+            url: `${baseUrl}/djs/${dj.slug}`,
+            lastModified,
+            changeFrequency: 'weekly',
+            priority: 0.7,
+          });
+          addedCount++;
+        } else {
+          console.warn(`[Sitemap] Skipping DJ "${dj.name || dj.id}" - missing or invalid slug`);
+        }
+      });
+
+      console.log(`[Sitemap] Added ${addedCount} DJ URLs to sitemap`);
+    } catch (djError) {
+      console.error('[Sitemap] Error loading DJs:', djError);
+      // Continue with other content even if DJs fail
+    }
 
     // Add products
     const products = await productsCollection.query(
