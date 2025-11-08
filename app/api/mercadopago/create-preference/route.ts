@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     // Crear preferencia según la documentación oficial de Mercado Pago
     const preference = new Preference(mp);
     
-    const preferenceBody = {
+    const preferenceBody: any = {
       items,
       payer: {
         name: buyerName || '',
@@ -106,7 +106,8 @@ export async function POST(request: NextRequest) {
         },
       },
       external_reference: orderId,
-      back_urls: { ...backUrls, auto_return: 'approved' },
+      back_urls: backUrls,  // snake_case es requerido
+      auto_return: 'approved', // Requiere que back_urls.success esté definido
       notification_url: webhookUrl,
     };
 
