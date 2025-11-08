@@ -266,11 +266,15 @@ export default function EventsAdminPage() {
                 <div className="space-y-3">
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="mr-2 h-4 w-4" />
-                    {format(new Date(event.startDate), 'PPP', { locale: es })}
+                    {event.startDate && !isNaN(new Date(event.startDate).getTime()) 
+                      ? format(new Date(event.startDate), 'PPP', { locale: es })
+                      : 'Fecha no disponible'}
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <MapPin className="mr-2 h-4 w-4" />
-                    {event.location.city}, {event.location.region}
+                    {event.location?.city && event.location?.region 
+                      ? `${event.location.city}, ${event.location.region}`
+                      : event.location?.city || event.location?.region || 'Ubicación no disponible'}
                   </div>
                   {event.sellTicketsOnPlatform && (
                     <div className="flex items-center text-sm text-muted-foreground">
