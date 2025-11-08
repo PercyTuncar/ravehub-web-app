@@ -14,6 +14,21 @@ import { AuthGuard } from '@/components/admin/AuthGuard';
 import { blogCollection } from '@/lib/firebase/collections';
 import { BlogPost } from '@/lib/types';
 
+// Helper function to revalidate sitemap
+async function revalidateSitemap() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+    await fetch(`${baseUrl}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, path: '/sitemap.xml' }),
+    });
+  } catch (error) {
+    console.error('Error revalidating sitemap:', error);
+  }
+}
+
 const STEPS = [
   { id: 'basic', title: 'Información Básica', description: 'Título, contenido y tipo' },
   { id: 'media', title: 'Multimedia', description: 'Imágenes y contenido visual' },
