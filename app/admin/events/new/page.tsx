@@ -21,6 +21,7 @@ import { SchemaPreview } from '@/components/seo/SchemaPreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Combobox } from '@/components/ui/combobox';
 import { FileUpload } from '@/components/common/FileUpload';
+import { VideoUpload } from '@/components/common/VideoUpload';
 import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
 import { generateSlug } from '@/lib/utils/slug-generator';
 import { generateArtistLineupIds } from '@/lib/data/dj-events';
@@ -1209,6 +1210,313 @@ export default function NewEventPage() {
                       </p>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Galería de Imágenes */}
+              <Card className="border-2 border-blue-200/50 dark:border-blue-800/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                      🖼️
+                    </div>
+                    Galería de Imágenes
+                    {eventData.imageGallery && eventData.imageGallery.length > 0 && (
+                      <Badge variant="default" className="text-xs bg-green-500">
+                        {eventData.imageGallery.length} {eventData.imageGallery.length === 1 ? 'imagen' : 'imágenes'}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    {eventData.imageGallery?.map((imageUrl, index) => (
+                      <Card key={index} className="border-2 border-blue-200 dark:border-blue-800">
+                        <CardContent className="p-4 space-y-4">
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold text-foreground">Subir Archivo (Recomendado)</Label>
+                              <FileUpload
+                                onUploadComplete={(url: string) => {
+                                  const newGallery = [...(eventData.imageGallery || [])];
+                                  newGallery[index] = url;
+                                  updateEventData('imageGallery', newGallery);
+                                  if (!eventData.imageAltTexts?.[`gallery-${index}`]) {
+                                    updateEventData('imageAltTexts', {
+                                      ...eventData.imageAltTexts,
+                                      [`gallery-${index}`]: `${eventData.name || 'Evento'} - Imagen ${index + 1}`
+                                    });
+                                  }
+                                }}
+                                currentUrl={imageUrl}
+                                onClear={() => {
+                                  const newGallery = [...(eventData.imageGallery || [])];
+                                  newGallery[index] = '';
+                                  updateEventData('imageGallery', newGallery);
+                                }}
+                                accept="image/jpeg,image/png,image/webp"
+                                maxSize={5}
+                                folder="events/gallery"
+                                variant="default"
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
+                              <Input
+                                type="url"
+                                value={imageUrl}
+                                onChange={(e) => {
+                                  const newGallery = [...(eventData.imageGallery || [])];
+                                  newGallery[index] = e.target.value;
+                                  updateEventData('imageGallery', newGallery);
+                                }}
+                                placeholder={`https://example.com/imagen-${index + 1}.jpg`}
+                                className="h-12"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Si ya tienes la imagen en un servidor externo
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold text-foreground">Texto Alternativo (SEO)</Label>
+                            <Input
+                              value={eventData.imageAltTexts?.[`gallery-${index}`] || ''}
+                              onChange={(e) => updateEventData('imageAltTexts', {
+                                ...eventData.imageAltTexts,
+                                [`gallery-${index}`]: e.target.value
+                              })}
+                              placeholder={`${eventData.name || 'Evento'} - Imagen ${index + 1}`}
+                              className="h-12"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Describe la imagen para motores de búsqueda y accesibilidad
+                            </p>
+                          </div>
+
+                          {imageUrl && (
+                            <div className="border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                              <img
+                                src={imageUrl}
+                                alt={eventData.imageAltTexts?.[`gallery-${index}`] || `Imagen ${index + 1}`}
+                                className="w-full max-w-md h-48 object-cover rounded-lg"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                const newGallery = (eventData.imageGallery || []).filter((_, i) => i !== index);
+                                const newAltTexts = { ...eventData.imageAltTexts };
+                                delete newAltTexts[`gallery-${index}`];
+                                // Reindexar alt texts
+                                const reindexedAltTexts: any = {};
+                                Object.keys(newAltTexts).forEach((key) => {
+                                  if (key.startsWith('gallery-')) {
+                                    const oldIndex = parseInt(key.split('-')[1]);
+                                    if (oldIndex > index) {
+                                      reindexedAltTexts[`gallery-${oldIndex - 1}`] = newAltTexts[key];
+                                    } else {
+                                      reindexedAltTexts[key] = newAltTexts[key];
+                                    }
+                                  } else {
+                                    reindexedAltTexts[key] = newAltTexts[key];
+                                  }
+                                });
+                                updateEventData('imageGallery', newGallery);
+                                updateEventData('imageAltTexts', reindexedAltTexts);
+                              }}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Eliminar Imagen
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const newGallery = [...(eventData.imageGallery || []), ''];
+                      updateEventData('imageGallery', newGallery);
+                    }}
+                    className="w-full h-12"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Agregar Imagen a la Galería
+                  </Button>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    Agrega más imágenes para mostrar diferentes aspectos de tu evento
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Videos */}
+              <Card className="border-2 border-red-200/50 dark:border-red-800/50 bg-gradient-to-br from-red-50/50 to-pink-50/50 dark:from-red-950/20 dark:to-pink-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-3">
+                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                      <Video className="h-4 w-4 text-white" />
+                    </div>
+                    Contenido de Video
+                    {eventData.videoUrl && (
+                      <Badge variant="default" className="text-xs bg-green-500">Video Principal</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Video Principal */}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-semibold text-foreground">Video Principal (Opcional)</Label>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-foreground">Subir Archivo (Recomendado)</Label>
+                        <VideoUpload
+                          onUploadComplete={(url: string) => updateEventData('videoUrl', url)}
+                          currentUrl={eventData.videoUrl}
+                          onClear={() => updateEventData('videoUrl', '')}
+                          accept="video/mp4,video/webm,video/quicktime"
+                          maxSize={100}
+                          folder="events/videos"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
+                        <Input
+                          type="url"
+                          value={eventData.videoUrl || ''}
+                          onChange={(e) => updateEventData('videoUrl', e.target.value)}
+                          placeholder="https://youtube.com/watch?v=... o https://vimeo.com/..."
+                          className="h-12"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          URL de YouTube, Vimeo u otra plataforma de video
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {eventData.videoUrl && (
+                      <div className="border-2 border-dashed border-red-300 dark:border-red-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                        <video
+                          src={eventData.videoUrl}
+                          controls
+                          className="w-full max-w-md h-48 object-contain rounded-lg"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Galería de Videos */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold text-foreground">Galería de Videos</Label>
+                      {eventData.videoGallery && eventData.videoGallery.length > 0 && (
+                        <Badge variant="default" className="text-xs bg-green-500">
+                          {eventData.videoGallery.length} {eventData.videoGallery.length === 1 ? 'video' : 'videos'}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {eventData.videoGallery?.map((videoUrl, index) => (
+                        <Card key={index} className="border-2 border-red-200 dark:border-red-800">
+                          <CardContent className="p-4 space-y-4">
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-sm font-semibold text-foreground">Subir Archivo (Recomendado)</Label>
+                                <VideoUpload
+                                  onUploadComplete={(url: string) => {
+                                    const newGallery = [...(eventData.videoGallery || [])];
+                                    newGallery[index] = url;
+                                    updateEventData('videoGallery', newGallery);
+                                  }}
+                                  currentUrl={videoUrl}
+                                  onClear={() => {
+                                    const newGallery = [...(eventData.videoGallery || [])];
+                                    newGallery[index] = '';
+                                    updateEventData('videoGallery', newGallery);
+                                  }}
+                                  accept="video/mp4,video/webm,video/quicktime"
+                                  maxSize={100}
+                                  folder="events/videos"
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
+                                <Input
+                                  type="url"
+                                  value={videoUrl}
+                                  onChange={(e) => {
+                                    const newGallery = [...(eventData.videoGallery || [])];
+                                    newGallery[index] = e.target.value;
+                                    updateEventData('videoGallery', newGallery);
+                                  }}
+                                  placeholder={`URL del video ${index + 1}`}
+                                  className="h-12"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  URL de YouTube, Vimeo u otra plataforma
+                                </p>
+                              </div>
+                            </div>
+
+                            {videoUrl && (
+                              <div className="border-2 border-dashed border-red-300 dark:border-red-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                                <video
+                                  src={videoUrl}
+                                  controls
+                                  className="w-full max-w-md h-48 object-contain rounded-lg"
+                                />
+                              </div>
+                            )}
+
+                            <div className="flex justify-end">
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  const newGallery = (eventData.videoGallery || []).filter((_, i) => i !== index);
+                                  updateEventData('videoGallery', newGallery);
+                                }}
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Eliminar Video
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const newGallery = [...(eventData.videoGallery || []), ''];
+                        updateEventData('videoGallery', newGallery);
+                      }}
+                      className="w-full h-12"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Agregar Video a la Galería
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
