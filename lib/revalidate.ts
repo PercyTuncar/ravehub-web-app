@@ -155,3 +155,11 @@ export async function revalidateEventCapacity(eventSlug: string): Promise<{ succ
     return { success: false, message: 'Failed to revalidate event or events listing' };
   }
 }
+
+/**
+ * Revalidate sitemap.xml
+ * This should be called whenever content is created, updated, or deleted
+ */
+export async function revalidateSitemap(): Promise<{ success: boolean; message: string }> {
+  return revalidatePath('/sitemap.xml');
+}

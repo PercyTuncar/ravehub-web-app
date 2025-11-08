@@ -14,6 +14,21 @@ import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+// Helper function to revalidate sitemap
+async function revalidateSitemap() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+    await fetch(`${baseUrl}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, path: '/sitemap.xml' }),
+    });
+  } catch (error) {
+    console.error('Error revalidating sitemap:', error);
+  }
+}
+
 export default function EventsAdminPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +60,9 @@ export default function EventsAdminPage() {
       await eventsCollection.delete(eventId);
       setEvents(prev => prev.filter(event => event.id !== eventId));
       alert('Evento eliminado exitosamente');
+      
+      // Revalidate sitemap when event is deleted
+      await revalidateSitemap();
     } catch (error) {
       console.error('Error deleting event:', error);
       alert('Error al eliminar el evento');
@@ -54,6 +72,9 @@ export default function EventsAdminPage() {
   const handleStatusChange = async (eventId: string, newStatus: string, eventName: string) => {
     try {
       await eventsCollection.update(eventId, { eventStatus: newStatus });
+      
+      // Revalidate sitemap when event status changes (affects visibility in sitemap)
+      await revalidateSitemap();
       setEvents(prev => prev.map(event =>
         event.id === eventId ? { ...event, eventStatus: newStatus } : event
       ));

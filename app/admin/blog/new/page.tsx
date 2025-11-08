@@ -90,6 +90,10 @@ export default function NewBlogPostPage() {
         status: 'published',
         publishDate: new Date().toISOString(),
       });
+      
+      // Revalidate sitemap when post is published
+      await revalidateSitemap();
+      
       router.push(`/admin/blog/${postId}`);
     } catch (error) {
       console.error('Error publishing post:', error);

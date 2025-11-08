@@ -417,6 +417,203 @@ export class SchemaGenerator {
     return schema;
   }
 
+  generateEventPurchaseSchema(eventData: any) {
+    const eventUrl = `${SchemaGenerator.BASE_URL}/eventos/${eventData.slug}`;
+    const purchaseUrl = `${eventUrl}/comprar`;
+
+    // Helper function to format dates with timezone
+    const formatDateWithTimezone = (dateString: string, timeString?: string, timezone?: string) => {
+      if (!dateString) return dateString;
+
+      const date = new Date(dateString);
+      if (timeString) {
+        const [hours, minutes] = timeString.split(':');
+        date.setHours(parseInt(hours), parseInt(minutes));
+      }
+
+      // Format as ISO-8601 string with timezone offset
+      if (timezone) {
+        // Convert to timezone offset format (e.g., -05:00)
+        const offset = timezone.includes(':') ? timezone : `${timezone}:00`;
+        // Ensure proper ISO format: remove milliseconds and add timezone
+        const isoString = date.toISOString();
+        const withoutMs = isoString.replace(/\.\d{3}Z$/, 'Z');
+        return withoutMs.replace('Z', offset);
+      }
+
+      return date.toISOString();
+    };
+
+    // Get all active offers from all phases
+    const offers: any[] = [];
+    
+    if (eventData.salesPhases && eventData.salesPhases.length > 0) {
+      eventData.salesPhases.forEach((phase: any) => {
+        if (phase.zonesPricing && phase.zonesPricing.length > 0) {
+          phase.zonesPricing.forEach((zonePricing: any) => {
+            const zone = eventData.zones?.find((z: any) => z.id === zonePricing.zoneId);
+            if (zone) {
+              offers.push({
+                '@type': 'Offer',
+                name: zone.name || 'General',
+                category: zone.category || zone.name?.toLowerCase() || 'general',
+                price: zonePricing.price,
+                priceCurrency: eventData.currency || 'PEN',
+                availability: 'https://schema.org/InStock',
+                url: purchaseUrl,
+                eligibleQuantity: {
+                  '@type': 'QuantitativeValue',
+                  maxValue: zone.capacity || 10,
+                },
+                // Optional: add priceValidUntil if phase has endDate
+                ...(phase.endDate ? {
+                  priceValidUntil: formatDateWithTimezone(phase.endDate, undefined, eventData.timezone),
+                } : {}),
+              });
+            }
+          });
+        }
+      });
+    }
+
+    // Get images - try to get different aspect ratios if available
+    const images: string[] = [];
+    if (eventData.mainImageUrl) {
+      // Try to construct different aspect ratio URLs (common pattern)
+      const baseImageUrl = eventData.mainImageUrl.replace(/[?&]token=[^&]*/, '');
+      images.push(baseImageUrl);
+      
+      // Try to find other aspect ratios in imageGallery
+      if (eventData.imageGallery && eventData.imageGallery.length > 0) {
+        eventData.imageGallery.forEach((img: string) => {
+          const cleanImg = img.replace(/[?&]token=[^&]*/, '');
+          if (!images.includes(cleanImg)) {
+            images.push(cleanImg);
+          }
+        });
+      }
+      
+      // If banner exists, add it
+      if (eventData.bannerImageUrl) {
+        const cleanBanner = eventData.bannerImageUrl.replace(/[?&]token=[^&]*/, '');
+        if (!images.includes(cleanBanner)) {
+          images.push(cleanBanner);
+        }
+      }
+    }
+
+    // Get main performer (headliner or first artist)
+    const mainPerformer = eventData.artistLineup?.find((artist: any) => artist.isHeadliner) 
+      || eventData.artistLineup?.[0];
+
+    // Build description focused on ticket purchase
+    // Format: "Concierto de [Artist] en [Venue] ([City], [Region])."
+    let description = eventData.seoDescription || eventData.shortDescription;
+    if (!description || description.length < 50) {
+      // Generate a more descriptive text for ticket purchase matching user's example format
+      const venueName = eventData.location?.venue || '';
+      const cityName = eventData.location?.city || '';
+      const regionName = eventData.location?.region || '';
+      
+      // Build location text: "Venue (City, Region)" or just "Venue" if city/region not available
+      let locationText = venueName;
+      if (cityName && regionName) {
+        locationText = `${venueName} (${cityName}, ${regionName})`;
+      } else if (cityName) {
+        locationText = `${venueName} (${cityName})`;
+      }
+      
+      if (mainPerformer) {
+        description = `Concierto de ${mainPerformer.name} en ${locationText}.`;
+      } else if (venueName) {
+        description = `Concierto en ${locationText}.`;
+      } else {
+        description = eventData.shortDescription || `Evento ${eventData.name}.`;
+      }
+    }
+
+    // Build the schema (simpler structure matching user's example)
+    const schema: any = {
+      '@context': 'https://schema.org',
+      '@type': 'Event',
+      name: eventData.name,
+      description: description,
+      startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime, eventData.timezone),
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      isAccessibleForFree: eventData.isAccessibleForFree || false,
+    };
+
+    // Add images as array of strings (not ImageObject)
+    if (images.length > 0) {
+      schema.image = images;
+    }
+
+    // Add location
+    if (eventData.location) {
+      schema.location = {
+        '@type': 'Place',
+        name: eventData.location.venue || eventData.location.city || 'Ubicación del evento',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: eventData.location.city || 'Lima',
+          addressRegion: eventData.location.region || eventData.location.city || '',
+          addressCountry: eventData.location.countryCode || eventData.location.country || 'PE',
+        },
+      };
+      
+      // Add streetAddress if available
+      if (eventData.location.address) {
+        schema.location.address.streetAddress = eventData.location.address;
+      }
+    }
+
+    // Add organizer
+    schema.organizer = {
+      '@type': 'Organization',
+      name: eventData.organizer?.name || 'Ravehub Latam',
+      url: SchemaGenerator.BASE_URL,
+    };
+
+    // Add performer if available
+    if (mainPerformer) {
+      schema.performer = {
+        '@type': 'Person',
+        name: mainPerformer.name,
+      };
+    }
+
+    // Add offers
+    if (offers.length > 0) {
+      schema.offers = offers;
+    }
+
+    // Add mainEntityOfPage
+    schema.mainEntityOfPage = {
+      '@type': 'WebPage',
+      '@id': eventUrl,
+    };
+
+    // Remove undefined values recursively
+    const removeUndefined = (obj: any): any => {
+      if (Array.isArray(obj)) {
+        return obj.map(removeUndefined).filter(item => item !== undefined);
+      } else if (obj !== null && typeof obj === 'object') {
+        const cleaned: any = {};
+        Object.keys(obj).forEach(key => {
+          const value = removeUndefined(obj[key]);
+          if (value !== undefined) {
+            cleaned[key] = value;
+          }
+        });
+        return cleaned;
+      }
+      return obj;
+    };
+
+    return removeUndefined(schema);
+  }
+
   static generateBlogPosting(post: BlogPost, commentCount: number = 0): BlogPostingSchema {
     const webpageId = `${this.BASE_URL}/blog/${post.slug}/#webpage`;
     const articleId = `${this.BASE_URL}/blog/${post.slug}/#article`;

@@ -1,5 +1,8 @@
 import { MetadataRoute } from 'next';
-import { blogCollection, blogCategoriesCollection, blogTagsCollection, eventsCollection, productsCollection, djsCollection } from '@/lib/firebase/collections';
+import { blogCollection, blogCategoriesCollection, blogTagsCollection, eventsCollection, productsCollection, eventDjsCollection } from '@/lib/firebase/collections';
+
+// Revalidate sitemap every hour to ensure it stays fresh
+export const revalidate = 3600; // 1 hour in seconds
 
 function toValidDate(dateValue: any): Date | undefined {
   if (!dateValue) return undefined;
@@ -47,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     // Add published events
     const events = await eventsCollection.query(
-      [{ field: 'status', operator: '==', value: 'published' }],
+      [{ field: 'eventStatus', operator: '==', value: 'published' }],
       'createdAt',
       'desc'
     );
@@ -109,21 +112,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     });
 
-    // Add DJs
-    const djs = await djsCollection.query(
-      [{ field: 'isActive', operator: '==', value: true }],
+    // Add DJs (using eventDjsCollection which is the main collection for DJ profiles)
+    const djs = await eventDjsCollection.query(
+      [{ field: 'approved', operator: '==', value: true }],
       'updatedAt',
       'desc'
     );
 
     djs.forEach((dj: any) => {
-      const lastModified = toValidDate(dj.updatedAt);
-      sitemap.push({
-        url: `${baseUrl}/djs/${dj.slug}`,
-        lastModified,
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      });
+      if (dj.slug) {
+        const lastModified = toValidDate(dj.updatedAt || dj.createdAt);
+        sitemap.push({
+          url: `${baseUrl}/djs/${dj.slug}`,
+          lastModified,
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        });
+      }
     });
 
     // Add products

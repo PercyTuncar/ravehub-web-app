@@ -26,6 +26,21 @@ import { generateSlug } from '@/lib/utils/slug-generator';
 import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
 
+// Helper function to revalidate sitemap
+async function revalidateSitemap() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+    await fetch(`${baseUrl}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, path: '/sitemap.xml' }),
+    });
+  } catch (error) {
+    console.error('Error revalidating sitemap:', error);
+  }
+}
+
 const STEPS = [
   { 
     id: 'basic', 
@@ -345,6 +360,9 @@ export default function NewEventPage() {
 
       // Keep old sync for backward compatibility
       await syncEventDjsForEvent(eventId);
+
+      // Revalidate sitemap when event is published
+      await revalidateSitemap();
 
       router.push(`/admin/events/${eventId}`);
     } catch (error) {

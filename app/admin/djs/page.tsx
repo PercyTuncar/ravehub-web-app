@@ -22,6 +22,21 @@ import { EventDj, Country } from '@/lib/types';
 import { generateSlug } from '@/lib/utils/slug-generator';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 
+// Helper function to revalidate sitemap
+async function revalidateSitemap() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+    await fetch(`${baseUrl}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, path: '/sitemap.xml' }),
+    });
+  } catch (error) {
+    console.error('Error revalidating sitemap:', error);
+  }
+}
+
 export default function DjManagementPage() {
   const router = useRouter();
   const [djs, setDjs] = useState<EventDj[]>([]);
@@ -238,6 +253,9 @@ export default function DjManagementPage() {
             setIsEditDialogOpen(false);
             setIsCreateDialogOpen(false);
             await loadDjs();
+            
+            // Revalidate sitemap when DJ is overwritten
+            await revalidateSitemap();
             return;
           }
         }
@@ -294,6 +312,9 @@ export default function DjManagementPage() {
       setIsEditDialogOpen(false);
       setIsCreateDialogOpen(false);
       await loadDjs();
+      
+      // Revalidate sitemap when DJ is created or updated
+      await revalidateSitemap();
     } catch (error) {
       console.error('❌ Error saving DJ:', error);
     }
@@ -304,6 +325,9 @@ export default function DjManagementPage() {
       try {
         await eventDjsCollection.delete(djId);
         await loadDjs();
+        
+        // Revalidate sitemap when DJ is deleted
+        await revalidateSitemap();
       } catch (error) {
         console.error('Error deleting DJ:', error);
       }
@@ -316,6 +340,9 @@ export default function DjManagementPage() {
         approved: !dj.approved,
       });
       await loadDjs();
+      
+      // Revalidate sitemap when DJ approval status changes (affects visibility in sitemap)
+      await revalidateSitemap();
     } catch (error) {
       console.error('Error updating DJ approval:', error);
     }

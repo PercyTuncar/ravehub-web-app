@@ -48,6 +48,20 @@ export default function EventDetailPage() {
 
     try {
       await eventsCollection.delete(event.id);
+      
+      // Revalidate sitemap when event is deleted
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+        const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+        await fetch(`${baseUrl}/api/revalidate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, path: '/sitemap.xml' }),
+        });
+      } catch (error) {
+        console.error('Error revalidating sitemap:', error);
+      }
+      
       router.push('/admin/events');
     } catch (error) {
       console.error('Error deleting event:', error);
@@ -85,6 +99,19 @@ export default function EventDetailPage() {
       if (newStatus === 'published') {
         await revalidateEvent(event.slug);
         await revalidateEventsListing();
+      }
+      
+      // Revalidate sitemap when event status changes (affects visibility in sitemap)
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+        const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+        await fetch(`${baseUrl}/api/revalidate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, path: '/sitemap.xml' }),
+        });
+      } catch (error) {
+        console.error('Error revalidating sitemap:', error);
       }
 
       // Reload event data

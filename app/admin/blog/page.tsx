@@ -14,6 +14,21 @@ import { BlogPost } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+// Helper function to revalidate sitemap
+async function revalidateSitemap() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+    await fetch(`${baseUrl}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, path: '/sitemap.xml' }),
+    });
+  } catch (error) {
+    console.error('Error revalidating sitemap:', error);
+  }
+}
+
 export default function BlogAdminPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +95,9 @@ export default function BlogAdminPage() {
       await blogCollection.delete(postId);
       setPosts(prev => prev.filter(post => post.id !== postId));
       alert('Post eliminado exitosamente');
+      
+      // Revalidate sitemap when post is deleted
+      await revalidateSitemap();
     } catch (error) {
       console.error('Error deleting post:', error);
       alert('Error al eliminar el post');
