@@ -5,6 +5,7 @@ import { EventDj, Dj } from '@/lib/types';
 import { DJProfile } from '@/components/djs/DJProfile';
 import JsonLd from '@/components/seo/JsonLd';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
+import { getDjUpcomingEvents, getDjPastEvents } from '@/lib/data/dj-events';
 
 // ISR configuration with revalidation
 export const revalidate = 3600; // Revalidate every hour
@@ -164,18 +165,42 @@ export default async function DJPage({ params }: DJPageProps) {
       notFound();
     }
 
-    // Generate JSON-LD schema
-    let schema = dj.jsonLdSchema;
-    if (!schema) {
+    // Get dynamic events for the DJ (only if in eventDjs collection)
+    let upcomingEvents: any[] = [];
+    let pastEvents: any[] = [];
+    
+    if (isInEventDjs && dj.id) {
       try {
-        const schemaData = SchemaGenerator.generate({
-          type: 'dj',
-          data: dj
-        });
-        schema = schemaData;
-      } catch (schemaError) {
-        console.error('Error generating schema:', schemaError);
+        const [upcoming, past] = await Promise.all([
+          getDjUpcomingEvents(dj.id),
+          getDjPastEvents(dj.id)
+        ]);
+        upcomingEvents = upcoming;
+        pastEvents = past;
+      } catch (eventsError) {
+        console.error('Error fetching DJ events for schema:', eventsError);
+        // Continue without events if there's an error
       }
+    }
+
+    // Generate JSON-LD schema with dynamic events
+    // Always regenerate to include latest events dynamically
+    let schema;
+    try {
+      const schemaData = SchemaGenerator.generate({
+        type: 'dj',
+        data: {
+          ...dj,
+          // Override with dynamic events
+          upcomingEvents: upcomingEvents,
+          pastEvents: pastEvents
+        }
+      });
+      schema = schemaData;
+    } catch (schemaError) {
+      console.error('Error generating schema:', schemaError);
+      // Fallback to stored schema if generation fails
+      schema = dj.jsonLdSchema;
     }
 
     return (
