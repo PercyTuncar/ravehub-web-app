@@ -1060,27 +1060,83 @@ generateEventSchema(eventData: any) {
 
 
 
-  schema['@graph'] = schema['@graph'].map((node: any) => {
-
-    const filtered: any = {};
-
-    Object.keys(node).forEach(key => {
-
-      if (node[key] !== undefined) {
-
-        filtered[key] = node[key];
-
+  // Recursive function to remove undefined values (but keep null if explicitly set)
+  // This ensures the schema is clean but doesn't remove valid empty objects
+  const removeUndefined = (obj: any): any => {
+    if (obj === undefined) {
+      return undefined;
+    }
+    
+    // Keep null values as they may be intentional
+    if (obj === null) {
+      return obj;
+    }
+    
+    if (Array.isArray(obj)) {
+      const filtered = obj.map(removeUndefined).filter(item => item !== undefined);
+      return filtered.length > 0 ? filtered : undefined;
+    }
+    
+    if (typeof obj === 'object' && obj !== null) {
+      // Special handling for objects with @id or @type (schema.org nodes)
+      const filtered: any = {};
+      let hasProperties = false;
+      
+      Object.keys(obj).forEach(key => {
+        const value = removeUndefined(obj[key]);
+        if (value !== undefined) {
+          filtered[key] = value;
+          hasProperties = true;
+        }
+      });
+      
+      // Always keep objects that have @type or @id (they're schema.org nodes)
+      if (filtered['@type'] || filtered['@id']) {
+        return filtered;
       }
+      
+      return hasProperties ? filtered : undefined;
+    }
+    
+    return obj;
+  };
 
-    });
+  // Clean the schema recursively, but preserve structure
+  const cleanedSchema = removeUndefined(schema);
+  
+  // Ensure @graph is an array and filter out any undefined items
+  // but keep all valid schema.org nodes
+  if (cleanedSchema && cleanedSchema['@graph'] && Array.isArray(cleanedSchema['@graph'])) {
+    cleanedSchema['@graph'] = cleanedSchema['@graph']
+      .map(removeUndefined)
+      .filter((item: any) => {
+        // Keep items that have @type or @id (schema.org nodes)
+        if (!item || (typeof item !== 'object')) return false;
+        return item['@type'] || item['@id'];
+      });
+    
+    // Ensure we have a valid @context
+    if (!cleanedSchema['@context']) {
+      cleanedSchema['@context'] = 'https://schema.org';
+    }
+  }
 
-    return filtered;
+  // Final validation: ensure schema is valid JSON and has required structure
+  try {
+    const testString = JSON.stringify(cleanedSchema);
+    JSON.parse(testString); // Validate it's valid JSON
+    
+    // Ensure @graph exists and is not empty
+    if (!cleanedSchema['@graph'] || !Array.isArray(cleanedSchema['@graph']) || cleanedSchema['@graph'].length === 0) {
+      console.error('Schema validation failed: @graph is empty or invalid');
+      return cleanedSchema; // Return as-is rather than failing completely
+    }
+  } catch (error) {
+    console.error('Schema validation error:', error);
+    // Return the schema anyway - let the browser handle parsing errors
+  }
 
-  });
-
-
-
-  return schema;
+  return cleanedSchema;
 
 }
 

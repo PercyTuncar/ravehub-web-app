@@ -140,12 +140,19 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const schemaGenerator = new SchemaGenerator();
   const jsonLd = schemaGenerator.generateEventSchema(event);
 
+  // Debug: Log schema structure (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Generated JSON-LD Schema:', JSON.stringify(jsonLd, null, 2));
+    console.log('Schema @graph length:', jsonLd?.['@graph']?.length || 0);
+  }
+
   return (
-    <EventColorProvider>
-      <ForceDarkMode />
-      <div className="min-h-screen bg-background dark" suppressHydrationWarning>
-        {/* JSON-LD Schema */}
-        <JsonLd data={jsonLd} id="event-jsonld" />
+    <>
+      {/* JSON-LD Schema - Must be at the top level for proper injection */}
+      <JsonLd data={jsonLd} id="event-jsonld" />
+      <EventColorProvider>
+        <ForceDarkMode />
+        <div className="min-h-screen bg-background dark" suppressHydrationWarning>
 
         {/* Hero Section with Dynamic Colors */}
         <EventHero event={event} />
@@ -311,7 +318,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         {event.sellTicketsOnPlatform && (
           <StickyTicketCTA event={event} />
         )}
-      </div>
-    </EventColorProvider>
+        </div>
+      </EventColorProvider>
+    </>
   );
 }
