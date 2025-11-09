@@ -230,6 +230,12 @@ export class SchemaGenerator {
       return parsed ? parsed.toISOString() : new Date().toISOString();
     };
 
+    // Helper para limpiar URLs de Firebase
+    const cleanFirebaseUrl = (url?: string) => {
+      if (!url) return undefined;
+      return url.split('?')[0];
+    };
+
     return {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
@@ -244,7 +250,7 @@ export class SchemaGenerator {
       ...(eventData.mainImageUrl ? {
         primaryImageOfPage: {
           '@type': 'ImageObject',
-          url: eventData.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
+          url: cleanFirebaseUrl(eventData.mainImageUrl),
           width: 1200,
           height: 675,
           caption: eventData.name
@@ -336,7 +342,7 @@ export class SchemaGenerator {
           addressLocality: eventData.location.city,
           addressRegion: eventData.location.region,
           postalCode: eventData.location.postalCode,
-          addressCountry: locationCountry,
+          addressCountry: locationCountry, // String: "PE", "CL", etc.
         },
       };
       if (eventData.location.geo && typeof eventData.location.geo.lat === 'number' && typeof eventData.location.geo.lng === 'number') {
@@ -377,8 +383,21 @@ export class SchemaGenerator {
               if (!zone || typeof zonePricing.price !== 'number') {
                 return undefined;
               }
+              
               const availabilityStarts = formatDateWithTimezone(phase.startDate, undefined);
               const availabilityEnds = phase.endDate ? formatDateWithTimezone(phase.endDate, undefined) : undefined;
+              
+              // Validar que availabilityEnds >= availabilityStarts
+              if (availabilityStarts && availabilityEnds) {
+                const startTime = new Date(availabilityStarts).getTime();
+                const endTime = new Date(availabilityEnds).getTime();
+                if (endTime < startTime) {
+                  // Fecha inválida: end < start, omitir esta oferta
+                  console.warn(`Invalid offer dates for ${zone.name} - ${phaseName}: end (${availabilityEnds}) < start (${availabilityStarts})`);
+                  return undefined;
+                }
+              }
+              
               const inventory = typeof zonePricing.available === 'number' ? zonePricing.available : zone.capacity;
               const offer: any = {
                 '@type': 'Offer',
@@ -422,10 +441,16 @@ export class SchemaGenerator {
       ...(eventData.organizer.phone ? { telephone: eventData.organizer.phone } : {}),
     } : { '@id': `${baseUrl}/#organization` };
 
+    // Helper para limpiar URLs de Firebase (remover query params completos)
+    const cleanFirebaseUrl = (url?: string) => {
+      if (!url) return undefined;
+      return url.split('?')[0]; // Remover todos los query params
+    };
+
     const imageObjects = eventData.mainImageUrl ? [
       {
         '@type': 'ImageObject',
-        url: eventData.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
+        url: cleanFirebaseUrl(eventData.mainImageUrl),
         width: 1200,
         height: 675,
         caption: eventData.name
@@ -435,7 +460,7 @@ export class SchemaGenerator {
     if (eventData.bannerImageUrl) {
       imageObjects.push({
         '@type': 'ImageObject',
-        url: eventData.bannerImageUrl.replace(/[?&]token=[^&]*/, ''),
+        url: cleanFirebaseUrl(eventData.bannerImageUrl),
         width: 1200,
         height: 675,
         caption: `${eventData.name} Banner`
@@ -495,7 +520,7 @@ export class SchemaGenerator {
       inLanguage: normalizeLanguage(eventData.inLanguage),
       eventStatus: 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      isAccessibleForFree: Boolean(eventData.isAccessibleForFree),
+      isAccessibleForFree: eventData.isAccessibleForFree === true, // Boolean estricto
       startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
       ...(formatDateWithTimezone(eventData.endDate, eventData.endTime) ? {
         endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime)
@@ -602,7 +627,13 @@ export class SchemaGenerator {
     const eventId = `${eventUrl}/#event`;
     const logoId = `${baseUrl}/#logo`;
     const primaryImageId = eventData.mainImageUrl ? `${eventUrl}/#primaryimage` : undefined;
-  const cleanImageUrl = (url?: string) => (typeof url === 'string' ? url.replace(/[?&]token=[^&]*/, '') : undefined);
+  
+  // Helper para limpiar URLs de Firebase (remover todos los query params)
+  const cleanImageUrl = (url?: string) => {
+    if (!url || typeof url !== 'string') return undefined;
+    return url.split('?')[0];
+  };
+  
   const normalizeTimezone = (timezone?: string) => {
     if (!timezone) return '-05:00';
     const trimmed = timezone.trim();
@@ -746,8 +777,21 @@ export class SchemaGenerator {
             if (!zone || typeof zonePricing.price !== 'number') {
               return undefined;
             }
+            
             const availabilityStarts = formatDateWithTimezone(phase.startDate, undefined);
             const availabilityEnds = phase.endDate ? formatDateWithTimezone(phase.endDate, undefined) : undefined;
+            
+            // Validar que availabilityEnds >= availabilityStarts
+            if (availabilityStarts && availabilityEnds) {
+              const startTime = new Date(availabilityStarts).getTime();
+              const endTime = new Date(availabilityEnds).getTime();
+              if (endTime < startTime) {
+                // Fecha inválida: end < start, omitir esta oferta
+                console.warn(`Invalid offer dates for ${zone.name} - ${phaseName}: end (${availabilityEnds}) < start (${availabilityStarts})`);
+                return undefined;
+              }
+            }
+            
             const inventory = typeof zonePricing.available === 'number' ? zonePricing.available : zone.capacity;
             const offer: any = {
               '@type': 'Offer',
@@ -889,7 +933,7 @@ export class SchemaGenerator {
       mainEntityOfPage: { '@id': pageId },
       eventStatus: 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      isAccessibleForFree: Boolean(eventData.isAccessibleForFree),
+      isAccessibleForFree: eventData.isAccessibleForFree === true, // Boolean estricto
       startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
       ...(formatDateWithTimezone(eventData.endDate, eventData.endTime) ? {
         endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime)
