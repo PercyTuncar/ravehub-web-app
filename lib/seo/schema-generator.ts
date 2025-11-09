@@ -374,11 +374,11 @@ export class SchemaGenerator {
       : `${eventUrl}/comprar`;
 
     const offers: any[] = Array.isArray(eventData.salesPhases)
-      ? eventData.salesPhases.flatMap((phase: any) => {
+      ? eventData.salesPhases.flatMap((phase: any, phaseIndex: number) => {
           if (!Array.isArray(phase.zonesPricing)) return [];
           const phaseName = phase.name || 'Fase';
           return phase.zonesPricing
-            .map((zonePricing: any) => {
+            .map((zonePricing: any, zoneIndex: number) => {
               const zone = eventData.zones?.find((z: any) => z.id === zonePricing.zoneId);
               if (!zone || typeof zonePricing.price !== 'number') {
                 return undefined;
@@ -399,8 +399,15 @@ export class SchemaGenerator {
               }
               
               const inventory = typeof zonePricing.available === 'number' ? zonePricing.available : zone.capacity;
+              
+              // Crear @id único para la oferta
+              const zoneName = (zone.name || 'general').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              const phaseSlug = (phaseName || `fase-${phaseIndex + 1}`).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              const offerId = `${eventUrl}/#offer-${zoneName}-${phaseSlug}`;
+              
               const offer: any = {
                 '@type': 'Offer',
+                '@id': offerId,
                 name: `${zone.name || 'General'} - ${phaseName}`,
                 category: zone.category || zone.name || 'General',
                 price: zonePricing.price,
@@ -409,19 +416,25 @@ export class SchemaGenerator {
                 url: ticketUrl,
                 seller: { '@id': `${baseUrl}/#organization` },
               };
+              
+              // validFrom: momento desde el que la oferta es válida
               if (availabilityStarts) {
+                offer.validFrom = availabilityStarts;
                 offer.availabilityStarts = availabilityStarts;
               }
+              
               if (availabilityEnds) {
                 offer.availabilityEnds = availabilityEnds;
                 offer.priceValidUntil = availabilityEnds;
               }
+              
               if (typeof inventory === 'number') {
                 offer.inventoryLevel = {
                   '@type': 'QuantitativeValue',
                   value: inventory,
                 };
               }
+              
               return offer;
             })
             .filter(Boolean) as any[];
@@ -520,7 +533,7 @@ export class SchemaGenerator {
       inLanguage: normalizeLanguage(eventData.inLanguage),
       eventStatus: 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      isAccessibleForFree: eventData.isAccessibleForFree === true, // Boolean estricto
+      isAccessibleForFree: eventData.isAccessibleForFree === true || eventData.isAccessibleForFree === 'true', // Boolean dinámico del formulario
       startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
       ...(formatDateWithTimezone(eventData.endDate, eventData.endTime) ? {
         endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime)
@@ -768,11 +781,11 @@ export class SchemaGenerator {
     ? eventData.externalTicketUrl
     : `${eventUrl}/comprar`;
   const offers: any[] = Array.isArray(eventData.salesPhases)
-    ? eventData.salesPhases.flatMap((phase: any) => {
+    ? eventData.salesPhases.flatMap((phase: any, phaseIndex: number) => {
         if (!Array.isArray(phase.zonesPricing)) return [];
         const phaseName = phase.name || 'Fase';
         return phase.zonesPricing
-          .map((zonePricing: any) => {
+          .map((zonePricing: any, zoneIndex: number) => {
             const zone = eventData.zones?.find((z: any) => z.id === zonePricing.zoneId);
             if (!zone || typeof zonePricing.price !== 'number') {
               return undefined;
@@ -793,8 +806,15 @@ export class SchemaGenerator {
             }
             
             const inventory = typeof zonePricing.available === 'number' ? zonePricing.available : zone.capacity;
+            
+            // Crear @id único para la oferta
+            const zoneName = (zone.name || 'general').toLowerCase().replace(/\\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const phaseSlug = (phaseName || `fase-${phaseIndex + 1}`).toLowerCase().replace(/\\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const offerId = `${eventUrl}/#offer-${zoneName}-${phaseSlug}`;
+            
             const offer: any = {
               '@type': 'Offer',
+              '@id': offerId,
               name: `${zone.name || 'General'} - ${phaseName}`,
               category: zone.category || zone.name || 'General',
               price: zonePricing.price,
@@ -803,13 +823,18 @@ export class SchemaGenerator {
               url: ticketUrl,
               seller: { '@id': organizationId },
             };
+            
+            // validFrom: momento desde el que la oferta es válida
             if (availabilityStarts) {
+              offer.validFrom = availabilityStarts;
               offer.availabilityStarts = availabilityStarts;
             }
+            
             if (availabilityEnds) {
               offer.availabilityEnds = availabilityEnds;
               offer.priceValidUntil = availabilityEnds;
             }
+            
             if (typeof inventory === 'number') {
               offer.inventoryLevel = {
                 '@type': 'QuantitativeValue',
@@ -933,7 +958,7 @@ export class SchemaGenerator {
       mainEntityOfPage: { '@id': pageId },
       eventStatus: 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      isAccessibleForFree: eventData.isAccessibleForFree === true, // Boolean estricto
+      isAccessibleForFree: eventData.isAccessibleForFree === true || eventData.isAccessibleForFree === 'true', // Boolean dinámico
       startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
       ...(formatDateWithTimezone(eventData.endDate, eventData.endTime) ? {
         endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime)

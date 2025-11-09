@@ -2156,17 +2156,32 @@ export default function NewEventPage() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 rounded-lg border border-yellow-200/50 dark:border-yellow-800/50">
-                <input
-                  type="checkbox"
-                  id="allowInstallmentPayments"
-                  checked={eventData.allowInstallmentPayments || false}
-                  onChange={(e) => updateEventData('allowInstallmentPayments', e.target.checked)}
-                  className="w-4 h-4 text-yellow-600 rounded focus:ring-yellow-500"
-                />
-                <Label htmlFor="allowInstallmentPayments" className="text-sm font-medium text-foreground cursor-pointer">
-                  📅 Permitir pagos en cuotas
-                </Label>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 rounded-lg border border-yellow-200/50 dark:border-yellow-800/50">
+                  <input
+                    type="checkbox"
+                    id="allowInstallmentPayments"
+                    checked={eventData.allowInstallmentPayments || false}
+                    onChange={(e) => updateEventData('allowInstallmentPayments', e.target.checked)}
+                    className="w-4 h-4 text-yellow-600 rounded focus:ring-yellow-500"
+                  />
+                  <Label htmlFor="allowInstallmentPayments" className="text-sm font-medium text-foreground cursor-pointer">
+                    📅 Permitir pagos en cuotas
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
+                  <input
+                    type="checkbox"
+                    id="isAccessibleForFree"
+                    checked={eventData.isAccessibleForFree || false}
+                    onChange={(e) => updateEventData('isAccessibleForFree', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <Label htmlFor="isAccessibleForFree" className="text-sm font-medium text-foreground cursor-pointer">
+                    🎁 Evento de entrada gratuita
+                  </Label>
+                </div>
               </div>
 
               {eventData.allowInstallmentPayments && (
