@@ -139,7 +139,7 @@ export class SchemaGenerator {
     const webPageSchema = this.generateEventWebPageSchema(eventData);
     if (webPageSchema) schemas.push(webPageSchema);
     
-    // 4. MusicEvent or MusicFestival Schema
+    // 4. MusicEvent or Festival Schema
     const eventSchema = this.generateMusicEventSchema(eventData);
     if (eventSchema) schemas.push(eventSchema);
     
@@ -254,7 +254,7 @@ export class SchemaGenerator {
   }
 
   /**
-   * Generate MusicEvent or MusicFestival schema
+   * Generate MusicEvent or Festival schema
    */
   private generateMusicEventSchema(eventData: any): any {
     const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
@@ -304,7 +304,7 @@ export class SchemaGenerator {
       return `${dateStr}T${time}${timezoneOffset}`;
     };
 
-    const fallbackCountry = (eventData.country || eventData.location?.countryCode || 'CL').toUpperCase();
+    const fallbackCountry = (eventData.country || eventData.location?.countryCode || 'PE').toUpperCase();
     const normalizeLanguage = (language?: string) => {
       const normalized = language?.replace('_', '-');
       if (normalized && /^[a-z]{2,3}(-[A-Za-z]{2})?$/.test(normalized)) {
@@ -487,7 +487,7 @@ export class SchemaGenerator {
 
     const eventSchema: any = {
       '@context': 'https://schema.org',
-      '@type': eventData.schemaType || (eventData.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent'),
+      '@type': eventData.schemaType || (eventData.eventType === 'festival' ? 'Festival' : 'MusicEvent'),
       '@id': `${eventUrl}/#event`,
       name: eventData.name,
       url: eventUrl,
@@ -1343,7 +1343,7 @@ export class SchemaGenerator {
           },
         },
         {
-          '@type': 'MusicFestival',
+          '@type': 'Festival',
           '@id': `${eventUrl}/#festival`,
           name: event.name,
           description: event.description,
@@ -1935,7 +1935,7 @@ export class SchemaGenerator {
           const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
           const eventId = `${eventUrl}#event`;
           const eventSchema: any = {
-            '@type': event.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent',
+            '@type': event.eventType === 'festival' ? 'Festival' : 'MusicEvent',
             '@id': eventId,
             name: event.name,
             description: event.shortDescription || event.description,
@@ -2001,7 +2001,7 @@ export class SchemaGenerator {
           const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
           const eventId = `${eventUrl}#event`;
           const eventSchema: any = {
-            '@type': event.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent',
+            '@type': event.eventType === 'festival' ? 'Festival' : 'MusicEvent',
             '@id': eventId,
             name: event.name,
             description: event.shortDescription || event.description,

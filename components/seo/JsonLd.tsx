@@ -33,6 +33,7 @@ export default function JsonLd({ data, id }: JsonLdProps) {
 
 /**
  * Renders multiple JSON-LD schemas as separate script tags
+ * Server Component - renders in SSR for crawlers and validators
  */
 export function JsonLdArray({ data, id }: { data: unknown[]; id?: string }) {
   if (!data || !Array.isArray(data) || data.length === 0) {
@@ -41,13 +42,27 @@ export function JsonLdArray({ data, id }: { data: unknown[]; id?: string }) {
 
   return (
     <>
-      {data.map((schema, index) => (
-        <JsonLd
-          key={`${id || 'json-ld-schema'}-${index}`}
-          data={schema}
-          id={`${id || 'json-ld-schema'}-${index}`}
-        />
-      ))}
+      {data.map((schema, index) => {
+        if (!schema) return null;
+        
+        try {
+          const jsonString = safeJSONStringify(schema);
+          const schemaId = id ? `${id}-${index}` : `schema-${index}`;
+          
+          return (
+            <script
+              key={schemaId}
+              id={schemaId}
+              type="application/ld+json"
+              suppressHydrationWarning
+              dangerouslySetInnerHTML={{ __html: jsonString }}
+            />
+          );
+        } catch (error) {
+          console.error(`Error serializing JSON-LD schema at index ${index}:`, error, schema);
+          return null;
+        }
+      })}
     </>
   );
 }
