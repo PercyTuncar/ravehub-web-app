@@ -308,16 +308,6 @@ generateEventSchema(eventData: any) {
           .filter(Boolean) as any[];
       })
     : [];
-  const numericPrices = offers
-    .map((offer: any) => (typeof offer.price === 'number' ? offer.price : Number(offer.price)))
-    .filter((price: number) => !Number.isNaN(price));
-  const aggregateOffer = offers.length > 0 && numericPrices.length > 0 ? {
-    '@type': 'AggregateOffer',
-    priceCurrency: eventData.currency || 'PEN',
-    lowPrice: Math.min(...numericPrices),
-    highPrice: Math.max(...numericPrices),
-    offerCount: offers.length,
-  } : undefined;
   const minAgeMatch = eventData.typicalAgeRange?.match(/\d+/);
   const minAge = minAgeMatch ? parseInt(minAgeMatch[0], 10) : 18;
   const organizerNode = eventData.organizer?.name ? {
@@ -421,8 +411,7 @@ generateEventSchema(eventData: any) {
         image: imageObjects.length > 0 ? imageObjects : undefined,
         organizer: organizerNode,
         performer: performers,
-        offers: offers.length > 0 ? offers : undefined,
-        aggregateOffer,
+          offers: offers.length > 0 ? offers : undefined,
         subEvent: subEvents && subEvents.length > 0 ? subEvents : undefined,
         maximumAttendeeCapacity: capacity,
         audience: {
