@@ -1,3524 +1,1608 @@
 import { BlogPost } from '@/lib/types';
 import { getLanguageCodeFromCountry, getTimezoneOffset } from '@/lib/utils/country-language';
-
-
-
 interface SchemaInput {
-
   type: 'blog' | 'news' | 'festival' | 'concert' | 'product' | 'dj';
-
   data: any;
-
 }
-
-
-
 interface WebSiteSchema {
-
   '@context': string;
-
   '@graph': Array<any>;
-
 }
-
-
-
 interface WebSiteNode {
-
   '@type': string;
-
   '@id': string;
-
   url: string;
-
   name: string;
-
   alternateName?: string[];
-
 }
-
-
-
 interface WebPageNode {
-
   '@type': string;
-
   '@id': string;
-
   url: string;
-
   name: string;
-
   isPartOf: { '@id': string };
-
   primaryImageOfPage: { '@id': string };
-
   datePublished: string;
-
   dateModified: string;
-
 }
-
-
-
 interface ImageObjectNode {
-
   '@type': string;
-
   '@id': string;
-
   url: string;
-
   width: number;
-
   height: number;
-
   caption: string;
-
 }
-
-
-
 interface OrganizationSchema {
-
   '@type': string;
-
   '@id': string;
-
   name: string;
-
   url: string;
-
   logo: {
-
     '@type': string;
-
     '@id': string;
-
     url: string;
-
     width: number;
-
     height: number;
-
   };
-
   sameAs: string[];
-
 }
-
-
-
 interface BlogPostingSchema {
-
   '@context': string;
-
   '@graph': Array<WebSiteSchema['@graph'][0] | OrganizationSchema | BlogPostingNode>;
-
 }
-
-
-
 interface BlogPostingNode {
-
   '@type': string;
-
   '@id': string;
-
   isPartOf: { '@id': string };
-
   mainEntityOfPage: { '@id': string };
-
   headline: string;
-
   alternativeHeadline?: string;
-
   description: string;
-
   inLanguage: string;
-
   articleSection: string;
-
   keywords: string[];
-
   datePublished: string;
-
   dateModified: string;
-
   author: Array<{
-
     '@type': string;
-
     '@id': string;
-
     name: string;
-
     url: string;
-
     sameAs?: string[];
-
   }>;
-
   publisher: { '@id': string };
-
   image: Array<{
-
     '@id'?: string;
-
     '@type'?: string;
-
     url: string;
-
     width?: number;
-
     height?: number;
-
     caption?: string;
-
   }>;
-
   thumbnailUrl: string;
-
   wordCount: number;
-
   about?: Array<{ '@type': string; name: string }>;
-
   mentions?: Array<{ '@type': string; name: string }>;
-
   commentCount: number;
-
   sharedContent?: {
-
     '@type': string;
-
     headline: string;
-
     url: string;
-
   };
-
 }
-
-
-
 // Sanitizador recomendado por Next.js
-
 export function safeJSONStringify(value: unknown): string {
-
   return JSON.stringify(value).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
-
 }
-
-
-
 export class SchemaGenerator {
-
   private static get BASE_URL() {
-
     // Always use production URL for schema generation (Google ignores localhost)
-
     const envUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim();
-
     if (envUrl && envUrl.startsWith('http') && !envUrl.includes('localhost')) {
-
       return envUrl.replace(/\/$/, '');
-
     }
-
     return 'https://www.ravehublatam.com';
-
   }
-
-
-
   static generate(input: SchemaInput): any {
-
     switch (input.type) {
-
       case 'blog':
-
         return SchemaGenerator.generateBlogPosting(input.data);
-
       case 'news':
-
         return SchemaGenerator.generateNewsArticle(input.data);
-
       case 'festival':
-
         return SchemaGenerator.generateFestival(input.data);
-
       case 'concert':
-
         return SchemaGenerator.generateConcert(input.data);
-
       case 'product':
-
         return SchemaGenerator.generateProduct(input.data);
-
       case 'dj':
-
         return SchemaGenerator.generateDjProfile(input.data);
-
       default:
-
         throw new Error(`Unsupported schema type: ${input.type}`);
-
     }
-
   }
-
-
-
-
-
 generateEventSchema(eventData: any) {
-
   const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
-
   const slug = (eventData.slug || eventData.id || '').toString().replace(/^\/+/, '');
-
   const eventSlug = slug || 'evento';
-
   const eventUrl = `${baseUrl}/eventos/${eventSlug}`;
-
   const websiteId = `${baseUrl}/#website`;
-
   const organizationId = `${baseUrl}/#organization`;
-
   const pageId = `${eventUrl}/#webpage`;
-
   const eventId = `${eventUrl}/#event`;
-
   const logoId = `${baseUrl}/#logo`;
-
   const primaryImageId = eventData.mainImageUrl ? `${eventUrl}/#primaryimage` : undefined;
-
   const cleanImageUrl = (url?: string) => (typeof url === 'string' ? url.replace(/[?&]token=[^&]*/, '') : undefined);
-
-  const primaryImageUrl = cleanImageUrl(eventData.mainImageUrl);
-
-  const bannerImageUrl = cleanImageUrl(eventData.bannerImageUrl);
-
-
-
-  // Get country code from location (primary source) or event data
-  const countryCode = (eventData.location?.countryCode || eventData.country || 'PE').toUpperCase();
-  
-  // Get language code from country code dynamically
-  const languageTag = getLanguageCodeFromCountry(countryCode);
-  
-  // Get timezone offset (e.g., "-05:00") using utility function
-  const timezoneOffset = getTimezoneOffset(eventData.timezone);
-
-  const parseOffsetMinutes = (offset: string) => {
-
-    const match = offset.match(/^([+-])(\d{2}):(\d{2})$/);
-
-    if (!match) return 0;
-
-    const [, sign, hours, minutes] = match;
-
-    const total = parseInt(hours, 10) * 60 + parseInt(minutes, 10);
-
-    return sign === '-' ? -total : total;
-
+  const normalizeTimezone = (timezone?: string) => {
+    if (!timezone) return '-05:00';
+    const trimmed = timezone.trim();
+    if (/^[+-]\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+    if (/^[+-]\d{2}$/.test(trimmed)) return `${trimmed}:00`;
+    if (/^[+-]\d{4}$/.test(trimmed)) return `${trimmed.slice(0, 3)}:${trimmed.slice(3)}`;
+    const utcMatch = trimmed.match(/UTC([+-]\d{2})(?::?(\d{2}))?/i);
+    if (utcMatch) {
+      const minutes = utcMatch[2] || '00';
+      return `${utcMatch[1]}:${minutes}`;
+    }
+    return '-05:00';
   };
-
-  const offsetMinutes = parseOffsetMinutes(timezoneOffset);
-
-  // Normalize time string to HH:MM:SS format
-  const normalizeTime = (time?: string): string => {
-
+  const pad = (value: number) => value.toString().padStart(2, '0');
+  const timezoneOffset = normalizeTimezone(eventData.timezone);
+  const normalizeTime = (time?: string) => {
     if (!time) return '00:00:00';
-
     if (/^\d{2}:\d{2}$/.test(time)) return `${time}:00`;
-
     if (/^\d{2}:\d{2}:\d{2}$/.test(time)) return time;
-
     return '00:00:00';
-
   };
-
-  // Format date with timezone offset - preserves the date/time as selected (prevents year shifts)
-  const formatDateWithTimezone = (dateStr?: string, timeStr?: string): string | undefined => {
-
+  const formatDateWithTimezone = (dateStr?: string, timeStr?: string) => {
     if (!dateStr) return undefined;
-    
-    try {
-      // If dateStr is already a full ISO string with time, parse it
-      if (dateStr.includes('T')) {
-        const parsed = new Date(dateStr);
-        if (Number.isNaN(parsed.getTime())) return undefined;
-        
-        // Extract date components (use local time to preserve selected date)
-        const year = parsed.getFullYear();
-        const month = String(parsed.getMonth() + 1).padStart(2, '0');
-        const day = String(parsed.getDate()).padStart(2, '0');
-        
-        // Extract time components
-        let hours = parsed.getHours();
-        let minutes = parsed.getMinutes();
-        let seconds = parsed.getSeconds();
-        
-        // If timeStr is provided, use it instead
-        if (timeStr) {
-          const time = normalizeTime(timeStr);
-          const [h, m, s] = time.split(':').map(Number);
-          hours = h;
-          minutes = m;
-          seconds = s;
-        }
-        
-        // Format as YYYY-MM-DDTHH:MM:SS with timezone offset
-        return `${year}-${month}-${day}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}${timezoneOffset}`;
+    if (dateStr.includes('T')) {
+      if (/[+-]\d{2}:\d{2}$/.test(dateStr)) {
+        return dateStr;
       }
-      
-      // If dateStr is just a date (YYYY-MM-DD), combine with time
-      const time = normalizeTime(timeStr);
-      return `${dateStr}T${time}${timezoneOffset}`;
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return undefined;
+      if (dateStr.endsWith('Z')) {
+        const parsed = new Date(dateStr);
+        if (!Number.isNaN(parsed.getTime())) {
+          return `${parsed.getUTCFullYear()}-${pad(parsed.getUTCMonth() + 1)}-${pad(parsed.getUTCDate())}T${pad(parsed.getUTCHours())}:${pad(parsed.getUTCMinutes())}:${pad(parsed.getUTCSeconds())}${timezoneOffset}`;
+        }
+      }
+      return `${dateStr}${timezoneOffset}`;
     }
-
+    const time = normalizeTime(timeStr);
+    return `${dateStr}T${time}${timezoneOffset}`;
   };
-
   const parseDateValue = (value: any): Date | undefined => {
-
     if (!value) return undefined;
-
     if (value instanceof Date) return value;
-
     if (typeof value === 'string') {
-
       const parsed = new Date(value);
-
       return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-
     }
-
-    if (typeof value === 'object' && value.seconds) {
-
+    if (typeof value === 'object' && typeof value.seconds === 'number') {
       return new Date(value.seconds * 1000);
-
     }
-
     return undefined;
-
   };
-
   const toIsoString = (value: any) => {
-
     const parsed = parseDateValue(value);
-
     return parsed ? parsed.toISOString() : new Date().toISOString();
-
   };
-
-  const fallbackCountry = countryCode;
-
-  const normalizeBoolean = (value: any, fallback = false) => {
-
-    if (typeof value === 'boolean') return value;
-
-    if (typeof value === 'string') {
-
-      const lowered = value.toLowerCase();
-
-      if (lowered === 'true' || lowered === 'https://schema.org/true' || lowered === 'http://schema.org/true') return true;
-
-      if (lowered === 'false' || lowered === 'https://schema.org/false' || lowered === 'http://schema.org/false') return false;
-
+  const fallbackCountry = (eventData.country || eventData.location?.countryCode || 'CL').toUpperCase();
+  const normalizeLanguage = (language?: string) => {
+    const normalized = language?.replace('_', '-');
+    if (normalized && /^[a-z]{2,3}(-[A-Za-z]{2})?$/.test(normalized)) {
+      const [lang, region] = normalized.split('-');
+      return `${lang.slice(0, 2).toLowerCase()}-${(region || fallbackCountry).toUpperCase()}`;
     }
-
-    return fallback;
-
+    return `es-${fallbackCountry}`;
   };
-
-  const buildLocation = () => {
-
+  const locationNode = (() => {
     if (!eventData.location) {
-
       return {
-
         '@type': 'Place',
-
         name: 'Ubicacion por confirmar',
-
         address: {
-
           '@type': 'PostalAddress',
-
           addressLocality: 'Ubicacion por confirmar',
-
           addressCountry: fallbackCountry,
-
         },
-
       };
-
     }
-
     const locationCountry = (eventData.location.countryCode || eventData.location.country || fallbackCountry).toUpperCase();
-
     const place: any = {
-
       '@type': 'Place',
-
       name: eventData.location.venue || eventData.location.city || 'Ubicacion del evento',
-
       address: {
-
         '@type': 'PostalAddress',
-
         streetAddress: eventData.location.address,
-
         addressLocality: eventData.location.city,
-
         addressRegion: eventData.location.region,
-
         postalCode: eventData.location.postalCode,
-
         addressCountry: locationCountry,
-
       },
-
     };
-
     if (eventData.location.geo && typeof eventData.location.geo.lat === 'number' && typeof eventData.location.geo.lng === 'number') {
-
       place.geo = {
-
         '@type': 'GeoCoordinates',
-
         latitude: eventData.location.geo.lat,
-
         longitude: eventData.location.geo.lng,
-
       };
-
     }
-
     return place;
-
-  };
-
-  const locationNode = buildLocation();
-
+  })();
   const capacity = Array.isArray(eventData.zones)
-
     ? eventData.zones.reduce((total: number, zone: any) => total + (zone.capacity || 0), 0)
-
     : undefined;
-
   const performers = Array.isArray(eventData.artistLineup) && eventData.artistLineup.length > 0
-
     ? eventData.artistLineup.map((artist: any) => ({
-
         '@type': 'Person',
-
         name: artist.name,
-
         sameAs: artist.instagram ? [`https://instagram.com/${artist.instagram.replace('@', '')}`] : undefined,
-
       }))
-
     : undefined;
-
   const subEvents = Array.isArray(eventData.artistLineup)
-
     ? eventData.artistLineup
-
         .map((artist: any, index: number) => {
-
           if (!artist.performanceDate || !artist.performanceTime) return undefined;
-
           const startDate = formatDateWithTimezone(artist.performanceDate, artist.performanceTime);
-
           if (!startDate) return undefined;
-
           return {
-
             '@type': 'MusicEvent',
-
-            '@id': `${eventUrl}/lineup/${index}#event`,
-
+            '@id': `${eventUrl}/lineup/${index + 1}#event`,
             name: `${artist.name} - ${eventData.name}`,
-
             startDate,
-
             endDate: artist.performanceEndTime
-
               ? formatDateWithTimezone(artist.performanceDate, artist.performanceEndTime)
-
               : undefined,
-
             location: locationNode,
-
             performer: {
-
               '@type': 'Person',
-
               name: artist.name,
-
             },
-
           };
-
         })
-
         .filter(Boolean)
-
     : undefined;
-
   const ticketUrl = eventData.externalTicketUrl && eventData.externalTicketUrl.startsWith('http')
-
     ? eventData.externalTicketUrl
-
     : `${eventUrl}/comprar`;
-
   const offers: any[] = Array.isArray(eventData.salesPhases)
-
     ? eventData.salesPhases.flatMap((phase: any) => {
-
         if (!Array.isArray(phase.zonesPricing)) return [];
-
         const phaseName = phase.name || 'Fase';
-
         return phase.zonesPricing
-
           .map((zonePricing: any) => {
-
             const zone = eventData.zones?.find((z: any) => z.id === zonePricing.zoneId);
-
             if (!zone || typeof zonePricing.price !== 'number') {
-
               return undefined;
-
             }
-
-            // Parse phase dates - ensure they're valid and before event start
-            const startDateIso = phase.startDate ? new Date(phase.startDate) : undefined;
-            const endDateIso = phase.endDate ? new Date(phase.endDate) : undefined;
-            const eventStartDate = eventData.startDate ? new Date(eventData.startDate) : undefined;
-            
-            // Validate date range: availabilityStarts < availabilityEnds and both before event start
-            let availabilityStarts: string | undefined;
-            let availabilityEnds: string | undefined;
-            
-            if (startDateIso && !Number.isNaN(startDateIso.getTime())) {
-              // Ensure phase starts before event starts
-              if (!eventStartDate || startDateIso.getTime() < eventStartDate.getTime()) {
-                availabilityStarts = formatDateWithTimezone(phase.startDate, '00:00:00');
-              }
-            }
-            
-            if (endDateIso && !Number.isNaN(endDateIso.getTime())) {
-              // Ensure phase ends before event starts and after phase starts
-              if (availabilityStarts && 
-                  (!eventStartDate || endDateIso.getTime() < eventStartDate.getTime()) &&
-                  endDateIso.getTime() >= startDateIso!.getTime()) {
-                // Set end time to 23:59:59 of the end date
-                availabilityEnds = formatDateWithTimezone(phase.endDate, '23:59:59');
-              }
-            }
-
-            const inventory = typeof zonePricing.available === 'number'
-
-              ? zonePricing.available
-
-              : zone.capacity;
-
-
-
+            const availabilityStarts = formatDateWithTimezone(phase.startDate, undefined);
+            const availabilityEnds = phase.endDate ? formatDateWithTimezone(phase.endDate, undefined) : undefined;
+            const inventory = typeof zonePricing.available === 'number' ? zonePricing.available : zone.capacity;
             const offer: any = {
-
               '@type': 'Offer',
-
               name: `${zone.name || 'General'} - ${phaseName}`,
-
               category: zone.category || zone.name || 'General',
-
               price: zonePricing.price,
-
               priceCurrency: eventData.currency || 'PEN',
-
               availability: 'https://schema.org/InStock',
-
               url: ticketUrl,
-
               seller: { '@id': organizationId },
-
             };
-
-            // Only add availability dates if they're valid
             if (availabilityStarts) {
               offer.availabilityStarts = availabilityStarts;
             }
-
             if (availabilityEnds) {
-              // Use priceValidUntil instead of availabilityEnds (Google prefers this)
+              offer.availabilityEnds = availabilityEnds;
               offer.priceValidUntil = availabilityEnds;
             }
-
             if (typeof inventory === 'number') {
-
               offer.inventoryLevel = {
-
                 '@type': 'QuantitativeValue',
-
                 value: inventory,
-
               };
-
             }
-
-
-
             return offer;
-
           })
-
-          .filter((offer: any): offer is any => offer !== undefined && typeof offer.price === 'number') as any[];
-
+          .filter(Boolean) as any[];
       })
-
     : [];
-
   const numericPrices = offers
-
     .map((offer: any) => (typeof offer.price === 'number' ? offer.price : Number(offer.price)))
-
     .filter((price: number) => !Number.isNaN(price));
-
   const aggregateOffer = offers.length > 0 && numericPrices.length > 0 ? {
-
     '@type': 'AggregateOffer',
-
     priceCurrency: eventData.currency || 'PEN',
-
     lowPrice: Math.min(...numericPrices),
-
     highPrice: Math.max(...numericPrices),
-
     offerCount: offers.length,
-
   } : undefined;
-
   const minAgeMatch = eventData.typicalAgeRange?.match(/\d+/);
-
   const minAge = minAgeMatch ? parseInt(minAgeMatch[0], 10) : 18;
-
   const organizerNode = eventData.organizer?.name ? {
-
     '@type': 'Organization',
-
     '@id': eventData.organizer.website && !eventData.organizer.website.includes('localhost')
-
       ? eventData.organizer.website
-
       : organizationId,
-
     name: eventData.organizer.name,
-
     ...(eventData.organizer.website && !eventData.organizer.website.includes('localhost')
-
       ? { url: eventData.organizer.website }
-
       : {}),
-
     ...(eventData.organizer.email ? { email: eventData.organizer.email } : {}),
-
     ...(eventData.organizer.phone ? { telephone: eventData.organizer.phone } : {}),
-
   } : { '@id': organizationId };
-
-
-
-  const eventDescription = eventData.seoDescription || eventData.shortDescription || eventData.description;
-
   const imageObjects = [
-
-    primaryImageUrl
-
+    cleanImageUrl(eventData.mainImageUrl)
       ? {
-
           '@type': 'ImageObject',
-
           '@id': primaryImageId,
-
-          url: primaryImageUrl,
-
+          url: cleanImageUrl(eventData.mainImageUrl)!,
           width: 1200,
-
           height: 675,
-
           caption: eventData.name,
-
         }
-
       : undefined,
-
-    bannerImageUrl
-
+    cleanImageUrl(eventData.bannerImageUrl)
       ? {
-
           '@type': 'ImageObject',
-
-          url: bannerImageUrl,
-
+          url: cleanImageUrl(eventData.bannerImageUrl)!,
           width: 1200,
-
           height: 675,
-
           caption: eventData.name,
-
         }
-
       : undefined,
-
   ].filter(Boolean);
-
-
-
   const schema: any = {
-
     '@context': 'https://schema.org',
-
     '@graph': [
-
       {
-
         '@type': 'WebSite',
-
         '@id': websiteId,
-
         url: baseUrl,
-
         name: 'Ravehub',
-
         alternateName: ['Ravehub'],
-
         potentialAction: {
-
           '@type': 'SearchAction',
-
           target: `${baseUrl}/buscar?q={search_term_string}`,
-
           'query-input': 'required name=search_term_string'
-
         }
-
       },
-
       {
-
         '@type': 'Organization',
-
         '@id': organizationId,
-
         name: 'Ravehub',
-
         url: baseUrl,
-
         logo: {
-
           '@type': 'ImageObject',
-
           '@id': logoId,
-
           url: `${baseUrl}/icons/logo.png`,
-
           width: 600,
-
           height: 60,
-
         },
-
         sameAs: [
-
           'https://www.instagram.com/ravehub.pe',
-
           'https://www.facebook.com/ravehub'
-
         ],
-
       },
-
       {
-
         '@type': 'WebPage',
-
         '@id': pageId,
-
         url: eventUrl,
-
         name: eventData.seoTitle || eventData.name,
-
         isPartOf: { '@id': websiteId },
-
         about: { '@id': eventId },
-
-        primaryImageOfPage: primaryImageUrl ? {
-
+        primaryImageOfPage: cleanImageUrl(eventData.mainImageUrl) ? {
           '@type': 'ImageObject',
-
           '@id': primaryImageId,
-
-          url: primaryImageUrl,
-
+          url: cleanImageUrl(eventData.mainImageUrl),
           width: 1200,
-
           height: 675,
-
           caption: eventData.name,
-
         } : undefined,
-
         datePublished: toIsoString(eventData.createdAt),
-
         dateModified: toIsoString(eventData.updatedAt || eventData.createdAt),
-
       },
-
       {
-
         '@type': eventData.schemaType || (eventData.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent'),
-
         '@id': eventId,
-
         name: eventData.name,
-
         url: eventUrl,
-
-        description: eventDescription,
-
-        inLanguage: languageTag,
-
+        description: eventData.seoDescription || eventData.shortDescription || eventData.description,
+        inLanguage: normalizeLanguage(eventData.inLanguage),
         mainEntityOfPage: { '@id': pageId },
-
         eventStatus: 'https://schema.org/EventScheduled',
-
         eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-
-        isAccessibleForFree: normalizeBoolean(eventData.isAccessibleForFree, false),
-
+        isAccessibleForFree: Boolean(eventData.isAccessibleForFree),
         startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
-
         endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime),
-
         doorTime: eventData.doorTime ? formatDateWithTimezone(eventData.startDate, eventData.doorTime) : undefined,
-
         location: locationNode,
-
         image: imageObjects.length > 0 ? imageObjects : undefined,
-
         organizer: organizerNode,
-
-        performer: performers && performers.length > 0 ? (performers.length === 1 ? performers[0] : performers) : undefined,
-
+        performer: performers,
         offers: offers.length > 0 ? offers : undefined,
-
         aggregateOffer,
-
         subEvent: subEvents && subEvents.length > 0 ? subEvents : undefined,
-
         maximumAttendeeCapacity: capacity,
-
         audience: {
-
           '@type': 'PeopleAudience',
-
           requiredMinAge: minAge,
-
+          ...(eventData.audienceType ? { audienceType: eventData.audienceType } : {}),
         },
-
       },
-
     ],
-
   };
-
-
-
   const faqs = Array.isArray(eventData.faqSection)
-
     ? eventData.faqSection
-
         .filter((faq: { question: string; answer: string }) => faq?.question && faq?.answer)
-
         .map((faq: { question: string; answer: string }) => ({
-
           '@type': 'Question',
-
           name: faq.question,
-
           acceptedAnswer: {
-
             '@type': 'Answer',
-
             text: faq.answer,
-
           },
-
         }))
-
     : [];
-
-
-
-  // Add FAQPage separately (mainEntity should NOT be in MusicEvent)
   if (faqs.length > 0) {
-
     schema['@graph'].push({
-
       '@type': 'FAQPage',
-
       '@id': `${eventUrl}/#faq`,
-
       isPartOf: { '@id': pageId },
-
       about: { '@id': eventId },
-
       mainEntity: faqs,
-
     });
-
   }
-
-
-
   schema['@graph'].push({
-
     '@type': 'BreadcrumbList',
-
-    'itemListElement': [
-
+    itemListElement: [
       {
-
         '@type': 'ListItem',
-
-        'position': 1,
-
-        'name': 'Inicio',
-
-        'item': {
-
+        position: 1,
+        name: 'Inicio',
+        item: {
           '@type': 'Thing',
-
           '@id': baseUrl,
-
           name: 'Inicio'
-
         }
-
       },
-
       {
-
         '@type': 'ListItem',
-
-        'position': 2,
-
-        'name': 'Eventos',
-
-        'item': {
-
+        position: 2,
+        name: 'Eventos',
+        item: {
           '@type': 'Thing',
-
           '@id': `${baseUrl}/eventos`,
-
           name: 'Eventos'
-
         }
-
       },
-
       {
-
         '@type': 'ListItem',
-
-        'position': 3,
-
-        'name': eventData.name,
-
-        'item': {
-
+        position: 3,
+        name: eventData.name,
+        item: {
           '@type': 'Thing',
-
           '@id': eventUrl,
-
           name: eventData.name
-
         }
-
       }
-
     ]
-
   });
-
-
-
-  // Recursive function to remove undefined values (but keep null if explicitly set)
-  // This ensures the schema is clean but doesn't remove valid empty objects
-  const removeUndefined = (obj: any): any => {
-    if (obj === undefined) {
-      return undefined;
-    }
-    
-    // Keep null values as they may be intentional
-    if (obj === null) {
-      return obj;
-    }
-    
-    if (Array.isArray(obj)) {
-      const filtered = obj.map(removeUndefined).filter(item => item !== undefined);
-      return filtered.length > 0 ? filtered : undefined;
-    }
-    
-    if (typeof obj === 'object' && obj !== null) {
-      // Special handling for objects with @id or @type (schema.org nodes)
-      const filtered: any = {};
-      let hasProperties = false;
-      
-      Object.keys(obj).forEach(key => {
-        const value = removeUndefined(obj[key]);
-        if (value !== undefined) {
-          filtered[key] = value;
-          hasProperties = true;
-        }
-      });
-      
-      // Always keep objects that have @type or @id (they're schema.org nodes)
-      if (filtered['@type'] || filtered['@id']) {
-        return filtered;
+  schema['@graph'] = schema['@graph'].map((node: any) => {
+    const filtered: any = {};
+    Object.keys(node).forEach(key => {
+      if (node[key] !== undefined) {
+        filtered[key] = node[key];
       }
-      
-      return hasProperties ? filtered : undefined;
-    }
-    
-    return obj;
-  };
-
-  // Clean the schema recursively, but preserve structure
-  const cleanedSchema = removeUndefined(schema);
-  
-  // Ensure @graph is an array and filter out any undefined items
-  // but keep all valid schema.org nodes
-  if (cleanedSchema && cleanedSchema['@graph'] && Array.isArray(cleanedSchema['@graph'])) {
-    cleanedSchema['@graph'] = cleanedSchema['@graph']
-      .map(removeUndefined)
-      .filter((item: any) => {
-        // Keep items that have @type or @id (schema.org nodes)
-        if (!item || (typeof item !== 'object')) return false;
-        return item['@type'] || item['@id'];
-      });
-    
-    // Ensure we have a valid @context
-    if (!cleanedSchema['@context']) {
-      cleanedSchema['@context'] = 'https://schema.org';
-    }
-  }
-
-  // Final validation: ensure schema is valid JSON and has required structure
-  try {
-    const testString = JSON.stringify(cleanedSchema);
-    JSON.parse(testString); // Validate it's valid JSON
-    
-    // Ensure @graph exists and is not empty
-    if (!cleanedSchema['@graph'] || !Array.isArray(cleanedSchema['@graph']) || cleanedSchema['@graph'].length === 0) {
-      console.error('Schema validation failed: @graph is empty or invalid');
-      return cleanedSchema; // Return as-is rather than failing completely
-    }
-  } catch (error) {
-    console.error('Schema validation error:', error);
-    // Return the schema anyway - let the browser handle parsing errors
-  }
-
-  return cleanedSchema;
-
+    });
+    return filtered;
+  });
+  return schema;
 }
-
-
-
-
-
   generateEventPurchaseSchema(eventData: any) {
-
     const eventUrl = `${SchemaGenerator.BASE_URL}/eventos/${eventData.slug}`;
-
     const purchaseUrl = `${eventUrl}/comprar`;
-
-
-
     // Helper function to format dates with timezone
-
     const formatDateWithTimezone = (dateString: string, timeString?: string, timezone?: string) => {
-
       if (!dateString) return dateString;
-
-
-
       const date = new Date(dateString);
-
       if (timeString) {
-
         const [hours, minutes] = timeString.split(':');
-
         date.setHours(parseInt(hours), parseInt(minutes));
-
       }
-
-
-
       // Format as ISO-8601 string with timezone offset
-
       if (timezone) {
-
         // Convert to timezone offset format (e.g., -05:00)
-
         const offset = timezone.includes(':') ? timezone : `${timezone}:00`;
-
         // Ensure proper ISO format: remove milliseconds and add timezone
-
         const isoString = date.toISOString();
-
         const withoutMs = isoString.replace(/\.\d{3}Z$/, 'Z');
-
         return withoutMs.replace('Z', offset);
-
       }
-
-
-
       return date.toISOString();
-
     };
-
-
-
     // Get all active offers from all phases
-
     const offers: any[] = [];
-
-    
-
     if (eventData.salesPhases && eventData.salesPhases.length > 0) {
-
       eventData.salesPhases.forEach((phase: any) => {
-
         if (phase.zonesPricing && phase.zonesPricing.length > 0) {
-
           phase.zonesPricing.forEach((zonePricing: any) => {
-
             const zone = eventData.zones?.find((z: any) => z.id === zonePricing.zoneId);
-
             if (zone) {
-
               offers.push({
-
                 '@type': 'Offer',
-
                 name: zone.name || 'General',
-
                 category: zone.category || zone.name?.toLowerCase() || 'general',
-
                 price: zonePricing.price,
-
                 priceCurrency: eventData.currency || 'PEN',
-
                 availability: 'https://schema.org/InStock',
-
                 url: purchaseUrl,
-
                 eligibleQuantity: {
-
                   '@type': 'QuantitativeValue',
-
                   maxValue: zone.capacity || 10,
-
                 },
-
                 // Optional: add priceValidUntil if phase has endDate
-
                 ...(phase.endDate ? {
-
                   priceValidUntil: formatDateWithTimezone(phase.endDate, undefined, eventData.timezone),
-
                 } : {}),
-
               });
-
             }
-
           });
-
         }
-
       });
-
     }
-
-
-
     // Get images - try to get different aspect ratios if available
-
     const images: string[] = [];
-
     if (eventData.mainImageUrl) {
-
       // Try to construct different aspect ratio URLs (common pattern)
-
       const baseImageUrl = eventData.mainImageUrl.replace(/[?&]token=[^&]*/, '');
-
       images.push(baseImageUrl);
-
-      
-
       // Try to find other aspect ratios in imageGallery
-
       if (eventData.imageGallery && eventData.imageGallery.length > 0) {
-
         eventData.imageGallery.forEach((img: string) => {
-
           const cleanImg = img.replace(/[?&]token=[^&]*/, '');
-
           if (!images.includes(cleanImg)) {
-
             images.push(cleanImg);
-
           }
-
         });
-
       }
-
-      
-
       // If banner exists, add it
-
       if (eventData.bannerImageUrl) {
-
         const cleanBanner = eventData.bannerImageUrl.replace(/[?&]token=[^&]*/, '');
-
         if (!images.includes(cleanBanner)) {
-
           images.push(cleanBanner);
-
         }
-
       }
-
     }
-
-
-
     // Get main performer (headliner or first artist)
-
     const mainPerformer = eventData.artistLineup?.find((artist: any) => artist.isHeadliner) 
-
       || eventData.artistLineup?.[0];
-
-
-
     // Build description focused on ticket purchase
-
     // Format: "Concierto de [Artist] en [Venue] ([City], [Region])."
-
     let description = eventData.seoDescription || eventData.shortDescription;
-
     if (!description || description.length < 50) {
-
       // Generate a more descriptive text for ticket purchase matching user's example format
-
       const venueName = eventData.location?.venue || '';
-
       const cityName = eventData.location?.city || '';
-
       const regionName = eventData.location?.region || '';
-
-      
-
       // Build location text: "Venue (City, Region)" or just "Venue" if city/region not available
-
       let locationText = venueName;
-
       if (cityName && regionName) {
-
         locationText = `${venueName} (${cityName}, ${regionName})`;
-
       } else if (cityName) {
-
         locationText = `${venueName} (${cityName})`;
-
       }
-
-      
-
       if (mainPerformer) {
-
         description = `Concierto de ${mainPerformer.name} en ${locationText}.`;
-
       } else if (venueName) {
-
         description = `Concierto en ${locationText}.`;
-
       } else {
-
         description = eventData.shortDescription || `Evento ${eventData.name}.`;
-
       }
-
     }
-
-
-
     // Build the schema (simpler structure matching user's example)
-
     const schema: any = {
-
       '@context': 'https://schema.org',
-
       '@type': 'Event',
-
       name: eventData.name,
-
       description: description,
-
       startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime, eventData.timezone),
-
       eventStatus: 'https://schema.org/EventScheduled',
-
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-
       isAccessibleForFree: eventData.isAccessibleForFree || false,
-
     };
-
-
-
     // Add images as array of strings (not ImageObject)
-
     if (images.length > 0) {
-
       schema.image = images;
-
     }
-
-
-
     // Add location
-
     if (eventData.location) {
-
       schema.location = {
-
         '@type': 'Place',
-
         name: eventData.location.venue || eventData.location.city || 'Ubicación del evento',
-
         address: {
-
           '@type': 'PostalAddress',
-
           addressLocality: eventData.location.city || 'Lima',
-
           addressRegion: eventData.location.region || eventData.location.city || '',
-
           addressCountry: eventData.location.countryCode || eventData.location.country || 'PE',
-
         },
-
       };
-
-      
-
       // Add streetAddress if available
-
       if (eventData.location.address) {
-
         schema.location.address.streetAddress = eventData.location.address;
-
       }
-
     }
-
-
-
     // Add organizer
-
     schema.organizer = {
-
       '@type': 'Organization',
-
       name: eventData.organizer?.name || 'Ravehub Latam',
-
       url: SchemaGenerator.BASE_URL,
-
     };
-
-
-
     // Add performer if available
-
     if (mainPerformer) {
-
       schema.performer = {
-
         '@type': 'Person',
-
         name: mainPerformer.name,
-
       };
-
     }
-
-
-
     // Add offers
-
     if (offers.length > 0) {
-
       schema.offers = offers;
-
     }
-
-
-
     // Add mainEntityOfPage
-
     schema.mainEntityOfPage = {
-
       '@type': 'WebPage',
-
       '@id': eventUrl,
-
     };
-
-
-
     // Remove undefined values recursively
-
     const removeUndefined = (obj: any): any => {
-
       if (Array.isArray(obj)) {
-
         return obj.map(removeUndefined).filter(item => item !== undefined);
-
       } else if (obj !== null && typeof obj === 'object') {
-
         const cleaned: any = {};
-
         Object.keys(obj).forEach(key => {
-
           const value = removeUndefined(obj[key]);
-
           if (value !== undefined) {
-
             cleaned[key] = value;
-
           }
-
         });
-
         return cleaned;
-
       }
-
       return obj;
-
     };
-
-
-
     return removeUndefined(schema);
-
   }
-
-
-
   static generateBlogPosting(post: BlogPost, commentCount: number = 0): BlogPostingSchema {
-
     const webpageId = `${this.BASE_URL}/blog/${post.slug}/#webpage`;
-
     const articleId = `${this.BASE_URL}/blog/${post.slug}/#article`;
-
     const websiteId = `${this.BASE_URL}/#website`;
-
     const organizationId = `${this.BASE_URL}/#organization`;
-
-
-
     const schema: BlogPostingSchema = {
-
       '@context': 'https://schema.org',
-
       '@graph': [
-
         {
-
           '@type': 'WebSite',
-
           '@id': websiteId,
-
           url: this.BASE_URL,
-
           name: 'Ravehub',
-
           alternateName: ['Ravehub'],
-
         },
-
         {
-
           '@type': 'Organization',
-
           '@id': organizationId,
-
           name: 'Ravehub',
-
           url: this.BASE_URL,
-
           logo: {
-
             '@type': 'ImageObject',
-
             '@id': `${SchemaGenerator.BASE_URL}/#logo`,
-
             url: `${this.BASE_URL}/icons/logo.png`,
-
             width: 600,
-
             height: 60,
-
           },
-
           sameAs: [
-
             'https://www.instagram.com/ravehub',
-
             'https://www.facebook.com/ravehub',
-
             'https://twitter.com/ravehub',
-
           ],
-
         },
-
         {
-
           '@type': 'WebPage',
-
           '@id': webpageId,
-
           url: `${this.BASE_URL}/blog/${post.slug}/`,
-
           name: post.seoTitle || post.title,
-
           isPartOf: { '@id': websiteId },
-
           primaryImageOfPage: { '@id': `${this.BASE_URL}/blog/${post.slug}/#primaryimage` },
-
           datePublished: post.publishDate || post.createdAt,
-
           dateModified: post.updatedDate || post.createdAt,
-
         },
-
         {
-
           '@type': 'ImageObject',
-
           '@id': `${this.BASE_URL}/blog/${post.slug}/#primaryimage`,
-
           url: post.featuredImageUrl.replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
-
           width: 1200,
-
           height: 675,
-
           caption: post.imageAltTexts?.[post.featuredImageUrl] || post.title,
-
         },
-
         {
-
           '@type': 'BlogPosting',
-
           '@id': articleId,
-
           isPartOf: { '@id': webpageId },
-
           mainEntityOfPage: { '@id': `${this.BASE_URL}/blog/${post.slug}` },
-
           headline: post.title,
-
           alternativeHeadline: post.excerpt,
-
           description: post.seoDescription || post.excerpt,
-
           inLanguage: 'es-CL',
-
           articleSection: post.categories[0] || 'General',
-
           keywords: post.seoKeywords || post.tags,
-
           datePublished: post.publishDate || post.createdAt,
-
           dateModified: post.updatedDate || post.createdAt,
-
           author: [
-
             {
-
               '@type': 'Person',
-
               '@id': `${this.BASE_URL}/authors/${post.authorId}/#author`,
-
               name: post.author,
-
               url: `${this.BASE_URL}/authors/${post.authorId}/`,
-
               sameAs: [], // Could be populated from author social links
-
             },
-
           ],
-
           publisher: { '@id': organizationId },
-
           image: [
-
             {
-
               '@type': 'ImageObject',
-
               url: post.featuredImageUrl.replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
-
               width: 1200,
-
               height: 675,
-
               caption: post.imageAltTexts?.[post.featuredImageUrl] || post.title,
-
             },
-
             {
-
               '@type': 'ImageObject',
-
               url: (post.socialImageUrl || post.featuredImageUrl).replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
-
               width: 1200,
-
               height: 630,
-
             },
-
           ],
-
           thumbnailUrl: (post.socialImageUrl || post.featuredImageUrl).replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
-
           wordCount: this.estimateWordCount(post.content),
-
           about: post.tags.map(tag => ({ '@type': 'Thing', name: tag })),
-
           commentCount: commentCount,
-
         },
-
       ],
-
     };
-
-
-
     // Add shared content if present
-
     if (post.sharedContent) {
-
       (schema['@graph'][4] as BlogPostingNode).sharedContent = {
-
         '@type': 'CreativeWork',
-
         headline: post.sharedContent.headline,
-
         url: post.sharedContent.url,
-
       };
-
     }
-
-
-
     return schema;
-
   }
-
-
-
   static generateNewsArticle(post: BlogPost): any {
-
     // Similar to BlogPosting but with NewsArticle specific fields
-
     const blogSchema = this.generateBlogPosting(post);
-
-
-
     // Change BlogPosting to NewsArticle
-
     const articleNode = blogSchema['@graph'][4] as BlogPostingNode;
-
     articleNode['@type'] = 'NewsArticle';
-
-
-
     // Add NewsArticle specific fields
-
     if (post.faq) {
-
       (articleNode as any).mainEntity = post.faq.map(faq => ({
-
         '@type': 'Question',
-
         name: faq.question,
-
         acceptedAnswer: {
-
           '@type': 'Answer',
-
           text: faq.answer,
-
         },
-
       }));
-
     }
-
-
-
     return blogSchema;
-
   }
-
-
-
   private static estimateWordCount(content: string): number {
-
     // Remove HTML tags and count words
-
     const text = content.replace(/<[^>]*>/g, '');
-
     return text.split(/\s+/).filter(word => word.length > 0).length;
-
   }
-
-
-
   static generateFestival(event: any): any {
-
     const baseUrl = this.BASE_URL;
-
     const eventUrl = `${baseUrl}/eventos/${event.slug}`;
-
     const websiteId = `${baseUrl}/#website`;
-
     const organizationId = `${baseUrl}/#organization`;
-
     const venueId = `${baseUrl}/#venue`;
-
-
-
     const schema = {
-
       '@context': 'https://schema.org',
-
       '@graph': [
-
         {
-
           '@type': 'WebSite',
-
           '@id': websiteId,
-
           url: baseUrl,
-
           name: 'Ravehub',
-
           alternateName: ['Ravehub'],
-
         },
-
         {
-
           '@type': 'Organization',
-
           '@id': organizationId,
-
           name: 'Ravehub',
-
           url: baseUrl,
-
           logo: {
-
             '@type': 'ImageObject',
-
             '@id': `${baseUrl}/#logo`,
-
             url: `${baseUrl}/icons/logo.png`,
-
             width: 600,
-
             height: 60,
-
           },
-
           sameAs: [
-
             'https://www.instagram.com/ravehub',
-
             'https://www.facebook.com/ravehub',
-
             'https://twitter.com/ravehub',
-
           ],
-
         },
-
         {
-
           '@type': 'Place',
-
           '@id': venueId,
-
           name: event.location.venue || event.location.city || 'Ubicación del evento',
-
           address: {
-
             '@type': 'PostalAddress',
-
             streetAddress: event.location.address || '',
-
             addressLocality: event.location.city || 'Ciudad no especificada',
-
             addressRegion: event.location.region || '',
-
             postalCode: event.location.postalCode || '',
-
             addressCountry: event.location.countryCode || event.location.country || event.country || 'CL',
-
           },
-
         },
-
         {
-
           '@type': 'MusicFestival',
-
           '@id': `${eventUrl}/#festival`,
-
           name: event.name,
-
           description: event.description,
-
           image: [
-
             event.mainImageUrl,
-
             event.bannerImageUrl,
-
           ].filter(Boolean).map(url => ({
-
             '@type': 'ImageObject',
-
             url,
-
             width: 1200,
-
             height: 675,
-
           })),
-
           eventStatus: 'https://schema.org/EventScheduled',
-
           eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-
           startDate: event.startDate,
-
           endDate: event.endDate,
-
           doorTime: event.doorTime,
-
           location: event.location ? {
-
             '@type': 'Place',
-
             name: event.location.venue || event.location.city || 'Ubicación del evento',
-
             address: {
-
               '@type': 'PostalAddress',
-
               addressLocality: event.location.city || 'Ciudad no especificada',
-
               addressCountry: event.location.countryCode || event.location.country || 'CL',
-
             },
-
           } : { '@id': venueId },
-
           organizer: { '@id': organizationId },
-
           maximumAttendeeCapacity: event.zones?.reduce((total: number, zone: any) => total + zone.capacity, 0) || 0,
-
           isAccessibleForFree: event.isAccessibleForFree,
-
           offers: this.generateEventOffers(event),
-
           subEvent: this.generateSubEvents(event, eventUrl),
-
         },
-
       ],
-
     };
-
-
-
     return schema;
-
   }
-
-
-
   static generateConcert(event: any): any {
-
     const baseUrl = this.BASE_URL;
-
     const eventUrl = `${baseUrl}/eventos/${event.slug}`;
-
     const websiteId = `${baseUrl}/#website`;
-
     const organizationId = `${baseUrl}/#organization`;
-
     const venueId = `${baseUrl}/#venue`;
-
-
-
     const schema = {
-
       '@context': 'https://schema.org',
-
       '@graph': [
-
         {
-
           '@type': 'WebSite',
-
           '@id': websiteId,
-
           url: baseUrl,
-
           name: 'Ravehub',
-
           alternateName: ['Ravehub'],
-
         },
-
         {
-
           '@type': 'Organization',
-
           '@id': organizationId,
-
           name: 'Ravehub',
-
           url: baseUrl,
-
           logo: {
-
             '@type': 'ImageObject',
-
             '@id': `${baseUrl}/#logo`,
-
             url: `${baseUrl}/icons/logo.png`,
-
             width: 600,
-
             height: 60,
-
           },
-
           sameAs: [
-
             'https://www.instagram.com/ravehub',
-
             'https://www.facebook.com/ravehub',
-
             'https://twitter.com/ravehub',
-
           ],
-
         },
-
         {
-
           '@type': 'Place',
-
           '@id': venueId,
-
           name: event.location.venue || event.location.city || 'Ubicación del evento',
-
           address: {
-
             '@type': 'PostalAddress',
-
             streetAddress: event.location.address || '',
-
             addressLocality: event.location.city || 'Ciudad no especificada',
-
             addressRegion: event.location.region || '',
-
             postalCode: event.location.postalCode || '',
-
             addressCountry: event.location.countryCode || event.location.country || event.country || 'CL',
-
           },
-
         },
-
         {
-
           '@type': 'MusicEvent',
-
           '@id': `${eventUrl}/#event`,
-
           name: event.name,
-
           description: event.description,
-
           image: [
-
             event.mainImageUrl,
-
             event.bannerImageUrl,
-
           ].filter(Boolean).map(url => ({
-
             '@type': 'ImageObject',
-
             url,
-
             width: 1200,
-
             height: 675,
-
           })),
-
           eventStatus: 'https://schema.org/EventScheduled',
-
           eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-
           startDate: event.startDate,
-
           endDate: event.endDate,
-
           doorTime: event.doorTime,
-
           location: event.location ? {
-
             '@type': 'Place',
-
             name: event.location.venue || event.location.city || 'Ubicación del evento',
-
             address: {
-
               '@type': 'PostalAddress',
-
               addressLocality: event.location.city || 'Ciudad no especificada',
-
               addressCountry: event.location.countryCode || event.location.country || 'CL',
-
             },
-
           } : { '@id': venueId },
-
           organizer: { '@id': organizationId },
-
           performer: this.generatePerformers(event),
-
           maximumAttendeeCapacity: event.zones?.reduce((total: number, zone: any) => total + zone.capacity, 0) || 0,
-
           isAccessibleForFree: event.isAccessibleForFree,
-
           offers: this.generateEventOffers(event),
-
           subEvent: this.generateSubEvents(event, eventUrl),
-
         },
-
       ],
-
     };
-
-
-
     return schema;
-
   }
-
-
-
   private static generateEventOffers(event: any): any[] {
-
     const offers: any[] = [];
-
-
-
     event.salesPhases?.forEach((phase: any) => {
-
       phase.zonesPricing?.forEach((zonePricing: any) => {
-
         const zone = event.zones?.find((z: any) => z.id === zonePricing.zoneId);
-
         if (zone) {
-
           offers.push({
-
             '@type': 'Offer',
-
             name: `${zone.name} - ${phase.name}`,
-
             category: zone.name,
-
             price: zonePricing.price,
-
             priceCurrency: event.currency,
-
             priceSpecification: {
-
               '@type': 'PriceSpecification',
-
               price: zonePricing.price,
-
               priceCurrency: event.currency,
-
             },
-
             availability: 'https://schema.org/InStock',
-
             availabilityStarts: phase.startDate,
-
             availabilityEnds: phase.endDate,
-
             validFrom: phase.startDate,
-
             validThrough: phase.endDate,
-
             inventoryLevel: {
-
               '@type': 'QuantitativeValue',
-
               value: zone.capacity,
-
             },
-
             url: `${this.BASE_URL}/eventos/${event.slug}/comprar`,
-
           });
-
         }
-
       });
-
     });
-
-
-
     return offers;
-
   }
-
-
-
   private static generatePerformers(event: any): any[] {
-
     return event.artistLineup?.map((artist: any) => ({
-
       '@type': 'Person',
-
       name: artist.name,
-
       sameAs: [], // Could be populated from DJ profiles
-
     })) || [];
-
   }
-
-
-
   private static generateSubEvents(event: any, eventUrl: string): any[] {
-
     const subEvents: any[] = [];
-
-
-
     // Generate sub-events for each day if multi-day
-
     if (event.isMultiDay && event.endDate) {
-
       const startDate = new Date(event.startDate);
-
       const endDate = new Date(event.endDate);
-
       let currentDate = new Date(startDate);
-
-
-
       while (currentDate <= endDate) {
-
         const dayArtists = event.artistLineup?.filter((artist: any) =>
-
           !artist.performanceDate || artist.performanceDate === currentDate.toISOString().split('T')[0]
-
         ) || [];
-
-
-
         if (dayArtists.length > 0) {
-
           subEvents.push({
-
             '@type': 'MusicEvent',
-
             '@id': `${eventUrl}/dia-${currentDate.toISOString().split('T')[0]}/#event`,
-
             name: `${event.name} - Día ${currentDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}`,
-
             startDate: currentDate.toISOString().split('T')[0],
-
             location: event.location ? {
-
               '@type': 'Place',
-
               name: event.location.venue || event.location.city || 'Ubicación del evento',
-
               address: {
-
                 '@type': 'PostalAddress',
-
                 addressLocality: event.location.city || 'Ciudad no especificada',
-
                 addressCountry: event.location.countryCode || event.location.country || 'CL',
-
               },
-
             } : { '@id': `${this.BASE_URL}/#venue` },
-
             superEvent: { '@id': `${eventUrl}/#${event.eventType === 'festival' ? 'festival' : 'event'}` },
-
             performer: dayArtists.map((artist: any) => ({
-
               '@type': 'Person',
-
               name: artist.name,
-
             })),
-
           });
-
         }
-
-
-
         currentDate.setDate(currentDate.getDate() + 1);
-
       }
-
     }
-
-
-
     return subEvents;
-
   }
-
-
-
   static generateProduct(product: any): any {
-
     const productUrl = `${this.BASE_URL}/tienda/${product.slug}`;
-
     const websiteId = `${this.BASE_URL}/#website`;
-
     const organizationId = `${this.BASE_URL}/#organization`;
-
-
-
     const schema = {
-
       '@context': 'https://schema.org',
-
       '@graph': [
-
         {
-
           '@type': 'WebSite',
-
           '@id': websiteId,
-
           url: this.BASE_URL,
-
           name: 'Ravehub',
-
           alternateName: ['Ravehub'],
-
         },
-
         {
-
           '@type': 'Organization',
-
           '@id': organizationId,
-
           name: 'Ravehub',
-
           url: this.BASE_URL,
-
           logo: {
-
             '@type': 'ImageObject',
-
             '@id': `${this.BASE_URL}/#logo`,
-
             url: `${this.BASE_URL}/icons/logo.png`,
-
             width: 600,
-
             height: 60,
-
           },
-
           sameAs: [
-
             'https://www.instagram.com/ravehub.pe',
-
             'https://www.facebook.com/ravehub'
-
           ],
-
         },
-
         {
-
           '@type': 'WebPage',
-
           '@id': `${productUrl}/#webpage`,
-
           url: productUrl,
-
           name: product.seoTitle || product.name,
-
           isPartOf: { '@id': websiteId },
-
           primaryImageOfPage: product.images?.[0] ? {
-
             '@type': 'ImageObject',
-
             '@id': `${productUrl}/#primaryimage`,
-
             url: product.images[0],
-
             width: 1200,
-
             height: 675,
-
           } : undefined,
-
           datePublished: product.createdAt,
-
           dateModified: product.updatedAt || product.createdAt,
-
         },
-
         {
-
           '@type': 'Product',
-
           '@id': `${productUrl}/#product`,
-
           name: product.name,
-
           description: product.seoDescription || product.shortDescription,
-
           image: product.images?.map((img: string) => ({
-
             '@type': 'ImageObject',
-
             url: img,
-
             width: 1200,
-
             height: 1200,
-
             caption: product.imageAltTexts?.[img] || product.name,
-
           })) || [],
-
           sku: product.id,
-
           brand: product.brand ? {
-
             '@type': 'Brand',
-
             name: product.brand,
-
           } : undefined,
-
           category: product.categoryId ? {
-
             '@type': 'CategoryCode',
-
             name: product.categoryId, // This could be enhanced with category name lookup
-
           } : undefined,
-
           offers: {
-
             '@type': 'Offer',
-
             price: product.discountPercentage && product.discountPercentage > 0
-
               ? (product.price * (1 - product.discountPercentage / 100)).toFixed(2)
-
               : product.price.toFixed(2),
-
             priceCurrency: product.currency || 'CLP',
-
             priceValidUntil: product.discountPercentage && product.discountPercentage > 0
-
               ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 days from now
-
               : undefined,
-
             availability: product.stock > 0
-
               ? 'https://schema.org/InStock'
-
               : 'https://schema.org/OutOfStock',
-
             condition: 'https://schema.org/NewCondition',
-
             seller: {
-
               '@type': 'Organization',
-
               name: 'Ravehub',
-
               url: this.BASE_URL,
-
             },
-
             priceSpecification: product.discountPercentage && product.discountPercentage > 0 ? {
-
               '@type': 'PriceSpecification',
-
               price: (product.price * (1 - product.discountPercentage / 100)).toFixed(2),
-
               priceCurrency: product.currency || 'CLP',
-
             } : undefined,
-
             shippingDetails: product.shippingDetails ? {
-
               '@type': 'OfferShippingDetails',
-
               shippingRate: {
-
                 '@type': 'MonetaryAmount',
-
                 value: '0', // Free shipping or calculate based on location
-
                 currency: product.currency || 'CLP',
-
               },
-
               shippingDestination: {
-
                 '@type': 'DefinedRegion',
-
                 addressCountry: 'CL', // Could be dynamic based on eligibleRegions
-
               },
-
               deliveryTime: {
-
                 '@type': 'ShippingDeliveryTime',
-
                 handlingTime: {
-
                   '@type': 'QuantitativeValue',
-
                   minValue: 1,
-
                   maxValue: 3,
-
                   unitText: 'Day',
-
                 },
-
                 transitTime: {
-
                   '@type': 'QuantitativeValue',
-
                   minValue: 3,
-
                   maxValue: 7,
-
                   unitText: 'Day',
-
                 },
-
               },
-
             } : undefined,
-
             hasMerchantReturnPolicy: {
-
               '@type': 'MerchantReturnPolicy',
-
               applicableCountry: 'CL',
-
               returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-
               merchantReturnDays: 30,
-
               returnMethod: 'https://schema.org/ReturnByMail',
-
               returnFees: 'https://schema.org/FreeReturn',
-
             },
-
           },
-
           aggregateRating: product.averageRating ? {
-
             '@type': 'AggregateRating',
-
             ratingValue: product.averageRating.toFixed(1),
-
             reviewCount: product.ratingCount || 0,
-
           } : undefined,
-
           review: [], // Could be populated with actual reviews
-
           additionalProperty: product.shippingDetails ? [
-
             {
-
               '@type': 'PropertyValue',
-
               name: 'Peso',
-
               value: `${product.shippingDetails.weight}kg`,
-
             },
-
             ...(product.shippingDetails.dimensions ? [
-
               {
-
                 '@type': 'PropertyValue',
-
                 name: 'Dimensiones',
-
                 value: `${product.shippingDetails.dimensions.length}x${product.shippingDetails.dimensions.width}x${product.shippingDetails.dimensions.height}cm`,
-
               },
-
             ] : []),
-
           ] : [],
-
         },
-
       ],
-
     };
-
-
-
     return schema;
-
   }
-
-
-
   static generateDjProfile(djData: any): any {
-
     const djUrl = `${this.BASE_URL}/djs/${djData.slug}`;
-
     const websiteId = `${this.BASE_URL}/#website`;
-
     const organizationId = `${this.BASE_URL}/#organization`;
-
     const profilePageId = `${djUrl}#webpage`;
-
     const personId = `${djUrl}#person`;
-
-
-
     // Helper function to process social links
-
     const getSocialLinks = (socialLinks: any) => {
-
       const sameAs: string[] = [];
-
-      
-
       if (socialLinks?.instagram) {
-
         sameAs.push(
-
           socialLinks.instagram.startsWith('http')
-
             ? socialLinks.instagram
-
             : `https://instagram.com/${socialLinks.instagram.replace('@', '')}`
-
         );
-
       }
-
       if (socialLinks?.facebook) {
-
         sameAs.push(
-
           socialLinks.facebook.startsWith('http')
-
             ? socialLinks.facebook
-
             : `https://facebook.com/${socialLinks.facebook}`
-
         );
-
       }
-
       if (socialLinks?.twitter) {
-
         sameAs.push(
-
           socialLinks.twitter.startsWith('http')
-
             ? socialLinks.twitter
-
             : `https://x.com/${socialLinks.twitter.replace('@', '')}`
-
         );
-
       }
-
       if (socialLinks?.youtube) {
-
         sameAs.push(
-
           socialLinks.youtube.startsWith('http')
-
             ? socialLinks.youtube
-
             : `https://youtube.com/channel/${socialLinks.youtube}`
-
         );
-
       }
-
       if (socialLinks?.spotify) {
-
         sameAs.push(
-
           socialLinks.spotify.startsWith('http')
-
             ? socialLinks.spotify
-
             : `https://open.spotify.com/artist/${socialLinks.spotify}`
-
         );
-
       }
-
       if (socialLinks?.tiktok) {
-
         sameAs.push(
-
           socialLinks.tiktok.startsWith('http')
-
             ? socialLinks.tiktok
-
             : `https://www.tiktok.com/${socialLinks.tiktok}?lang=es`
-
         );
-
       }
-
       if (socialLinks?.website) {
-
         sameAs.push(socialLinks.website);
-
       }
-
-      
-
       return sameAs;
-
     };
-
-
-
     // Helper function to create event references (only if not empty)
-
     const getEventReferences = (upcomingEvents: any[], pastEvents: any[]) => {
-
       const eventRefs: Array<{ '@id': string }> = [];
-
-      
-
       // Add upcoming events
-
       if (upcomingEvents?.length > 0) {
-
         upcomingEvents.forEach((event: any) => {
-
           eventRefs.push({
-
             '@id': `${this.BASE_URL}/eventos/${event.eventId}#event`
-
           });
-
         });
-
       }
-
-      
-
       // Add past events
-
       if (pastEvents?.length > 0) {
-
         pastEvents.forEach((event: any) => {
-
           eventRefs.push({
-
             '@id': `${this.BASE_URL}/eventos/${event.eventId}#event`
-
           });
-
         });
-
       }
-
-      
-
       return eventRefs;
-
     };
-
-
-
     // Helper function to format dates - Handles Firestore Timestamps and regular dates
-
     const formatDate = (dateValue: any) => {
-
       if (!dateValue) {
-
         return new Date().toISOString();
-
       }
-
-      
-
       try {
-
         // Handle Firestore Timestamp objects
-
         if (typeof dateValue === 'object' && dateValue.seconds !== undefined) {
-
           return new Date(dateValue.seconds * 1000).toISOString();
-
         }
-
-        
-
         // Handle regular date strings or Date objects
-
         const parsedDate = new Date(dateValue);
-
-        
-
         // Check if the date is valid
-
         if (isNaN(parsedDate.getTime())) {
-
           console.warn(`Invalid date value: ${dateValue}, using current date as fallback`);
-
           return new Date().toISOString();
-
         }
-
-        
-
         return parsedDate.toISOString();
-
       } catch (error) {
-
         console.error(`Error formatting date ${dateValue}:`, error);
-
         return new Date().toISOString();
-
       }
-
     };
-
-
-
     const schema = {
-
       '@context': 'https://schema.org',
-
       '@graph': [
-
         // Website
-
         {
-
           '@type': 'WebSite',
-
           '@id': websiteId,
-
           url: this.BASE_URL,
-
           name: 'Ravehub',
-
           alternateName: ['Ravehub'],
-
         },
-
         // Organization
-
         {
-
           '@type': 'Organization',
-
           '@id': organizationId,
-
           name: 'Ravehub',
-
           url: this.BASE_URL,
-
           logo: {
-
             '@type': 'ImageObject',
-
             '@id': `${this.BASE_URL}/#logo`,
-
             url: `${this.BASE_URL}/icons/logo.png`,
-
             width: 600,
-
             height: 60,
-
           },
-
           sameAs: [
-
             'https://www.instagram.com/ravehub.pe',
-
             'https://www.facebook.com/ravehub'
-
           ],
-
         },
-
         // ProfilePage
-
         {
-
           '@type': 'ProfilePage',
-
           '@id': profilePageId,
-
           url: djUrl,
-
           name: `${djData.name} - Perfil del DJ`,
-
           isPartOf: { '@id': websiteId },
-
           publisher: { '@id': organizationId },
-
           dateCreated: formatDate(djData.createdAt),
-
           dateModified: formatDate(djData.updatedAt),
-
           mainEntity: { '@id': personId }
-
         },
-
         // Person (DJ)
-
         {
-
           '@type': 'Person',
-
           '@id': personId,
-
           name: djData.name,
-
           alternateName: djData.alternateName || [djData.name.split(' ')[0]], // First name as alternate
-
           description: djData.description || djData.bio || `${djData.name} es un DJ especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
-
           image: djData.imageUrl ? {
-
             '@type': 'ImageObject',
-
             url: djData.imageUrl.replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
-
             caption: djData.name,
-
             encodingFormat: 'image/jpeg'
-
           } : undefined,
-
           url: djData.socialLinks?.website || djUrl,
-
           sameAs: getSocialLinks(djData.socialLinks),
-
           nationality: djData.country ? {
-
             '@type': 'Country',
-
             name: djData.country
-
           } : undefined,
-
           hasOccupation: [
-
             { '@type': 'Occupation', name: 'DJ' },
-
             ...(djData.jobTitle || ['Music Producer']).filter((title: string) => title !== 'DJ').map((title: string) => ({
-
               '@type': 'Occupation',
-
               name: title
-
             }))
-
           ],
-
           knowsAbout: djData.genres || [],
-
           identifier: [
-
             { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id },
-
             { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug }
-
           ],
-
           mainEntityOfPage: { '@id': profilePageId }, // Point to ProfilePage @id
-
           performerIn: undefined as any // Will be set later based on events
-
         }
-
       ]
-
     };
-
-
-
     // Only add performerIn if it has events
-
     const eventRefs = getEventReferences(djData.upcomingEvents || [], djData.pastEvents || []);
-
     if (eventRefs.length > 0) {
-
       // Add event references if they exist
-
       const personNode = schema['@graph'].find((node: any) => node['@type'] === 'Person');
-
       if (personNode) {
-
         personNode.performerIn = eventRefs;
-
       }
-
     }
-
-
-
     // Add famous albums as MusicAlbum nodes
-
     if (djData.famousAlbums?.length > 0) {
-
       djData.famousAlbums.forEach((album: string, index: number) => {
-
         (schema['@graph'] as any[]).push({
-
           '@type': 'MusicAlbum',
-
           '@id': `${djUrl}/albums/${index}#album`,
-
           name: album,
-
           byArtist: { '@id': personId },
-
           genre: djData.genres || []
-
         });
-
       });
-
     }
-
-
-
     // Add famous tracks as MusicRecording nodes
-
     if (djData.famousTracks?.length > 0) {
-
       djData.famousTracks.forEach((track: string, index: number) => {
-
         (schema['@graph'] as any[]).push({
-
           '@type': 'MusicRecording',
-
           name: track,
-
           byArtist: { '@id': personId },
-
           genre: djData.genres?.[0] || 'Electronic'
-
         });
-
       });
-
     }
-
-
-
     // Helper function to format date with timezone
-
     const formatDateWithTimezone = (dateStr: string, timeStr?: string, timezone?: string) => {
-
       if (!dateStr) return undefined;
-
-      
-
       try {
-
         let dateTimeStr = dateStr;
-
         if (timeStr) {
-
           dateTimeStr = `${dateStr}T${timeStr}`;
-
         } else {
-
           dateTimeStr = `${dateStr}T00:00:00`;
-
         }
-
-        
-
         if (timezone) {
-
           // Try to format with timezone
-
           const date = new Date(dateTimeStr);
-
           return date.toISOString();
-
         }
-
-        
-
         return new Date(dateTimeStr).toISOString();
-
       } catch (error) {
-
         console.error('Error formatting date:', error);
-
         return new Date(dateStr).toISOString();
-
       }
-
     };
-
-
-
     // Add complete event schemas for upcoming events (if full Event objects are provided)
-
     if (djData.upcomingEvents?.length > 0) {
-
       djData.upcomingEvents.forEach((event: any) => {
-
         // Check if this is a full Event object (has slug, location, etc.) or just a reference
-
         if (event.slug && event.location) {
-
           // Full Event object - generate complete MusicEvent schema
-
           const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
-
           const eventId = `${eventUrl}#event`;
-
-          
-
           const eventSchema: any = {
-
             '@type': event.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent',
-
             '@id': eventId,
-
             name: event.name,
-
             description: event.shortDescription || event.description,
-
             url: eventUrl,
-
             startDate: formatDateWithTimezone(event.startDate, event.startTime, event.timezone),
-
             endDate: event.endDate ? formatDateWithTimezone(event.endDate, event.endTime, event.timezone) : undefined,
-
             eventStatus: 'https://schema.org/EventScheduled',
-
             eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-
             image: event.mainImageUrl ? {
-
               '@type': 'ImageObject',
-
               url: event.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
-
               width: 1200,
-
               height: 675
-
             } : undefined,
-
             location: event.location ? {
-
               '@type': 'Place',
-
               name: event.location.venue,
-
               address: {
-
                 '@type': 'PostalAddress',
-
                 addressLocality: event.location.city,
-
                 addressRegion: event.location.region,
-
                 addressCountry: event.location.countryCode || event.location.country,
-
                 streetAddress: event.location.address
-
               },
-
               geo: event.location.geo ? {
-
                 '@type': 'GeoCoordinates',
-
                 latitude: event.location.geo.lat,
-
                 longitude: event.location.geo.lng
-
               } : undefined
-
             } : undefined,
-
             performer: {
-
               '@id': personId,
-
               '@type': 'Person',
-
               name: djData.name
-
             }
-
           };
-
-
-
           // Remove undefined values
-
           Object.keys(eventSchema).forEach(key => {
-
             if (eventSchema[key] === undefined) {
-
               delete eventSchema[key];
-
             }
-
           });
-
-
-
           (schema['@graph'] as any[]).push(eventSchema);
-
         } else {
-
           // Reference object - create simple reference
-
           const eventId = event.eventId || event.id;
-
           const eventSlug = event.slug || eventId;
-
           (schema['@graph'] as any[]).push({
-
             '@type': 'MusicEvent',
-
             '@id': `${this.BASE_URL}/eventos/${eventSlug}#event`,
-
             name: event.eventName || event.name,
-
             url: `${this.BASE_URL}/eventos/${eventSlug}`
-
           });
-
         }
-
       });
-
     }
-
-
-
     // Add complete event schemas for past events (if full Event objects are provided)
-
     if (djData.pastEvents?.length > 0) {
-
       djData.pastEvents.forEach((event: any) => {
-
         // Check if this is a full Event object
-
         if (event.slug && event.location) {
-
           // Full Event object - generate complete MusicEvent schema
-
           const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
-
           const eventId = `${eventUrl}#event`;
-
-          
-
           const eventSchema: any = {
-
             '@type': event.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent',
-
             '@id': eventId,
-
             name: event.name,
-
             description: event.shortDescription || event.description,
-
             url: eventUrl,
-
             startDate: formatDateWithTimezone(event.startDate, event.startTime, event.timezone),
-
             endDate: event.endDate ? formatDateWithTimezone(event.endDate, event.endTime, event.timezone) : undefined,
-
             eventStatus: 'https://schema.org/EventScheduled',
-
             eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-
             image: event.mainImageUrl ? {
-
               '@type': 'ImageObject',
-
               url: event.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
-
               width: 1200,
-
               height: 675
-
             } : undefined,
-
             location: event.location ? {
-
               '@type': 'Place',
-
               name: event.location.venue,
-
               address: {
-
                 '@type': 'PostalAddress',
-
                 addressLocality: event.location.city,
-
                 addressRegion: event.location.region,
-
                 addressCountry: event.location.countryCode || event.location.country,
-
                 streetAddress: event.location.address
-
               },
-
               geo: event.location.geo ? {
-
                 '@type': 'GeoCoordinates',
-
                 latitude: event.location.geo.lat,
-
                 longitude: event.location.geo.lng
-
               } : undefined
-
             } : undefined,
-
             performer: {
-
               '@id': personId,
-
               '@type': 'Person',
-
               name: djData.name
-
             }
-
           };
-
-
-
           // Remove undefined values
-
           Object.keys(eventSchema).forEach(key => {
-
             if (eventSchema[key] === undefined) {
-
               delete eventSchema[key];
-
             }
-
           });
-
-
-
           (schema['@graph'] as any[]).push(eventSchema);
-
         }
-
         // Note: We don't add simple references for past events to keep schema cleaner
-
       });
-
     }
-
-
-
     // Add BreadcrumbList with proper object structure
-
     (schema['@graph'] as any[]).push({
-
       '@type': 'BreadcrumbList',
-
       'itemListElement': [
-
         {
-
           '@type': 'ListItem',
-
           'position': 1,
-
           'name': 'Inicio',
-
           'item': {
-
             '@type': 'Thing',
-
             '@id': this.BASE_URL,
-
             name: 'Inicio'
-
           }
-
         },
-
         {
-
           '@type': 'ListItem',
-
           'position': 2,
-
           'name': 'DJs',
-
           'item': {
-
             '@type': 'Thing',
-
             '@id': `${this.BASE_URL}/djs`,
-
             name: 'DJs'
-
           }
-
         },
-
         {
-
           '@type': 'ListItem',
-
           'position': 3,
-
           'name': djData.name,
-
           'item': {
-
             '@type': 'Thing',
-
             '@id': djUrl,
-
             name: djData.name
-
           }
-
         }
-
       ]
-
     });
-
-
-
     // Filter out undefined values
-
     schema['@graph'] = schema['@graph'].map((node: any) => {
-
       const filtered: any = {};
-
       Object.keys(node).forEach(key => {
-
         if (node[key] !== undefined) {
-
           filtered[key] = node[key];
-
         }
-
       });
-
       return filtered;
-
     });
-
-
-
     return schema;
-
   }
-
 }
-

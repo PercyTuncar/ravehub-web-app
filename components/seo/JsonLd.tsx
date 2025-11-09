@@ -1,26 +1,30 @@
 import { safeJSONStringify } from '@/lib/seo/schema-generator';
+import Script, { ScriptProps } from 'next/script';
 
-export default function JsonLd({ data, id }: { data: unknown; id?: string }) {
-  // Ensure data is valid
+interface JsonLdProps {
+  data: unknown;
+  id?: string;
+  /**
+   * Allow overriding strategy when needed (e.g., afterInteractive for dynamic data).
+   * Default keeps it in the head before hydration so crawlers see it immediately.
+   */
+  strategy?: ScriptProps['strategy'];
+}
+
+export default function JsonLd({ data, id, strategy = 'beforeInteractive' }: JsonLdProps) {
   if (!data) {
     return null;
   }
 
   try {
-    // Validate and stringify the JSON
     const jsonString = safeJSONStringify(data);
-    
-    // Double-check it's valid JSON
-    JSON.parse(jsonString);
-    
+
     return (
-      <script
-        type="application/ld+json"
+      <Script
         id={id || 'json-ld-schema'}
-        suppressHydrationWarning
-        dangerouslySetInnerHTML={{
-          __html: jsonString,
-        }}
+        type="application/ld+json"
+        strategy={strategy}
+        dangerouslySetInnerHTML={{ __html: jsonString }}
       />
     );
   } catch (error) {
