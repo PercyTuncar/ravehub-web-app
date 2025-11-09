@@ -1,17 +1,15 @@
 import { safeJSONStringify } from '@/lib/seo/schema-generator';
-import Script, { ScriptProps } from 'next/script';
 
 interface JsonLdProps {
   data: unknown;
   id?: string;
-  /**
-   * Allow overriding strategy when needed (e.g., afterInteractive for dynamic data).
-   * Default keeps it in the head before hydration so crawlers see it immediately.
-   */
-  strategy?: ScriptProps['strategy'];
 }
 
-export default function JsonLd({ data, id, strategy = 'beforeInteractive' }: JsonLdProps) {
+/**
+ * Renders JSON-LD in the server response so crawlers (and schema.org validator)
+ * can read the full graph without executing client-side scripts.
+ */
+export default function JsonLd({ data, id }: JsonLdProps) {
   if (!data) {
     return null;
   }
@@ -20,10 +18,10 @@ export default function JsonLd({ data, id, strategy = 'beforeInteractive' }: Jso
     const jsonString = safeJSONStringify(data);
 
     return (
-      <Script
+      <script
         id={id || 'json-ld-schema'}
         type="application/ld+json"
-        strategy={strategy}
+        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: jsonString }}
       />
     );
