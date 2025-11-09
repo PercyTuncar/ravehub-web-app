@@ -1,0 +1,28 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="hero-core" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#050608" stop-opacity="0.95" />
+      <stop offset="55%" stop-color="#0F1114" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#141618" stop-opacity="0.2" />
+    </radialGradient>
+    <radialGradient id="hero-flare" cx="80%" cy="25%" r="40%">
+      <stop offset="0%" stop-color="#00CBFF" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#00CBFF" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="hero-ember" cx="15%" cy="65%" r="40%">
+      <stop offset="0%" stop-color="#FBA905" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#FBA905" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="hero-bottom" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#141618" stop-opacity="0" />
+      <stop offset="60%" stop-color="#141618" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#141618" stop-opacity="1" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#050608" />
+  <rect width="1920" height="1080" fill="url(#hero-core)" />
+  <rect width="1920" height="1080" fill="url(#hero-flare)" />
+  <rect width="1920" height="1080" fill="url(#hero-ember)" />
+  <rect y="640" width="1920" height="440" fill="url(#hero-bottom)" />
+</svg>

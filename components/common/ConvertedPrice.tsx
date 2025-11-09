@@ -33,12 +33,12 @@ export function ConvertedPrice({
 
   return (
     <span className={`inline-flex flex-col ${className}`}>
-      <span className={`font-bold transition-all duration-300 ${isConverted ? 'text-orange-600' : ''}`}>
+      <span className={`font-bold transition-all duration-300 ${isConverted ? 'text-[#FBA905]' : 'text-[#FAFDFF]'}`}>
         {convertedPrice.formatted}
       </span>
       
       {showOriginal && isConverted && (
-        <span className="text-xs text-gray-500 line-through">
+        <span className="text-xs text-[#53575A] line-through">
           {convertedPrice.originalAmount.toLocaleString('es-ES', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 2,

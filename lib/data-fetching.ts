@@ -1,5 +1,5 @@
-import { BlogPost, Event } from '@/lib/types';
-import { blogCollection, eventsCollection } from '@/lib/firebase/collections';
+import { BlogPost, Event, EventDj } from '@/lib/types';
+import { blogCollection, eventDjsCollection, eventsCollection } from '@/lib/firebase/collections';
 
 export async function getBlogPosts(filters?: {
   category?: string;
@@ -96,5 +96,20 @@ export async function getUpcomingEvents(limit: number = 3): Promise<Event[]> {
     return upcomingEvents.slice(0, limit) as Event[];
   } catch (err) {
     throw new Error(err instanceof Error ? err.message : 'Error fetching upcoming events');
+  }
+}
+
+export async function getFeaturedEventDjs(limit: number = 12): Promise<EventDj[]> {
+  try {
+    const featuredDjs = await eventDjsCollection.query(
+      [{ field: 'approved', operator: '==', value: true }],
+      'updatedAt',
+      'desc',
+      limit
+    );
+
+    return featuredDjs as EventDj[];
+  } catch (err) {
+    throw new Error(err instanceof Error ? err.message : 'Error fetching featured DJs');
   }
 }

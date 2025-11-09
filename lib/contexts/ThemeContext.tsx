@@ -14,20 +14,14 @@ const ThemeContext = createContext<{
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useLocalStorage<Theme>('theme', 'system');
+  const [theme, setTheme] = useLocalStorage<Theme>('theme', 'dark');
 
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
 
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
-    }
+    // Always use dark mode
+    root.classList.add('dark');
   }, [theme]);
 
   return (

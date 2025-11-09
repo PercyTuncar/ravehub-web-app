@@ -54,8 +54,8 @@ export function CurrencySelector() {
   // During SSR, render a consistent state
   if (!mounted || isLoading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500">
-        <Globe className="h-4 w-4 animate-pulse" />
+      <div className="flex items-center gap-2 px-3 py-2 text-sm text-[#53575A]">
+        <Globe className="h-4 w-4 animate-pulse text-[#53575A]" />
         <span className="hidden sm:inline">Cargando...</span>
       </div>
     );
@@ -69,19 +69,19 @@ export function CurrencySelector() {
         className={`
           flex items-center gap-2 px-3 py-2 rounded-md 
           text-sm font-medium transition-all duration-200
-          hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1
-          ${isOpen ? 'bg-gray-100' : 'bg-transparent'}
+          hover:bg-[#141618] focus:outline-none focus:ring-2 focus:ring-[#FBA905] focus:ring-offset-1 focus:ring-offset-[#282D31]
+          ${isOpen ? 'bg-[#141618]' : 'bg-transparent'}
           ${animatePrice ? 'scale-105' : 'scale-100'}
         `}
         aria-label="Seleccionar divisa"
         aria-expanded={isOpen}
       >
-        <Globe className="h-4 w-4 text-gray-600" />
-        <span className="text-gray-700 font-semibold">
+        <Globe className="h-4 w-4 text-[#FAFDFF]" />
+        <span className="text-[#FAFDFF] font-semibold">
           {currentCurrency?.symbol} {currency}
         </span>
         <ChevronDown 
-          className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+          className={`h-4 w-4 text-[#53575A] transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -89,17 +89,17 @@ export function CurrencySelector() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 mt-2 w-72 bg-[#141618] border border-[#DFE0E0]/20 rounded-lg shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Header */}
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800">Seleccionar Moneda</h3>
-            <p className="text-xs text-gray-500 mt-1">
+          <div className="px-4 py-3 bg-[#282D31] border-b border-[#DFE0E0]/20">
+            <h3 className="text-sm font-semibold text-[#FAFDFF]">Seleccionar Moneda</h3>
+            <p className="text-xs text-[#53575A] mt-1">
               Los precios se convertirán automáticamente
             </p>
           </div>
 
           {/* Lista de monedas */}
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto custom-scrollbar">
             {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => {
               const isSelected = code === currency;
               
@@ -110,8 +110,8 @@ export function CurrencySelector() {
                   className={`
                     w-full px-4 py-3 flex items-center justify-between
                     transition-colors duration-150
-                    hover:bg-orange-50 focus:outline-none focus:bg-orange-50
-                    ${isSelected ? 'bg-orange-50' : 'bg-white'}
+                    hover:bg-[#282D31] focus:outline-none focus:bg-[#282D31]
+                    ${isSelected ? 'bg-[#282D31]' : 'bg-[#141618]'}
                   `}
                 >
                   <div className="flex items-center gap-3">
@@ -119,17 +119,17 @@ export function CurrencySelector() {
                       {info.symbol}
                     </span>
                     <div className="text-left">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-[#FAFDFF]">
                         {code}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-[#53575A]">
                         {info.name}
                       </div>
                     </div>
                   </div>
                   
                   {isSelected && (
-                    <Check className="h-5 w-5 text-orange-500" />
+                    <Check className="h-5 w-5 text-[#FBA905]" />
                   )}
                 </button>
               );
@@ -137,8 +137,8 @@ export function CurrencySelector() {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center">
+          <div className="px-4 py-3 bg-[#282D31] border-t border-[#DFE0E0]/20">
+            <p className="text-xs text-[#53575A] text-center">
               Tasas actualizadas cada hora
             </p>
           </div>

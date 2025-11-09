@@ -174,6 +174,25 @@ export default function EditEventPage() {
     loadRegions();
   }, [eventData.location?.countryCode]);
 
+  // Update inLanguage when country changes
+  useEffect(() => {
+    if (eventData.location?.countryCode) {
+      // Map country code to language code (e.g., PE -> es-PE, CL -> es-CL)
+      const countryCode = eventData.location.countryCode.toUpperCase();
+      const languageMap: Record<string, string> = {
+        PE: 'es-PE', CL: 'es-CL', CO: 'es-CO', MX: 'es-MX', AR: 'es-AR',
+        EC: 'es-EC', BO: 'es-BO', PY: 'es-PY', UY: 'es-UY', VE: 'es-VE',
+        PA: 'es-PA', CR: 'es-CR', GT: 'es-GT', SV: 'es-SV', HN: 'es-HN',
+        NI: 'es-NI', DO: 'es-DO', CU: 'es-CU', PR: 'es-PR', ES: 'es-ES',
+        BR: 'pt-BR', US: 'en-US', CA: 'en-CA',
+      };
+      const languageCode = languageMap[countryCode] || `es-${countryCode}`;
+      if (eventData.inLanguage !== languageCode) {
+        updateEventData('inLanguage', languageCode);
+      }
+    }
+  }, [eventData.location?.countryCode]);
+
   // Load timezone when country changes
   useEffect(() => {
     const loadTimezone = async () => {

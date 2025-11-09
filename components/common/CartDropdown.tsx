@@ -62,21 +62,21 @@ export function CartDropdown() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-96">
+      <DropdownMenuContent align="end" className="w-96 bg-[#141618] border-[#DFE0E0]/20 text-[#FAFDFF]">
         <div className="flex items-center justify-between px-4 py-3">
-          <h3 className="font-semibold text-lg">Tu Carrito</h3>
-          <Badge variant="secondary">{totalItems} {totalItems === 1 ? 'producto' : 'productos'}</Badge>
+          <h3 className="font-semibold text-lg text-[#FAFDFF]">Tu Carrito</h3>
+          <Badge variant="secondary" className="bg-[#282D31] text-[#FAFDFF] border-[#DFE0E0]/20">{totalItems} {totalItems === 1 ? 'producto' : 'productos'}</Badge>
         </div>
-        <Separator />
+        <Separator className="bg-[#DFE0E0]/20" />
 
         {items.length === 0 ? (
           <div className="p-8 text-center">
-            <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">Tu carrito está vacío</p>
+            <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-[#53575A] opacity-50" />
+            <p className="text-[#53575A]">Tu carrito está vacío</p>
             <Button
               variant="outline"
               size="sm"
-              className="mt-3"
+              className="mt-3 border-[#DFE0E0]/30 text-[#FAFDFF] hover:bg-[#282D31]"
               asChild
               onClick={() => setOpen(false)}
             >
@@ -90,7 +90,7 @@ export function CartDropdown() {
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-3 relative group">
                     {/* Imagen */}
-                    <div className="w-20 h-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                    <div className="w-20 h-20 rounded-md overflow-hidden bg-[#282D31] flex-shrink-0">
                       {item.image ? (
                         <img
                           src={item.image}
@@ -99,16 +99,16 @@ export function CartDropdown() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <ShoppingCart className="h-8 w-8 text-muted-foreground" />
+                          <ShoppingCart className="h-8 w-8 text-[#53575A]" />
                         </div>
                       )}
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm line-clamp-2 pr-6">{item.name}</h4>
+                      <h4 className="font-medium text-sm line-clamp-2 pr-6 text-[#FAFDFF]">{item.name}</h4>
                       {item.variant && (
-                        <p className="text-xs text-muted-foreground">{item.variant}</p>
+                        <p className="text-xs text-[#53575A]">{item.variant}</p>
                       )}
                       
                       <div className="flex items-center justify-between mt-2">
@@ -117,16 +117,16 @@ export function CartDropdown() {
                           <Button
                             variant="outline"
                             size="icon"
-                            className="h-6 w-6"
+                            className="h-6 w-6 border-[#DFE0E0]/30 text-[#FAFDFF] hover:bg-[#282D31]"
                             onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
+                          <span className="text-sm font-medium w-8 text-center text-[#FAFDFF]">{item.quantity}</span>
                           <Button
                             variant="outline"
                             size="icon"
-                            className="h-6 w-6"
+                            className="h-6 w-6 border-[#DFE0E0]/30 text-[#FAFDFF] hover:bg-[#282D31]"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           >
                             <Plus className="h-3 w-3" />
@@ -135,14 +135,14 @@ export function CartDropdown() {
 
                         {/* Precio */}
                         <div className="text-right">
-                          <p className="font-semibold text-sm">
+                          <p className="font-semibold text-sm text-[#FAFDFF]">
                             <ConvertedPrice
                               amount={item.price * item.quantity}
                               currency={item.currency}
                               showOriginal={false}
                             />
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-[#53575A]">
                             <ConvertedPrice
                               amount={item.price}
                               currency={item.currency}
@@ -157,7 +157,7 @@ export function CartDropdown() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-[#FAFDFF] hover:bg-[#282D31]"
                       onClick={() => removeItem(item.id)}
                     >
                       <X className="h-4 w-4" />
@@ -167,13 +167,13 @@ export function CartDropdown() {
               </div>
             </ScrollArea>
 
-            <Separator />
+            <Separator className="bg-[#DFE0E0]/20" />
 
             {/* Total y acciones */}
             <div className="p-4 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Subtotal:</span>
-                <span className="font-bold text-lg">
+                <span className="text-sm text-[#53575A]">Subtotal:</span>
+                <span className="font-bold text-lg text-[#FAFDFF]">
                   <ConvertedPrice
                     amount={totalAmount}
                     currency={items[0]?.currency || 'PEN'}
@@ -187,6 +187,7 @@ export function CartDropdown() {
                   variant="outline"
                   asChild
                   onClick={() => setOpen(false)}
+                  className="border-[#DFE0E0]/30 text-[#FAFDFF] hover:bg-[#282D31]"
                 >
                   <Link href="/tienda/carrito">
                     Ver Carrito
@@ -195,6 +196,7 @@ export function CartDropdown() {
                 <Button
                   asChild
                   onClick={() => setOpen(false)}
+                  className="bg-[#FBA905] text-[#282D31] hover:bg-[#F1A000]"
                 >
                   <Link href="/tienda/checkout">
                     Finalizar Compra
@@ -203,7 +205,7 @@ export function CartDropdown() {
                 </Button>
               </div>
 
-              <p className="text-xs text-center text-muted-foreground">
+              <p className="text-xs text-center text-[#53575A]">
                 Envío calculado en el checkout
               </p>
             </div>

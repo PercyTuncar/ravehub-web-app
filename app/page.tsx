@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import JsonLd from '@/components/seo/JsonLd'
-import { getUpcomingEvents } from '@/lib/data-fetching'
+import { getUpcomingEvents, getFeaturedEventDjs } from '@/lib/data-fetching'
 import { Event } from '@/lib/types'
 import HeroVideo from '@/components/home/HeroVideo'
+import EventDjsMarquee from '@/components/home/EventDjsMarquee'
 import EventCarousel from '@/components/home/EventCarousel'
 import CountrySelector from '@/components/home/CountrySelector'
 import HowItWorks from '@/components/home/HowItWorks'
@@ -522,12 +523,36 @@ const jsonLd = (upcomingEvents: Event[]) => ({
 });
 
 export default async function HomePage() {
-  const upcomingEvents = await getUpcomingEvents(12); // Obtener más eventos para el carousel
+  const [upcomingEvents, featuredDjs] = await Promise.all([
+    getUpcomingEvents(12), // Obtener más eventos para el carousel
+    getFeaturedEventDjs(16)
+  ]);
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* JSON-LD for SEO */}
-      <JsonLd id="homepage-jsonld" data={jsonLd(upcomingEvents)} />
+    <main className="relative min-h-screen overflow-hidden bg-[#141618] text-[#FAFDFF] homepage-main">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[#141618]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-70"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 18% 22%, rgba(251,169,5,0.22), transparent 32%), radial-gradient(circle at 78% 12%, rgba(0,203,255,0.18), transparent 30%), radial-gradient(circle at 65% 78%, rgba(255,255,255,0.05), transparent 35%)'
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-35"
+        style={{
+          backgroundImage:
+            'linear-gradient(135deg, rgba(241,160,0,0.06) 0%, transparent 45%, rgba(0,123,223,0.06) 80%)'
+        }}
+      />
+      <div className="relative z-10 flex flex-col gap-0">
+        {/* JSON-LD for SEO */}
+        <JsonLd id="homepage-jsonld" data={jsonLd(upcomingEvents)} />
 
       {/* Hero Section */}
       <HeroVideo
@@ -543,19 +568,24 @@ export default async function HomePage() {
           href: "/eventos"
         }}
         videoSources={{
-          avif: "/videos/hero-background.avif",
-          webm: "/videos/hero-background.webm",
-          mp4: "/videos/hero-background.mp4"
+          mp4: "/videos/peru-hero-bg.mp4"
         }}
-        posterImage="/images/hero-poster.jpg"
-        fallbackImage="/images/hero-fallback.jpg"
-        trustIndicators={[
-          { icon: "🛡️", text: "Entradas 100% oficiales y seguras" },
-          { icon: "💳", text: "Pagos flexibles y locales" },
-          { icon: "⭐", text: "Lineups verificados" },
-          { icon: "🇪🇸", text: "Soporte en español" }
-        ]}
+        posterImage="/images/hero-poster.svg"
+        fallbackImage="/images/hero-poster.svg"
+        featuredDjs={featuredDjs}
       />
+
+      <EventDjsMarquee djs={featuredDjs} />
+
+      <div className="relative isolate overflow-hidden bg-[#141618]">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(251,169,5,0.08),transparent_52%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_25%,rgba(0,203,255,0.07),transparent_48%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_82%,rgba(255,255,255,0.05),transparent_55%)]" />
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#141618] via-[#141618]/95 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#141618] via-[#141618]/95 to-transparent" />
+        </div>
+        <div className="relative z-10 flex flex-col gap-0">
 
       {/* Events Carousel */}
       <EventCarousel
@@ -574,81 +604,97 @@ export default async function HomePage() {
       <Newsletter />
 
       {/* FAQ Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative isolate overflow-hidden bg-[#141618] py-24">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-x-0 top-0 h-32 bg-[#141618]" />
+          <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-[#141618] via-[#141618]/95 to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(251,169,5,0.08),transparent_55%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_65%,rgba(0,203,255,0.07),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_58%_90%,rgba(255,255,255,0.05),transparent_48%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-[#141618] via-[#141618]/95 to-transparent" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-          <div className="mb-16">
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
-              Preguntas frecuentes
-            </h2>
-            <p className="text-lg sm:text-xl text-gray-600">
-              Todo lo que necesitas saber sobre Ravehub
-            </p>
-          </div>
+            <div className="mb-16">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#FAFDFF] mb-4 tracking-tight">
+                Preguntas frecuentes
+              </h2>
+              <p className="text-lg sm:text-xl text-white/70">
+                Todo lo que necesitas saber sobre Ravehub
+              </p>
+            </div>
 
-          <div className="space-y-4">
-            {[
-              {
-                question: "¿Cómo funcionan los e-tickets?",
-                answer: "Tu e-ticket es digital y llega a tu email inmediatamente después del pago. También lo encuentras en tu cuenta de Ravehub en la sección 'Mis Tickets'. En la entrada del evento, presenta el código QR desde tu celular, no es necesario imprimirlo."
-              },
-              {
-                question: "¿Qué medios de pago aceptan?",
-                answer: "Aceptamos tarjetas de crédito y débito Visa, Mastercard y American Express, transferencias bancarias, y métodos de pago locales como Yape (Perú), Mercado Pago, Nequi (Colombia) y más."
-              },
-              {
-                question: "¿Qué pasa si se reprograma el evento?",
-                answer: "Si el organizador reprograma el evento, tu entrada es válida automáticamente para la nueva fecha. Si la nueva fecha no te funciona, puedes solicitar reembolso completo dentro de los 7 días del anuncio."
-              },
-              {
-                question: "¿Dónde veo mis entradas?",
-                answer: "Inicia sesión en ravehublatam.com y dirígete a la sección 'Mis Tickets' en tu perfil. Ahí encontrarás todas tus entradas activas, historial de compras y podrás descargar los códigos QR."
-              }
-            ].map((faq, index) => (
-              <details
-                key={index}
-                className="group bg-white border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-200"
-              >
-                <summary className="font-semibold text-lg text-gray-900 cursor-pointer list-none flex items-center justify-between">
-                  <span>{faq.question}</span>
-                  <svg 
-                    className="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </summary>
-                <div className="mt-4 text-gray-600 leading-relaxed">
-                  {faq.answer}
-                </div>
-              </details>
-            ))}
-          </div>
+            <div className="space-y-4">
+              {[
+                {
+                  question: "?C?mo funcionan los e-tickets?",
+                  answer: "Tu e-ticket es digital y llega a tu email inmediatamente despu?s del pago. Tambi?n lo encuentras en tu cuenta de Ravehub en la secci?n 'Mis Tickets'. En la entrada del evento, presenta el c?digo QR desde tu celular, no es necesario imprimirlo."
+                },
+                {
+                  question: "?Qu? medios de pago aceptan?",
+                  answer: "Aceptamos tarjetas de cr?dito y d?bito Visa, Mastercard y American Express, transferencias bancarias, y m?todos de pago locales como Yape (Per?), Mercado Pago, Nequi (Colombia) y m?s."
+                },
+                {
+                  question: "?Qu? pasa si se reprograma el evento?",
+                  answer: "Si el organizador reprograma el evento, tu entrada es v?lida autom?ticamente para la nueva fecha. Si la nueva fecha no te funciona, puedes solicitar reembolso completo dentro de los 7 d?as del anuncio."
+                },
+                {
+                  question: "?D?nde veo mis entradas?",
+                  answer: "Inicia sesi?n en ravehublatam.com y dir?gete a la secci?n 'Mis Tickets' en tu perfil. Ah? encontrar?s todas tus entradas activas, historial de compras y podr?s descargar los c?digos QR."
+                }
+              ].map((faq, index) => (
+                <details
+                  key={index}
+                  className="group bg-white/5 border border-white/10 rounded-xl p-6 hover:border-[#FBA905]/40 transition-all duration-200 backdrop-blur"
+                >
+                  <summary className="font-semibold text-lg text-[#FAFDFF] cursor-pointer list-none flex items-center justify-between">
+                    <span>{faq.question}</span>
+                    <svg 
+                      className="w-5 h-5 text-white/60 group-open:rotate-180 transition-transform" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="mt-4 text-white/70 leading-relaxed">
+                    {faq.answer}
+                  </div>
+                </details>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* Organizers CTA Section */}
-      <section className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative isolate overflow-hidden bg-[#141618] py-24">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-x-0 top-0 h-32 bg-[#141618]" />
+          <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-[#141618] via-[#141618]/95 to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_65%,rgba(251,169,5,0.08),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_70%,rgba(0,203,255,0.07),transparent_48%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_92%,rgba(255,255,255,0.05),transparent_45%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-[#141618] via-[#141618]/95 to-transparent" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Content */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg mb-6">
-                <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/10 rounded-lg mb-6 text-white/70">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
-                <span className="text-sm font-medium text-gray-600">Para Organizadores</span>
+                <span className="text-sm font-medium">Para Organizadores</span>
               </div>
               
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
-                ¿Organizas eventos?
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#FAFDFF] mb-6 tracking-tight">
+                ?Organizas eventos?
               </h2>
               
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                Únete a la plataforma líder de música electrónica en Latinoamérica.
+              <p className="text-lg text-white/70 mb-8 leading-relaxed">
+                ?nete a la plataforma l?der de m?sica electr?nica en Latinoam?rica.
                 Gestiona tus eventos, vende entradas y conecta con miles de ravers.
               </p>
 
@@ -661,22 +707,22 @@ export default async function HomePage() {
                   },
                   {
                     title: "Pagos seguros",
-                    description: "Procesamiento automático con múltiples métodos"
+                    description: "Procesamiento autom?tico con m?ltiples m?todos"
                   },
                   {
                     title: "Marketing incluido",
-                    description: "Promoción automática en nuestra red de fans"
+                    description: "Promoci?n autom?tica en nuestra red de fans"
                   }
                 ].map((benefit, index) => (
                   <div key={index} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-6 h-6 rounded-full bg-[#FBA905] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-4 h-4 text-[#282D31]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 mb-1">{benefit.title}</h3>
-                      <p className="text-sm text-gray-600">{benefit.description}</p>
+                      <h3 className="font-semibold text-[#FAFDFF] mb-1">{benefit.title}</h3>
+                      <p className="text-sm text-white/70">{benefit.description}</p>
                     </div>
                   </div>
                 ))}
@@ -684,26 +730,26 @@ export default async function HomePage() {
             </div>
 
             {/* Right: CTA Card */}
-            <div className="bg-white border border-gray-200 rounded-xl p-8">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-8 backdrop-blur">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-2xl font-bold text-[#FAFDFF] mb-2">
                     Comienza hoy mismo
                   </h3>
-                  <p className="text-gray-600">
-                    Más de 1,030+ eventos ya confían en nuestra plataforma
+                  <p className="text-white/70">
+                    M?s de 1,030+ eventos ya conf?an en nuestra plataforma
                   </p>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-6 py-6 border-y border-gray-200">
+                <div className="grid grid-cols-2 gap-6 py-6 border-y border-white/10">
                   <div>
-                    <div className="text-3xl font-bold text-gray-900 mb-1">98%</div>
-                    <div className="text-sm text-gray-600">Satisfacción</div>
+                    <div className="text-3xl font-bold text-[#FAFDFF] mb-1">98%</div>
+                    <div className="text-sm text-white/70">Satisfacci?n</div>
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-gray-900 mb-1">24/7</div>
-                    <div className="text-sm text-gray-600">Soporte</div>
+                    <div className="text-3xl font-bold text-[#FAFDFF] mb-1">24/7</div>
+                    <div className="text-sm text-white/70">Soporte</div>
                   </div>
                 </div>
 
@@ -711,25 +757,25 @@ export default async function HomePage() {
                 <div className="space-y-3">
                   <Link
                     href="/contact"
-                    className="w-full inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                    className="w-full inline-flex items-center justify-center px-6 py-3 bg-[#FBA905] text-[#282D31] font-medium rounded-lg hover:bg-[#F1A000] transition-colors"
                   >
                     Contactar Ventas
                   </Link>
                   
                   <Link
                     href="/eventos"
-                    className="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                    className="w-full inline-flex items-center justify-center px-6 py-3 border border-white/20 text-[#FAFDFF] font-medium rounded-lg hover:bg-white/10 transition-colors"
                   >
                     Ver Eventos Existentes
                   </Link>
                 </div>
 
                 {/* Trust indicator */}
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-500 pt-4 border-t border-gray-200">
-                  <svg className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <div className="flex items-center justify-center gap-2 text-sm text-white/70 pt-4 border-t border-white/10">
+                  <svg className="h-4 w-4 text-[#28a745]" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span>Setup gratuito • Sin comisiones por configuración</span>
+                  <span>Setup gratuito ? Sin comisiones por configuraci?n</span>
                 </div>
               </div>
             </div>
@@ -737,6 +783,10 @@ export default async function HomePage() {
         </div>
       </section>
 
+        </div>
+      </div>
+
+      </div>
     </main>
   )
 }

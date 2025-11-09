@@ -86,9 +86,9 @@ export function NotificationBell() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 bg-[#141618] border-[#DFE0E0]/20 text-[#FAFDFF]">
         <div className="flex items-center justify-between px-4 py-2">
-          <h3 className="font-semibold">Notificaciones</h3>
+          <h3 className="font-semibold text-[#FAFDFF]">Notificaciones</h3>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -97,19 +97,19 @@ export function NotificationBell() {
                 e.stopPropagation();
                 markAllAsRead();
               }}
-              className="h-auto py-1 px-2 text-xs"
+              className="h-auto py-1 px-2 text-xs text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905]"
             >
               <Check className="h-3 w-3 mr-1" />
               Marcar todas
             </Button>
           )}
         </div>
-        <Separator />
+        <Separator className="bg-[#DFE0E0]/20" />
         
         {notifications.length === 0 ? (
           <div className="p-8 text-center">
-            <Bell className="h-12 w-12 mx-auto mb-2 text-muted-foreground opacity-50" />
-            <p className="text-sm text-muted-foreground">No tienes notificaciones</p>
+            <Bell className="h-12 w-12 mx-auto mb-2 text-[#53575A] opacity-50" />
+            <p className="text-sm text-[#53575A]">No tienes notificaciones</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px]">
@@ -117,29 +117,29 @@ export function NotificationBell() {
               {notifications.slice(0, 10).map((notification) => (
                 <div
                   key={notification.id}
-                  className={`relative p-3 hover:bg-muted cursor-pointer transition-colors ${
-                    !notification.read ? 'bg-blue-50' : ''
+                  className={`relative p-3 hover:bg-[#282D31] cursor-pointer transition-colors ${
+                    !notification.read ? 'bg-[#282D31]' : 'bg-[#141618]'
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex gap-3">
-                    <div className={`mt-1 ${notification.read ? 'text-muted-foreground' : 'text-primary'}`}>
+                    <div className={`mt-1 ${notification.read ? 'text-[#53575A]' : 'text-[#FBA905]'}`}>
                       {getIcon(notification.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm font-medium ${notification.read ? 'text-muted-foreground' : 'text-foreground'}`}>
+                        <p className={`text-sm font-medium ${notification.read ? 'text-[#53575A]' : 'text-[#FAFDFF]'}`}>
                           {notification.title}
                         </p>
                         {!notification.read && (
-                          <div className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-1" />
+                          <div className="w-2 h-2 rounded-full bg-[#FBA905] flex-shrink-0 mt-1" />
                         )}
                       </div>
-                      <p className={`text-xs ${notification.read ? 'text-muted-foreground' : 'text-foreground'} line-clamp-2`}>
+                      <p className={`text-xs ${notification.read ? 'text-[#53575A]' : 'text-[#FAFDFF]'} line-clamp-2`}>
                         {notification.body}
                       </p>
                       <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-[#53575A]">
                           {formatDistanceToNow(parseNotificationDate(notification.createdAt), {
                             addSuffix: true,
                             locale: es,
@@ -148,7 +148,7 @@ export function NotificationBell() {
                         {notification.orderId && (
                           <Link
                             href={`/profile/orders`}
-                            className="text-xs text-primary hover:underline"
+                            className="text-xs text-[#FBA905] hover:text-[#F1A000] hover:underline"
                             onClick={(e) => e.stopPropagation()}
                           >
                             Ver pedido
@@ -159,7 +159,7 @@ export function NotificationBell() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 opacity-0 hover:opacity-100 transition-opacity"
+                      className="h-6 w-6 opacity-0 hover:opacity-100 transition-opacity text-[#FAFDFF] hover:bg-[#282D31]"
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteNotification(notification.id);
@@ -176,12 +176,12 @@ export function NotificationBell() {
         
         {notifications.length > 10 && (
           <>
-            <Separator />
+            <Separator className="bg-[#DFE0E0]/20" />
             <div className="p-2">
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full"
+                className="w-full text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905]"
                 asChild
                 onClick={() => setOpen(false)}
               >

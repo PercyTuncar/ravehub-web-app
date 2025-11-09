@@ -73,14 +73,22 @@ export default function EventCarousel({ events, title, subtitle, className = '' 
   if (!events || events.length === 0) return null;
 
   return (
-    <section className={`py-24 bg-white ${className}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className={`relative isolate overflow-hidden bg-[#141618] py-24 ${className}`}>
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_26%_58%,rgba(251,169,5,0.08),transparent_58%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_52%,rgba(0,203,255,0.07),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_64%_80%,rgba(255,255,255,0.05),transparent_50%)]" />
+        <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[#141618] via-[#141618]/98 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-[#141618] via-[#141618]/98 to-transparent" />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header - Clean, minimal */}
         <div className="mb-16">
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#FAFDFF] mb-4 tracking-tight">
             {title}
           </h2>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl">
+          <p className="text-lg sm:text-xl text-white/70 max-w-2xl">
             {subtitle}
           </p>
         </div>
@@ -95,10 +103,10 @@ export default function EventCarousel({ events, title, subtitle, className = '' 
           <div className="flex justify-between items-center mb-8">
             <button
               onClick={goToPrevious}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FBA905]"
               aria-label="Anterior"
             >
-              <ChevronLeft className="h-6 w-6 text-gray-600" />
+              <ChevronLeft className="h-6 w-6 text-white" />
             </button>
 
             {/* Pagination Indicators */}
@@ -109,8 +117,8 @@ export default function EventCarousel({ events, title, subtitle, className = '' 
                   onClick={() => setCurrentIndex(index)}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     index === currentIndex
-                      ? 'bg-gray-900 w-8'
-                      : 'bg-gray-300 w-1.5 hover:bg-gray-400'
+                      ? 'bg-[#FBA905] w-8'
+                      : 'bg-white/30 w-1.5 hover:bg-white/60'
                   }`}
                   aria-label={`Ir a slide ${index + 1}`}
                 />
@@ -119,10 +127,10 @@ export default function EventCarousel({ events, title, subtitle, className = '' 
 
             <button
               onClick={goToNext}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FBA905]"
               aria-label="Siguiente"
             >
-              <ChevronRight className="h-6 w-6 text-gray-600" />
+              <ChevronRight className="h-6 w-6 text-white" />
             </button>
           </div>
 
@@ -144,9 +152,9 @@ export default function EventCarousel({ events, title, subtitle, className = '' 
                   }`}
                 >
                   <Link href={`/eventos/${event.slug}`}>
-                    <div className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 hover:shadow-lg transition-all duration-200 h-full flex flex-col">
+                    <div className="group bg-[#0A0C0F] border border-white/10 rounded-2xl overflow-hidden hover:border-[#FBA905]/60 hover:bg-white/5 transition-all duration-300 h-full flex flex-col">
                       {/* Event Image */}
-                      <div className="aspect-video relative overflow-hidden bg-gray-100">
+                      <div className="aspect-video relative overflow-hidden bg-[#282D31]">
                         {event.mainImageUrl ? (
                           <Image
                             src={event.mainImageUrl}
@@ -156,22 +164,22 @@ export default function EventCarousel({ events, title, subtitle, className = '' 
                             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           />
                         ) : (
-                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                            <Calendar className="h-12 w-12 text-gray-400" />
+                          <div className="w-full h-full bg-[#282D31] flex items-center justify-center">
+                            <Calendar className="h-12 w-12 text-white/30" />
                           </div>
                         )}
                       </div>
 
                       {/* Event Content */}
                       <div className="p-6 flex-1 flex flex-col">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                        <h3 className="text-xl font-semibold text-[#FAFDFF] mb-3 line-clamp-2 group-hover:text-[#FBA905] transition-colors">
                           {event.name}
                         </h3>
 
                         {/* Event Details */}
-                        <div className="space-y-2 text-sm text-gray-600 mb-4">
+                        <div className="space-y-2 text-sm text-white/70 mb-4">
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
+                            <Calendar className="h-4 w-4 text-white/60" />
                             <span>
                               {format(new Date(event.startDate), 'PPP', { locale: es })}
                               {event.startTime && ` • ${event.startTime}`}
@@ -179,7 +187,7 @@ export default function EventCarousel({ events, title, subtitle, className = '' 
                           </div>
                           
                           <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-gray-400" />
+                            <MapPin className="h-4 w-4 text-white/60" />
                             <span className="line-clamp-1">
                               {event.location.venue}, {event.location.city}
                             </span>
@@ -188,13 +196,13 @@ export default function EventCarousel({ events, title, subtitle, className = '' 
 
                         {/* Description */}
                         {event.shortDescription && (
-                          <p className="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">
+                          <p className="text-white/70 text-sm line-clamp-2 mb-4 flex-1">
                             {event.shortDescription}
                           </p>
                         )}
 
                         {/* CTA */}
-                        <div className="flex items-center text-sm font-medium text-gray-900 group-hover:text-orange-600 transition-colors mt-auto">
+                        <div className="flex items-center text-sm font-medium text-[#FAFDFF] group-hover:text-[#FBA905] transition-colors mt-auto">
                           Ver detalles
                           <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                         </div>
@@ -211,7 +219,7 @@ export default function EventCarousel({ events, title, subtitle, className = '' 
         <div className="text-center mt-16">
           <Link
             href="/eventos"
-            className="inline-flex items-center gap-2 text-gray-900 font-medium hover:text-orange-600 transition-colors"
+            className="inline-flex items-center gap-2 text-[#FAFDFF] font-medium hover:text-[#FBA905] transition-colors"
           >
             Ver todos los eventos
             <ArrowRight className="h-4 w-4" />

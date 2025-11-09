@@ -1,21 +1,77 @@
-/* Custom Scrollbar Styles for consistency */
+/* ============================================
+   RAVEHUB BRAND COLOR PALETTE
+   ============================================
+   
+   Principal: #FBA905
+   Principal Alt: #F1A000
+   Énfasis: #007BDF
+   Énfasis Alt: #006DC6
+   Énfasis Secundario: #00CBFF
+   Énfasis Secundario Alt: #00BFF0
+   Fondo Principal (Oscuro): #282D31
+   Fondo Principal Alt (Más Oscuro): #141618
+   Texto Principal (Claro): #FAFDFF
+   Texto Secundario (Gris): #53575A
+   Bordes: #DFE0E0
+   Error: #FF3C32
+   Error Alt: #FF2419
+   Success: #28a745
+   Success Alt: #218838
+   
+   ============================================ */
+
+:root {
+  --navbar-height: 4rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --navbar-height: 5rem;
+  }
+}
+
+/* Hero video starts from top 0 of viewport, navbar floats on top */
+.homepage-main {
+  margin-top: calc(var(--navbar-height) * -1) !important;
+}
+
+/* Safe Area Support for Mobile Devices */
+@supports (padding: max(0px)) {
+  .safe-area-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-left {
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+  }
+}
+
+/* Custom Scrollbar Styles for consistency - Using brand colors */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(55, 65, 81, 0.3);
+  background: rgba(40, 45, 49, 0.3); /* #282D31 with opacity */
   border-radius: 2px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(249, 115, 22, 0.4);
+  background: rgba(251, 169, 5, 0.4); /* #FBA905 with opacity */
   border-radius: 2px;
   transition: background 0.3s ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(249, 115, 22, 0.6);
+  background: rgba(251, 169, 5, 0.6); /* #FBA905 with opacity */
 }
 
 .custom-scrollbar::-webkit-scrollbar-corner {
@@ -35,103 +91,185 @@
     max-height: 95vh !important;
   }
 }
+
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Modern Light Mode Color Palette - Vercel/HeroUI Inspired */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+    /* ============================================
+       RAVEHUB BRAND COLOR PALETTE - DARK MODE
+       ============================================ */
+    
+    /* Principal */
+    /* #FBA905 */
+    --primary: 41 96% 50%;
+    --primary-foreground: 205 100% 99%;
 
-    /* Primary: Orange - Clean and Modern */
-    --primary: 24 95% 53%;
-    --primary-foreground: 0 0% 100%;
+    /* Principal Alt */
+    /* #F1A000 */
+    --primary-alt: 41 100% 47%;
 
-    /* Secondary: Neutral gray for depth */
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
+    /* Énfasis */
+    /* #007BDF */
+    --emphasis: 205 100% 44%;
 
-    /* Muted: Subtle gray */
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
+    /* Énfasis Alt */
+    /* #006DC6 */
+    --emphasis-alt: 207 100% 39%;
 
-    /* Accent: Orange accent */
-    --accent: 24 95% 53%;
-    --accent-foreground: 0 0% 100%;
+    /* Énfasis Secundario */
+    /* #00CBFF */
+    --emphasis-secondary: 192 100% 50%;
 
-    /* Success: Green */
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    /* Énfasis Secundario Alt */
+    /* #00BFF0 */
+    --emphasis-secondary-alt: 193 100% 47%;
 
-    /* Warning: Orange/Yellow */
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    /* Fondo Principal (Oscuro) */
+    /* #282D31 */
+    --background: 210 10% 17%;
+    --foreground: 205 100% 99%;
 
-    /* Error/Destructive: Red */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* Fondo Principal Alt (Más Oscuro) */
+    /* #141618 */
+    --card: 210 9% 9%;
+    --card-foreground: 205 100% 99%;
+    --popover: 210 9% 9%;
+    --popover-foreground: 205 100% 99%;
 
-    /* Info: Blue */
-    --info: 217 91% 60%;
-    --info-foreground: 0 0% 100%;
+    /* Texto Principal (Claro) */
+    /* #FAFDFF */
+    /* Ya definido en --foreground arriba */
 
-    /* Border: Subtle gray */
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 24 95% 53%;
+    /* Texto Secundario (Gris) */
+    /* #53575A */
+    --muted: 210 4% 34%;
+    --muted-foreground: 210 4% 34%;
+
+    /* Bordes */
+    /* #DFE0E0 */
+    --border: 180 2% 88%;
+    --input: 180 2% 88%;
+
+    /* Error */
+    /* #FF3C32 */
+    --destructive: 3 100% 60%;
+    --destructive-foreground: 205 100% 99%;
+
+    /* Error Alt */
+    /* #FF2419 */
+    --destructive-alt: 3 100% 55%;
+
+    /* Success */
+    /* #28a745 */
+    --success: 134 61% 41%;
+    --success-foreground: 205 100% 99%;
+
+    /* Success Alt */
+    /* #218838 */
+    --success-alt: 134 61% 33%;
+
+    /* Additional utility variables */
+    --secondary: 210 9% 12%;
+    --secondary-foreground: 205 100% 99%;
+    --accent: 41 96% 50%;
+    --accent-foreground: 205 100% 99%;
+    --warning: 41 96% 50%;
+    --warning-foreground: 205 100% 99%;
+    --info: 205 100% 44%;
+    --info-foreground: 205 100% 99%;
+    --ring: 41 96% 50%;
     --radius: 0.5rem;
   }
 
   .dark {
-    /* AWS Orange-based Color Palette - Darker Light Mode */
-    --background: 30 15% 94%;
-    --foreground: 30 20% 10%;
-    --card: 30 10% 96%;
-    --card-foreground: 30 20% 10%;
-    --popover: 30 10% 96%;
-    --popover-foreground: 30 20% 10%;
+    /* ============================================
+       RAVEHUB BRAND COLOR PALETTE - DARK MODE
+       ============================================ */
+    
+    /* Principal */
+    /* #FBA905 */
+    --primary: 41 96% 50%;
+    --primary-foreground: 205 100% 99%;
 
-    /* Primary: AWS Orange (same in both modes) */
-    --primary: 30 100% 50%;
-    --primary-foreground: 0 0% 100%;
+    /* Principal Alt */
+    /* #F1A000 */
+    --primary-alt: 41 100% 47%;
 
-    /* Secondary: Lighter orange for subtle backgrounds */
-    --secondary: 30 60% 45%;
-    --secondary-foreground: 0 0% 100%;
+    /* Énfasis */
+    /* #007BDF */
+    --emphasis: 205 100% 44%;
 
-    /* Muted: Light orange tint */
-    --muted: 30 25% 90%;
-    --muted-foreground: 30 15% 40%;
+    /* Énfasis Alt */
+    /* #006DC6 */
+    --emphasis-alt: 207 100% 39%;
 
-    /* Accent: Bright orange */
-    --accent: 30 100% 50%;
-    --accent-foreground: 0 0% 100%;
+    /* Énfasis Secundario */
+    /* #00CBFF */
+    --emphasis-secondary: 192 100% 50%;
 
-    /* Success: Green */
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    /* Énfasis Secundario Alt */
+    /* #00BFF0 */
+    --emphasis-secondary-alt: 193 100% 47%;
 
-    /* Warning: Orange/Yellow */
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    /* Fondo Principal (Oscuro) */
+    /* #282D31 */
+    --background: 210 10% 17%;
+    --foreground: 205 100% 99%;
 
-    /* Error/Destructive: Red */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* Fondo Principal Alt (Más Oscuro) */
+    /* #141618 */
+    --card: 210 9% 9%;
+    --card-foreground: 205 100% 99%;
+    --popover: 210 9% 9%;
+    --popover-foreground: 205 100% 99%;
 
-    /* Info: Blue */
-    --info: 217 91% 60%;
-    --info-foreground: 0 0% 100%;
+    /* Texto Principal (Claro) */
+    /* #FAFDFF */
+    /* Ya definido en --foreground arriba */
 
-    --border: 30 20% 85%;
-    --input: 30 20% 85%;
-    --ring: 30 100% 50%;
+    /* Texto Secundario (Gris) */
+    /* #53575A */
+    --muted: 210 4% 34%;
+    --muted-foreground: 210 4% 34%;
+
+    /* Bordes */
+    /* #DFE0E0 */
+    --border: 180 2% 88%;
+    --input: 180 2% 88%;
+
+    /* Error */
+    /* #FF3C32 */
+    --destructive: 3 100% 60%;
+    --destructive-foreground: 205 100% 99%;
+
+    /* Error Alt */
+    /* #FF2419 */
+    --destructive-alt: 3 100% 55%;
+
+    /* Success */
+    /* #28a745 */
+    --success: 134 61% 41%;
+    --success-foreground: 205 100% 99%;
+
+    /* Success Alt */
+    /* #218838 */
+    --success-alt: 134 61% 33%;
+
+    /* Additional utility variables */
+    --secondary: 210 9% 12%;
+    --secondary-foreground: 205 100% 99%;
+    --accent: 41 96% 50%;
+    --accent-foreground: 205 100% 99%;
+    --warning: 41 96% 50%;
+    --warning-foreground: 205 100% 99%;
+    --info: 205 100% 44%;
+    --info-foreground: 205 100% 99%;
+    --ring: 41 96% 50%;
   }
 }
 
@@ -145,7 +283,7 @@
   }
   
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[#282D31] text-[#FAFDFF];
     font-feature-settings: "rlig" 1, "calt" 1;
     /* Smooth font rendering */
     -webkit-font-smoothing: antialiased;
@@ -198,7 +336,7 @@
 
 @layer components {
   .text-base {
-    @apply text-xl md:text-2xl text-gray-700;
+    @apply text-xl md:text-2xl text-[#FAFDFF];
   }
   
   /* Premium animations */
@@ -222,59 +360,59 @@
     animation-delay: 2s;
   }
   
-  /* Loading states - Light mode optimized */
+  /* Loading states - Dark mode optimized */
   .skeleton {
-    @apply animate-pulse bg-gray-200 rounded;
+    @apply animate-pulse bg-[#282D31] rounded;
   }
-  
+
   .skeleton-text {
     @apply skeleton h-4 w-3/4;
   }
-  
+
   .skeleton-title {
     @apply skeleton h-6 w-1/2;
   }
-  
+
   .skeleton-circle {
     @apply skeleton rounded-full;
   }
-  
-  /* Custom scrollbar - Light mode */
+
+  /* Custom scrollbar - Dark mode */
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-gray-100 rounded-lg;
+    @apply bg-[#141618] rounded-lg;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-orange-500 rounded-lg hover:bg-orange-400;
+    @apply bg-[#FBA905] rounded-lg hover:bg-[#F1A000];
   }
-  
-  /* Glass effect - Light mode adapted */
+
+  /* Glass effect - Dark mode adapted */
   .glass {
-    @apply backdrop-blur-lg bg-white/70 border border-gray-200/50;
+    @apply backdrop-blur-lg bg-[#282D31]/70 border border-[#DFE0E0]/20;
   }
-  
-  /* Gradient text - AWS Orange */
+
+  /* Gradient text - Principal */
   .gradient-text {
-    @apply bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-[#FBA905] to-[#F1A000] bg-clip-text text-transparent;
   }
-  
-  /* Premium shadows - Light mode */
+
+  /* Premium shadows - Dark mode */
   .shadow-glow {
-    box-shadow: 0 0 20px rgba(255, 153, 0, 0.25);
+    box-shadow: 0 0 20px rgba(251, 169, 5, 0.25);
   }
-  
+
   .shadow-glow-lg {
-    box-shadow: 0 0 40px rgba(255, 153, 0, 0.3);
+    box-shadow: 0 0 40px rgba(251, 169, 5, 0.3);
   }
-  
-  /* Text effects - Light mode */
+
+  /* Text effects - Dark mode */
   .text-glow {
-    text-shadow: 0 0 20px rgba(255, 153, 0, 0.4);
+    text-shadow: 0 0 20px rgba(251, 169, 5, 0.4);
   }
   
   /* Line clamping utilities */
@@ -319,9 +457,9 @@
     }
   }
   
-  /* Focus visible improvements - Light mode */
+  /* Focus visible improvements - Dark mode */
   .focus-visible:focus-visible {
-    @apply outline-none ring-2 ring-orange-500 ring-offset-2 ring-offset-white;
+    @apply outline-none ring-2 ring-[#FBA905] ring-offset-2 ring-offset-[#282D31];
   }
 }
 
@@ -671,10 +809,10 @@ img {
 
 @keyframes glow {
   0%, 100% { 
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 20px rgba(251, 169, 5, 0.3);
   }
   50% { 
-    box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 30px rgba(251, 169, 5, 0.6);
   }
 }
 
@@ -778,15 +916,15 @@ img {
   animation: bounce-in 0.8s ease-out forwards;
 }
 
-/* Cultural Pattern Backgrounds */
+/* Cultural Pattern Backgrounds - Using brand colors */
 .bg-pattern-peru {
   background-image: 
-    radial-gradient(circle at 25% 25%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(239, 68, 68, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 25% 25%, rgba(251, 169, 5, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(251, 169, 5, 0.05) 0%, transparent 50%);
 }
 
 .bg-gradient-cultural {
-  background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(127, 29, 29, 0.1) 50%, rgba(0,0,0,0.9) 100%);
+  background: linear-gradient(135deg, rgba(40, 45, 49, 0.9) 0%, rgba(251, 169, 5, 0.1) 50%, rgba(40, 45, 49, 0.9) 100%);
 }
 
 /* Modern Card Hover Effects */
@@ -799,9 +937,9 @@ img {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Button Enhancement */
+/* Button Enhancement - Using brand colors */
 .btn-peru {
-  background: linear-gradient(45deg, #dc2626, #ef4444, #f87171);
+  background: linear-gradient(45deg, #FBA905, #F1A000);
   background-size: 200% 200%;
   transition: all 0.3s ease;
   position: relative;
@@ -826,7 +964,7 @@ img {
 .btn-peru:hover {
   background-position: right center;
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(220, 38, 38, 0.3);
+  box-shadow: 0 10px 20px rgba(251, 169, 5, 0.3);
 }
 /* Particles Animation for Cultural Backgrounds */
 @keyframes particle-float {
@@ -842,10 +980,10 @@ img {
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 20px rgba(251, 169, 5, 0.3);
   }
   50% {
-    box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 30px rgba(251, 169, 5, 0.6);
   }
 }
 
@@ -917,13 +1055,13 @@ img {
   animation: cultural-pulse 3s ease-in-out infinite;
 }
 
-/* Enhanced Card Effects */
+/* Enhanced Card Effects - Using brand colors */
 .card-cultural {
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(10px);
-  background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(127, 29, 29, 0.1) 50%, rgba(0,0,0,0.8) 100%);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: linear-gradient(135deg, rgba(40, 45, 49, 0.8) 0%, rgba(251, 169, 5, 0.1) 50%, rgba(40, 45, 49, 0.8) 100%);
+  border: 1px solid rgba(251, 169, 5, 0.2);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -934,7 +1072,7 @@ img {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1), transparent);
+  background: linear-gradient(90deg, transparent, rgba(251, 169, 5, 0.1), transparent);
   transition: left 0.6s ease;
 }
 
@@ -944,18 +1082,18 @@ img {
 
 .card-cultural:hover {
   transform: translateY(-5px) scale(1.02);
-  border-color: rgba(239, 68, 68, 0.4);
-  box-shadow: 0 20px 25px -5px rgba(239, 68, 68, 0.1), 0 10px 10px -5px rgba(239, 68, 68, 0.04);
+  border-color: rgba(251, 169, 5, 0.4);
+  box-shadow: 0 20px 25px -5px rgba(251, 169, 5, 0.1), 0 10px 10px -5px rgba(251, 169, 5, 0.04);
 }
 
-/* Button Enhancements */
+/* Button Enhancements - Using brand colors */
 .btn-cultural {
-  background: linear-gradient(45deg, #dc2626, #ef4444, #f87171);
+  background: linear-gradient(45deg, #FBA905, #F1A000);
   background-size: 300% 300%;
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(223, 224, 224, 0.1);
 }
 
 .btn-cultural::before {
@@ -976,23 +1114,23 @@ img {
 .btn-cultural:hover {
   background-position: right center;
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(220, 38, 38, 0.4);
+  box-shadow: 0 10px 20px rgba(251, 169, 5, 0.4);
 }
 
-/* Cultural Icons Enhancement */
+/* Cultural Icons Enhancement - Using brand colors */
 .icon-cultural {
-  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.3));
+  filter: drop-shadow(0 0 8px rgba(251, 169, 5, 0.3));
   transition: all 0.3s ease;
 }
 
 .icon-cultural:hover {
-  filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.6));
+  filter: drop-shadow(0 0 12px rgba(251, 169, 5, 0.6));
   transform: scale(1.1);
 }
 
-/* Enhanced Typography */
+/* Enhanced Typography - Using brand colors */
 .text-cultural-gradient {
-  background: linear-gradient(135deg, #dc2626, #ef4444, #f87171, #dc2626);
+  background: linear-gradient(135deg, #FBA905, #F1A000, #FBA905);
   background-size: 300% 300%;
   background-clip: text;
   -webkit-background-clip: text;
@@ -1000,9 +1138,9 @@ img {
   animation: text-shimmer 3s ease-in-out infinite;
 }
 
-/* Loading States */
+/* Loading States - Using brand colors */
 .skeleton-loading {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 25%, rgba(239, 68, 68, 0.2) 50%, rgba(239, 68, 68, 0.1) 75%);
+  background: linear-gradient(90deg, rgba(251, 169, 5, 0.1) 25%, rgba(251, 169, 5, 0.2) 50%, rgba(251, 169, 5, 0.1) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }

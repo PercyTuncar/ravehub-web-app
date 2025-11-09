@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calendar, MapPin, Clock, Users, Share2, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, Clock, Share2, Heart, ChevronLeft, CreditCard, Phone, Mail, Globe, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,15 @@ import { es } from 'date-fns/locale';
 import JsonLd from '@/components/seo/JsonLd';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import Image from 'next/image';
+import { EventColorProvider } from '@/components/events/EventColorContext';
+import { ForceDarkMode } from '@/components/events/ForceDarkMode';
+import { EventHero } from '@/components/events/EventHero';
+import { StickyTicketCTA } from '@/components/events/StickyTicketCTA';
+import { LineupTimeline } from '@/components/events/LineupTimeline';
+import { EventMap } from '@/components/events/EventMap';
+import { EventGallery } from '@/components/events/EventGallery';
+import { EventDetails } from '@/components/events/EventDetails';
+import { EventOrganizer } from '@/components/events/EventOrganizer';
 
 // ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
 export const revalidate = 180;
@@ -33,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const url = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com'}/eventos/${slug}`;
     const isDraft = event.eventStatus !== 'published';
 
-  return {
+    return {
       title: event.seoTitle || event.name,
       description: event.seoDescription || event.shortDescription,
       keywords: (event.seoKeywords as string[] | undefined) || event.tags,
@@ -131,189 +140,41 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const schemaGenerator = new SchemaGenerator();
   const jsonLd = schemaGenerator.generateEventSchema(event);
 
-  const getDjProfile = (eventDjId?: string) => {
-    if (!eventDjId) return null;
-    return eventDjs.find(dj => dj.id === eventDjId);
-  };
-
-  const getEventTypeLabel = (type: string) => {
-    switch (type) {
-      case 'festival': return 'Festival';
-      case 'concert': return 'Concierto';
-      case 'club': return 'Club';
-      default: return type;
-    }
-  };
-
-  const getEventTypeColor = (type: string) => {
-    switch (type) {
-      case 'festival': return 'bg-purple-100 text-purple-800';
-      case 'concert': return 'bg-blue-100 text-blue-800';
-      case 'club': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* JSON-LD Schema */}
-      <JsonLd data={jsonLd} id="event-jsonld" />
+    <EventColorProvider>
+      <ForceDarkMode />
+      <div className="min-h-screen bg-background dark" suppressHydrationWarning>
+        {/* JSON-LD Schema */}
+        <JsonLd data={jsonLd} id="event-jsonld" />
 
-      {/* Hero Section */}
-      <div className="relative">
-        {event.mainImageUrl && (
-          <div className="h-96 md:h-[500px] relative overflow-hidden">
-            <Image
-              src={event.mainImageUrl}
-              alt={event.name}
-              fill
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-black/40" />
-            <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge className={getEventTypeColor(event.eventType)}>
-                    {getEventTypeLabel(event.eventType)}
-                  </Badge>
-                  {event.isHighlighted && (
-                    <Badge variant="secondary">Destacado</Badge>
-                  )}
-                </div>
-                <h1 className="text-4xl md:text-6xl font-bold mb-4">{event.name}</h1>
-                <div className="flex flex-wrap items-center gap-6 text-lg">
-                  <div className="flex items-center">
-                    <Calendar className="mr-2 h-5 w-5" />
-                    {format(new Date(event.startDate), 'PPP', { locale: es })}
-                    {event.startTime && ` • ${event.startTime}`}
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="mr-2 h-5 w-5" />
-                    {event.location.venue}, {event.location.city}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Hero Section with Dynamic Colors */}
+        <EventHero event={event} />
 
-        {/* Action Buttons */}
-        <div className="absolute top-4 right-4 flex gap-2">
-          <Button variant="secondary" size="sm">
-            <Share2 className="h-4 w-4" />
-          </Button>
-          <Button variant="secondary" size="sm">
-            <Heart className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Description */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Acerca del Evento</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
-                  {event.description}
-                </p>
-              </CardContent>
-            </Card>
-
             {/* Lineup */}
-            {event.artistLineup && event.artistLineup.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Lineup</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {event.artistLineup
-                      .sort((a: any, b: any) => a.order - b.order)
-                      .map((artist: any) => {
-                        const djProfile = getDjProfile(artist.eventDjId);
-                        return (
-                          <div key={artist.eventDjId || artist.name} className="flex items-center gap-4 p-4 border rounded-lg">
-                            {djProfile?.imageUrl && (
-                              <Image
-                                src={djProfile.imageUrl}
-                                alt={artist.name}
-                                width={48}
-                                height={48}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <h4 className="font-medium">{artist.name}</h4>
-                              {artist.stage && (
-                                <p className="text-sm text-muted-foreground">{artist.stage}</p>
-                              )}
-                              {artist.performanceDate && (
-                                <p className="text-sm text-muted-foreground">
-                                  {format(new Date(artist.performanceDate), 'PPP', { locale: es })}
-                                  {artist.performanceTime && ` • ${artist.performanceTime}`}
-                                </p>
-                              )}
-                              {djProfile?.country && (
-                                <p className="text-xs text-muted-foreground">{djProfile.country}</p>
-                              )}
-                            </div>
-                            {artist.isHeadliner && (
-                              <Badge variant="secondary">Headliner</Badge>
-                            )}
-                          </div>
-                        );
-                      })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
 
             {/* Gallery */}
-            {event.mainImageUrl && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Galería</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="relative">
-                    <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                      <Image
-                        src={event.mainImageUrl}
-                        alt={event.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <EventGallery
+              mainImageUrl={event.mainImageUrl}
+              imageGallery={event.imageGallery}
+              videoGallery={event.videoGallery}
+              videoUrl={event.videoUrl}
+              imageAltTexts={event.imageAltTexts}
+            />
 
-            {/* FAQ */}
-            {event.faqSection && event.faqSection.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Preguntas Frecuentes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {event.faqSection.map((faq: any, index: number) => (
-                      <div key={index}>
-                        <h4 className="font-medium mb-2">{faq.question}</h4>
-                        <p className="text-muted-foreground">{faq.answer}</p>
-                        {index < event.faqSection!.length - 1 && <Separator className="mt-4" />}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Event Details */}
+            <EventDetails
+              description={event.description}
+              specifications={event.specifications}
+              faqSection={event.faqSection}
+              tags={event.tags}
+              categories={event.categories}
+            />
           </div>
 
           {/* Sidebar */}
@@ -341,6 +202,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   <div>
                     {event.startTime && <div>Inicio: {event.startTime}</div>}
                     {event.doorTime && <div>Puertas: {event.doorTime}</div>}
+                    {event.endTime && <div>Fin: {event.endTime}</div>}
+                    {event.timezone && (
+                      <div className="text-muted-foreground text-xs">{event.timezone}</div>
+                    )}
                   </div>
                 </div>
 
@@ -357,20 +222,49 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   </div>
                 </div>
 
-                {event.organizer.name && (
-                  <div className="pt-4 border-t">
+                {/* Event Type & Status */}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Badge variant="outline">{event.eventType}</Badge>
+                  {event.eventStatus && (
+                    <Badge variant="secondary">{event.eventStatus}</Badge>
+                  )}
+                  {event.eventAttendanceMode && (
+                    <Badge variant="outline">{event.eventAttendanceMode}</Badge>
+                  )}
+                  {event.isAccessibleForFree && (
+                    <Badge variant="default">Gratis</Badge>
+                  )}
+                </div>
+
+                {/* Categories */}
+                {event.categories && event.categories.length > 0 && (
+                  <div className="pt-2">
+                    <div className="text-xs text-muted-foreground mb-2">Categorías</div>
+                    <div className="flex flex-wrap gap-1">
+                      {event.categories.map((cat, index) => (
+                        <Badge key={`cat-${index}-${cat}`} variant="outline" className="text-xs">
+                          {cat}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Age Range & Audience */}
+                {(event.typicalAgeRange || event.audienceType) && (
+                  <div className="pt-2 border-t">
                     <div className="text-sm">
-                      <span className="text-muted-foreground">Organizado por:</span>
-                      <div className="font-medium">{event.organizer.name}</div>
-                      {event.organizer.website && (
-                        <a
-                          href={event.organizer.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline text-sm"
-                        >
-                          {event.organizer.website}
-                        </a>
+                      {event.typicalAgeRange && (
+                        <div className="mb-1">
+                          <span className="text-muted-foreground">Edad:</span>{' '}
+                          <span className="font-medium">{event.typicalAgeRange}</span>
+                        </div>
+                      )}
+                      {event.audienceType && (
+                        <div>
+                          <span className="text-muted-foreground">Audiencia:</span>{' '}
+                          <span className="font-medium">{event.audienceType}</span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -378,43 +272,18 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
               </CardContent>
             </Card>
 
-            {/* Ticket Purchase Card */}
-            {event.sellTicketsOnPlatform && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Entradas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Compra tus entradas de forma segura y recibe tu ticket digital al instante.
-                    </p>
-
-                    <div className="space-y-2">
-                      {event.allowOfflinePayments && (
-                        <div className="flex items-center text-sm">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-                          Pago offline disponible
-                        </div>
-                      )}
-                      {event.allowInstallmentPayments && (
-                        <div className="flex items-center text-sm">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
-                          Pago en cuotas disponible
-                        </div>
-                      )}
-                    </div>
-
-                    <Link href={`/eventos/${event.slug}/comprar`} className="block">
-                      <Button className="w-full" size="lg">
-                        <Users className="mr-2 h-4 w-4" />
-                        Comprar Entradas
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Map */}
+            {event.location.geo && (
+              <EventMap
+                lat={event.location.geo.lat}
+                lng={event.location.geo.lng}
+                venue={event.location.venue}
+                address={event.location.address}
+              />
             )}
+
+            {/* Organizer */}
+            <EventOrganizer organizer={event.organizer} />
 
             {/* External Tickets */}
             {event.externalTicketUrl && (
@@ -437,6 +306,12 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           </div>
         </div>
       </div>
-    </div>
+
+        {/* Sticky CTA */}
+        {event.sellTicketsOnPlatform && (
+          <StickyTicketCTA event={event} />
+        )}
+      </div>
+    </EventColorProvider>
   );
 }

@@ -6,6 +6,7 @@ import { CartProvider } from '@/lib/contexts/CartContext'
 import { CurrencyProvider } from '@/lib/contexts/CurrencyContext'
 import { NotificationsProvider } from '@/lib/contexts/NotificationsContext'
 import { MainNavbar } from '@/components/layout/MainNavbar'
+import { MobileNavbar } from '@/components/layout/MobileNavbar'
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Toaster } from 'react-hot-toast'
@@ -71,15 +72,19 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <body className={`${inter.variable} ${inter.className}`}>
+    <html lang="es" suppressHydrationWarning className="dark">
+      <body className={`${inter.variable} ${inter.className} dark`}>
         <ThemeProvider>
           <AuthProvider>
             <NotificationsProvider>
               <CurrencyProvider>
                 <CartProvider>
                   <MainNavbar />
-                  <div className="pt-16">
+                  <MobileNavbar />
+                  <div
+                    className="pb-20 md:pb-0"
+                    style={{ paddingTop: 'var(--navbar-height)' }}
+                  >
                     {children}
                   </div>
                 </CartProvider>
@@ -92,21 +97,22 @@ export default function RootLayout({
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#363636',
-              color: '#fff',
+              background: '#282D31',
+              color: '#FAFDFF',
+              border: '1px solid #DFE0E0',
             },
             success: {
               duration: 3000,
               iconTheme: {
-                primary: '#4ade80',
-                secondary: '#fff',
+                primary: '#28a745',
+                secondary: '#FAFDFF',
               },
             },
             error: {
               duration: 4000,
               iconTheme: {
-                primary: '#ef4444',
-                secondary: '#fff',
+                primary: '#FF3C32',
+                secondary: '#FAFDFF',
               },
             },
           }}
