@@ -2043,6 +2043,17 @@ export default function EditEventPage() {
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
+                  id="isAccessibleForFree"
+                  checked={eventData.isAccessibleForFree || false}
+                  onChange={(e) => updateEventData('isAccessibleForFree', e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor="isAccessibleForFree">🎁 Evento de entrada gratuita</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
                   id="sellTicketsOnPlatform"
                   checked={eventData.sellTicketsOnPlatform || false}
                   onChange={(e) => updateEventData('sellTicketsOnPlatform', e.target.checked)}
