@@ -122,7 +122,7 @@ export class SchemaGenerator {
         throw new Error(`Unsupported schema type: ${input.type}`);
     }
   }
-generateEventSchema(eventData: any): any[] {
+generateEventSchema(eventData: any): any {
   const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
   const slug = (eventData.slug || eventData.id || '').toString().replace(/^\/+/, '');
   const eventSlug = slug || 'evento';
@@ -343,10 +343,32 @@ generateEventSchema(eventData: any): any[] {
         }
       : undefined,
   ].filter(Boolean);
-  // Create individual schema objects instead of @graph
-  const schemas: any[] = [
+
+  // Helper function to recursively remove undefined values
+  const removeUndefined = (obj: any): any => {
+    if (obj === undefined || obj === null) {
+      return undefined;
+    }
+    if (Array.isArray(obj)) {
+      const filtered = obj.map(removeUndefined).filter(item => item !== undefined);
+      return filtered.length > 0 ? filtered : undefined;
+    }
+    if (typeof obj === 'object') {
+      const filtered: any = {};
+      Object.keys(obj).forEach(key => {
+        const value = removeUndefined(obj[key]);
+        if (value !== undefined) {
+          filtered[key] = value;
+        }
+      });
+      return Object.keys(filtered).length > 0 ? filtered : undefined;
+    }
+    return obj;
+  };
+
+  // Create schema graph nodes (without @context, it will be added at the root)
+  const graphNodes: any[] = [
     {
-      '@context': 'https://schema.org',
       '@type': 'WebSite',
       '@id': websiteId,
       url: baseUrl,
@@ -359,7 +381,6 @@ generateEventSchema(eventData: any): any[] {
       }
     },
     {
-      '@context': 'https://schema.org',
       '@type': 'Organization',
       '@id': organizationId,
       name: 'Ravehub',
@@ -377,26 +398,19 @@ generateEventSchema(eventData: any): any[] {
       ],
     },
     {
-      '@context': 'https://schema.org',
       '@type': 'WebPage',
       '@id': pageId,
       url: eventUrl,
       name: eventData.seoTitle || eventData.name,
       isPartOf: { '@id': websiteId },
       about: { '@id': eventId },
-      primaryImageOfPage: cleanImageUrl(eventData.mainImageUrl) ? {
-        '@type': 'ImageObject',
-        '@id': primaryImageId,
-        url: cleanImageUrl(eventData.mainImageUrl),
-        width: 1200,
-        height: 675,
-        caption: eventData.name,
-      } : undefined,
+      ...(cleanImageUrl(eventData.mainImageUrl) && primaryImageId ? {
+        primaryImageOfPage: { '@id': primaryImageId }
+      } : {}),
       datePublished: toIsoString(eventData.createdAt),
       dateModified: toIsoString(eventData.updatedAt || eventData.createdAt),
     },
     {
-      '@context': 'https://schema.org',
       '@type': eventData.schemaType || (eventData.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent'),
       '@id': eventId,
       name: eventData.name,
@@ -408,15 +422,19 @@ generateEventSchema(eventData: any): any[] {
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       isAccessibleForFree: Boolean(eventData.isAccessibleForFree),
       startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
-      endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime),
-      doorTime: eventData.doorTime ? formatDateWithTimezone(eventData.startDate, eventData.doorTime) : undefined,
+      ...(formatDateWithTimezone(eventData.endDate, eventData.endTime) ? {
+        endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime)
+      } : {}),
+      ...(eventData.doorTime ? {
+        doorTime: formatDateWithTimezone(eventData.startDate, eventData.doorTime)
+      } : {}),
       location: locationNode,
-      image: imageObjects.length > 0 ? imageObjects : undefined,
+      ...(imageObjects.length > 0 ? { image: imageObjects } : {}),
       organizer: organizerNode,
-      performer: performers,
-      offers: offers.length > 0 ? offers : undefined,
-      subEvent: subEvents && subEvents.length > 0 ? subEvents : undefined,
-      maximumAttendeeCapacity: capacity,
+      ...(performers ? { performer: performers } : {}),
+      ...(offers.length > 0 ? { offers } : {}),
+      ...(subEvents && subEvents.length > 0 ? { subEvent: subEvents } : {}),
+      ...(capacity ? { maximumAttendeeCapacity: capacity } : {}),
       audience: {
         '@type': 'PeopleAudience',
         requiredMinAge: minAge,
@@ -424,6 +442,18 @@ generateEventSchema(eventData: any): any[] {
       },
     },
   ];
+
+  // Add ImageObject for primary image if it exists (needed for WebPage reference)
+  if (cleanImageUrl(eventData.mainImageUrl) && primaryImageId) {
+    graphNodes.push({
+      '@type': 'ImageObject',
+      '@id': primaryImageId,
+      url: cleanImageUrl(eventData.mainImageUrl),
+      width: 1200,
+      height: 675,
+      caption: eventData.name,
+    });
+  }
 
   // Add FAQPage if FAQs exist
   const faqs = Array.isArray(eventData.faqSection)
@@ -439,8 +469,7 @@ generateEventSchema(eventData: any): any[] {
         }))
     : [];
   if (faqs.length > 0) {
-    schemas.push({
-      '@context': 'https://schema.org',
+    graphNodes.push({
       '@type': 'FAQPage',
       '@id': `${eventUrl}/#faq`,
       isPartOf: { '@id': pageId },
@@ -450,8 +479,7 @@ generateEventSchema(eventData: any): any[] {
   }
 
   // Add BreadcrumbList
-  schemas.push({
-    '@context': 'https://schema.org',
+  graphNodes.push({
     '@type': 'BreadcrumbList',
     itemListElement: [
       {
@@ -487,16 +515,13 @@ generateEventSchema(eventData: any): any[] {
     ]
   });
 
-  // Filter out undefined values from each schema
-  return schemas.map((schema: any) => {
-    const filtered: any = {};
-    Object.keys(schema).forEach(key => {
-      if (schema[key] !== undefined) {
-        filtered[key] = schema[key];
-      }
-    });
-    return filtered;
-  });
+  // Remove undefined values recursively and return as @graph structure
+  const cleanedGraph = graphNodes.map(removeUndefined).filter(node => node !== undefined);
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': cleanedGraph
+  };
 }
   generateEventPurchaseSchema(eventData: any) {
     const eventUrl = `${SchemaGenerator.BASE_URL}/eventos/${eventData.slug}`;
