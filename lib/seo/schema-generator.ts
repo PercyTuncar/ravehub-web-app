@@ -122,17 +122,486 @@ export class SchemaGenerator {
         throw new Error(`Unsupported schema type: ${input.type}`);
     }
   }
-generateEventSchema(eventData: any): any {
-  const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
-  const slug = (eventData.slug || eventData.id || '').toString().replace(/^\/+/, '');
-  const eventSlug = slug || 'evento';
-  const eventUrl = `${baseUrl}/eventos/${eventSlug}`;
-  const websiteId = `${baseUrl}/#website`;
-  const organizationId = `${baseUrl}/#organization`;
-  const pageId = `${eventUrl}/#webpage`;
-  const eventId = `${eventUrl}/#event`;
-  const logoId = `${baseUrl}/#logo`;
-  const primaryImageId = eventData.mainImageUrl ? `${eventUrl}/#primaryimage` : undefined;
+/**
+   * Generate individual event schemas as separate objects for better validator compatibility
+   * Returns an array of schemas to be rendered as separate <script> tags
+   */
+  generateEventSchemas(eventData: any): any[] {
+    const schemas = [];
+    
+    // 1. WebSite Schema
+    schemas.push(this.generateWebSiteSchema());
+    
+    // 2. Organization Schema
+    schemas.push(this.generateOrganizationSchema());
+    
+    // 3. WebPage Schema
+    const webPageSchema = this.generateEventWebPageSchema(eventData);
+    if (webPageSchema) schemas.push(webPageSchema);
+    
+    // 4. MusicEvent or MusicFestival Schema
+    const eventSchema = this.generateMusicEventSchema(eventData);
+    if (eventSchema) schemas.push(eventSchema);
+    
+    // 5. FAQPage Schema (if FAQs exist)
+    const faqSchema = this.generateEventFAQSchema(eventData);
+    if (faqSchema) schemas.push(faqSchema);
+    
+    // 6. BreadcrumbList Schema
+    const breadcrumbSchema = this.generateEventBreadcrumbSchema(eventData);
+    if (breadcrumbSchema) schemas.push(breadcrumbSchema);
+    
+    return schemas;
+  }
+
+  /**
+   * Generate WebSite schema (reusable across site)
+   */
+  private generateWebSiteSchema(): any {
+    const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      '@id': `${baseUrl}/#website`,
+      url: baseUrl,
+      name: 'Ravehub',
+      alternateName: 'Ravehub Latam',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${baseUrl}/buscar?q={search_term_string}`
+        },
+        'query-input': 'required name=search_term_string'
+      }
+    };
+  }
+
+  /**
+   * Generate Organization schema (reusable across site)
+   */
+  private generateOrganizationSchema(): any {
+    const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      '@id': `${baseUrl}/#organization`,
+      name: 'Ravehub',
+      url: baseUrl,
+      logo: {
+        '@type': 'ImageObject',
+        '@id': `${baseUrl}/#logo`,
+        url: `${baseUrl}/icons/logo.png`,
+        width: 600,
+        height: 60,
+        caption: 'Ravehub Logo'
+      },
+      sameAs: [
+        'https://www.instagram.com/ravehub.pe',
+        'https://www.facebook.com/ravehub'
+      ]
+    };
+  }
+
+  /**
+   * Generate WebPage schema for event pages
+   */
+  private generateEventWebPageSchema(eventData: any): any {
+    const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
+    const slug = (eventData.slug || eventData.id || '').toString().replace(/^\/+/, '');
+    const eventSlug = slug || 'evento';
+    const eventUrl = `${baseUrl}/eventos/${eventSlug}`;
+    
+    const parseDateValue = (value: any): Date | undefined => {
+      if (!value) return undefined;
+      if (value instanceof Date) return value;
+      if (typeof value === 'string') {
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+      }
+      if (typeof value === 'object' && typeof value.seconds === 'number') {
+        return new Date(value.seconds * 1000);
+      }
+      return undefined;
+    };
+    
+    const toIsoString = (value: any) => {
+      const parsed = parseDateValue(value);
+      return parsed ? parsed.toISOString() : new Date().toISOString();
+    };
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      '@id': `${eventUrl}/#webpage`,
+      url: eventUrl,
+      name: eventData.seoTitle || eventData.name,
+      description: eventData.seoDescription || eventData.shortDescription,
+      isPartOf: { '@id': `${baseUrl}/#website` },
+      about: { '@id': `${eventUrl}/#event` },
+      datePublished: toIsoString(eventData.createdAt),
+      dateModified: toIsoString(eventData.updatedAt || eventData.createdAt),
+      ...(eventData.mainImageUrl ? {
+        primaryImageOfPage: {
+          '@type': 'ImageObject',
+          url: eventData.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
+          width: 1200,
+          height: 675,
+          caption: eventData.name
+        }
+      } : {})
+    };
+  }
+
+  /**
+   * Generate MusicEvent or MusicFestival schema
+   */
+  private generateMusicEventSchema(eventData: any): any {
+    const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
+    const slug = (eventData.slug || eventData.id || '').toString().replace(/^\/+/, '');
+    const eventSlug = slug || 'evento';
+    const eventUrl = `${baseUrl}/eventos/${eventSlug}`;
+    
+    const normalizeTimezone = (timezone?: string) => {
+      if (!timezone) return '-05:00';
+      const trimmed = timezone.trim();
+      if (/^[+-]\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+      if (/^[+-]\d{2}$/.test(trimmed)) return `${trimmed}:00`;
+      if (/^[+-]\d{4}$/.test(trimmed)) return `${trimmed.slice(0, 3)}:${trimmed.slice(3)}`;
+      const utcMatch = trimmed.match(/UTC([+-]\d{2})(?::?(\d{2}))?/i);
+      if (utcMatch) {
+        const minutes = utcMatch[2] || '00';
+        return `${utcMatch[1]}:${minutes}`;
+      }
+      return '-05:00';
+    };
+    
+    const pad = (value: number) => value.toString().padStart(2, '0');
+    const timezoneOffset = normalizeTimezone(eventData.timezone);
+    
+    const normalizeTime = (time?: string) => {
+      if (!time) return '00:00:00';
+      if (/^\d{2}:\d{2}$/.test(time)) return `${time}:00`;
+      if (/^\d{2}:\d{2}:\d{2}$/.test(time)) return time;
+      return '00:00:00';
+    };
+    
+    const formatDateWithTimezone = (dateStr?: string, timeStr?: string) => {
+      if (!dateStr) return undefined;
+      if (dateStr.includes('T')) {
+        if (/[+-]\d{2}:\d{2}$/.test(dateStr)) {
+          return dateStr;
+        }
+        if (dateStr.endsWith('Z')) {
+          const parsed = new Date(dateStr);
+          if (!Number.isNaN(parsed.getTime())) {
+            return `${parsed.getUTCFullYear()}-${pad(parsed.getUTCMonth() + 1)}-${pad(parsed.getUTCDate())}T${pad(parsed.getUTCHours())}:${pad(parsed.getUTCMinutes())}:${pad(parsed.getUTCSeconds())}${timezoneOffset}`;
+          }
+        }
+        return `${dateStr}${timezoneOffset}`;
+      }
+      const time = normalizeTime(timeStr);
+      return `${dateStr}T${time}${timezoneOffset}`;
+    };
+
+    const fallbackCountry = (eventData.country || eventData.location?.countryCode || 'CL').toUpperCase();
+    const normalizeLanguage = (language?: string) => {
+      const normalized = language?.replace('_', '-');
+      if (normalized && /^[a-z]{2,3}(-[A-Za-z]{2})?$/.test(normalized)) {
+        const [lang, region] = normalized.split('-');
+        return `${lang.slice(0, 2).toLowerCase()}-${(region || fallbackCountry).toUpperCase()}`;
+      }
+      return `es-${fallbackCountry}`;
+    };
+
+    const locationNode = (() => {
+      if (!eventData.location) {
+        return {
+          '@type': 'Place',
+          name: 'Ubicacion por confirmar',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: 'Ubicacion por confirmar',
+            addressCountry: fallbackCountry,
+          },
+        };
+      }
+      const locationCountry = (eventData.location.countryCode || eventData.location.country || fallbackCountry).toUpperCase();
+      const place: any = {
+        '@type': 'Place',
+        name: eventData.location.venue || eventData.location.city || 'Ubicacion del evento',
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: eventData.location.address,
+          addressLocality: eventData.location.city,
+          addressRegion: eventData.location.region,
+          postalCode: eventData.location.postalCode,
+          addressCountry: locationCountry,
+        },
+      };
+      if (eventData.location.geo && typeof eventData.location.geo.lat === 'number' && typeof eventData.location.geo.lng === 'number') {
+        place.geo = {
+          '@type': 'GeoCoordinates',
+          latitude: eventData.location.geo.lat,
+          longitude: eventData.location.geo.lng,
+        };
+      }
+      return place;
+    })();
+
+    const capacity = Array.isArray(eventData.zones)
+      ? eventData.zones.reduce((total: number, zone: any) => total + (zone.capacity || 0), 0)
+      : undefined;
+
+    const performers = Array.isArray(eventData.artistLineup) && eventData.artistLineup.length > 0
+      ? eventData.artistLineup.map((artist: any) => ({
+          '@type': 'Person',
+          name: artist.name,
+          ...(artist.instagram ? {
+            sameAs: [`https://instagram.com/${artist.instagram.replace('@', '')}`]
+          } : {})
+        }))
+      : undefined;
+
+    const ticketUrl = eventData.externalTicketUrl && eventData.externalTicketUrl.startsWith('http')
+      ? eventData.externalTicketUrl
+      : `${eventUrl}/comprar`;
+
+    const offers: any[] = Array.isArray(eventData.salesPhases)
+      ? eventData.salesPhases.flatMap((phase: any) => {
+          if (!Array.isArray(phase.zonesPricing)) return [];
+          const phaseName = phase.name || 'Fase';
+          return phase.zonesPricing
+            .map((zonePricing: any) => {
+              const zone = eventData.zones?.find((z: any) => z.id === zonePricing.zoneId);
+              if (!zone || typeof zonePricing.price !== 'number') {
+                return undefined;
+              }
+              const availabilityStarts = formatDateWithTimezone(phase.startDate, undefined);
+              const availabilityEnds = phase.endDate ? formatDateWithTimezone(phase.endDate, undefined) : undefined;
+              const inventory = typeof zonePricing.available === 'number' ? zonePricing.available : zone.capacity;
+              const offer: any = {
+                '@type': 'Offer',
+                name: `${zone.name || 'General'} - ${phaseName}`,
+                category: zone.category || zone.name || 'General',
+                price: zonePricing.price,
+                priceCurrency: eventData.currency || 'PEN',
+                availability: 'https://schema.org/InStock',
+                url: ticketUrl,
+                seller: { '@id': `${baseUrl}/#organization` },
+              };
+              if (availabilityStarts) {
+                offer.availabilityStarts = availabilityStarts;
+              }
+              if (availabilityEnds) {
+                offer.availabilityEnds = availabilityEnds;
+                offer.priceValidUntil = availabilityEnds;
+              }
+              if (typeof inventory === 'number') {
+                offer.inventoryLevel = {
+                  '@type': 'QuantitativeValue',
+                  value: inventory,
+                };
+              }
+              return offer;
+            })
+            .filter(Boolean) as any[];
+        })
+      : [];
+
+    const minAgeMatch = eventData.typicalAgeRange?.match(/\d+/);
+    const minAge = minAgeMatch ? parseInt(minAgeMatch[0], 10) : 18;
+
+    const organizerNode = eventData.organizer?.name ? {
+      '@type': 'Organization',
+      name: eventData.organizer.name,
+      ...(eventData.organizer.website && !eventData.organizer.website.includes('localhost')
+        ? { url: eventData.organizer.website }
+        : {}),
+      ...(eventData.organizer.email ? { email: eventData.organizer.email } : {}),
+      ...(eventData.organizer.phone ? { telephone: eventData.organizer.phone } : {}),
+    } : { '@id': `${baseUrl}/#organization` };
+
+    const imageObjects = eventData.mainImageUrl ? [
+      {
+        '@type': 'ImageObject',
+        url: eventData.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
+        width: 1200,
+        height: 675,
+        caption: eventData.name
+      }
+    ] : [];
+
+    if (eventData.bannerImageUrl) {
+      imageObjects.push({
+        '@type': 'ImageObject',
+        url: eventData.bannerImageUrl.replace(/[?&]token=[^&]*/, ''),
+        width: 1200,
+        height: 675,
+        caption: `${eventData.name} Banner`
+      });
+    }
+
+    const subEvents = Array.isArray(eventData.artistLineup)
+      ? eventData.artistLineup
+          .map((artist: any, index: number) => {
+            if (!artist.performanceDate || !artist.performanceTime) return undefined;
+            const startDate = formatDateWithTimezone(artist.performanceDate, artist.performanceTime);
+            if (!startDate) return undefined;
+            return {
+              '@type': 'MusicEvent',
+              name: `${artist.name} - ${eventData.name}`,
+              startDate,
+              ...(artist.performanceEndTime ? {
+                endDate: formatDateWithTimezone(artist.performanceDate, artist.performanceEndTime)
+              } : {}),
+              location: locationNode,
+              performer: {
+                '@type': 'Person',
+                name: artist.name,
+              },
+            };
+          })
+          .filter(Boolean)
+      : undefined;
+
+    // Remove undefined values
+    const removeUndefined = (obj: any): any => {
+      if (obj === undefined || obj === null) return undefined;
+      if (Array.isArray(obj)) {
+        const filtered = obj.map(removeUndefined).filter(item => item !== undefined);
+        return filtered.length > 0 ? filtered : undefined;
+      }
+      if (typeof obj === 'object') {
+        const filtered: any = {};
+        Object.keys(obj).forEach(key => {
+          const value = removeUndefined(obj[key]);
+          if (value !== undefined) {
+            filtered[key] = value;
+          }
+        });
+        return Object.keys(filtered).length > 0 ? filtered : undefined;
+      }
+      return obj;
+    };
+
+    const eventSchema: any = {
+      '@context': 'https://schema.org',
+      '@type': eventData.schemaType || (eventData.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent'),
+      '@id': `${eventUrl}/#event`,
+      name: eventData.name,
+      url: eventUrl,
+      description: eventData.seoDescription || eventData.shortDescription || eventData.description,
+      inLanguage: normalizeLanguage(eventData.inLanguage),
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      isAccessibleForFree: Boolean(eventData.isAccessibleForFree),
+      startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
+      ...(formatDateWithTimezone(eventData.endDate, eventData.endTime) ? {
+        endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime)
+      } : {}),
+      ...(eventData.doorTime ? {
+        doorTime: formatDateWithTimezone(eventData.startDate, eventData.doorTime)
+      } : {}),
+      location: locationNode,
+      ...(imageObjects.length > 0 ? { image: imageObjects } : {}),
+      organizer: organizerNode,
+      ...(performers ? { performer: performers } : {}),
+      ...(offers.length > 0 ? { offers } : {}),
+      ...(subEvents && subEvents.length > 0 ? { subEvent: subEvents } : {}),
+      ...(capacity ? { maximumAttendeeCapacity: capacity } : {}),
+      audience: {
+        '@type': 'PeopleAudience',
+        requiredMinAge: minAge,
+        ...(eventData.audienceType ? { audienceType: eventData.audienceType } : {}),
+      },
+    };
+
+    return removeUndefined(eventSchema);
+  }
+
+  /**
+   * Generate FAQPage schema if FAQs exist
+   */
+  private generateEventFAQSchema(eventData: any): any | null {
+    const faqs = Array.isArray(eventData.faqSection)
+      ? eventData.faqSection
+          .filter((faq: { question: string; answer: string }) => faq?.question && faq?.answer)
+          .map((faq: { question: string; answer: string }) => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: faq.answer,
+            },
+          }))
+      : [];
+
+    if (faqs.length === 0) return null;
+
+    const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
+    const slug = (eventData.slug || eventData.id || '').toString().replace(/^\/+/, '');
+    const eventSlug = slug || 'evento';
+    const eventUrl = `${baseUrl}/eventos/${eventSlug}`;
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      '@id': `${eventUrl}/#faq`,
+      mainEntity: faqs,
+    };
+  }
+
+  /**
+   * Generate BreadcrumbList schema
+   */
+  private generateEventBreadcrumbSchema(eventData: any): any {
+    const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
+    const slug = (eventData.slug || eventData.id || '').toString().replace(/^\/+/, '');
+    const eventSlug = slug || 'evento';
+    const eventUrl = `${baseUrl}/eventos/${eventSlug}`;
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Inicio',
+          item: baseUrl
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Eventos',
+          item: `${baseUrl}/eventos`
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: eventData.name,
+          item: eventUrl
+        }
+      ]
+    };
+  }
+
+  /**
+   * Legacy method for backward compatibility - now returns @graph format
+   * @deprecated Use generateEventSchemas() for better validator compatibility
+   */
+  generateEventSchema(eventData: any): any {
+    const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
+    const slug = (eventData.slug || eventData.id || '').toString().replace(/^\/+/, '');
+    const eventSlug = slug || 'evento';
+    const eventUrl = `${baseUrl}/eventos/${eventSlug}`;
+    const websiteId = `${baseUrl}/#website`;
+    const organizationId = `${baseUrl}/#organization`;
+    const pageId = `${eventUrl}/#webpage`;
+    const eventId = `${eventUrl}/#event`;
+    const logoId = `${baseUrl}/#logo`;
+    const primaryImageId = eventData.mainImageUrl ? `${eventUrl}/#primaryimage` : undefined;
   const cleanImageUrl = (url?: string) => (typeof url === 'string' ? url.replace(/[?&]token=[^&]*/, '') : undefined);
   const normalizeTimezone = (timezone?: string) => {
     if (!timezone) return '-05:00';

@@ -9,7 +9,7 @@ import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections
 import { Event, EventDj } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import JsonLd from '@/components/seo/JsonLd';
+import JsonLd, { JsonLdArray } from '@/components/seo/JsonLd';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import Image from 'next/image';
 import { EventColorProvider } from '@/components/events/EventColorContext';
@@ -136,21 +136,20 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
   const { event, eventDjs } = data;
 
-  // Generate JSON-LD schema
+  // Generate JSON-LD schemas as separate objects for better validator compatibility
   const schemaGenerator = new SchemaGenerator();
-  const jsonLd = schemaGenerator.generateEventSchema(event);
+  const schemas = schemaGenerator.generateEventSchemas(event);
 
   // Debug: Log schema structure (only in development)
   if (process.env.NODE_ENV === 'development') {
-    console.log('Generated JSON-LD Schema:', JSON.stringify(jsonLd, null, 2));
-    const graphNodes = (jsonLd as any)?.['@graph'];
-    console.log('Schema graph nodes:', Array.isArray(graphNodes) ? graphNodes.length : 0);
+    console.log('Generated Schemas Count:', schemas.length);
+    console.log('Schema Types:', schemas.map((s: any) => s['@type']).join(', '));
   }
 
   return (
     <>
-      {/* JSON-LD Schema - Must be at the top level for proper injection */}
-      <JsonLd data={jsonLd} id="event-jsonld" />
+      {/* JSON-LD Schemas - Rendered as separate script tags for better validator compatibility */}
+      <JsonLdArray data={schemas} id="event-schema" />
       <EventColorProvider>
         <ForceDarkMode />
         <div className="min-h-screen bg-background dark" suppressHydrationWarning>
