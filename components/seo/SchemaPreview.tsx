@@ -18,33 +18,39 @@ export function SchemaPreview({ eventData }: SchemaPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const { schema, isValid, errors } = useMemo(() => {
+  const { schema, isValid, errors, musicEventSchema } = useMemo(() => {
     try {
       if (!eventData.name || !eventData.slug) {
-        return { schema: null, isValid: false, errors: ['Datos básicos requeridos faltantes'] };
+        return { schema: null, isValid: false, errors: ['Datos básicos requeridos faltantes'], musicEventSchema: null };
       }
 
       const generator = new SchemaGenerator();
       const schemaData = generator.generateEventSchema(eventData);
 
-      // Basic validation
+      // Basic validation - find the MusicEvent schema
       const validationErrors: string[] = [];
-      if (!schemaData['@graph']?.[3]?.name) validationErrors.push('Nombre del evento requerido');
-      if (!schemaData['@graph']?.[3]?.startDate) validationErrors.push('Fecha de inicio requerida');
-      if (!schemaData['@graph']?.[3]?.location?.address?.addressCountry) validationErrors.push('País requerido');
-      if (!schemaData['@graph']?.[3]?.location?.address?.addressLocality) validationErrors.push('Ciudad requerida');
+      const eventSchema = Array.isArray(schemaData)
+        ? schemaData.find((schema: any) => schema['@type'] === 'MusicEvent' || schema['@type'] === 'MusicFestival')
+        : schemaData['@graph']?.[3]; // fallback for old format
+
+      if (!eventSchema?.name) validationErrors.push('Nombre del evento requerido');
+      if (!eventSchema?.startDate) validationErrors.push('Fecha de inicio requerida');
+      if (!eventSchema?.location?.address?.addressCountry) validationErrors.push('País requerido');
+      if (!eventSchema?.location?.address?.addressLocality) validationErrors.push('Ciudad requerida');
 
       return {
         schema: schemaData,
         isValid: validationErrors.length === 0,
-        errors: validationErrors
+        errors: validationErrors,
+        musicEventSchema: eventSchema
       };
     } catch (error) {
       console.error('Schema generation error:', error);
       return {
         schema: null,
         isValid: false,
-        errors: ['Error generando schema: ' + (error as Error).message]
+        errors: ['Error generando schema: ' + (error as Error).message],
+        musicEventSchema: null
       };
     }
   }, [eventData]);
@@ -111,7 +117,7 @@ export function SchemaPreview({ eventData }: SchemaPreviewProps) {
             <div className="text-sm">
               <p className="font-medium text-muted-foreground">Tipo de Schema</p>
               <p className="text-lg font-semibold">
-                {schema?.['@graph']?.[3]?.['@type'] || eventData.schemaType || 'MusicFestival'}
+                {musicEventSchema?.['@type'] || eventData.schemaType || 'MusicFestival'}
               </p>
             </div>
           </CardContent>
@@ -235,7 +241,7 @@ export function SchemaPreview({ eventData }: SchemaPreviewProps) {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="default">{schema?.['@graph']?.[3]?.['@type'] || eventData.schemaType || 'MusicFestival'}</Badge>
+                    <Badge variant="default">{musicEventSchema?.['@type'] || eventData.schemaType || 'MusicFestival'}</Badge>
                     <span className="text-sm text-muted-foreground">
                       Tipo principal del evento
                     </span>
@@ -263,25 +269,25 @@ export function SchemaPreview({ eventData }: SchemaPreviewProps) {
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm">Evento Principal</h4>
                     <ul className="text-xs space-y-1 text-muted-foreground">
-                      <li>• name: {schema['@graph']?.[3]?.name ? '✓' : '✗'}</li>
-                      <li>• description: {schema['@graph']?.[3]?.description ? '✓' : '✗'}</li>
-                      <li>• startDate: {schema['@graph']?.[3]?.startDate ? '✓' : '✗'}</li>
-                      <li>• location: {schema['@graph']?.[3]?.location ? '✓' : '✗'}</li>
-                      <li>• organizer: {schema['@graph']?.[3]?.organizer ? '✓' : '✗'}</li>
-                      <li>• image: {schema['@graph']?.[3]?.image ? '✓' : '✗'}</li>
-                      <li>• offers: {schema['@graph']?.[3]?.offers && schema['@graph'][3].offers.length > 0 ? '✓' : '✗'}</li>
+                      <li>• name: {musicEventSchema?.name ? '✓' : '✗'}</li>
+                      <li>• description: {musicEventSchema?.description ? '✓' : '✗'}</li>
+                      <li>• startDate: {musicEventSchema?.startDate ? '✓' : '✗'}</li>
+                      <li>• location: {musicEventSchema?.location ? '✓' : '✗'}</li>
+                      <li>• organizer: {musicEventSchema?.organizer ? '✓' : '✗'}</li>
+                      <li>• image: {musicEventSchema?.image ? '✓' : '✗'}</li>
+                      <li>• offers: {musicEventSchema?.offers && musicEventSchema.offers.length > 0 ? '✓' : '✗'}</li>
                     </ul>
                   </div>
 
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm">SEO y Metadatos</h4>
                     <ul className="text-xs space-y-1 text-muted-foreground">
-                      <li>• eventStatus: {schema['@graph']?.[3]?.eventStatus ? '✓' : '✗'}</li>
-                      <li>• eventAttendanceMode: {schema['@graph']?.[3]?.eventAttendanceMode ? '✓' : '✗'}</li>
-                      <li>• inLanguage: {schema['@graph']?.[3]?.inLanguage ? '✓' : '✗'}</li>
-                      <li>• maximumAttendeeCapacity: {schema['@graph']?.[3]?.maximumAttendeeCapacity ? '✓' : '✗'}</li>
-                      <li>• subEvent: {schema['@graph']?.[3]?.subEvent && schema['@graph'][3].subEvent.length > 0 ? '✓' : '✗'}</li>
-                      <li>• performer: {schema['@graph']?.[3]?.performer ? '✓' : '✗'}</li>
+                      <li>• eventStatus: {musicEventSchema?.eventStatus ? '✓' : '✗'}</li>
+                      <li>• eventAttendanceMode: {musicEventSchema?.eventAttendanceMode ? '✓' : '✗'}</li>
+                      <li>• inLanguage: {musicEventSchema?.inLanguage ? '✓' : '✗'}</li>
+                      <li>• maximumAttendeeCapacity: {musicEventSchema?.maximumAttendeeCapacity ? '✓' : '✗'}</li>
+                      <li>• subEvent: {musicEventSchema?.subEvent && musicEventSchema.subEvent.length > 0 ? '✓' : '✗'}</li>
+                      <li>• performer: {musicEventSchema?.performer ? '✓' : '✗'}</li>
                     </ul>
                   </div>
                 </div>
@@ -307,7 +313,7 @@ export function SchemaPreview({ eventData }: SchemaPreviewProps) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {schema['@graph']?.[3]?.['@type'] === 'MusicFestival' || schema['@graph']?.[3]?.['@type'] === 'MusicEvent' ? (
+                    {musicEventSchema?.['@type'] === 'MusicFestival' || musicEventSchema?.['@type'] === 'MusicEvent' ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
                     ) : (
                       <AlertCircle className="h-4 w-4 text-red-600" />
@@ -316,7 +322,7 @@ export function SchemaPreview({ eventData }: SchemaPreviewProps) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {schema['@graph']?.[3]?.startDate ? (
+                    {musicEventSchema?.startDate ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
                     ) : (
                       <AlertCircle className="h-4 w-4 text-red-600" />
@@ -325,7 +331,7 @@ export function SchemaPreview({ eventData }: SchemaPreviewProps) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {schema['@graph']?.[3]?.location?.address?.addressCountry ? (
+                    {musicEventSchema?.location?.address?.addressCountry ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
                     ) : (
                       <AlertCircle className="h-4 w-4 text-red-600" />
@@ -334,7 +340,7 @@ export function SchemaPreview({ eventData }: SchemaPreviewProps) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {schema['@graph']?.[3]?.location?.address?.addressLocality ? (
+                    {musicEventSchema?.location?.address?.addressLocality ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
                     ) : (
                       <AlertCircle className="h-4 w-4 text-red-600" />

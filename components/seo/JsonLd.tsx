@@ -30,3 +30,24 @@ export default function JsonLd({ data, id }: JsonLdProps) {
     return null;
   }
 }
+
+/**
+ * Renders multiple JSON-LD schemas as separate script tags
+ */
+export function JsonLdArray({ data, id }: { data: unknown[]; id?: string }) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      {data.map((schema, index) => (
+        <JsonLd
+          key={`${id || 'json-ld-schema'}-${index}`}
+          data={schema}
+          id={`${id || 'json-ld-schema'}-${index}`}
+        />
+      ))}
+    </>
+  );
+}

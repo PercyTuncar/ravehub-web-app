@@ -122,7 +122,7 @@ export class SchemaGenerator {
         throw new Error(`Unsupported schema type: ${input.type}`);
     }
   }
-generateEventSchema(eventData: any) {
+generateEventSchema(eventData: any): any[] {
   const baseUrl = SchemaGenerator.BASE_URL.replace(/\/$/, '');
   const slug = (eventData.slug || eventData.id || '').toString().replace(/^\/+/, '');
   const eventSlug = slug || 'evento';
@@ -343,85 +343,89 @@ generateEventSchema(eventData: any) {
         }
       : undefined,
   ].filter(Boolean);
-  const schema: any = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'WebSite',
-        '@id': websiteId,
-        url: baseUrl,
-        name: 'Ravehub',
-        alternateName: ['Ravehub'],
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${baseUrl}/buscar?q={search_term_string}`,
-          'query-input': 'required name=search_term_string'
-        }
+  // Create individual schema objects instead of @graph
+  const schemas: any[] = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      '@id': websiteId,
+      url: baseUrl,
+      name: 'Ravehub',
+      alternateName: ['Ravehub'],
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: `${baseUrl}/buscar?q={search_term_string}`,
+        'query-input': 'required name=search_term_string'
+      }
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      '@id': organizationId,
+      name: 'Ravehub',
+      url: baseUrl,
+      logo: {
+        '@type': 'ImageObject',
+        '@id': logoId,
+        url: `${baseUrl}/icons/logo.png`,
+        width: 600,
+        height: 60,
       },
-      {
-        '@type': 'Organization',
-        '@id': organizationId,
-        name: 'Ravehub',
-        url: baseUrl,
-        logo: {
-          '@type': 'ImageObject',
-          '@id': logoId,
-          url: `${baseUrl}/icons/logo.png`,
-          width: 600,
-          height: 60,
-        },
-        sameAs: [
-          'https://www.instagram.com/ravehub.pe',
-          'https://www.facebook.com/ravehub'
-        ],
+      sameAs: [
+        'https://www.instagram.com/ravehub.pe',
+        'https://www.facebook.com/ravehub'
+      ],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      '@id': pageId,
+      url: eventUrl,
+      name: eventData.seoTitle || eventData.name,
+      isPartOf: { '@id': websiteId },
+      about: { '@id': eventId },
+      primaryImageOfPage: cleanImageUrl(eventData.mainImageUrl) ? {
+        '@type': 'ImageObject',
+        '@id': primaryImageId,
+        url: cleanImageUrl(eventData.mainImageUrl),
+        width: 1200,
+        height: 675,
+        caption: eventData.name,
+      } : undefined,
+      datePublished: toIsoString(eventData.createdAt),
+      dateModified: toIsoString(eventData.updatedAt || eventData.createdAt),
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': eventData.schemaType || (eventData.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent'),
+      '@id': eventId,
+      name: eventData.name,
+      url: eventUrl,
+      description: eventData.seoDescription || eventData.shortDescription || eventData.description,
+      inLanguage: normalizeLanguage(eventData.inLanguage),
+      mainEntityOfPage: { '@id': pageId },
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      isAccessibleForFree: Boolean(eventData.isAccessibleForFree),
+      startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
+      endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime),
+      doorTime: eventData.doorTime ? formatDateWithTimezone(eventData.startDate, eventData.doorTime) : undefined,
+      location: locationNode,
+      image: imageObjects.length > 0 ? imageObjects : undefined,
+      organizer: organizerNode,
+      performer: performers,
+      offers: offers.length > 0 ? offers : undefined,
+      subEvent: subEvents && subEvents.length > 0 ? subEvents : undefined,
+      maximumAttendeeCapacity: capacity,
+      audience: {
+        '@type': 'PeopleAudience',
+        requiredMinAge: minAge,
+        ...(eventData.audienceType ? { audienceType: eventData.audienceType } : {}),
       },
-      {
-        '@type': 'WebPage',
-        '@id': pageId,
-        url: eventUrl,
-        name: eventData.seoTitle || eventData.name,
-        isPartOf: { '@id': websiteId },
-        about: { '@id': eventId },
-        primaryImageOfPage: cleanImageUrl(eventData.mainImageUrl) ? {
-          '@type': 'ImageObject',
-          '@id': primaryImageId,
-          url: cleanImageUrl(eventData.mainImageUrl),
-          width: 1200,
-          height: 675,
-          caption: eventData.name,
-        } : undefined,
-        datePublished: toIsoString(eventData.createdAt),
-        dateModified: toIsoString(eventData.updatedAt || eventData.createdAt),
-      },
-      {
-        '@type': eventData.schemaType || (eventData.eventType === 'festival' ? 'MusicFestival' : 'MusicEvent'),
-        '@id': eventId,
-        name: eventData.name,
-        url: eventUrl,
-        description: eventData.seoDescription || eventData.shortDescription || eventData.description,
-        inLanguage: normalizeLanguage(eventData.inLanguage),
-        mainEntityOfPage: { '@id': pageId },
-        eventStatus: 'https://schema.org/EventScheduled',
-        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-        isAccessibleForFree: Boolean(eventData.isAccessibleForFree),
-        startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
-        endDate: formatDateWithTimezone(eventData.endDate, eventData.endTime),
-        doorTime: eventData.doorTime ? formatDateWithTimezone(eventData.startDate, eventData.doorTime) : undefined,
-        location: locationNode,
-        image: imageObjects.length > 0 ? imageObjects : undefined,
-        organizer: organizerNode,
-        performer: performers,
-          offers: offers.length > 0 ? offers : undefined,
-        subEvent: subEvents && subEvents.length > 0 ? subEvents : undefined,
-        maximumAttendeeCapacity: capacity,
-        audience: {
-          '@type': 'PeopleAudience',
-          requiredMinAge: minAge,
-          ...(eventData.audienceType ? { audienceType: eventData.audienceType } : {}),
-        },
-      },
-    ],
-  };
+    },
+  ];
+
+  // Add FAQPage if FAQs exist
   const faqs = Array.isArray(eventData.faqSection)
     ? eventData.faqSection
         .filter((faq: { question: string; answer: string }) => faq?.question && faq?.answer)
@@ -435,7 +439,8 @@ generateEventSchema(eventData: any) {
         }))
     : [];
   if (faqs.length > 0) {
-    schema['@graph'].push({
+    schemas.push({
+      '@context': 'https://schema.org',
       '@type': 'FAQPage',
       '@id': `${eventUrl}/#faq`,
       isPartOf: { '@id': pageId },
@@ -443,7 +448,10 @@ generateEventSchema(eventData: any) {
       mainEntity: faqs,
     });
   }
-  schema['@graph'].push({
+
+  // Add BreadcrumbList
+  schemas.push({
+    '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       {
@@ -478,16 +486,17 @@ generateEventSchema(eventData: any) {
       }
     ]
   });
-  schema['@graph'] = schema['@graph'].map((node: any) => {
+
+  // Filter out undefined values from each schema
+  return schemas.map((schema: any) => {
     const filtered: any = {};
-    Object.keys(node).forEach(key => {
-      if (node[key] !== undefined) {
-        filtered[key] = node[key];
+    Object.keys(schema).forEach(key => {
+      if (schema[key] !== undefined) {
+        filtered[key] = schema[key];
       }
     });
     return filtered;
   });
-  return schema;
 }
   generateEventPurchaseSchema(eventData: any) {
     const eventUrl = `${SchemaGenerator.BASE_URL}/eventos/${eventData.slug}`;
