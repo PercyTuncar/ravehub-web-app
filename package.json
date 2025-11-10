@@ -72,6 +72,7 @@
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.0.1",
     "@types/color": "^4.2.0",
+    "@types/colorthief": "^2.6.0",
     "@types/node": "^22.8.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
