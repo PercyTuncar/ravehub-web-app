@@ -9,7 +9,7 @@ import { Calendar, MapPin, Clock, Share2, Heart, ChevronLeft, CreditCard, ArrowR
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Event } from '@/lib/types';
-import { extractColorsFromImage, getDefaultPalette, type ColorPalette } from '@/lib/utils/color-extraction';
+import { extractColorsFromImageEnhanced, getDefaultPalette, type ColorPalette } from '@/lib/utils/enhanced-color-extraction';
 import { CountdownTimer } from './CountdownTimer';
 import { useEventColors } from './EventColorContext';
 import { motion } from 'framer-motion';
@@ -75,7 +75,10 @@ export function EventHero({ event }: EventHeroProps) {
       return;
     }
 
-    extractColorsFromImage(event.mainImageUrl)
+    extractColorsFromImageEnhanced(event.mainImageUrl, {
+      quality: 'balanced',
+      targetContrast: 'AA'
+    })
       .then((palette) => {
         setColorPalette(palette || getDefaultPalette());
         setIsLoadingColors(false);
