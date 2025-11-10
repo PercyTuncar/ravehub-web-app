@@ -26,9 +26,10 @@ function convertColorToRgba(color: string, alpha: number): string {
 export function DynamicBackgroundGradients() {
   const { colorPalette } = useEventColors();
   
-  // Get colors with fallbacks (matching getDefaultPalette)
-  const dominantColor = colorPalette?.dominant || 'hsl(24, 95%, 53%)';
-  const accentColor = colorPalette?.accent || 'hsl(200, 100%, 50%)';
+  // Brand colors for initial gradient (orange + cyan) - this is the RaveHub brand gradient
+  const BRAND_ORANGE = 'hsl(24, 95%, 53%)';
+  const BRAND_CYAN = 'hsl(200, 100%, 50%)';
+  const DEFAULT_ACCENT = 'hsl(24, 95%, 60%)'; // Default palette accent (lighter orange)
   
   // Calculate colors from context for current render
   const calculateColors = (domColor: string, accColor: string) => ({
@@ -37,20 +38,36 @@ export function DynamicBackgroundGradients() {
     dominantRgbaLight: convertColorToRgba(domColor, 0.05),
   });
   
-  // Initialize state with colors from context (ensures consistency from first render)
-  const initialColors = calculateColors(dominantColor, accentColor);
-  const [gradientColors, setGradientColors] = useState(initialColors);
+  // Initialize with brand gradient (orange + cyan) for initial state
+  const brandInitialColors = {
+    dominantRgba: convertColorToRgba(BRAND_ORANGE, 0.08),
+    accentRgba: convertColorToRgba(BRAND_CYAN, 0.07),
+    dominantRgbaLight: convertColorToRgba(BRAND_ORANGE, 0.05),
+  };
+  
+  const [gradientColors, setGradientColors] = useState(brandInitialColors);
   const [opacity, setOpacity] = useState(1); // Start with opacity 1 to show default colors
-  const previousColorsRef = useRef(initialColors);
+  const previousColorsRef = useRef(brandInitialColors);
   const hasInitializedRef = useRef(false);
   
   // Update gradient colors smoothly when palette changes
   useEffect(() => {
-    const newColors = calculateColors(dominantColor, accentColor);
+    const dominantColor = colorPalette?.dominant || BRAND_ORANGE;
+    const paletteAccent = colorPalette?.accent || DEFAULT_ACCENT;
+    
+    // Check if we're using default palette (accent is the default lighter orange)
+    // If so, use brand gradient (orange + cyan) for the background
+    // Otherwise, use extracted colors
+    const isUsingDefaultPalette = paletteAccent === DEFAULT_ACCENT || 
+                                   paletteAccent === BRAND_ORANGE ||
+                                   !colorPalette?.accent;
+    const gradientAccentColor = isUsingDefaultPalette ? BRAND_CYAN : paletteAccent;
+    
+    const newColors = calculateColors(dominantColor, gradientAccentColor);
     
     // On first render, initialize refs silently
     if (!hasInitializedRef.current) {
-      previousColorsRef.current = newColors;
+      previousColorsRef.current = brandInitialColors;
       hasInitializedRef.current = true;
       return; // Don't trigger any updates on first render
     }
@@ -79,7 +96,7 @@ export function DynamicBackgroundGradients() {
         });
       });
     }
-  }, [dominantColor, accentColor]);
+  }, [colorPalette?.dominant, colorPalette?.accent]);
 
   return (
     <div className="pointer-events-none absolute inset-0">

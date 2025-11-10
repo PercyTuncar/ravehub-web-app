@@ -1347,15 +1347,17 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
             <TabsTrigger 
               value="driving-car" 
               className={cn(
-                "flex items-center justify-center gap-2 text-white/70 transition-all rounded-md",
+                "flex items-center justify-center gap-2 text-white transition-all rounded-md",
                 "data-[state=active]:shadow-sm",
                 routeMode === 'driving-car' && "bg-white/10"
               )}
               style={{
                 ...(routeMode === 'driving-car' ? {
                   backgroundColor: `${dominantColor}15`,
-                  color: dominantColor,
-                } : {}),
+                  color: '#FFFFFF',
+                } : {
+                  color: '#FFFFFF',
+                }),
                 transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
@@ -1366,20 +1368,22 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
                   transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               />
-              <span className="text-xs sm:text-sm font-medium">Auto</span>
+              <span className="text-xs sm:text-sm font-medium text-white">Auto</span>
             </TabsTrigger>
             <TabsTrigger 
               value="foot-walking" 
               className={cn(
-                "flex items-center justify-center gap-2 text-white/70 transition-all rounded-md",
+                "flex items-center justify-center gap-2 text-white transition-all rounded-md",
                 "data-[state=active]:shadow-sm",
                 routeMode === 'foot-walking' && "bg-white/10"
               )}
               style={{
                 ...(routeMode === 'foot-walking' ? {
                   backgroundColor: `${dominantColor}15`,
-                  color: dominantColor,
-                } : {}),
+                  color: '#FFFFFF',
+                } : {
+                  color: '#FFFFFF',
+                }),
                 transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
@@ -1390,20 +1394,22 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
                   transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               />
-              <span className="text-xs sm:text-sm font-medium">A pie</span>
+              <span className="text-xs sm:text-sm font-medium text-white">A pie</span>
             </TabsTrigger>
             <TabsTrigger 
               value="cycling" 
               className={cn(
-                "flex items-center justify-center gap-2 text-white/70 transition-all rounded-md",
+                "flex items-center justify-center gap-2 text-white transition-all rounded-md",
                 "data-[state=active]:shadow-sm",
                 routeMode === 'cycling' && "bg-white/10"
               )}
               style={{
                 ...(routeMode === 'cycling' ? {
                   backgroundColor: `${dominantColor}15`,
-                  color: dominantColor,
-                } : {}),
+                  color: '#FFFFFF',
+                } : {
+                  color: '#FFFFFF',
+                }),
                 transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
@@ -1414,20 +1420,22 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
                   transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               />
-              <span className="text-xs sm:text-sm font-medium">Bici</span>
+              <span className="text-xs sm:text-sm font-medium text-white">Bici</span>
             </TabsTrigger>
             <TabsTrigger 
               value="transit" 
               className={cn(
-                "flex items-center justify-center gap-2 text-white/70 transition-all rounded-md",
+                "flex items-center justify-center gap-2 text-white transition-all rounded-md",
                 "data-[state=active]:shadow-sm",
                 routeMode === 'transit' && "bg-white/10"
               )}
               style={{
                 ...(routeMode === 'transit' ? {
                   backgroundColor: `${dominantColor}15`,
-                  color: dominantColor,
-                } : {}),
+                  color: '#FFFFFF',
+                } : {
+                  color: '#FFFFFF',
+                }),
                 transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
@@ -1438,7 +1446,7 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
                   transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               />
-              <span className="text-xs sm:text-sm font-medium">Bus</span>
+              <span className="text-xs sm:text-sm font-medium text-white">Bus</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>

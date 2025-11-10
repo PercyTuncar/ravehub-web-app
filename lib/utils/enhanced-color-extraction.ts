@@ -571,7 +571,7 @@ export function applyColorPaletteToDocument(palette: ColorPalette): void {
 export function getDefaultPalette(): ColorPalette {
   return {
     dominant: 'hsl(24, 95%, 53%)', // Orange brand color
-    accent: 'hsl(200, 100%, 50%)', // Cyan/blue accent color (matches initial background gradient)
+    accent: 'hsl(24, 95%, 60%)', // Lighter orange accent (default should be orange, not cyan)
     background: 'hsl(0, 0%, 8%)',
     text: '#ffffff',
     muted: 'hsl(0, 0%, 30%)',
@@ -581,14 +581,14 @@ export function getDefaultPalette(): ColorPalette {
       secondary: '#f5f5f5',
     },
     gradients: {
-      primary: 'linear-gradient(135deg, hsl(24, 95%, 53%), hsl(200, 100%, 50%))',
-      secondary: 'linear-gradient(90deg, hsl(200, 100%, 50%), hsl(24, 95%, 53%))',
+      primary: 'linear-gradient(135deg, hsl(24, 95%, 53%), hsl(24, 95%, 60%))',
+      secondary: 'linear-gradient(90deg, hsl(24, 95%, 60%), hsl(24, 95%, 53%))',
       radial: 'radial-gradient(circle, hsl(24, 95%, 53%, 0.15) 0%, hsl(0, 0%, 8%) 70%)',
     },
     success: '#10b981',
     warning: '#f59e0b',
     error: '#ef4444',
-    info: 'hsl(200, 100%, 50%)',
+    info: 'hsl(24, 95%, 60%)',
   };
 }
 
