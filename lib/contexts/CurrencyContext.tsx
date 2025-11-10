@@ -22,9 +22,24 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 const STORAGE_KEY = 'ravehub_selected_currency';
 const STORAGE_EVENT = 'ravehub_currency_change';
 
+// Función helper para obtener la divisa inicial del localStorage de forma síncrona
+function getInitialCurrency(): string {
+  if (typeof window === 'undefined') {
+    return 'USD';
+  }
+  
+  const savedCurrency = localStorage.getItem(STORAGE_KEY);
+  if (savedCurrency && SUPPORTED_CURRENCIES[savedCurrency as keyof typeof SUPPORTED_CURRENCIES]) {
+    return savedCurrency;
+  }
+  
+  return 'USD';
+}
+
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [currency, setCurrencyState] = useState<string>('USD');
+  // Inicializar con la divisa del localStorage si existe (síncrono)
+  const [currency, setCurrencyState] = useState<string>(getInitialCurrency);
   const [isLoading, setIsLoading] = useState(true);
   const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
 
@@ -60,30 +75,32 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   // Inicializar divisa al montar el componente
   useEffect(() => {
     async function initializeCurrency() {
-      setIsLoading(true);
-
       try {
-        // 1. Verificar si hay una divisa guardada en localStorage
+        // 1. Verificar si el usuario autenticado tiene una preferencia (tiene prioridad sobre localStorage)
+        if (user?.preferredCurrency && SUPPORTED_CURRENCIES[user.preferredCurrency as keyof typeof SUPPORTED_CURRENCIES]) {
+          const currentCurrency = getInitialCurrency();
+          if (user.preferredCurrency !== currentCurrency) {
+            console.log('Using user preferred currency:', user.preferredCurrency);
+            setCurrency(user.preferredCurrency);
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        // 2. Si ya hay una divisa guardada en localStorage (establecida en el estado inicial), 
+        // solo marcamos como cargado y terminamos
         if (typeof window !== 'undefined') {
           const savedCurrency = localStorage.getItem(STORAGE_KEY);
           if (savedCurrency && SUPPORTED_CURRENCIES[savedCurrency as keyof typeof SUPPORTED_CURRENCIES]) {
+            // Ya está establecida en el estado inicial síncrono, solo marcamos como cargado
             console.log('Using saved currency:', savedCurrency);
-            setCurrencyState(savedCurrency);
             setIsLoading(false);
             return;
           }
         }
 
-        // 2. Verificar si el usuario autenticado tiene una preferencia
-        if (user?.preferredCurrency && SUPPORTED_CURRENCIES[user.preferredCurrency as keyof typeof SUPPORTED_CURRENCIES]) {
-          console.log('Using user preferred currency:', user.preferredCurrency);
-          setCurrency(user.preferredCurrency);
-          setIsLoading(false);
-          return;
-        }
-
-        // 3. Detectar ubicación geográfica y configurar divisa automática
-        console.log('Detecting user location for currency...');
+        // 3. Si no hay divisa guardada, detectar ubicación geográfica y configurar divisa automática
+        console.log('No saved currency found, detecting user location...');
         const location = await getUserLocation();
         setDetectedCountry(location.countryCode);
 
@@ -155,6 +172,7 @@ export function useCurrency() {
   }
   return context;
 }
+
 
 
 

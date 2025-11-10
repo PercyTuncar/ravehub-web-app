@@ -100,12 +100,18 @@ export function useCurrencyConverter() {
  * Hook para usar un precio convertido con actualización automática
  */
 export function useConvertedPrice(amount: number, fromCurrency: string) {
-  const { currency: targetCurrency } = useCurrency();
+  const { currency: targetCurrency, isLoading: isCurrencyContextLoading } = useCurrency();
   const [convertedPrice, setConvertedPrice] = useState<ConvertedPrice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function convert() {
+      // Esperar a que el contexto de divisa termine de cargar antes de convertir
+      if (isCurrencyContextLoading) {
+        setIsLoading(true);
+        return;
+      }
+
       if (!amount || !fromCurrency) {
         setIsLoading(false);
         return;
@@ -153,13 +159,14 @@ export function useConvertedPrice(amount: number, fromCurrency: string) {
     }
 
     convert();
-  }, [amount, fromCurrency, targetCurrency]);
+  }, [amount, fromCurrency, targetCurrency, isCurrencyContextLoading]);
 
   return {
     convertedPrice,
     isLoading,
   };
 }
+
 
 
 
