@@ -80,189 +80,133 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
 
   return (
     <>
-      {/* Desktop version - esquina inferior derecha */}
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-            initial={{ x: 400, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 400, opacity: 0 }}
-            transition={{ 
-              type: 'spring',
-              damping: 30,
-              stiffness: 300,
-            }}
-            className="fixed bottom-6 right-6 z-50 hidden lg:block pointer-events-none"
-            style={{ maxWidth: '320px' }}
+      {/* Desktop version - dock style, bottom centered */}
+      <AnimatePresence>
+        {isVisible && (
+          <div 
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden lg:block pointer-events-none"
+            style={{ maxWidth: '500px', width: 'auto' }}
           >
-            <div className="pointer-events-auto relative">
+            <motion.div
+              initial={{ y: 100, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 100, opacity: 0, scale: 0.95 }}
+              transition={{ 
+                type: 'spring',
+                damping: 28,
+                stiffness: 300,
+                mass: 0.7,
+              }}
+              className="pointer-events-auto relative w-full"
+            >
               {/* Close button */}
               <button
                 onClick={handleDismiss}
-                className="absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full bg-[#141618] border border-white/20 hover:border-white/40 flex items-center justify-center transition-colors shadow-lg"
+                className="absolute -top-1.5 -right-1.5 z-20 w-6 h-6 rounded-full bg-black/70 backdrop-blur-sm border border-white/10 hover:border-white/20 flex items-center justify-center transition-all duration-200 shadow-md hover:scale-110 hover:bg-black/80"
                 aria-label="Cerrar"
               >
-                <X className="h-3 w-3 text-white/70 hover:text-white" />
+                <X className="h-3 w-3 text-white/90 hover:text-white" />
               </button>
 
               <Link href={`/eventos/${event.slug}/comprar`}>
                 <motion.div
                   whileHover={{ y: -2, scale: 1.01 }}
-          className={cn(
-                    'relative overflow-visible',
-                    'bg-gradient-to-br from-[#141618] to-[#0f1113]',
-                    'border',
-                    'shadow-2xl',
-                    'cursor-pointer'
-          )}
-          style={{
-                    borderColor: `${accentColor}40`,
-                    boxShadow: `0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px ${accentColor}30`,
+                  className={cn(
+                    'relative overflow-hidden group',
+                    'backdrop-blur-xl',
+                    'cursor-pointer',
+                    'transition-all duration-300'
+                  )}
+                  style={{
+                    background: `linear-gradient(135deg, rgba(20, 22, 24, 0.92) 0%, rgba(15, 17, 19, 0.95) 100%)`,
+                    border: `1px solid ${accentColor}15`,
+                    boxShadow: `
+                      0 8px 32px -4px rgba(0, 0, 0, 0.5),
+                      0 0 0 0.5px rgba(255, 255, 255, 0.05),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.08)
+                    `,
                     borderRadius: '16px',
                   }}
                 >
-                  {/* Ticket side perforations - Left */}
-                  <div 
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-full flex flex-col items-center justify-center gap-3 pointer-events-none z-10"
-                  >
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          backgroundColor: '#0a0c0f',
-                          border: `1.5px solid ${accentColor}40`,
-                          boxShadow: `0 0 0 2px #141618, inset 0 0 3px ${accentColor}20`,
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Ticket side perforations - Right */}
-                  <div 
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-full flex flex-col items-center justify-center gap-3 pointer-events-none z-10"
-                  >
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          backgroundColor: '#0a0c0f',
-                          border: `1.5px solid ${accentColor}40`,
-                          boxShadow: `0 0 0 2px #141618, inset 0 0 3px ${accentColor}20`,
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Content */}
-                  <div className="relative px-5 py-4">
-                    {/* Top border with dashed line */}
+                  {/* Content - Horizontal layout */}
+                  <div className="relative px-5 py-2.5 flex items-center gap-3.5">
+                    {/* Icon */}
                     <div 
-                      className="absolute top-0 left-4 right-4 h-px"
+                      className="flex-shrink-0 p-2 rounded-lg"
                       style={{
-                        background: `repeating-linear-gradient(
-                          90deg,
-                          ${accentColor}60,
-                          ${accentColor}60 4px,
-                          transparent 4px,
-                          transparent 8px
-                        )`,
+                        background: `${accentColor}15`,
+                        border: `1px solid ${accentColor}20`,
                       }}
-                    />
+                    >
+                      <Ticket 
+                        className="h-4 w-4" 
+                        style={{ color: accentColor }}
+                      />
+                    </div>
 
-                    {/* Header */}
-                    <div className="flex items-center gap-2 mb-3 pt-1">
-                      <div 
-                        className="p-1.5 rounded-md flex-shrink-0"
-                        style={{
-                          backgroundColor: `${accentColor}15`,
-                          border: `1px solid ${accentColor}30`,
-                        }}
-                      >
-                        <Ticket 
-                          className="h-3.5 w-3.5" 
-                          style={{ color: accentColor }}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div 
-                          className="text-[10px] font-bold uppercase tracking-wider"
+                    {/* Info Section */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className="text-[9px] font-semibold uppercase tracking-wider opacity-75"
                           style={{ color: accentColor }}
                         >
-                          Entradas disponibles
+                          Desde
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <div 
+                          className="text-xl font-bold leading-tight"
+                          style={{ color: accentColor }}
+                        >
+                          {isConvertingPrice ? (
+                            <span className="inline-block animate-pulse text-lg">---</span>
+                          ) : (
+                            <span>{convertedPrice?.formatted || `${eventCurrency} ${cheapestPrice.toFixed(2)}`}</span>
+                          )}
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Price */}
-                    <div className="mb-3">
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="text-white/60 text-sm font-medium">Desde</span>
-                      </div>
-                      <div 
-                        className="text-3xl font-bold leading-none"
-                        style={{ color: accentColor }}
-                      >
-                        {isConvertingPrice ? (
-                          <span className="inline-block animate-pulse">---</span>
-                        ) : (
-                          <span>{convertedPrice?.formatted || `${eventCurrency} ${cheapestPrice.toFixed(2)}`}</span>
+                        {zonesPricing.length > 1 && (
+                          <span className="text-white/35 text-[10px] font-medium">
+                            • {zonesPricing.length} zonas
+                          </span>
                         )}
                       </div>
-                      {zonesPricing.length > 1 && (
-                        <div className="text-white/50 text-xs mt-1.5">
-                          {zonesPricing.length} zonas disponibles
-                        </div>
-                      )}
                     </div>
 
-              {/* CTA Button */}
+                    {/* CTA Button */}
                     <div
                       className={cn(
-                        'w-full py-2.5 px-4 rounded-lg font-semibold text-sm',
+                        'flex-shrink-0 py-2 px-4 rounded-lg font-semibold text-sm',
                         'flex items-center justify-center gap-2',
                         'transition-all duration-200',
-                        'relative overflow-hidden group'
+                        'relative overflow-hidden',
+                        'pointer-events-none'
                       )}
-                  style={{
-                        backgroundColor: accentColor,
-                        color: '#141618',
+                      style={{
+                        background: accentColor,
+                        color: '#FFFFFF',
+                        boxShadow: `0 2px 8px ${accentColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.25)`,
                       }}
                     >
                       {/* Shine effect */}
                       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
                       
-                      <span className="relative z-10">Comprar</span>
-                      <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform relative z-10" />
+                      <span className="relative z-10 font-bold text-white">Comprar</span>
+                      <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform relative z-10 text-white" />
                     </div>
-
-                    {/* Bottom border with dashed line */}
-                    <div 
-                      className="absolute bottom-0 left-4 right-4 h-px"
-                      style={{
-                        background: `repeating-linear-gradient(
-                          90deg,
-                          ${accentColor}60,
-                          ${accentColor}60 4px,
-                          transparent 4px,
-                          transparent 8px
-                        )`,
-                      }}
-                    />
                   </div>
 
-                  {/* Subtle glow */}
+                  {/* Subtle glow effect */}
                   <div 
-                    className="absolute inset-0 -z-10 blur-xl opacity-10 rounded-2xl"
+                    className="absolute -inset-0.5 -z-10 blur-xl opacity-10 rounded-2xl"
                     style={{
-                      backgroundColor: accentColor,
+                      background: `radial-gradient(circle, ${accentColor} 0%, transparent 70%)`,
                     }}
                   />
                 </motion.div>
               </Link>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

@@ -9,16 +9,15 @@ import { Calendar, Clock, Music } from 'lucide-react';
 import { Event, EventDj } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useEventColors } from './EventColorContext';
 
 interface LineupTimelineProps {
   artistLineup: Event['artistLineup'];
   eventDjs: EventDj[];
-  colorPalette?: {
-    accent: string;
-  };
 }
 
-export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupTimelineProps) {
+export function LineupTimeline({ artistLineup, eventDjs }: LineupTimelineProps) {
+  const { colorPalette } = useEventColors();
   if (!artistLineup || artistLineup.length === 0) {
     return null;
   }
@@ -45,11 +44,14 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
     return eventDjs.find((dj) => dj.id === eventDjId);
   };
 
+  const dominantColor = colorPalette?.dominant || '#FBA905';
+  const accentColor = colorPalette?.accent || '#FBA905';
+
   return (
     <Card className="overflow-hidden bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
-          <Music className="h-5 w-5 text-[#FBA905]" />
+          <Music className="h-5 w-5" style={{ color: dominantColor }} />
           Lineup
         </CardTitle>
       </CardHeader>
@@ -58,7 +60,7 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
           <div key={date} className="space-y-4">
             {date && (
               <div className="flex items-center gap-2 pb-2 border-b border-white/10">
-                <Calendar className="h-4 w-4 text-[#FBA905]" />
+                <Calendar className="h-4 w-4" style={{ color: dominantColor }} />
                 <span className="font-semibold text-sm text-[#FAFDFF]">
                   {format(new Date(date), 'EEEE, d MMMM', { locale: es })}
                 </span>
@@ -79,9 +81,13 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
                     className={cn(
                       'flex items-center gap-4 p-4 rounded-lg border transition-all hover:shadow-lg hover:scale-[1.02]',
                       artist.isHeadliner 
-                        ? 'bg-white/10 border-[#FBA905]/40 backdrop-blur-sm' 
+                        ? 'backdrop-blur-sm' 
                         : 'bg-white/5 border-white/10 backdrop-blur-sm hover:border-white/20'
                     )}
+                    style={artist.isHeadliner ? {
+                      backgroundColor: `${dominantColor}15`,
+                      borderColor: `${dominantColor}40`,
+                    } : undefined}
                   >
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
@@ -93,7 +99,7 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
                           height={64}
                           className="w-16 h-16 rounded-full object-cover ring-2 ring-offset-2"
                           style={{
-                            '--tw-ring-color': colorPalette?.accent || 'hsl(var(--ring))',
+                            '--tw-ring-color': accentColor,
                           } as React.CSSProperties}
                         />
                       ) : (
@@ -105,7 +111,8 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
                         <Badge
                           className="absolute -top-1 -right-1"
                           style={{
-                            backgroundColor: colorPalette?.accent || undefined,
+                            backgroundColor: accentColor,
+                            color: '#141618',
                           }}
                         >
                           ★
@@ -118,7 +125,7 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="font-semibold text-lg truncate text-[#FAFDFF]">{artist.name}</h4>
                         {artist.isHeadliner && (
-                          <Badge className="text-xs flex-shrink-0 bg-[#FBA905] text-[#141618]">
+                          <Badge className="text-xs flex-shrink-0 text-[#141618]" style={{ backgroundColor: dominantColor }}>
                             Headliner
                           </Badge>
                         )}
@@ -126,14 +133,14 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
 
                       {artist.stage && (
                         <p className="text-sm text-white/70 mt-1">
-                          <Music className="h-3 w-3 inline mr-1 text-[#FBA905]" />
+                          <Music className="h-3 w-3 inline mr-1" style={{ color: dominantColor }} />
                           {artist.stage}
                         </p>
                       )}
 
                       {artist.performanceTime && (
                         <div className="flex items-center gap-1 text-sm text-white/70 mt-1">
-                          <Clock className="h-3 w-3 text-[#FBA905]" />
+                          <Clock className="h-3 w-3" style={{ color: dominantColor }} />
                           {artist.performanceTime}
                         </div>
                       )}

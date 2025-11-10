@@ -1,0 +1,11 @@
+[
+  {
+    "origin": [
+      "https://www.ravehublatam.com",
+      "http://localhost:3000"
+    ],
+    "method": ["GET", "HEAD", "OPTIONS"],
+    "responseHeader": ["Content-Type", "x-goog-meta-*"],
+    "maxAgeSeconds": 3600
+  }
+]

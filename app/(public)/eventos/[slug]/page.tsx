@@ -1,14 +1,10 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calendar, MapPin, Clock, Share2, Heart, ChevronLeft, CreditCard, Phone, Mail, Globe, MessageCircle } from 'lucide-react';
+import { Share2, Heart, ChevronLeft, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections';
 import { Event, EventDj } from '@/lib/types';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import JsonLd, { JsonLdArray } from '@/components/seo/JsonLd';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import Image from 'next/image';
@@ -21,6 +17,8 @@ import { EventMap } from '@/components/events/EventMap';
 import { EventGallery } from '@/components/events/EventGallery';
 import { EventDetails } from '@/components/events/EventDetails';
 import { EventOrganizer } from '@/components/events/EventOrganizer';
+import { DynamicBackgroundGradients } from '@/components/events/DynamicBackgroundGradients';
+import { EventInfoSidebar } from '@/components/events/EventInfoSidebar';
 
 // ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
 export const revalidate = 180;
@@ -158,13 +156,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
           {/* Main Content */}
           <div className="relative isolate overflow-hidden bg-[#141618]">
-            {/* Background Gradients */}
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(251,169,5,0.08),transparent_52%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_25%,rgba(0,203,255,0.07),transparent_48%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_82%,rgba(255,255,255,0.05),transparent_55%)]" />
-              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#141618] via-[#141618]/95 to-transparent" />
-            </div>
+            {/* Background Gradients - Dynamic based on image colors */}
+            <DynamicBackgroundGradients />
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
               <div className="grid gap-12 lg:grid-cols-3">
@@ -195,134 +188,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 {/* Sidebar */}
                 <div className="space-y-6">
                   {/* Event Info Card */}
-                  <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                    <CardHeader>
-                      <CardTitle className="text-[#FAFDFF]">Información del Evento</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="flex items-start gap-3 text-sm">
-                        <Calendar className="h-5 w-5 text-[#FBA905] mt-0.5 flex-shrink-0" />
-                        <div className="space-y-1">
-                          <div className="text-[#FAFDFF] font-medium">
-                            {format(new Date(event.startDate), 'PPP', { locale: es })}
-                          </div>
-                          {event.endDate && (
-                            <div className="text-white/70 text-xs">
-                              hasta {format(new Date(event.endDate), 'PPP', { locale: es })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <Separator className="bg-white/10" />
-
-                      <div className="flex items-start gap-3 text-sm">
-                        <Clock className="h-5 w-5 text-[#FBA905] mt-0.5 flex-shrink-0" />
-                        <div className="space-y-1">
-                          {event.startTime && (
-                            <div className="text-[#FAFDFF]">
-                              <span className="text-white/70">Inicio:</span> {event.startTime}
-                            </div>
-                          )}
-                          {event.doorTime && (
-                            <div className="text-[#FAFDFF]">
-                              <span className="text-white/70">Puertas:</span> {event.doorTime}
-                            </div>
-                          )}
-                          {event.endTime && (
-                            <div className="text-[#FAFDFF]">
-                              <span className="text-white/70">Fin:</span> {event.endTime}
-                            </div>
-                          )}
-                          {event.timezone && (
-                            <div className="text-white/60 text-xs mt-1">{event.timezone}</div>
-                          )}
-                        </div>
-                      </div>
-
-                      <Separator className="bg-white/10" />
-
-                      <div className="flex items-start gap-3 text-sm">
-                        <MapPin className="h-5 w-5 text-[#FBA905] mt-0.5 flex-shrink-0" />
-                        <div className="space-y-1">
-                          <div className="text-[#FAFDFF] font-medium">{event.location.venue}</div>
-                          <div className="text-white/70 text-xs">
-                            {event.location.city}, {event.location.region}
-                          </div>
-                          {event.location.address && (
-                            <div className="text-white/70 text-xs mt-1">{event.location.address}</div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Event Type & Status */}
-                      <Separator className="bg-white/10" />
-                      <div className="flex flex-wrap gap-2">
-                        {event.eventType && (
-                          <Badge variant="outline" className="border-white/20 text-white/90 bg-white/5">
-                            {event.eventType}
-                          </Badge>
-                        )}
-                        {event.eventStatus && event.eventStatus === 'published' && (
-                          <Badge className="bg-[#28a745]/20 text-[#28a745] border-[#28a745]/30">
-                            {event.eventStatus}
-                          </Badge>
-                        )}
-                        {event.eventAttendanceMode && (
-                          <Badge variant="outline" className="border-white/20 text-white/90 bg-white/5">
-                            {event.eventAttendanceMode}
-                          </Badge>
-                        )}
-                        {event.isAccessibleForFree && (
-                          <Badge className="bg-[#FBA905] text-[#141618]">
-                            Gratis
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Categories */}
-                      {event.categories && event.categories.length > 0 && (
-                        <>
-                          <Separator className="bg-white/10" />
-                          <div>
-                            <div className="text-xs text-white/70 mb-3 uppercase tracking-wider">Categorías</div>
-                            <div className="flex flex-wrap gap-2">
-                              {event.categories.map((cat, index) => (
-                                <Badge 
-                                  key={`cat-${index}-${cat}`} 
-                                  variant="outline" 
-                                  className="text-xs border-white/20 text-white/90 bg-white/5"
-                                >
-                                  {cat}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {/* Age Range & Audience */}
-                      {(event.typicalAgeRange || event.audienceType) && (
-                        <>
-                          <Separator className="bg-white/10" />
-                          <div className="space-y-2 text-sm">
-                            {event.typicalAgeRange && (
-                              <div>
-                                <span className="text-white/70">Edad:</span>{' '}
-                                <span className="text-[#FAFDFF] font-medium">{event.typicalAgeRange}</span>
-                              </div>
-                            )}
-                            {event.audienceType && (
-                              <div>
-                                <span className="text-white/70">Audiencia:</span>{' '}
-                                <span className="text-[#FAFDFF] font-medium">{event.audienceType}</span>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <EventInfoSidebar event={event} />
 
                   {/* Map */}
                   {event.location.geo && (

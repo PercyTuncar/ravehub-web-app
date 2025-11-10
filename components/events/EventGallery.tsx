@@ -14,6 +14,7 @@ import {
 import { ImageIcon, Video, ZoomIn } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useEventColors } from './EventColorContext';
 
 interface EventGalleryProps {
   mainImageUrl: string;
@@ -30,6 +31,8 @@ export function EventGallery({
   videoUrl,
   imageAltTexts,
 }: EventGalleryProps) {
+  const { colorPalette } = useEventColors();
+  const dominantColor = colorPalette?.dominant || '#FBA905';
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
 
@@ -44,7 +47,7 @@ export function EventGallery({
     <Card className="overflow-hidden bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
-          <ImageIcon className="h-5 w-5 text-[#FBA905]" />
+          <ImageIcon className="h-5 w-5" style={{ color: dominantColor }} />
           Multimedia
         </CardTitle>
       </CardHeader>
@@ -107,7 +110,7 @@ export function EventGallery({
         {allVideos.length > 0 && (
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2 text-[#FAFDFF]">
-              <Video className="h-5 w-5 text-[#FBA905]" />
+              <Video className="h-5 w-5" style={{ color: dominantColor }} />
               Videos
             </h3>
             <div className="grid gap-4 md:grid-cols-2">

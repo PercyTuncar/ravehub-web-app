@@ -1,3 +1,5 @@
+import Color from 'color';
+
 export interface ColorPalette {
   dominant: string;
   accent: string;
@@ -73,8 +75,19 @@ async function extractColorsWithColorThief(
   imageUrl: string, 
   quality: 'fast' | 'balanced' | 'detailed'
 ): Promise<{ dominant: [number, number, number]; accent: [number, number, number] } | null> {
-  if (typeof window === 'undefined' || !window.ColorThief) {
+  if (typeof window === 'undefined') {
     return null;
+  }
+
+  // Dynamically load Color Thief if not already loaded
+  if (!window.ColorThief) {
+    try {
+      const ColorThiefModule = await import('colorthief');
+      window.ColorThief = ColorThiefModule.default || ColorThiefModule;
+    } catch (error) {
+      console.warn('Failed to load Color Thief:', error);
+      return null;
+    }
   }
 
   return new Promise((resolve, reject) => {
@@ -89,7 +102,8 @@ async function extractColorsWithColorThief(
       clearTimeout(timeout);
       
       try {
-        const colorThief = new window.ColorThief();
+        const ColorThiefClass = window.ColorThief;
+        const colorThief = new ColorThiefClass();
         
         // Get dominant color
         const dominant = colorThief.getColor(img);
@@ -318,21 +332,70 @@ function createAccessiblePalette(
   const { dominant, accent } = baseColors;
   
   try {
-    // Convert to HSL for better color manipulation
-    const dominantHsl = rgbToHsl(dominant[0], dominant[1], dominant[2]);
-    const accentHsl = rgbToHsl(accent[0], accent[1], accent[2]);
+    // Convert RGB to Color objects for easier manipulation
+    const dominantRgb = `rgb(${dominant[0]}, ${dominant[1]}, ${dominant[2]})`;
+    const accentRgb = `rgb(${accent[0]}, ${accent[1]}, ${accent[2]})`;
+    
+    // Create Color objects and increase saturation significantly
+    const dominantColorObj = Color(dominantRgb).saturate(0.5); // Increase saturation by 50%
+    const accentColorObj = Color(accentRgb).saturate(0.5); // Increase saturation by 50%
+    
+    // Get HSL values after saturation increase
+    const dominantHsl = dominantColorObj.hsl().object();
+    const accentHsl = accentColorObj.hsl().object();
+    
+    // Adjust lightness for better visibility and contrast
+    // Dominant color should be bright enough to stand out but not too bright
+    const dominantLightness = Math.max(Math.min(dominantHsl.l || 50, 65), 40);
+    // Accent color should complement dominant, slightly brighter
+    const accentLightness = Math.max(Math.min((accentHsl.l || 50) + 5, 75), 45);
     
     // Ensure sufficient contrast for text
-    const textColor = dominantHsl.l > 50 ? '#ffffff' : '#f5f5f5';
-    const backgroundColor = `hsl(${dominantHsl.h}, ${Math.max(dominantHsl.s - 20, 10)}%, ${Math.max(dominantHsl.l - 40, 8)}%)`;
+    const textColor = dominantLightness > 50 ? '#ffffff' : '#f5f5f5';
+    
+    // Background should be dark but maintain hue relationship
+    const backgroundLightness = Math.max((dominantHsl.l || 50) - 45, 8);
+    const backgroundSaturation = Math.max((dominantHsl.s || 50) - 25, 10);
+    const backgroundColor = Color(dominantRgb)
+      .saturate(0.2) // Slight saturation for background
+      .darken(0.7)
+      .hsl()
+      .string();
+    
+    // Muted color for subtle elements
+    const mutedLightness = Math.max((dominantHsl.l || 50) - 15, 30);
+    const mutedSaturation = Math.max((dominantHsl.s || 50) - 15, 20);
+    
+    // Create final colors with enhanced saturation
+    const dominantColor = Color(dominantRgb)
+      .saturate(0.5)
+      .lightness(dominantLightness)
+      .hsl()
+      .string();
+    
+    const accentColor = Color(accentRgb)
+      .saturate(0.5)
+      .lightness(accentLightness)
+      .hsl()
+      .string();
+    
+    // For muted color, create directly with HSL values
+    const mutedColor = Color({
+      h: dominantHsl.h || 0,
+      s: mutedSaturation,
+      l: mutedLightness,
+    })
+      .hsl()
+      .string();
     
     // Validate and adjust contrast if needed
     const adjustedColors = ensureContrast(
       {
-        dominant: `hsl(${dominantHsl.h}, ${dominantHsl.s}%, ${dominantHsl.l}%)`,
-        accent: `hsl(${accentHsl.h}, ${accentHsl.s}%, ${Math.min(accentHsl.l + 10, 70)}%)`,
+        dominant: dominantColor,
+        accent: accentColor,
         background: backgroundColor,
         text: textColor,
+        muted: mutedColor,
       },
       targetContrast
     );
@@ -342,7 +405,11 @@ function createAccessiblePalette(
       brand: adjustedColors.dominant,
       contrast: {
         primary: adjustedColors.text,
-        secondary: `hsl(${dominantHsl.h}, ${Math.min(dominantHsl.s + 20, 100)}%, ${Math.max(dominantHsl.l + 20, 20)}%)`,
+        secondary: Color(dominantRgb)
+          .saturate(0.6)
+          .lightness(Math.max(dominantLightness + 20, 20))
+          .hsl()
+          .string(),
       },
       gradients: {
         primary: `linear-gradient(135deg, ${adjustedColors.dominant}, ${adjustedColors.accent})`,
@@ -369,6 +436,7 @@ function ensureContrast(
     accent: string;
     background: string;
     text: string;
+    muted?: string;
   },
   targetContrast: 'AA' | 'AAA'
 ): {
@@ -378,11 +446,13 @@ function ensureContrast(
   text: string;
   muted: string;
 } {
-  // For now, return with muted color - in a full implementation,
-  // you would validate contrast ratios and adjust colors as needed
+  // Return colors with muted color (already calculated in createAccessiblePalette)
   return {
-    ...colors,
-    muted: `hsl(${getHueFromColor(colors.dominant)}, 20%, 60%)`,
+    dominant: colors.dominant,
+    accent: colors.accent,
+    background: colors.background,
+    text: colors.text,
+    muted: colors.muted || `hsl(${getHueFromColor(colors.dominant)}, 20%, 60%)`,
   };
 }
 
@@ -527,4 +597,48 @@ declare global {
   interface Window {
     ColorThief: any;
   }
+}
+
+// Helper function to convert HSL color string to RGB for opacity calculations
+export function hslToRgb(hslString: string): { r: number; g: number; b: number } | null {
+  const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+  if (!match) return null;
+  
+  const h = parseInt(match[1]) / 360;
+  const s = parseInt(match[2]) / 100;
+  const l = parseInt(match[3]) / 100;
+  
+  let r, g, b;
+  
+  if (s === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  
+  return {
+    r: Math.round(r * 255),
+    g: Math.round(g * 255),
+    b: Math.round(b * 255)
+  };
+}
+
+// Helper function to convert HSL to rgba string with opacity
+export function hslToRgba(hslString: string, opacity: number): string {
+  const rgb = hslToRgb(hslString);
+  if (!rgb) return `rgba(0, 0, 0, ${opacity})`;
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
 }
