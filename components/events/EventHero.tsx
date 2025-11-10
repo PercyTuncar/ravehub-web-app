@@ -43,6 +43,7 @@ function CinematicOverlays({ disableMotion, palette }: { disableMotion: boolean;
           backgroundColor: palette?.dominant 
             ? `${palette.dominant}25` 
             : 'rgba(251, 169, 5, 0.25)',
+          transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       />
       <div
@@ -53,6 +54,7 @@ function CinematicOverlays({ disableMotion, palette }: { disableMotion: boolean;
           backgroundColor: palette?.accent 
             ? `${palette.accent}25` 
             : 'rgba(0, 203, 255, 0.25)',
+          transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       />
     </div>
@@ -267,6 +269,7 @@ export function EventHero({ event }: EventHeroProps) {
                     borderColor: palette?.accent 
                       ? `${palette.accent}60` 
                       : 'rgba(251, 169, 5, 0.6)',
+                    transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
                   {cat}
@@ -282,6 +285,7 @@ export function EventHero({ event }: EventHeroProps) {
                     borderColor: palette?.accent 
                       ? `${palette.accent}60` 
                       : 'rgba(251, 169, 5, 0.6)',
+                    transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
                   {event.audienceType}
@@ -350,10 +354,11 @@ export function EventHero({ event }: EventHeroProps) {
                 <Link href={`/eventos/${event.slug}/comprar`}>
                   <Button
                     size="lg"
-                    className="group text-lg px-8 py-6 rounded-full font-semibold transition-all hover:scale-105"
+                    className="group text-lg px-8 py-6 rounded-full font-semibold transition-transform hover:scale-105"
                     style={{
                       backgroundColor: palette?.dominant || '#FBA905',
                       color: palette?.text || '#141618',
+                      transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
                     <CreditCard className="h-5 w-5 mr-2" />
@@ -385,6 +390,7 @@ export function EventHero({ event }: EventHeroProps) {
             }`}
             style={{
               backgroundColor: palette?.dominant || '#FBA905',
+              transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           />
         </div>

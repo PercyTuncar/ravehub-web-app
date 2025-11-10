@@ -37,7 +37,13 @@ export function EventDetails({
         <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
-              <FileText className="h-5 w-5" style={{ color: dominantColor }} />
+              <FileText 
+                className="h-5 w-5" 
+                style={{ 
+                  color: dominantColor,
+                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                }} 
+              />
               Acerca del Evento
             </CardTitle>
           </CardHeader>
@@ -50,8 +56,11 @@ export function EventDetails({
                   </p>
                   <button
                     onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                    className="mt-4 hover:underline flex items-center gap-1 transition-colors"
-                    style={{ color: dominantColor }}
+                    className="mt-4 hover:underline flex items-center gap-1"
+                    style={{ 
+                      color: dominantColor,
+                      transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
                   >
                     {isDescriptionExpanded ? (
                       <>
@@ -111,9 +120,10 @@ export function EventDetails({
                   className="border-white/10"
                 >
                   <AccordionTrigger 
-                    className="text-left text-[#FAFDFF] transition-colors"
+                    className="text-left text-[#FAFDFF]"
                     style={{ 
                       '--hover-color': dominantColor,
+                      transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     } as React.CSSProperties & { '--hover-color': string }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.color = dominantColor;
@@ -139,7 +149,13 @@ export function EventDetails({
         <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
-              <Tag className="h-5 w-5" style={{ color: dominantColor }} />
+              <Tag 
+                className="h-5 w-5" 
+                style={{ 
+                  color: dominantColor,
+                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                }} 
+              />
               Etiquetas
             </CardTitle>
           </CardHeader>

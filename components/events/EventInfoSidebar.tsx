@@ -24,7 +24,13 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-start gap-3 text-sm">
-          <Calendar className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: dominantColor }} />
+          <Calendar 
+            className="h-5 w-5 mt-0.5 flex-shrink-0" 
+            style={{ 
+              color: dominantColor,
+              transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+            }} 
+          />
           <div className="space-y-1">
             <div className="text-[#FAFDFF] font-medium">
               {format(new Date(event.startDate), 'PPP', { locale: es })}
@@ -40,7 +46,13 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
         <Separator className="bg-white/10" />
 
         <div className="flex items-start gap-3 text-sm">
-          <Clock className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: dominantColor }} />
+          <Clock 
+            className="h-5 w-5 mt-0.5 flex-shrink-0" 
+            style={{ 
+              color: dominantColor,
+              transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+            }} 
+          />
           <div className="space-y-1">
             {event.startTime && (
               <div className="text-[#FAFDFF]">
@@ -66,7 +78,13 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
         <Separator className="bg-white/10" />
 
         <div className="flex items-start gap-3 text-sm">
-          <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: dominantColor }} />
+          <MapPin 
+            className="h-5 w-5 mt-0.5 flex-shrink-0" 
+            style={{ 
+              color: dominantColor,
+              transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+            }} 
+          />
           <div className="space-y-1">
             <div className="text-[#FAFDFF] font-medium">{event.location.venue}</div>
             <div className="text-white/70 text-xs">
@@ -97,7 +115,13 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
             </Badge>
           )}
           {event.isAccessibleForFree && (
-            <Badge className="text-[#141618]" style={{ backgroundColor: dominantColor }}>
+            <Badge 
+              className="text-[#141618]" 
+              style={{ 
+                backgroundColor: dominantColor,
+                transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
               Gratis
             </Badge>
           )}

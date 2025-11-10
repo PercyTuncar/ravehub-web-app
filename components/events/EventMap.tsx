@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { MapPin, Navigation, Car, Bike, Footprints, Bus, ExternalLink, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEventColors } from './EventColorContext';
 
 interface EventMapProps {
   lat: number;
@@ -20,6 +21,7 @@ interface EventMapProps {
 type RouteMode = 'driving-car' | 'foot-walking' | 'cycling' | 'transit';
 
 export function EventMap({ lat, lng, venue, address }: EventMapProps) {
+  const { colorPalette } = useEventColors();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const marker = useRef<maplibregl.Marker | null>(null);
@@ -34,21 +36,35 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
   const [isAutoLoading, setIsAutoLoading] = useState(false);
   const [hasAutoLoaded, setHasAutoLoaded] = useState(false);
   const [isWatchingLocation, setIsWatchingLocation] = useState(false);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
   const isAutoLoadingRef = useRef(false);
   const watchIdRef = useRef<number | null>(null);
   const reverseGeocodeAbortControllerRef = useRef<AbortController | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const markerColorRef = useRef<string | null>(null);
+  const popupColorRef = useRef<string | null>(null);
 
-  // Create user marker icon based on route mode
+  // Get colors from palette with fallbacks
+  const dominantColor = colorPalette?.dominant || '#FBA905';
+  const accentColor = colorPalette?.accent || '#f97316';
+
+  // Create user marker icon based on route mode with glass effect
   const createUserMarkerIcon = useCallback((mode: RouteMode): HTMLElement => {
     const el = document.createElement('div');
     el.className = 'user-location-marker';
     el.style.width = '40px';
     el.style.height = '40px';
     el.style.borderRadius = '50%';
-    el.style.backgroundColor = '#3b82f6';
-    el.style.border = '3px solid white';
-    el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+    // Glass effect: semi-transparent background with backdrop blur
+    el.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+    el.style.backdropFilter = 'blur(10px)';
+    // Border with dominant color from palette
+    el.style.border = `3px solid ${dominantColor}`;
+    el.style.boxShadow = `0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1) inset`;
+    // Add webkit prefix for Safari support (using setProperty to avoid TypeScript error)
+    el.style.setProperty('-webkit-backdrop-filter', 'blur(10px)');
+    // Add smooth transition for border color changes
+    el.style.transition = 'border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
     el.style.display = 'flex';
     el.style.alignItems = 'center';
     el.style.justifyContent = 'center';
@@ -70,11 +86,14 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
     `;
 
     return el;
-  }, []);
+  }, [dominantColor]);
 
   // Update user marker position and icon
   const updateUserMarker = useCallback((location: { lat: number; lng: number }, mode: RouteMode) => {
-    if (!map.current) return;
+    // Only update if map is loaded and ready
+    if (!map.current || !map.current.loaded()) {
+      return;
+    }
 
     // If marker exists, update position and icon smoothly
     if (userMarker.current) {
@@ -185,9 +204,96 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
     }
   }, [createUserMarkerIcon]);
 
+  // Add user marker when map is loaded and we have a user location
+  useEffect(() => {
+    if (isMapLoaded && userLocation && map.current && map.current.loaded()) {
+      updateUserMarker(userLocation, routeMode);
+    }
+  }, [isMapLoaded, userLocation, routeMode, updateUserMarker]);
+
+  // Update user marker border color when dominantColor changes
+  useEffect(() => {
+    if (userMarker.current) {
+      const markerElement = userMarker.current.getElement();
+      if (markerElement) {
+        // Update border color directly
+        markerElement.style.border = `3px solid ${dominantColor}`;
+      }
+    }
+  }, [dominantColor]);
+
+  // Update route color when accentColor changes
+  useEffect(() => {
+    if (map.current && map.current.loaded() && map.current.getLayer('route')) {
+      try {
+        map.current.setPaintProperty('route', 'line-color', accentColor);
+      } catch (error) {
+        console.warn('⚠️ Could not update route color:', error);
+      }
+    }
+  }, [accentColor, isMapLoaded]);
+
+  // Update destination marker color when accentColor changes (only if map is already initialized)
+  useEffect(() => {
+    // Only update if map is loaded, marker exists, and color actually changed
+    if (marker.current && map.current && map.current.loaded() && accentColor && markerColorRef.current !== accentColor) {
+      // Recreate marker with new color
+      const currentLngLat = marker.current.getLngLat();
+      const popup = marker.current.getPopup();
+      marker.current.remove();
+      marker.current = new maplibregl.Marker({ color: accentColor })
+        .setLngLat([currentLngLat.lng, currentLngLat.lat])
+        .addTo(map.current);
+      
+      // Re-add popup with updated colors
+      const popupHTML = `
+        <div style="color: ${dominantColor}; font-weight: 600; font-size: 14px; margin-bottom: ${address ? '4px' : '0'}; transition: color 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
+          ${venue}
+        </div>
+        ${address ? `<div style="color: ${colorPalette?.muted || '#6b7280'}; font-size: 12px; transition: color 0.8s cubic-bezier(0.4, 0, 0.2, 1);">${address}</div>` : ''}
+      `;
+      
+      if (popup) {
+        popup.setHTML(popupHTML);
+        marker.current.setPopup(popup);
+      } else {
+        new maplibregl.Popup({ 
+          offset: 25,
+          className: 'venue-popup'
+        })
+          .setLngLat([currentLngLat.lng, currentLngLat.lat])
+          .setHTML(popupHTML)
+          .addTo(map.current);
+      }
+      
+      markerColorRef.current = accentColor;
+      popupColorRef.current = dominantColor;
+    }
+  }, [accentColor, dominantColor, isMapLoaded, venue, address, colorPalette]);
+  
+  // Update popup colors when dominantColor changes (without recreating marker)
+  useEffect(() => {
+    if (marker.current && map.current && map.current.loaded() && dominantColor && popupColorRef.current !== dominantColor) {
+      const popup = marker.current.getPopup();
+      if (popup) {
+        const popupHTML = `
+          <div style="color: ${dominantColor}; font-weight: 600; font-size: 14px; margin-bottom: ${address ? '4px' : '0'}; transition: color 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
+            ${venue}
+          </div>
+          ${address ? `<div style="color: ${colorPalette?.muted || '#6b7280'}; font-size: 12px; transition: color 0.8s cubic-bezier(0.4, 0, 0.2, 1);">${address}</div>` : ''}
+        `;
+        popup.setHTML(popupHTML);
+        popupColorRef.current = dominantColor;
+      }
+    }
+  }, [dominantColor, isMapLoaded, venue, address, colorPalette]);
+
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
+
+    // Reset map loaded state when initializing
+    setIsMapLoaded(false);
 
     const maptilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY || '';
 
@@ -217,16 +323,43 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
       zoom: 15,
     });
 
-    // Add destination marker (event venue)
-    marker.current = new maplibregl.Marker({ color: '#f97316' })
-      .setLngLat([lng, lat])
-      .addTo(map.current);
+    // Wait for map to be fully loaded before marking as ready
+    map.current.on('load', () => {
+      console.log('🗺️ Map loaded and ready');
+      setIsMapLoaded(true);
+    });
 
-    // Add popup for destination
-    new maplibregl.Popup({ offset: 25 })
+    // Handle map errors
+    map.current.on('error', (e) => {
+      console.error('🗺️ Map error:', e);
+    });
+
+    // Add destination marker (event venue) - can be added before load
+    // Use accentColor from palette for the destination marker
+    marker.current = new maplibregl.Marker({ color: accentColor })
       .setLngLat([lng, lat])
-      .setHTML(`<div class="font-semibold">${venue}</div>${address ? `<div class="text-sm text-gray-600">${address}</div>` : ''}`)
       .addTo(map.current);
+    
+    // Store initial marker color in ref
+    markerColorRef.current = accentColor;
+
+    // Add popup for destination with colors from palette
+    const popupHTML = `
+      <div style="color: ${dominantColor}; font-weight: 600; font-size: 14px; margin-bottom: ${address ? '4px' : '0'}; transition: color 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
+        ${venue}
+      </div>
+      ${address ? `<div style="color: ${colorPalette?.muted || '#6b7280'}; font-size: 12px; transition: color 0.8s cubic-bezier(0.4, 0, 0.2, 1);">${address}</div>` : ''}
+    `;
+    new maplibregl.Popup({ 
+      offset: 25,
+      className: 'venue-popup'
+    })
+      .setLngLat([lng, lat])
+      .setHTML(popupHTML)
+      .addTo(map.current);
+    
+    // Store initial popup color in ref
+    popupColorRef.current = dominantColor;
 
     return () => {
       // Cancel any ongoing animations
@@ -236,8 +369,38 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
       }
       if (userMarker.current) {
         userMarker.current.remove();
+        userMarker.current = null;
       }
-      map.current?.remove();
+      if (marker.current) {
+        marker.current.remove();
+        marker.current = null;
+      }
+      // Clean up route source and layer if they exist
+      if (map.current) {
+        try {
+          // Try to remove layer and source safely
+          if (map.current.getLayer && map.current.getLayer('route')) {
+            map.current.removeLayer('route');
+          }
+          if (map.current.getSource && map.current.getSource('route')) {
+            map.current.removeSource('route');
+          }
+        } catch (error) {
+          // Ignore errors during cleanup - map might be in a transitional state
+          console.warn('⚠️ Error cleaning up route (safe to ignore):', error);
+        }
+        // Remove all map event listeners before removing map
+        map.current.remove();
+        map.current = null;
+      }
+      // Reset state
+      setIsMapLoaded(false);
+      setRouteGeometry(null);
+      setUserLocation(null);
+      setHasAutoLoaded(false);
+      isAutoLoadingRef.current = false;
+      markerColorRef.current = null;
+      popupColorRef.current = null;
     };
   }, [lat, lng, venue, address]);
 
@@ -503,50 +666,84 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
 
       setRouteGeometry(geometry);
 
-      // Add route to map
-      if (map.current) {
-        const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
-        if (source) {
-          source.setData({
-            type: 'Feature',
-            geometry,
-            properties: {},
+      // Add route to map - wait for map to be loaded if necessary
+      const addRouteToMap = () => {
+        if (!map.current) {
+          console.warn('⚠️ Map not available when trying to add route');
+          return;
+        }
+
+        // Check if map is loaded and ready
+        if (!map.current.loaded()) {
+          console.log('⏳ Map not loaded yet, waiting...');
+          // Wait for map to load, then add route
+          map.current.once('load', () => {
+            addRouteToMap();
           });
-        } else {
-          map.current.addSource('route', {
-            type: 'geojson',
-            data: {
+          return;
+        }
+
+        try {
+          // Check if source already exists
+          const source = map.current.getSource('route') as maplibregl.GeoJSONSource | undefined;
+          if (source) {
+            // Update existing source
+            source.setData({
               type: 'Feature',
               geometry,
               properties: {},
-            },
-          });
+            });
+          } else {
+            // Add new source and layer
+            map.current.addSource('route', {
+              type: 'geojson',
+              data: {
+                type: 'Feature',
+                geometry,
+                properties: {},
+              },
+            });
 
-          map.current.addLayer({
-            id: 'route',
-            type: 'line',
-            source: 'route',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-            },
-            paint: {
-              'line-color': '#f97316',
-              'line-width': 4,
-            },
-          });
-        }
+            // Check if layer already exists before adding
+            if (!map.current.getLayer('route')) {
+              map.current.addLayer({
+                id: 'route',
+                type: 'line',
+                source: 'route',
+                layout: {
+                  'line-join': 'round',
+                  'line-cap': 'round',
+                },
+                paint: {
+                  'line-color': accentColor,
+                  'line-width': 4,
+                },
+              });
+            }
+          }
 
-        // Fit bounds to route
-        const coordinates = geometry.coordinates as [number, number][];
-        if (coordinates && coordinates.length > 0) {
-          const bounds = coordinates.reduce(
-            (bounds, coord) => bounds.extend(coord as maplibregl.LngLatLike),
-            new maplibregl.LngLatBounds(coordinates[0] as maplibregl.LngLatLike, coordinates[0] as maplibregl.LngLatLike)
-          );
-          map.current.fitBounds(bounds, { padding: 50 });
+          // Fit bounds to route
+          const coordinates = geometry.coordinates as [number, number][];
+          if (coordinates && coordinates.length > 0) {
+            const bounds = coordinates.reduce(
+              (bounds, coord) => bounds.extend(coord as maplibregl.LngLatLike),
+              new maplibregl.LngLatBounds(coordinates[0] as maplibregl.LngLatLike, coordinates[0] as maplibregl.LngLatLike)
+            );
+            map.current.fitBounds(bounds, { padding: 50 });
+          }
+        } catch (error) {
+          console.error('❌ Error adding route to map:', error);
+          // If error occurs, try again after a short delay
+          setTimeout(() => {
+            if (map.current && map.current.loaded()) {
+              addRouteToMap();
+            }
+          }, 500);
         }
-      }
+      };
+
+      // Add route to map (will wait if map is not loaded)
+      addRouteToMap();
 
       setIsLoadingRoute(false);
     } catch (error) {
@@ -1119,7 +1316,7 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
     <Card className="overflow-hidden bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
-          <MapPin className="h-5 w-5 text-[#FBA905]" />
+          <MapPin className="h-5 w-5" style={{ color: dominantColor }} />
           Cómo llegar
         </CardTitle>
       </CardHeader>
@@ -1140,22 +1337,108 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
             });
           }
         }}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="driving-car" className="flex items-center gap-2">
-              <Car className="h-4 w-4" />
-              Auto
+          <TabsList 
+            className="grid w-full grid-cols-4 bg-white/5 border backdrop-blur-sm p-1 gap-1"
+            style={{
+              borderColor: `${dominantColor}30`,
+              transition: 'border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            <TabsTrigger 
+              value="driving-car" 
+              className={cn(
+                "flex items-center justify-center gap-2 text-white/70 transition-all rounded-md",
+                "data-[state=active]:shadow-sm",
+                routeMode === 'driving-car' && "bg-white/10"
+              )}
+              style={{
+                ...(routeMode === 'driving-car' ? {
+                  backgroundColor: `${dominantColor}15`,
+                  color: dominantColor,
+                } : {}),
+                transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              <Car 
+                className="h-4 w-4" 
+                style={{ 
+                  color: routeMode === 'driving-car' ? dominantColor : 'rgba(255, 255, 255, 0.7)',
+                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+              <span className="text-xs sm:text-sm font-medium">Auto</span>
             </TabsTrigger>
-            <TabsTrigger value="foot-walking" className="flex items-center gap-2">
-              <Footprints className="h-4 w-4" />
-              A pie
+            <TabsTrigger 
+              value="foot-walking" 
+              className={cn(
+                "flex items-center justify-center gap-2 text-white/70 transition-all rounded-md",
+                "data-[state=active]:shadow-sm",
+                routeMode === 'foot-walking' && "bg-white/10"
+              )}
+              style={{
+                ...(routeMode === 'foot-walking' ? {
+                  backgroundColor: `${dominantColor}15`,
+                  color: dominantColor,
+                } : {}),
+                transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              <Footprints 
+                className="h-4 w-4" 
+                style={{ 
+                  color: routeMode === 'foot-walking' ? dominantColor : 'rgba(255, 255, 255, 0.7)',
+                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+              <span className="text-xs sm:text-sm font-medium">A pie</span>
             </TabsTrigger>
-            <TabsTrigger value="cycling" className="flex items-center gap-2">
-              <Bike className="h-4 w-4" />
-              Bici
+            <TabsTrigger 
+              value="cycling" 
+              className={cn(
+                "flex items-center justify-center gap-2 text-white/70 transition-all rounded-md",
+                "data-[state=active]:shadow-sm",
+                routeMode === 'cycling' && "bg-white/10"
+              )}
+              style={{
+                ...(routeMode === 'cycling' ? {
+                  backgroundColor: `${dominantColor}15`,
+                  color: dominantColor,
+                } : {}),
+                transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              <Bike 
+                className="h-4 w-4" 
+                style={{ 
+                  color: routeMode === 'cycling' ? dominantColor : 'rgba(255, 255, 255, 0.7)',
+                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+              <span className="text-xs sm:text-sm font-medium">Bici</span>
             </TabsTrigger>
-            <TabsTrigger value="transit" className="flex items-center gap-2">
-              <Bus className="h-4 w-4" />
-              Bus
+            <TabsTrigger 
+              value="transit" 
+              className={cn(
+                "flex items-center justify-center gap-2 text-white/70 transition-all rounded-md",
+                "data-[state=active]:shadow-sm",
+                routeMode === 'transit' && "bg-white/10"
+              )}
+              style={{
+                ...(routeMode === 'transit' ? {
+                  backgroundColor: `${dominantColor}15`,
+                  color: dominantColor,
+                } : {}),
+                transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              <Bus 
+                className="h-4 w-4" 
+                style={{ 
+                  color: routeMode === 'transit' ? dominantColor : 'rgba(255, 255, 255, 0.7)',
+                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+              <span className="text-xs sm:text-sm font-medium">Bus</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -1181,6 +1464,10 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
             onClick={handleGetLocation}
             disabled={isLoadingRoute || isAutoLoading}
             className="flex items-center gap-2 whitespace-nowrap"
+            style={{
+              backgroundColor: dominantColor,
+              color: '#FFFFFF',
+            }}
           >
             {(isLoadingRoute || isAutoLoading) ? (
               <>
@@ -1226,6 +1513,10 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
           variant="outline"
           className="w-full"
           onClick={() => openGoogleMaps(routeMode === 'transit' ? 'transit' : 'driving')}
+          style={{
+            borderColor: dominantColor,
+            color: dominantColor,
+          }}
         >
           <ExternalLink className="h-4 w-4 mr-2" />
           Ver en Google Maps

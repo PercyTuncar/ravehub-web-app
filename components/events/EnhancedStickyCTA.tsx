@@ -189,6 +189,7 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
           style={{
             backgroundColor: colorPalette?.background || 'hsl(var(--card))',
             borderColor: colorPalette?.accent || 'hsl(var(--border))',
+            transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <Card className="border-0 shadow-none rounded-none md:rounded-2xl">
@@ -272,6 +273,7 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
                     style={{
                       background: `linear-gradient(135deg, ${colorPalette?.dominant || '#FBA905'}, ${colorPalette?.accent || '#F1A000'})`,
                       color: colorPalette?.text || '#fff',
+                      transition: 'background 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
                     {isLoading ? (

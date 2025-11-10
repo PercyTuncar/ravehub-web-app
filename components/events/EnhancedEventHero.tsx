@@ -152,7 +152,8 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                 background: `linear-gradient(135deg, 
                   ${colorPalette?.background || 'rgba(0,0,0,0.8)'} 0%, 
                   ${colorPalette?.background || 'rgba(0,0,0,0.6)'} 40%,
-                  rgba(0,0,0,0.8) 100%)`
+                  rgba(0,0,0,0.8) 100%)`,
+                transition: 'background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             />
           </div>
@@ -164,7 +165,8 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
           style={{
             background: `radial-gradient(circle at 50% 30%, 
               ${colorPalette?.dominant || '#FBA905'}15 0%, 
-              ${colorPalette?.background || 'rgba(0,0,0,0.9)'} 60%)`
+              ${colorPalette?.background || 'rgba(0,0,0,0.9)'} 60%)`,
+            transition: 'background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
           animate={{
             opacity: opacityTransform.get()
@@ -237,6 +239,7 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                     style={{
                       backgroundColor: `${colorPalette?.dominant || 'rgba(251,169,5,0.3)'}40`,
                       borderColor: `${colorPalette?.accent || 'rgba(251,169,5,0.6)'}60`,
+                      transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
                     {cat}
@@ -249,6 +252,7 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                     style={{
                       backgroundColor: `${colorPalette?.dominant || 'rgba(251,169,5,0.3)'}40`,
                       borderColor: `${colorPalette?.accent || 'rgba(251,169,5,0.6)'}60`,
+                      transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
                     <Users className="h-3 w-3 mr-1" />
@@ -362,6 +366,7 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                       style={{
                         background: `linear-gradient(135deg, ${colorPalette?.dominant || '#FBA905'}, ${colorPalette?.accent || '#F1A000'})`,
                         color: colorPalette?.text || '#fff',
+                        transition: 'background 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />

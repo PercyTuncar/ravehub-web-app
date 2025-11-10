@@ -56,19 +56,12 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isDismissed]);
 
-  // Check if user dismissed it in sessionStorage
-  useEffect(() => {
-    const dismissed = sessionStorage.getItem(`ticket-cta-dismissed-${event.id}`);
-    if (dismissed === 'true') {
-      setIsDismissed(true);
-    }
-  }, [event.id]);
-
   const handleDismiss = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // Solo actualizamos el estado local - sin sessionStorage
+    // Esto permite que el CTA vuelva a aparecer al recargar la página (F5)
     setIsDismissed(true);
-    sessionStorage.setItem(`ticket-cta-dismissed-${event.id}`, 'true');
   };
 
   // Early return AFTER all hooks have been called
@@ -115,7 +108,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                     'relative overflow-hidden group',
                     'backdrop-blur-xl',
                     'cursor-pointer',
-                    'transition-all duration-300'
+                    'transition-transform duration-300'
                   )}
                   style={{
                     background: `linear-gradient(135deg, rgba(20, 22, 24, 0.92) 0%, rgba(15, 17, 19, 0.95) 100%)`,
@@ -126,7 +119,9 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                       inset 0 1px 0 rgba(255, 255, 255, 0.08)
                     `,
                     borderRadius: '16px',
-                  }}
+                    '--accent-color': accentColor,
+                    transition: 'border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                  } as React.CSSProperties & { '--accent-color': string }}
                 >
                   {/* Content - Horizontal layout */}
                   <div className="relative px-5 py-2.5 flex items-center gap-3.5">
@@ -136,11 +131,15 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                       style={{
                         background: `${accentColor}15`,
                         border: `1px solid ${accentColor}20`,
+                        transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
                       <Ticket 
                         className="h-4 w-4" 
-                        style={{ color: accentColor }}
+                        style={{ 
+                          color: accentColor,
+                          transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
                       />
                     </div>
 
@@ -149,7 +148,10 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                       <div className="flex items-center gap-2">
                         <span 
                           className="text-[9px] font-semibold uppercase tracking-wider opacity-75"
-                          style={{ color: accentColor }}
+                          style={{ 
+                            color: accentColor,
+                            transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                          }}
                         >
                           Desde
                         </span>
@@ -157,7 +159,10 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                       <div className="flex items-baseline gap-2">
                         <div 
                           className="text-xl font-bold leading-tight"
-                          style={{ color: accentColor }}
+                          style={{ 
+                            color: accentColor,
+                            transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                          }}
                         >
                           {isConvertingPrice ? (
                             <span className="inline-block animate-pulse text-lg">---</span>
@@ -178,7 +183,6 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                       className={cn(
                         'flex-shrink-0 py-2 px-4 rounded-lg font-semibold text-sm',
                         'flex items-center justify-center gap-2',
-                        'transition-all duration-200',
                         'relative overflow-hidden',
                         'pointer-events-none'
                       )}
@@ -186,6 +190,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                         background: accentColor,
                         color: '#FFFFFF',
                         boxShadow: `0 2px 8px ${accentColor}30, inset 0 1px 0 rgba(255, 255, 255, 0.25)`,
+                        transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
                       {/* Shine effect */}
@@ -201,6 +206,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                     className="absolute -inset-0.5 -z-10 blur-xl opacity-10 rounded-2xl"
                     style={{
                       background: `radial-gradient(circle, ${accentColor} 0%, transparent 70%)`,
+                      transition: 'background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   />
                 </motion.div>
@@ -246,6 +252,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                   borderColor: `${accentColor}35`,
                   boxShadow: `0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px ${accentColor}25, 0 0 16px ${accentColor}10`,
                   borderRadius: '14px',
+                  transition: 'border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
                 <div className="px-3.5 py-2.5 flex items-center justify-between gap-2.5">
@@ -255,23 +262,33 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                       style={{
                         backgroundColor: `${accentColor}12`,
                         border: `1px solid ${accentColor}25`,
+                        transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
                       <Ticket 
                         className="h-3.5 w-3.5" 
-                        style={{ color: accentColor }}
+                        style={{ 
+                          color: accentColor,
+                          transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div 
                         className="text-[9px] font-semibold uppercase tracking-wider mb-0.5 opacity-90"
-                        style={{ color: accentColor }}
+                        style={{ 
+                          color: accentColor,
+                          transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
                       >
                         Desde
                       </div>
                       <div 
                         className="text-lg font-bold leading-tight"
-                        style={{ color: accentColor }}
+                        style={{ 
+                          color: accentColor,
+                          transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
                       >
                         {isConvertingPrice ? (
                           <span className="inline-block animate-pulse text-xs">---</span>
@@ -285,12 +302,12 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                     className={cn(
                       'py-2 px-3.5 rounded-lg font-semibold text-xs whitespace-nowrap flex-shrink-0',
                       'flex items-center gap-1.5',
-                      'transition-all duration-200',
                       'shadow-sm'
                     )}
                     style={{
                       backgroundColor: accentColor,
                       color: '#141618',
+                      transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
                     Comprar
