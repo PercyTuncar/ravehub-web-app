@@ -27,7 +27,7 @@ import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
 import { generateSlug } from '@/lib/utils/slug-generator';
 import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
-import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart } from '@/lib/utils/date-timezone';
+import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart, formatDateTimeLocalForInput, convertDateTimeLocalToISO, parseLocalDate, compareDates } from '@/lib/utils/date-timezone';
 import toast from 'react-hot-toast';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { revalidateSitemap } from '@/lib/revalidate';
@@ -276,8 +276,8 @@ export default function EditEventPage() {
             return { ...phase, status: 'upcoming' as const };
           }
           
-          const startDate = new Date(phase.startDate);
-          const endDate = new Date(phase.endDate);
+          const startDate = parseLocalDate(phase.startDate);
+          const endDate = parseLocalDate(phase.endDate);
           
           if (now < startDate) {
             return { ...phase, status: 'upcoming' as const };
@@ -351,8 +351,8 @@ export default function EditEventPage() {
         return { ...phase, status: 'upcoming' };
       }
       
-      const startDate = new Date(phase.startDate);
-      const endDate = new Date(phase.endDate);
+      const startDate = parseLocalDate(phase.startDate);
+      const endDate = parseLocalDate(phase.endDate);
       
       if (now < startDate) {
         return { ...phase, status: 'upcoming' };
@@ -1742,8 +1742,8 @@ export default function EditEventPage() {
                     if (!phase.startDate || !phase.endDate) return 'upcoming';
                     
                     const now = new Date();
-                    const startDate = new Date(phase.startDate);
-                    const endDate = new Date(phase.endDate);
+                    const startDate = parseLocalDate(phase.startDate);
+                    const endDate = parseLocalDate(phase.endDate);
                     
                     if (now < startDate) return 'upcoming';
                     if (now > endDate) return 'expired';
@@ -1803,14 +1803,15 @@ export default function EditEventPage() {
                             </Label>
                             <Input
                               type="datetime-local"
-                              value={phase.startDate ? new Date(phase.startDate).toISOString().slice(0, 16) : ''}
+                              value={formatDateTimeLocalForInput(phase.startDate)}
                               onChange={(e) => {
                                 const newPhases = [...(eventData.salesPhases || [])];
-                                const updatedPhase = { ...phase, startDate: new Date(e.target.value).toISOString() };
+                                const isoDate = convertDateTimeLocalToISO(e.target.value);
+                                const updatedPhase = { ...phase, startDate: isoDate };
                                 // Recalcular estado automáticamente
                                 const now = new Date();
-                                const startDate = new Date(e.target.value);
-                                const endDate = phase.endDate ? new Date(phase.endDate) : null;
+                                const startDate = parseLocalDate(isoDate);
+                                const endDate = phase.endDate ? parseLocalDate(phase.endDate) : null;
                                 
                                 if (updatedPhase.manualStatus === null) {
                                   if (endDate && now > endDate) {
@@ -1835,14 +1836,15 @@ export default function EditEventPage() {
                             </Label>
                             <Input
                               type="datetime-local"
-                              value={phase.endDate ? new Date(phase.endDate).toISOString().slice(0, 16) : ''}
+                              value={formatDateTimeLocalForInput(phase.endDate)}
                               onChange={(e) => {
                                 const newPhases = [...(eventData.salesPhases || [])];
-                                const updatedPhase = { ...phase, endDate: new Date(e.target.value).toISOString() };
+                                const isoDate = convertDateTimeLocalToISO(e.target.value);
+                                const updatedPhase = { ...phase, endDate: isoDate };
                                 // Recalcular estado automáticamente
                                 const now = new Date();
-                                const startDate = phase.startDate ? new Date(phase.startDate) : null;
-                                const endDate = new Date(e.target.value);
+                                const startDate = phase.startDate ? parseLocalDate(phase.startDate) : null;
+                                const endDate = parseLocalDate(isoDate);
                                 
                                 if (updatedPhase.manualStatus === null) {
                                   if (now > endDate) {
@@ -1872,8 +1874,8 @@ export default function EditEventPage() {
                                   updatedPhase.manualStatus = null;
                                   // Recalcular automáticamente
                                   const now = new Date();
-                                  const startDate = phase.startDate ? new Date(phase.startDate) : null;
-                                  const endDate = phase.endDate ? new Date(phase.endDate) : null;
+                                  const startDate = phase.startDate ? parseLocalDate(phase.startDate) : null;
+                                  const endDate = phase.endDate ? parseLocalDate(phase.endDate) : null;
                                   
                                   if (startDate && endDate) {
                                     if (now > endDate) {

@@ -10,6 +10,7 @@ import { Event, EventDj } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useEventColors } from './EventColorContext';
+import { parseLocalDate } from '@/lib/utils/date-timezone';
 
 interface LineupTimelineProps {
   artistLineup: Event['artistLineup'];
@@ -74,7 +75,7 @@ export function LineupTimeline({ artistLineup, eventDjs }: LineupTimelineProps) 
                   }} 
                 />
                 <span className="font-semibold text-sm text-[#FAFDFF]">
-                  {format(new Date(date), 'EEEE, d MMMM', { locale: es })}
+                  {format(parseLocalDate(date), 'EEEE, d MMMM', { locale: es })}
                 </span>
               </div>
             )}

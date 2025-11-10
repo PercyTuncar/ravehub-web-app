@@ -1995,127 +1995,137 @@ export class SchemaGenerator {
         return new Date(dateStr).toISOString();
       }
     };
-    // Add complete event schemas for upcoming events (if full Event objects are provided)
-    if (djData.upcomingEvents?.length > 0) {
-      djData.upcomingEvents.forEach((event: any) => {
-        // Check if this is a full Event object (has slug, location, etc.) or just a reference
-        if (event.slug && event.location) {
-          // Full Event object - generate complete MusicEvent schema
-          const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
-          const eventId = `${eventUrl}#event`;
-          const eventSchema: any = {
-            '@type': event.eventType === 'festival' ? 'Festival' : 'MusicEvent',
-            '@id': eventId,
-            name: event.name,
-            description: event.shortDescription || event.description,
-            url: eventUrl,
-            startDate: formatDateWithTimezone(event.startDate, event.startTime, event.timezone),
-            endDate: event.endDate ? formatDateWithTimezone(event.endDate, event.endTime, event.timezone) : undefined,
-            eventStatus: 'https://schema.org/EventScheduled',
-            eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-            image: event.mainImageUrl ? {
-              '@type': 'ImageObject',
-              url: event.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
-              width: 1200,
-              height: 675
-            } : undefined,
-            location: event.location ? {
-              '@type': 'Place',
-              name: event.location.venue,
-              address: {
-                '@type': 'PostalAddress',
-                addressLocality: event.location.city,
-                addressRegion: event.location.region,
-                addressCountry: event.location.countryCode || event.location.country,
-                streetAddress: event.location.address
-              },
-              geo: event.location.geo ? {
-                '@type': 'GeoCoordinates',
-                latitude: event.location.geo.lat,
-                longitude: event.location.geo.lng
-              } : undefined
-            } : undefined,
-            performer: {
-              '@id': personId,
-              '@type': 'Person',
-              name: djData.name
-            }
+    // Helper function to generate event schema from Event object
+    const generateEventSchema = (event: any): any | null => {
+      // Check if event has minimum required properties (slug is essential)
+      if (!event || !event.slug) {
+        return null;
+      }
+
+      const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
+      const eventId = `${eventUrl}#event`;
+      
+      // Build event schema
+      const eventSchema: any = {
+        '@type': event.eventType === 'festival' ? 'Festival' : 'MusicEvent',
+        '@id': eventId,
+        name: event.name,
+        url: eventUrl,
+      };
+
+      // Add description if available
+      if (event.shortDescription || event.description) {
+        eventSchema.description = event.shortDescription || event.description;
+      }
+
+      // Add dates
+      if (event.startDate) {
+        eventSchema.startDate = formatDateWithTimezone(event.startDate, event.startTime, event.timezone);
+      }
+      if (event.endDate) {
+        eventSchema.endDate = formatDateWithTimezone(event.endDate, event.endTime, event.timezone);
+      }
+
+      // Add event status - use EventScheduled for upcoming, EventPast for past events
+      // This will be set by the caller based on whether it's upcoming or past
+      eventSchema.eventStatus = 'https://schema.org/EventScheduled';
+      eventSchema.eventAttendanceMode = 'https://schema.org/OfflineEventAttendanceMode';
+
+      // Add image if available
+      if (event.mainImageUrl) {
+        eventSchema.image = {
+          '@type': 'ImageObject',
+          url: event.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
+          width: 1200,
+          height: 675
+        };
+      }
+
+      // Add location if available
+      if (event.location && event.location.venue) {
+        const location: any = {
+          '@type': 'Place',
+          name: event.location.venue
+        };
+
+        if (event.location.city || event.location.region || event.location.country) {
+          location.address = {
+            '@type': 'PostalAddress'
           };
-          // Remove undefined values
-          Object.keys(eventSchema).forEach(key => {
-            if (eventSchema[key] === undefined) {
-              delete eventSchema[key];
-            }
-          });
-          (schema['@graph'] as any[]).push(eventSchema);
-        } else {
-          // Reference object - create simple reference
-          const eventId = event.eventId || event.id;
-          const eventSlug = event.slug || eventId;
-          (schema['@graph'] as any[]).push({
-            '@type': 'MusicEvent',
-            '@id': `${this.BASE_URL}/eventos/${eventSlug}#event`,
-            name: event.eventName || event.name,
-            url: `${this.BASE_URL}/eventos/${eventSlug}`
-          });
+          if (event.location.city) location.address.addressLocality = event.location.city;
+          if (event.location.region) location.address.addressRegion = event.location.region;
+          if (event.location.countryCode || event.location.country) {
+            location.address.addressCountry = event.location.countryCode || event.location.country;
+          }
+          if (event.location.address) {
+            location.address.streetAddress = event.location.address;
+          }
+        }
+
+        if (event.location.geo && event.location.geo.lat && event.location.geo.lng) {
+          location.geo = {
+            '@type': 'GeoCoordinates',
+            latitude: event.location.geo.lat,
+            longitude: event.location.geo.lng
+          };
+        }
+
+        eventSchema.location = location;
+      }
+
+      // Add performer (the DJ)
+      eventSchema.performer = {
+        '@id': personId,
+        '@type': 'Person',
+        name: djData.name
+      };
+
+      // Remove undefined values
+      const cleanSchema: any = {};
+      Object.keys(eventSchema).forEach(key => {
+        if (eventSchema[key] !== undefined) {
+          cleanSchema[key] = eventSchema[key];
+        }
+      });
+
+      return cleanSchema;
+    };
+
+    // Collect events to add (prioritize upcoming over past)
+    const eventsToAdd: any[] = [];
+    
+    // First, add upcoming events (priority - show all upcoming events)
+    if (djData.upcomingEvents && Array.isArray(djData.upcomingEvents) && djData.upcomingEvents.length > 0) {
+      djData.upcomingEvents.forEach((event: any) => {
+        const eventSchema = generateEventSchema(event);
+        if (eventSchema) {
+          // Set status as scheduled for upcoming events
+          eventSchema.eventStatus = 'https://schema.org/EventScheduled';
+          eventsToAdd.push(eventSchema);
         }
       });
     }
-    // Add complete event schemas for past events (if full Event objects are provided)
-    if (djData.pastEvents?.length > 0) {
-      djData.pastEvents.forEach((event: any) => {
-        // Check if this is a full Event object
-        if (event.slug && event.location) {
-          // Full Event object - generate complete MusicEvent schema
-          const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
-          const eventId = `${eventUrl}#event`;
-          const eventSchema: any = {
-            '@type': event.eventType === 'festival' ? 'Festival' : 'MusicEvent',
-            '@id': eventId,
-            name: event.name,
-            description: event.shortDescription || event.description,
-            url: eventUrl,
-            startDate: formatDateWithTimezone(event.startDate, event.startTime, event.timezone),
-            endDate: event.endDate ? formatDateWithTimezone(event.endDate, event.endTime, event.timezone) : undefined,
-            eventStatus: 'https://schema.org/EventScheduled',
-            eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-            image: event.mainImageUrl ? {
-              '@type': 'ImageObject',
-              url: event.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
-              width: 1200,
-              height: 675
-            } : undefined,
-            location: event.location ? {
-              '@type': 'Place',
-              name: event.location.venue,
-              address: {
-                '@type': 'PostalAddress',
-                addressLocality: event.location.city,
-                addressRegion: event.location.region,
-                addressCountry: event.location.countryCode || event.location.country,
-                streetAddress: event.location.address
-              },
-              geo: event.location.geo ? {
-                '@type': 'GeoCoordinates',
-                latitude: event.location.geo.lat,
-                longitude: event.location.geo.lng
-              } : undefined
-            } : undefined,
-            performer: {
-              '@id': personId,
-              '@type': 'Person',
-              name: djData.name
-            }
-          };
-          // Remove undefined values
-          Object.keys(eventSchema).forEach(key => {
-            if (eventSchema[key] === undefined) {
-              delete eventSchema[key];
-            }
-          });
-          (schema['@graph'] as any[]).push(eventSchema);
+    
+    // Then, add past events only if no upcoming events were added
+    // This ensures we prioritize upcoming events but still show past events if no upcoming exist
+    if (eventsToAdd.length === 0 && djData.pastEvents && Array.isArray(djData.pastEvents) && djData.pastEvents.length > 0) {
+      // Limit past events to avoid schema bloat (show most recent past events only)
+      const pastEventsToShow = djData.pastEvents.slice(0, 5); // Show up to 5 most recent past events
+      pastEventsToShow.forEach((event: any) => {
+        const eventSchema = generateEventSchema(event);
+        if (eventSchema) {
+          // Set status as past for past events
+          eventSchema.eventStatus = 'https://schema.org/EventPast';
+          eventsToAdd.push(eventSchema);
         }
-        // Note: We don't add simple references for past events to keep schema cleaner
+      });
+    }
+
+    // Add all valid event schemas to the graph (only if we have events)
+    // This ensures events are only added dynamically when they exist
+    if (eventsToAdd.length > 0) {
+      eventsToAdd.forEach(eventSchema => {
+        (schema['@graph'] as any[]).push(eventSchema);
       });
     }
     // Add BreadcrumbList with proper object structure

@@ -13,6 +13,7 @@ import { eventsCollection } from '@/lib/firebase/collections';
 import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { parseLocalDate } from '@/lib/utils/date-timezone';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -266,8 +267,8 @@ export default function EventsAdminPage() {
                 <div className="space-y-3">
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="mr-2 h-4 w-4" />
-                    {event.startDate && !isNaN(new Date(event.startDate).getTime()) 
-                      ? format(new Date(event.startDate), 'PPP', { locale: es })
+                    {event.startDate 
+                      ? format(parseLocalDate(event.startDate), 'PPP', { locale: es })
                       : 'Fecha no disponible'}
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">

@@ -175,8 +175,20 @@ export default async function DJPage({ params }: DJPageProps) {
           getDjUpcomingEvents(dj.id),
           getDjPastEvents(dj.id)
         ]);
-        upcomingEvents = upcoming;
-        pastEvents = past;
+        
+        // Filter events to ensure they have required properties (slug is essential for schema)
+        upcomingEvents = (upcoming || []).filter((event: any) => event && event.slug && event.name);
+        pastEvents = (past || []).filter((event: any) => event && event.slug && event.name);
+        
+        // Log for debugging (only in development)
+        if (process.env.NODE_ENV === 'development') {
+          if (upcomingEvents.length > 0) {
+            console.log(`[DJ Schema] Found ${upcomingEvents.length} upcoming events for ${dj.name}`);
+          }
+          if (pastEvents.length > 0 && upcomingEvents.length === 0) {
+            console.log(`[DJ Schema] Found ${pastEvents.length} past events for ${dj.name} (no upcoming events)`);
+          }
+        }
       } catch (eventsError) {
         console.error('Error fetching DJ events for schema:', eventsError);
         // Continue without events if there's an error
@@ -191,9 +203,9 @@ export default async function DJPage({ params }: DJPageProps) {
         type: 'dj',
         data: {
           ...dj,
-          // Override with dynamic events
-          upcomingEvents: upcomingEvents,
-          pastEvents: pastEvents
+          // Override with dynamic events (only valid events with slug and name)
+          upcomingEvents: upcomingEvents.length > 0 ? upcomingEvents : undefined,
+          pastEvents: pastEvents.length > 0 ? pastEvents : undefined
         }
       });
       schema = schemaData;

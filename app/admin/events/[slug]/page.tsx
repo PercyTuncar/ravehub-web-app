@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getCurrencySymbol } from '@/lib/utils';
 import { revalidateEvent, revalidateEventsListing } from '@/lib/revalidate';
+import { parseLocalDate } from '@/lib/utils/date-timezone';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -221,7 +222,7 @@ export default function EventDetailPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center text-sm">
                       <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {format(new Date(event.startDate), 'PPP', { locale: es })}
+                      {format(parseLocalDate(event.startDate), 'PPP', { locale: es })}
                       {event.startTime && ` a las ${event.startTime}`}
                     </div>
                     <div className="flex items-center text-sm">
@@ -271,7 +272,7 @@ export default function EventDetailPage() {
                             <Badge variant="outline">Fase {index + 1}</Badge>
                           </div>
                           <div className="text-sm text-muted-foreground mb-2">
-                            {format(new Date(phase.startDate), 'PPP', { locale: es })} - {format(new Date(phase.endDate), 'PPP', { locale: es })}
+                            {format(parseLocalDate(phase.startDate), 'PPP', { locale: es })} - {format(parseLocalDate(phase.endDate), 'PPP', { locale: es })}
                           </div>
                           <div className="grid gap-2">
                             {phase.prices?.map((price) => (

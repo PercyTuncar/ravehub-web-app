@@ -8,6 +8,7 @@ import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useEventColors } from './EventColorContext';
+import { parseLocalDate } from '@/lib/utils/date-timezone';
 
 interface EventInfoSidebarProps {
   event: Event;
@@ -33,11 +34,11 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
           />
           <div className="space-y-1">
             <div className="text-[#FAFDFF] font-medium">
-              {format(new Date(event.startDate), 'PPP', { locale: es })}
+              {format(parseLocalDate(event.startDate), 'PPP', { locale: es })}
             </div>
             {event.endDate && (
               <div className="text-white/70 text-xs">
-                hasta {format(new Date(event.endDate), 'PPP', { locale: es })}
+                hasta {format(parseLocalDate(event.endDate), 'PPP', { locale: es })}
               </div>
             )}
           </div>

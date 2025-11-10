@@ -14,6 +14,7 @@ import { CountdownTimer } from './CountdownTimer';
 import { useEventColors } from './EventColorContext';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { parseLocalDate } from '@/lib/utils/date-timezone';
 
 interface EventHeroProps {
   event: Event;
@@ -316,7 +317,7 @@ export function EventHero({ event }: EventHeroProps) {
               <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 px-3 py-2 rounded-lg border border-white/10">
                 <Calendar className="h-4 w-4" />
                 <span className="text-sm sm:text-base">
-                  {format(new Date(event.startDate), 'PPP', { locale: es })}
+                  {format(parseLocalDate(event.startDate), 'PPP', { locale: es })}
                   {event.startTime && ` • ${event.startTime}`}
                 </span>
               </div>

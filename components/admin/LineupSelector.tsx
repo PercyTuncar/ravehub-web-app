@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { eventDjsCollection } from '@/lib/firebase/collections';
 import { EventDj } from '@/lib/types';
-import { formatDateForInput } from '@/lib/utils/date-timezone';
+import { formatDateForInput, formatDateForDisplay } from '@/lib/utils/date-timezone';
 
 interface LineupArtist {
   eventDjId?: string;
@@ -323,7 +323,7 @@ export function LineupSelector({
                               {artist.performanceDate && (
                                 <div className="flex items-center gap-1.5 whitespace-nowrap">
                                   <Calendar className="h-4 w-4 flex-shrink-0 text-blue-500" />
-                                  <span className="font-medium">{new Date(artist.performanceDate + 'T00:00:00').toLocaleDateString()}</span>
+                                  <span className="font-medium">{formatDateForDisplay(artist.performanceDate)}</span>
                                 </div>
                               )}
                               {artist.performanceTime && (
