@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { eventDjsCollection } from '@/lib/firebase/collections';
 import { EventDj } from '@/lib/types';
+import { formatDateForInput } from '@/lib/utils/date-timezone';
 
 interface LineupArtist {
   eventDjId?: string;
@@ -50,7 +51,7 @@ export function LineupSelector({
   const [loading, setLoading] = useState(true);
   const [newArtist, setNewArtist] = useState<Partial<LineupArtist>>({
     name: '',
-    performanceDate: startDate,
+    performanceDate: startDate ? formatDateForInput(startDate) : undefined,
     performanceTime: '',
     stage: '',
     isHeadliner: false,
@@ -59,6 +60,16 @@ export function LineupSelector({
   useEffect(() => {
     loadAvailableDjs();
   }, []);
+
+  // Update newArtist default date when startDate changes (only if form is empty)
+  useEffect(() => {
+    if (startDate && !newArtist.name) {
+      setNewArtist(prev => ({
+        ...prev,
+        performanceDate: formatDateForInput(startDate)
+      }));
+    }
+  }, [startDate]);
 
   const loadAvailableDjs = async () => {
     try {
@@ -101,11 +112,14 @@ export function LineupSelector({
     });
 
   const addDjToLineup = (dj: EventDj) => {
+    // Format the date to ensure it's in YYYY-MM-DD format and avoid timezone issues
+    const formattedDate = startDate ? formatDateForInput(startDate) : undefined;
+    
     const newArtist: LineupArtist = {
       eventDjId: dj.id,
       name: dj.name,
       order: lineup.length + 1,
-      performanceDate: startDate,
+      performanceDate: formattedDate,
       imageUrl: dj.imageUrl,
       isHeadliner: false,
       // Include all relevant DJ fields for consistency
@@ -133,7 +147,7 @@ export function LineupSelector({
     onChange([...lineup, artist]);
     setNewArtist({
       name: '',
-      performanceDate: startDate,
+      performanceDate: startDate ? formatDateForInput(startDate) : undefined,
       performanceTime: '',
       stage: '',
       isHeadliner: false,
@@ -309,7 +323,7 @@ export function LineupSelector({
                               {artist.performanceDate && (
                                 <div className="flex items-center gap-1.5 whitespace-nowrap">
                                   <Calendar className="h-4 w-4 flex-shrink-0 text-blue-500" />
-                                  <span className="font-medium">{new Date(artist.performanceDate).toLocaleDateString()}</span>
+                                  <span className="font-medium">{new Date(artist.performanceDate + 'T00:00:00').toLocaleDateString()}</span>
                                 </div>
                               )}
                               {artist.performanceTime && (
@@ -341,28 +355,13 @@ export function LineupSelector({
                           <Star className={`h-4 w-4 ${artist.isHeadliner ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                         </Button>
 
-                        {(eventType === 'festival' || isMultiDay) && (
-                          <Select
-                            value={artist.performanceDate || ''}
-                            onValueChange={(value) => updateArtist(index, { performanceDate: value })}
-                          >
-                            <SelectTrigger className="w-36 h-8 text-xs">
-                              <SelectValue placeholder="Fecha" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {startDate && (
-                                <SelectItem value={startDate}>
-                                  Día 1: {new Date(startDate).toLocaleDateString()}
-                                </SelectItem>
-                              )}
-                              {endDate && endDate !== startDate && (
-                                <SelectItem value={endDate}>
-                                  Día 2: {new Date(endDate).toLocaleDateString()}
-                                </SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
-                        )}
+                        <Input
+                          type="date"
+                          value={formatDateForInput(artist.performanceDate) || ''}
+                          onChange={(e) => updateArtist(index, { performanceDate: e.target.value })}
+                          className="w-36 h-8 text-xs"
+                          placeholder="Fecha"
+                        />
 
                         <Input
                           placeholder="Escenario"
@@ -467,28 +466,14 @@ export function LineupSelector({
                   onChange={(e) => setNewArtist({ ...newArtist, name: e.target.value })}
                 />
 
-                {(eventType === 'festival' || isMultiDay) && (
-                  <Select
-                    value={newArtist.performanceDate || ''}
-                    onValueChange={(value) => setNewArtist({ ...newArtist, performanceDate: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Fecha de presentación" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {startDate && (
-                        <SelectItem value={startDate}>
-                          Día 1: {new Date(startDate).toLocaleDateString()}
-                        </SelectItem>
-                      )}
-                      {endDate && endDate !== startDate && (
-                        <SelectItem value={endDate}>
-                          Día 2: {new Date(endDate).toLocaleDateString()}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                )}
+                <Input
+                  type="date"
+                  value={formatDateForInput(newArtist.performanceDate) || ''}
+                  onChange={(e) => setNewArtist({ ...newArtist, performanceDate: e.target.value })}
+                  placeholder="Fecha de presentación"
+                  min={startDate ? formatDateForInput(startDate) : undefined}
+                  max={endDate ? formatDateForInput(endDate) : undefined}
+                />
 
                 <div className="grid grid-cols-2 gap-2">
                   <Input
