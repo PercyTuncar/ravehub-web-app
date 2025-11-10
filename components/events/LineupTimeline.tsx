@@ -93,8 +93,8 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
                           height={64}
                           className="w-16 h-16 rounded-full object-cover ring-2 ring-offset-2"
                           style={{
-                            ringColor: colorPalette?.accent || 'hsl(var(--ring))',
-                          }}
+                            '--tw-ring-color': colorPalette?.accent || 'hsl(var(--ring))',
+                          } as React.CSSProperties}
                         />
                       ) : (
                         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
