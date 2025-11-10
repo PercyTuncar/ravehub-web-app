@@ -41,10 +41,10 @@ export function EventGallery({
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ImageIcon className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
+          <ImageIcon className="h-5 w-5 text-[#FBA905]" />
           Multimedia
         </CardTitle>
       </CardHeader>
@@ -106,8 +106,8 @@ export function EventGallery({
         {/* Video Gallery */}
         {allVideos.length > 0 && (
           <div className="space-y-4">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Video className="h-5 w-5" />
+            <h3 className="font-semibold flex items-center gap-2 text-[#FAFDFF]">
+              <Video className="h-5 w-5 text-[#FBA905]" />
               Videos
             </h3>
             <div className="grid gap-4 md:grid-cols-2">

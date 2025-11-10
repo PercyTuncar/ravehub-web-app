@@ -152,172 +152,221 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       <JsonLdArray data={schemas} id="event-schema" />
       <EventColorProvider>
         <ForceDarkMode />
-        <div className="min-h-screen bg-background dark" suppressHydrationWarning>
+        <div className="min-h-screen bg-[#141618] text-[#FAFDFF]" suppressHydrationWarning>
+          {/* Hero Section with Dynamic Colors */}
+          <EventHero event={event} />
 
-        {/* Hero Section with Dynamic Colors */}
-        <EventHero event={event} />
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Lineup */}
-            <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
+          <div className="relative isolate overflow-hidden bg-[#141618]">
+            {/* Background Gradients */}
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(251,169,5,0.08),transparent_52%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_25%,rgba(0,203,255,0.07),transparent_48%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_82%,rgba(255,255,255,0.05),transparent_55%)]" />
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#141618] via-[#141618]/95 to-transparent" />
+            </div>
 
-            {/* Gallery */}
-            <EventGallery
-              mainImageUrl={event.mainImageUrl}
-              imageGallery={event.imageGallery}
-              videoGallery={event.videoGallery}
-              videoUrl={event.videoUrl}
-              imageAltTexts={event.imageAltTexts}
-            />
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+              <div className="grid gap-12 lg:grid-cols-3">
+                {/* Main Content */}
+                <div className="lg:col-span-2 space-y-12">
+                  {/* Lineup */}
+                  <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
 
-            {/* Event Details */}
-            <EventDetails
-              description={event.description}
-              specifications={event.specifications}
-              faqSection={event.faqSection}
-              tags={event.tags}
-              categories={event.categories}
-            />
-          </div>
+                  {/* Gallery */}
+                  <EventGallery
+                    mainImageUrl={event.mainImageUrl}
+                    imageGallery={event.imageGallery}
+                    videoGallery={event.videoGallery}
+                    videoUrl={event.videoUrl}
+                    imageAltTexts={event.imageAltTexts}
+                  />
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Event Info Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Información del Evento</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center text-sm">
-                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <div>{format(new Date(event.startDate), 'PPP', { locale: es })}</div>
-                    {event.endDate && (
-                      <div className="text-muted-foreground">
-                        hasta {format(new Date(event.endDate), 'PPP', { locale: es })}
+                  {/* Event Details */}
+                  <EventDetails
+                    description={event.description}
+                    specifications={event.specifications}
+                    faqSection={event.faqSection}
+                    tags={event.tags}
+                    categories={event.categories}
+                  />
+                </div>
+
+                {/* Sidebar */}
+                <div className="space-y-6">
+                  {/* Event Info Card */}
+                  <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                    <CardHeader>
+                      <CardTitle className="text-[#FAFDFF]">Información del Evento</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="flex items-start gap-3 text-sm">
+                        <Calendar className="h-5 w-5 text-[#FBA905] mt-0.5 flex-shrink-0" />
+                        <div className="space-y-1">
+                          <div className="text-[#FAFDFF] font-medium">
+                            {format(new Date(event.startDate), 'PPP', { locale: es })}
+                          </div>
+                          {event.endDate && (
+                            <div className="text-white/70 text-xs">
+                              hasta {format(new Date(event.endDate), 'PPP', { locale: es })}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
 
-                <div className="flex items-center text-sm">
-                  <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <div>
-                    {event.startTime && <div>Inicio: {event.startTime}</div>}
-                    {event.doorTime && <div>Puertas: {event.doorTime}</div>}
-                    {event.endTime && <div>Fin: {event.endTime}</div>}
-                    {event.timezone && (
-                      <div className="text-muted-foreground text-xs">{event.timezone}</div>
-                    )}
-                  </div>
-                </div>
+                      <Separator className="bg-white/10" />
 
-                <div className="flex items-start text-sm">
-                  <MapPin className="mr-2 h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <div className="font-medium">{event.location.venue}</div>
-                    <div className="text-muted-foreground">
-                      {event.location.city}, {event.location.region}
-                      {event.location.address && (
-                        <div>{event.location.address}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Event Type & Status */}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <Badge variant="outline">{event.eventType}</Badge>
-                  {event.eventStatus && (
-                    <Badge variant="secondary">{event.eventStatus}</Badge>
-                  )}
-                  {event.eventAttendanceMode && (
-                    <Badge variant="outline">{event.eventAttendanceMode}</Badge>
-                  )}
-                  {event.isAccessibleForFree && (
-                    <Badge variant="default">Gratis</Badge>
-                  )}
-                </div>
-
-                {/* Categories */}
-                {event.categories && event.categories.length > 0 && (
-                  <div className="pt-2">
-                    <div className="text-xs text-muted-foreground mb-2">Categorías</div>
-                    <div className="flex flex-wrap gap-1">
-                      {event.categories.map((cat, index) => (
-                        <Badge key={`cat-${index}-${cat}`} variant="outline" className="text-xs">
-                          {cat}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Age Range & Audience */}
-                {(event.typicalAgeRange || event.audienceType) && (
-                  <div className="pt-2 border-t">
-                    <div className="text-sm">
-                      {event.typicalAgeRange && (
-                        <div className="mb-1">
-                          <span className="text-muted-foreground">Edad:</span>{' '}
-                          <span className="font-medium">{event.typicalAgeRange}</span>
+                      <div className="flex items-start gap-3 text-sm">
+                        <Clock className="h-5 w-5 text-[#FBA905] mt-0.5 flex-shrink-0" />
+                        <div className="space-y-1">
+                          {event.startTime && (
+                            <div className="text-[#FAFDFF]">
+                              <span className="text-white/70">Inicio:</span> {event.startTime}
+                            </div>
+                          )}
+                          {event.doorTime && (
+                            <div className="text-[#FAFDFF]">
+                              <span className="text-white/70">Puertas:</span> {event.doorTime}
+                            </div>
+                          )}
+                          {event.endTime && (
+                            <div className="text-[#FAFDFF]">
+                              <span className="text-white/70">Fin:</span> {event.endTime}
+                            </div>
+                          )}
+                          {event.timezone && (
+                            <div className="text-white/60 text-xs mt-1">{event.timezone}</div>
+                          )}
                         </div>
-                      )}
-                      {event.audienceType && (
-                        <div>
-                          <span className="text-muted-foreground">Audiencia:</span>{' '}
-                          <span className="font-medium">{event.audienceType}</span>
+                      </div>
+
+                      <Separator className="bg-white/10" />
+
+                      <div className="flex items-start gap-3 text-sm">
+                        <MapPin className="h-5 w-5 text-[#FBA905] mt-0.5 flex-shrink-0" />
+                        <div className="space-y-1">
+                          <div className="text-[#FAFDFF] font-medium">{event.location.venue}</div>
+                          <div className="text-white/70 text-xs">
+                            {event.location.city}, {event.location.region}
+                          </div>
+                          {event.location.address && (
+                            <div className="text-white/70 text-xs mt-1">{event.location.address}</div>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Event Type & Status */}
+                      <Separator className="bg-white/10" />
+                      <div className="flex flex-wrap gap-2">
+                        {event.eventType && (
+                          <Badge variant="outline" className="border-white/20 text-white/90 bg-white/5">
+                            {event.eventType}
+                          </Badge>
+                        )}
+                        {event.eventStatus && event.eventStatus === 'published' && (
+                          <Badge className="bg-[#28a745]/20 text-[#28a745] border-[#28a745]/30">
+                            {event.eventStatus}
+                          </Badge>
+                        )}
+                        {event.eventAttendanceMode && (
+                          <Badge variant="outline" className="border-white/20 text-white/90 bg-white/5">
+                            {event.eventAttendanceMode}
+                          </Badge>
+                        )}
+                        {event.isAccessibleForFree && (
+                          <Badge className="bg-[#FBA905] text-[#141618]">
+                            Gratis
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Categories */}
+                      {event.categories && event.categories.length > 0 && (
+                        <>
+                          <Separator className="bg-white/10" />
+                          <div>
+                            <div className="text-xs text-white/70 mb-3 uppercase tracking-wider">Categorías</div>
+                            <div className="flex flex-wrap gap-2">
+                              {event.categories.map((cat, index) => (
+                                <Badge 
+                                  key={`cat-${index}-${cat}`} 
+                                  variant="outline" 
+                                  className="text-xs border-white/20 text-white/90 bg-white/5"
+                                >
+                                  {cat}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </>
                       )}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Map */}
-            {event.location.geo && (
-              <EventMap
-                lat={event.location.geo.lat}
-                lng={event.location.geo.lng}
-                venue={event.location.venue}
-                address={event.location.address}
-              />
-            )}
+                      {/* Age Range & Audience */}
+                      {(event.typicalAgeRange || event.audienceType) && (
+                        <>
+                          <Separator className="bg-white/10" />
+                          <div className="space-y-2 text-sm">
+                            {event.typicalAgeRange && (
+                              <div>
+                                <span className="text-white/70">Edad:</span>{' '}
+                                <span className="text-[#FAFDFF] font-medium">{event.typicalAgeRange}</span>
+                              </div>
+                            )}
+                            {event.audienceType && (
+                              <div>
+                                <span className="text-white/70">Audiencia:</span>{' '}
+                                <span className="text-[#FAFDFF] font-medium">{event.audienceType}</span>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
 
-            {/* Organizer */}
-            <EventOrganizer organizer={event.organizer} />
+                  {/* Map */}
+                  {event.location.geo && (
+                    <EventMap
+                      lat={event.location.geo.lat}
+                      lng={event.location.geo.lng}
+                      venue={event.location.venue}
+                      address={event.location.address}
+                    />
+                  )}
 
-            {/* External Tickets */}
-            {event.externalTicketUrl && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Entradas Externas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Las entradas para este evento se venden en una plataforma externa.
-                  </p>
-                  <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" className="w-full">
-                      Comprar en Plataforma Externa
-                    </Button>
-                  </a>
-                </CardContent>
-              </Card>
-            )}
+                  {/* Organizer */}
+                  <EventOrganizer organizer={event.organizer} />
+
+                  {/* External Tickets */}
+                  {event.externalTicketUrl && (
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                      <CardHeader>
+                        <CardTitle className="text-[#FAFDFF]">Entradas Externas</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-white/70 mb-4">
+                          Las entradas para este evento se venden en una plataforma externa.
+                        </p>
+                        <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer">
+                          <Button 
+                            variant="outline" 
+                            className="w-full border-white/20 text-white hover:bg-white/10"
+                          >
+                            Comprar en Plataforma Externa
+                          </Button>
+                        </a>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-        {/* Sticky CTA */}
-        {event.sellTicketsOnPlatform && (
-          <StickyTicketCTA event={event} />
-        )}
+          {/* Sticky CTA */}
+          {event.sellTicketsOnPlatform && (
+            <StickyTicketCTA event={event} />
+          )}
         </div>
       </EventColorProvider>
     </>

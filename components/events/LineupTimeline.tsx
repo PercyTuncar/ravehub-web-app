@@ -46,10 +46,10 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Music className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
+          <Music className="h-5 w-5 text-[#FBA905]" />
           Lineup
         </CardTitle>
       </CardHeader>
@@ -57,9 +57,9 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
         {Object.entries(groupedByDate).map(([date, artists]) => (
           <div key={date} className="space-y-4">
             {date && (
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="font-semibold text-sm">
+              <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                <Calendar className="h-4 w-4 text-[#FBA905]" />
+                <span className="font-semibold text-sm text-[#FAFDFF]">
                   {format(new Date(date), 'EEEE, d MMMM', { locale: es })}
                 </span>
               </div>
@@ -77,8 +77,10 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                     className={cn(
-                      'flex items-center gap-4 p-4 rounded-lg border transition-all hover:shadow-md',
-                      artist.isHeadliner && 'bg-primary/5 border-primary/20'
+                      'flex items-center gap-4 p-4 rounded-lg border transition-all hover:shadow-lg hover:scale-[1.02]',
+                      artist.isHeadliner 
+                        ? 'bg-white/10 border-[#FBA905]/40 backdrop-blur-sm' 
+                        : 'bg-white/5 border-white/10 backdrop-blur-sm hover:border-white/20'
                     )}
                   >
                     {/* Avatar */}
@@ -89,9 +91,9 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
                           alt={artist.name}
                           width={64}
                           height={64}
-                          className="w-16 h-16 rounded-full object-cover"
+                          className="w-16 h-16 rounded-full object-cover ring-2 ring-offset-2"
                           style={{
-                            boxShadow: `0 0 0 2px ${colorPalette?.accent || 'hsl(var(--ring))'}`,
+                            ringColor: colorPalette?.accent || 'hsl(var(--ring))',
                           }}
                         />
                       ) : (
@@ -114,30 +116,30 @@ export function LineupTimeline({ artistLineup, eventDjs, colorPalette }: LineupT
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className="font-semibold text-lg truncate">{artist.name}</h4>
+                        <h4 className="font-semibold text-lg truncate text-[#FAFDFF]">{artist.name}</h4>
                         {artist.isHeadliner && (
-                          <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          <Badge className="text-xs flex-shrink-0 bg-[#FBA905] text-[#141618]">
                             Headliner
                           </Badge>
                         )}
                       </div>
 
                       {artist.stage && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          <Music className="h-3 w-3 inline mr-1" />
+                        <p className="text-sm text-white/70 mt-1">
+                          <Music className="h-3 w-3 inline mr-1 text-[#FBA905]" />
                           {artist.stage}
                         </p>
                       )}
 
                       {artist.performanceTime && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                          <Clock className="h-3 w-3" />
+                        <div className="flex items-center gap-1 text-sm text-white/70 mt-1">
+                          <Clock className="h-3 w-3 text-[#FBA905]" />
                           {artist.performanceTime}
                         </div>
                       )}
 
                       {djProfile?.country && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-white/60 mt-1">
                           {djProfile.country}
                         </p>
                       )}

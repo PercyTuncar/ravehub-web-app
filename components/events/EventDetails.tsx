@@ -31,10 +31,10 @@ export function EventDetails({
     <div className="space-y-6">
       {/* Description */}
       {description && (
-        <Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
+              <FileText className="h-5 w-5 text-[#FBA905]" />
               Acerca del Evento
             </CardTitle>
           </CardHeader>
@@ -42,12 +42,12 @@ export function EventDetails({
             <div className="prose prose-invert max-w-none">
               {shouldTruncate ? (
                 <>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-white/80 leading-relaxed">
                     {isDescriptionExpanded ? description : `${descriptionPreview}...`}
                   </p>
                   <button
                     onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                    className="mt-4 text-primary hover:underline flex items-center gap-1"
+                    className="mt-4 text-[#FBA905] hover:text-[#F1A000] hover:underline flex items-center gap-1 transition-colors"
                   >
                     {isDescriptionExpanded ? (
                       <>
@@ -61,7 +61,7 @@ export function EventDetails({
                   </button>
                 </>
               ) : (
-                <p className="text-muted-foreground leading-relaxed">{description}</p>
+                <p className="text-white/80 leading-relaxed">{description}</p>
               )}
             </div>
           </CardContent>
@@ -70,21 +70,21 @@ export function EventDetails({
 
       {/* Specifications */}
       {specifications && specifications.length > 0 && (
-        <Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Especificaciones</CardTitle>
+            <CardTitle className="text-[#FAFDFF]">Especificaciones</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               {specifications.map((spec, index) => (
                 <div key={index}>
-                  <h4 className="font-semibold mb-2">{spec.title}</h4>
-                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  <h4 className="font-semibold mb-2 text-[#FAFDFF]">{spec.title}</h4>
+                  <ul className="list-disc list-inside space-y-1 text-white/80">
                     {spec.items.map((item, itemIndex) => (
                       <li key={itemIndex}>{item}</li>
                     ))}
                   </ul>
-                  {index < specifications.length - 1 && <Separator className="mt-4" />}
+                  {index < specifications.length - 1 && <Separator className="mt-4 bg-white/10" />}
                 </div>
               ))}
             </div>
@@ -94,18 +94,22 @@ export function EventDetails({
 
       {/* FAQ */}
       {faqSection && faqSection.length > 0 && (
-        <Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Preguntas Frecuentes</CardTitle>
+            <CardTitle className="text-[#FAFDFF]">Preguntas Frecuentes</CardTitle>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
               {faqSection.map((faq, index) => (
-                <AccordionItem key={index} value={`faq-${index}`}>
-                  <AccordionTrigger className="text-left">
+                <AccordionItem 
+                  key={index} 
+                  value={`faq-${index}`}
+                  className="border-white/10"
+                >
+                  <AccordionTrigger className="text-left text-[#FAFDFF] hover:text-[#FBA905] transition-colors">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">
+                  <AccordionContent className="text-white/80">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -117,17 +121,21 @@ export function EventDetails({
 
       {/* Tags */}
       {tags && tags.length > 0 && (
-        <Card>
+        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
+              <Tag className="h-5 w-5 text-[#FBA905]" />
               Etiquetas
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag, index) => (
-                <Badge key={`tag-${index}-${tag}`} variant="outline">
+                <Badge 
+                  key={`tag-${index}-${tag}`} 
+                  variant="outline"
+                  className="border-white/20 text-white/90 bg-white/5"
+                >
                   {tag}
                 </Badge>
               ))}

@@ -23,9 +23,9 @@ export function EventOrganizer({ organizer }: EventOrganizerProps) {
     : null;
 
   return (
-    <Card>
+    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle>Organizador</CardTitle>
+        <CardTitle className="text-[#FAFDFF]">Organizador</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Logo */}
@@ -43,7 +43,7 @@ export function EventOrganizer({ organizer }: EventOrganizerProps) {
 
         {/* Name */}
         <div className="text-center">
-          <h3 className="font-semibold text-lg">{organizer.name}</h3>
+          <h3 className="font-semibold text-lg text-[#FAFDFF]">{organizer.name}</h3>
         </div>
 
         {/* Contact Actions */}
@@ -53,7 +53,7 @@ export function EventOrganizer({ organizer }: EventOrganizerProps) {
               variant="outline"
               size="sm"
               asChild
-              className="w-full"
+              className="w-full border-white/20 text-white hover:bg-white/10"
             >
               <a href={`mailto:${organizer.email}`}>
                 <Mail className="h-4 w-4 mr-2" />
@@ -67,7 +67,7 @@ export function EventOrganizer({ organizer }: EventOrganizerProps) {
               variant="outline"
               size="sm"
               asChild
-              className="w-full"
+              className="w-full border-white/20 text-white hover:bg-white/10"
             >
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4 mr-2" />
@@ -81,7 +81,7 @@ export function EventOrganizer({ organizer }: EventOrganizerProps) {
               variant="outline"
               size="sm"
               asChild
-              className="w-full"
+              className="w-full border-white/20 text-white hover:bg-white/10"
             >
               <a href={`tel:${organizer.phone}`}>
                 <Phone className="h-4 w-4 mr-2" />
@@ -95,7 +95,7 @@ export function EventOrganizer({ organizer }: EventOrganizerProps) {
               variant="outline"
               size="sm"
               asChild
-              className="w-full col-span-2"
+              className="w-full col-span-2 border-white/20 text-white hover:bg-white/10"
             >
               <a href={organizer.website} target="_blank" rel="noopener noreferrer">
                 <Globe className="h-4 w-4 mr-2" />
@@ -106,19 +106,19 @@ export function EventOrganizer({ organizer }: EventOrganizerProps) {
         </div>
 
         {/* Contact Info */}
-        <div className="space-y-2 text-sm text-muted-foreground pt-2 border-t">
+        <div className="space-y-2 text-sm text-white/70 pt-2 border-t border-white/10">
           {organizer.email && (
             <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              <a href={`mailto:${organizer.email}`} className="hover:underline">
+              <Mail className="h-4 w-4 text-[#FBA905]" />
+              <a href={`mailto:${organizer.email}`} className="hover:text-[#FBA905] hover:underline transition-colors">
                 {organizer.email}
               </a>
             </div>
           )}
           {organizer.phone && (
             <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              <a href={`tel:${organizer.phone}`} className="hover:underline">
+              <Phone className="h-4 w-4 text-[#FBA905]" />
+              <a href={`tel:${organizer.phone}`} className="hover:text-[#FBA905] hover:underline transition-colors">
                 {organizer.phone}
               </a>
             </div>

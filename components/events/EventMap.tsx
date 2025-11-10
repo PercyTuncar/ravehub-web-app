@@ -503,143 +503,48 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
 
       setRouteGeometry(geometry);
 
-      // Add route to map - ensure map is loaded before manipulating sources
-      if (!map.current) {
-        console.warn('⚠️ Map not initialized, skipping route display');
-      } else {
-        // Function to actually add the route to the map
-        const addRouteToMap = () => {
-          if (!map.current) {
-            console.warn('⚠️ Map not available in addRouteToMap');
-            return;
-          }
-          
-          // Double-check that map is ready before proceeding
-          try {
-            if (typeof map.current.isStyleLoaded === 'function' && !map.current.isStyleLoaded()) {
-              console.warn('⚠️ Map style not loaded yet, retrying...');
-              // Retry after a short delay
-              setTimeout(() => {
-                if (map.current && typeof map.current.isStyleLoaded === 'function' && map.current.isStyleLoaded()) {
-                  addRouteToMap();
-                }
-              }, 200);
-              return;
-            }
-          } catch (error) {
-            // Error checking, but continue anyway
-            console.log('ℹ️ Could not check isStyleLoaded, proceeding...');
-          }
-          
-          try {
-            // Check if source already exists
-            let source: maplibregl.GeoJSONSource | null = null;
-            try {
-              source = map.current.getSource('route') as maplibregl.GeoJSONSource | null;
-            } catch (error) {
-              // Source doesn't exist or map not ready, will create it
-              console.log('ℹ️ Source does not exist yet, will create it');
-            }
-            
-            if (source) {
-              // Source exists, update it
-              source.setData({
-                type: 'Feature',
-                geometry,
-                properties: {},
-              });
-            } else {
-              // Source doesn't exist, create it
-              map.current.addSource('route', {
-                type: 'geojson',
-                data: {
-                  type: 'Feature',
-                  geometry,
-                  properties: {},
-                },
-              });
-
-              // Check if layer already exists before adding
-              if (!map.current.getLayer('route')) {
-                map.current.addLayer({
-                  id: 'route',
-                  type: 'line',
-                  source: 'route',
-                  layout: {
-                    'line-join': 'round',
-                    'line-cap': 'round',
-                  },
-                  paint: {
-                    'line-color': '#f97316',
-                    'line-width': 4,
-                  },
-                });
-              }
-            }
-
-            // Fit bounds to route
-            const coordinates = geometry.coordinates as [number, number][];
-            if (coordinates && coordinates.length > 0) {
-              const bounds = coordinates.reduce(
-                (bounds, coord) => bounds.extend(coord as maplibregl.LngLatLike),
-                new maplibregl.LngLatBounds(coordinates[0] as maplibregl.LngLatLike, coordinates[0] as maplibregl.LngLatLike)
-              );
-              map.current.fitBounds(bounds, { padding: 50 });
-            }
-          } catch (error) {
-            console.error('❌ Error adding route to map:', error);
-            // Don't throw, just log the error so the route data is still set
-          }
-        };
-
-        // Check if map is ready
-        const checkMapReady = () => {
-          if (!map.current) return false;
-          try {
-            // MapLibre requires the style to be loaded before adding sources
-            // Check both loaded() and isStyleLoaded() if available
-            const isLoaded = map.current.loaded();
-            const isStyleLoaded = typeof map.current.isStyleLoaded === 'function' 
-              ? map.current.isStyleLoaded() 
-              : isLoaded; // Fallback to loaded() if isStyleLoaded() doesn't exist
-            return isLoaded && isStyleLoaded;
-          } catch (error) {
-            // If any error occurs, assume map is not ready
-            return false;
-          }
-        };
-
-        if (checkMapReady()) {
-          // Map is ready, add route immediately
-          addRouteToMap();
+      // Add route to map
+      if (map.current) {
+        const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
+        if (source) {
+          source.setData({
+            type: 'Feature',
+            geometry,
+            properties: {},
+          });
         } else {
-          // Map not ready, wait for it to load
-          console.log('⏳ Map not loaded yet, waiting for load event...');
-          
-          const handleMapLoad = () => {
-            if (map.current && checkMapReady()) {
-              addRouteToMap();
-            }
-          };
-          
-          // Listen for both 'load' and 'style.load' events
-          // 'load' fires when the map is fully loaded
-          // 'style.load' fires when the style is loaded (required for adding sources)
-          map.current.once('load', handleMapLoad);
-          
-          if (typeof map.current.isStyleLoaded === 'function') {
-            // If style is not loaded, also listen for style.load
-            if (!map.current.isStyleLoaded()) {
-              map.current.once('style.load', handleMapLoad);
-            }
-          }
-          
-          // Fallback: try after a short delay in case events don't fire
-          setTimeout(() => {
-            if (map.current && checkMapReady()) {
-              addRouteToMap();
-            }
-          }, 1000);
+          map.current.addSource('route', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              geometry,
+              properties: {},
+            },
+          });
+
+          map.current.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#f97316',
+              'line-width': 4,
+            },
+          });
+        }
+
+        // Fit bounds to route
+        const coordinates = geometry.coordinates as [number, number][];
+        if (coordinates && coordinates.length > 0) {
+          const bounds = coordinates.reduce(
+            (bounds, coord) => bounds.extend(coord as maplibregl.LngLatLike),
+            new maplibregl.LngLatBounds(coordinates[0] as maplibregl.LngLatLike, coordinates[0] as maplibregl.LngLatLike)
+          );
+          map.current.fitBounds(bounds, { padding: 50 });
         }
       }
 
@@ -1211,10 +1116,10 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
+          <MapPin className="h-5 w-5 text-[#FBA905]" />
           Cómo llegar
         </CardTitle>
       </CardHeader>
