@@ -6,6 +6,7 @@ import { DJProfile } from '@/components/djs/DJProfile';
 import JsonLd from '@/components/seo/JsonLd';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import { getDjUpcomingEvents, getDjPastEvents } from '@/lib/data/dj-events';
+import { generateDJMetadata } from '@/lib/seo/dj-metadata-generator';
 
 // ISR configuration with revalidation
 export const revalidate = 3600; // Revalidate every hour
@@ -50,12 +51,46 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
       };
     }
 
-    const url = `https://www.ravehublatam.com/djs/${slug}`;
-    const title = dj.seoTitle || `${dj.name} - DJ | Ravehub`;
-    const description = dj.seoDescription || dj.description || `Perfil de ${dj.name}, DJ de ${dj.country}. Descubre su música, próximos eventos y biografía completa.`;
-    const keywords = dj.seoKeywords && dj.seoKeywords.length > 0
-      ? dj.seoKeywords
-      : ['DJ', 'música electrónica', 'rave', 'eventos', dj.country, dj.name, ...(dj.genres || [])];
+    // Get upcoming events for description (only if in eventDjs collection)
+    let upcomingEvents: any[] = [];
+    if (isInEventDjs && dj.id) {
+      try {
+        upcomingEvents = await getDjUpcomingEvents(dj.id);
+        // Filter to ensure events have location data (same filter as in generateDJMetadata)
+        upcomingEvents = (upcomingEvents || []).filter((event: any) => 
+          event && event.slug && event.name && event.location && event.location.city
+        );
+      } catch (eventsError) {
+        // Continue without events if there's an error
+        console.error('Error fetching upcoming events for metadata:', eventsError);
+      }
+    }
+
+    // Use the shared metadata generator to ensure exact consistency
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
+    const metadata = generateDJMetadata(
+      {
+        name: dj.name,
+        seoTitle: dj.seoTitle,
+        seoDescription: dj.seoDescription,
+        description: dj.description,
+        country: dj.country,
+        imageUrl: dj.imageUrl,
+        slug: slug,
+        seoKeywords: dj.seoKeywords,
+        genres: dj.genres,
+        instagramHandle: dj.instagramHandle,
+      },
+      upcomingEvents.map((event: any) => ({
+        slug: event.slug,
+        name: event.name,
+        location: event.location || {},
+        startDate: event.startDate,
+      })),
+      baseUrl
+    );
+
+    const { title, description, url, keywords } = metadata;
 
     return {
       title,

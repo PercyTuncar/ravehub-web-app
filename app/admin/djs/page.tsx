@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, EyeOff, Music, Star, Instagram, Globe, Calendar, Users, Award, Filter, CheckCircle, ExternalLink, Upload, Download, FileText, AlertCircle, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, EyeOff, Music, Star, Instagram, Globe, Calendar, Users, Award, Filter, CheckCircle, ExternalLink, Upload, Download, FileText, AlertCircle, CheckCircle2, XCircle, Loader2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,19 +21,39 @@ import { eventDjsCollection } from '@/lib/firebase/collections';
 import { EventDj, Country } from '@/lib/types';
 import { generateSlug } from '@/lib/utils/slug-generator';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
+import { DJSocialPreview } from '@/components/seo/DJSocialPreview';
 
-// Helper function to revalidate sitemap
+// Helper function to revalidate sitemap (only on server-side or when API is available)
 async function revalidateSitemap() {
+  // Only attempt revalidation if we're on the server or if the API route is available
+  if (typeof window === 'undefined') {
+    // Server-side: skip client-side fetch
+    return;
+  }
+  
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    // Check if we're in a browser environment and API is available
+    const baseUrl = window.location.origin;
     const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+    
+    // Use a timeout to avoid hanging if API is not available
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     await fetch(`${baseUrl}/api/revalidate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, path: '/sitemap.xml' }),
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
   } catch (error) {
-    console.error('Error revalidating sitemap:', error);
+    // Silently fail - revalidation is not critical for the user experience
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Sitemap revalidation skipped (API may not be available):', error);
+    }
   }
 }
 
@@ -159,6 +179,10 @@ export default function DjManagementPage() {
       famousTracks: dj.famousTracks,
       famousAlbums: dj.famousAlbums,
       approved: dj.approved,
+      seoTitle: dj.seoTitle,
+      seoDescription: dj.seoDescription,
+      seoKeywords: dj.seoKeywords,
+      slug: dj.slug,
     });
     setIsEditDialogOpen(true);
   };
@@ -240,9 +264,9 @@ export default function DjManagementPage() {
               
               await eventDjsCollection.update(savedDjId, {
                 jsonLdSchema: schema,
-                seoTitle: `${editForm.name} - DJ Profile | Ravehub`,
-                seoDescription: editForm.description || `${editForm.name} is a professional DJ specializing in ${editForm.genres?.join(', ') || 'electronic music'}.`,
-                seoKeywords: editForm.genres || [],
+                seoTitle: editForm.name || '', // Only the name, no suffix
+                seoDescription: editForm.description || editForm.seoDescription || `${editForm.name || 'DJ'} es un DJ profesional de ${editForm.country || 'Latinoamérica'}. Descubre su música, próximos eventos y biografía completa.`,
+                seoKeywords: editForm.seoKeywords || editForm.genres || [],
               });
               
               console.log('✅ Generated and saved JSONLD Schema for DJ (overwrite):', editForm.name);
@@ -295,11 +319,12 @@ export default function DjManagementPage() {
         });
         
         // Save the schema to the database
+        // Title: Only the DJ name (as per user requirement - no "- DJ Profile | Ravehub")
         await eventDjsCollection.update(savedDjId, {
           jsonLdSchema: schema,
-          seoTitle: `${editForm.name} - DJ Profile | Ravehub`,
-          seoDescription: editForm.description || `${editForm.name} is a professional DJ specializing in ${editForm.genres?.join(', ') || 'electronic music'}.`,
-          seoKeywords: editForm.genres || [],
+          seoTitle: editForm.name || '', // Only the name, no suffix
+          seoDescription: editForm.description || editForm.seoDescription || `${editForm.name || 'DJ'} es un DJ profesional de ${editForm.country || 'Latinoamérica'}. Descubre su música, próximos eventos y biografía completa.`,
+          seoKeywords: editForm.seoKeywords || editForm.genres || [],
         });
         
         console.log('✅ Generated and saved JSONLD Schema for DJ:', editForm.name);
@@ -1094,8 +1119,8 @@ export default function DjManagementPage() {
                         className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-medium text-sm"
                       >
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-sm bg-current opacity-60"></div>
-                          Vista Previa Schema
+                          <Share2 className="w-4 h-4" />
+                          SEO y Vista Previa
                         </div>
                       </TabsTrigger>
                     </TabsList>
@@ -1595,6 +1620,44 @@ export default function DjManagementPage() {
                     </TabsContent>
 
                     <TabsContent value="schema" className="space-y-8 mt-0">
+                      {/* Social Preview Section */}
+                      <div className="space-y-6">
+                        <DJSocialPreview 
+                          djData={{
+                            ...editForm,
+                            slug: editForm.slug || generateSlug(editForm.name || ''),
+                          }}
+                          upcomingEvents={(() => {
+                            // Use eventsSummary if available (has more complete data including location)
+                            // Otherwise fall back to upcomingEvents
+                            if (selectedDj?.eventsSummary) {
+                              const now = new Date();
+                              const today = now.toISOString().split('T')[0];
+                              return selectedDj.eventsSummary
+                                .filter((event: any) => !event.isPast && event.startDate >= today)
+                                .map((event: any) => ({
+                                  slug: event.slug || event.eventId,
+                                  name: event.eventName,
+                                  startDate: event.startDate,
+                                  location: {
+                                    city: event.city,
+                                    country: event.country,
+                                    venue: event.venue,
+                                  },
+                                }));
+                            }
+                            // Fallback to upcomingEvents (legacy format)
+                            return (selectedDj?.upcomingEvents || []).map((event: any) => ({
+                              slug: event.eventId,
+                              name: event.eventName,
+                              startDate: event.startDate,
+                              location: {}, // Location not available in legacy format
+                            }));
+                          })()}
+                        />
+                      </div>
+
+                      {/* Schema JSON-LD Preview */}
                       <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-xl p-8 border border-indigo-200 dark:border-indigo-800">
                         <div className="flex items-center gap-3 mb-6">
                           <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg flex items-center justify-center">
@@ -1611,7 +1674,7 @@ export default function DjManagementPage() {
                             // Generate real-time schema preview
                             const previewData = {
                               ...editForm,
-                              slug: generateSlug(editForm.name || ''),
+                              slug: editForm.slug || generateSlug(editForm.name || ''),
                               id: selectedDj?.id || 'preview-id',
                               createdAt: selectedDj?.createdAt || new Date(),
                               updatedAt: new Date(),
