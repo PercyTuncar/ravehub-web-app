@@ -96,9 +96,11 @@ export function generateDJMetadata(
   const image = djData.imageUrl || '/images/default-dj.jpg';
   
   // Keywords - EXACTLY as in generateMetadata
-  const keywords = djData.seoKeywords && djData.seoKeywords.length > 0
+  // Filter out undefined/null values and ensure all are strings
+  const keywords = (djData.seoKeywords && djData.seoKeywords.length > 0
     ? djData.seoKeywords
-    : ['DJ', 'música electrónica', 'rave', 'eventos', djData.country, djData.name, ...(djData.genres || [])].filter(Boolean);
+    : ['DJ', 'música electrónica', 'rave', 'eventos', djData.country, djData.name, ...(djData.genres || [])]
+  ).filter((keyword): keyword is string => Boolean(keyword) && typeof keyword === 'string');
 
   // Generate Open Graph and Twitter Card meta tags - EXACTLY as in generateMetadata
   const metaTags = {
