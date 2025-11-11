@@ -89,17 +89,24 @@ export function EventDetails({
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {specifications.map((spec, index) => (
-                <div key={index}>
-                  <h4 className="font-semibold mb-2 text-[#FAFDFF]">{spec.title}</h4>
-                  <ul className="list-disc list-inside space-y-1 text-white/80">
-                    {spec.items.map((item, itemIndex) => (
-                      <li key={itemIndex}>{item}</li>
-                    ))}
-                  </ul>
-                  {index < specifications.length - 1 && <Separator className="mt-4 bg-white/10" />}
-                </div>
-              ))}
+              {specifications
+                .filter((spec: any) => {
+                  // Filter out stageMapUrl-only objects, as they're handled by EventStageMap
+                  return spec.title && spec.items && Array.isArray(spec.items);
+                })
+                .map((spec: any, index: number) => (
+                  <div key={index}>
+                    <h4 className="font-semibold mb-2 text-[#FAFDFF]">{spec.title}</h4>
+                    <ul className="list-disc list-inside space-y-1 text-white/80">
+                      {spec.items.map((item: string, itemIndex: number) => (
+                        <li key={itemIndex}>{item}</li>
+                      ))}
+                    </ul>
+                    {index < specifications.filter((s: any) => s.title && s.items).length - 1 && (
+                      <Separator className="mt-4 bg-white/10" />
+                    )}
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>

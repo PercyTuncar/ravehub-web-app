@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useEventColors } from './EventColorContext';
 import { parseLocalDate } from '@/lib/utils/date-timezone';
+import { generateSlug } from '@/lib/utils/slug-generator';
 
 interface LineupTimelineProps {
   artistLineup: Event['artistLineup'];
@@ -84,10 +86,15 @@ export function LineupTimeline({ artistLineup, eventDjs }: LineupTimelineProps) 
               {artists.map((artist, index) => {
                 const djProfile = getDjProfile(artist.eventDjId);
                 const imageUrl = djProfile?.imageUrl || artist.imageUrl;
+                
+                // Generate DJ profile URL
+                // Use slug if available, otherwise generate from name, or fallback to ID
+                const djSlug = djProfile?.slug || (artist.name ? generateSlug(artist.name) : null);
+                const djUrl = djSlug ? `/djs/${djSlug}` : (artist.eventDjId ? `/djs/${artist.eventDjId}` : null);
+                const isClickable = !!djUrl && !!djProfile;
 
-                return (
+                const artistCard = (
                   <motion.div
-                    key={artist.eventDjId || artist.name || index}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
@@ -95,7 +102,8 @@ export function LineupTimeline({ artistLineup, eventDjs }: LineupTimelineProps) 
                       'flex items-center gap-4 p-4 rounded-lg border transition-all hover:shadow-lg hover:scale-[1.02]',
                       artist.isHeadliner 
                         ? 'backdrop-blur-sm' 
-                        : 'bg-white/5 border-white/10 backdrop-blur-sm hover:border-white/20'
+                        : 'bg-white/5 border-white/10 backdrop-blur-sm hover:border-white/20',
+                      isClickable && 'cursor-pointer'
                     )}
                     style={artist.isHeadliner ? {
                       backgroundColor: `${dominantColor}15`,
@@ -186,6 +194,26 @@ export function LineupTimeline({ artistLineup, eventDjs }: LineupTimelineProps) 
                       )}
                     </div>
                   </motion.div>
+                );
+
+                // Wrap in Link if DJ profile is available, otherwise render as div
+                if (isClickable && djUrl) {
+                  return (
+                    <Link
+                      key={artist.eventDjId || artist.name || index}
+                      href={djUrl}
+                      className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FBA905] rounded-lg"
+                      aria-label={`Ver perfil de ${artist.name}`}
+                    >
+                      {artistCard}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div key={artist.eventDjId || artist.name || index}>
+                    {artistCard}
+                  </div>
                 );
               })}
             </div>

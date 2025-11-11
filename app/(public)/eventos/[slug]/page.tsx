@@ -19,6 +19,10 @@ import { EventDetails } from '@/components/events/EventDetails';
 import { EventOrganizer } from '@/components/events/EventOrganizer';
 import { DynamicBackgroundGradients } from '@/components/events/DynamicBackgroundGradients';
 import { EventInfoSidebar } from '@/components/events/EventInfoSidebar';
+import { EventWhatsAppWidget } from '@/components/events/EventWhatsAppWidget';
+import { EventPricingTable } from '@/components/events/EventPricingTable';
+import { EventStageMap } from '@/components/events/EventStageMap';
+import { EventPaymentInfo } from '@/components/events/EventPaymentInfo';
 
 // ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
 export const revalidate = 180;
@@ -166,6 +170,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   {/* Lineup */}
                   <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
 
+                  {/* Pricing Table */}
+                  {event.salesPhases && event.salesPhases.length > 0 && (
+                    <EventPricingTable event={event} />
+                  )}
+
+                  {/* Stage Map */}
+                  <EventStageMap 
+                    stageMapUrl={event.stageMapUrl}
+                    specifications={event.specifications}
+                  />
+
                   {/* Gallery */}
                   <EventGallery
                     mainImageUrl={event.mainImageUrl}
@@ -189,6 +204,12 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 <div className="space-y-6">
                   {/* Event Info Card */}
                   <EventInfoSidebar event={event} />
+
+                  {/* WhatsApp Widget */}
+                  <EventWhatsAppWidget event={event} />
+
+                  {/* Payment Info */}
+                  <EventPaymentInfo event={event} />
 
                   {/* Map */}
                   {event.location.geo && (
