@@ -28,14 +28,16 @@ export function PreventAutoScroll() {
       }, 0);
     }
 
-    // Prevent scroll on any focus events
+    // Prevent scroll on any focus events that might cause auto-scroll
     const preventScrollOnFocus = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
       // Only prevent if it's an auto-focus (not user-initiated)
-      if (target && target.scrollIntoView) {
-        // Check if this is likely an auto-focus
+      if (target) {
+        // Check if this is likely an auto-focus (not user-initiated)
+        // :focus-visible is only true when focus is from keyboard navigation
         const isAutoFocus = !target.matches(':focus-visible');
         if (isAutoFocus) {
+          // Prevent default scroll behavior on auto-focus
           e.preventDefault();
         }
       }
