@@ -256,7 +256,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
   }
 
   return (
-    <Card className="bg-white/5 border-white/10 backdrop-blur-sm overflow-hidden shadow-lg" style={{ boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)' }}>
+    <Card className="bg-white/5 border-white/5 backdrop-blur-sm overflow-hidden shadow-lg" style={{ boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)' }}>
       <CardHeader className="bg-gradient-to-r from-white/10 to-transparent border-b border-white/10 px-3 sm:px-4 py-2.5 sm:py-3">
         <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
           <div 
@@ -319,15 +319,15 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
             return (
               <TabsContent key={phase.id} value={`phase-${index}`} className="mt-4 sm:mt-6">
                 <div 
-                  className="rounded-lg sm:rounded-xl border overflow-hidden transition-all duration-300"
+                  className="rounded-lg sm:rounded-xl overflow-hidden transition-all duration-300"
                   style={{
-                    borderColor: isActive ? `${dominantColor}40` : 'rgba(255, 255, 255, 0.1)',
+                    borderColor: isActive ? `${dominantColor}30` : 'rgba(255, 255, 255, 0.1)',
                     backgroundColor: isActive ? `${dominantColor}10` : 'rgba(255, 255, 255, 0.03)',
                   }}
                 >
                   {/* Phase Header */}
                   <div 
-                    className="px-3 sm:px-4 py-2.5 sm:py-3 border-b bg-white/8"
+                    className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white/8"
                     style={{
                       borderColor: isActive ? `${dominantColor}30` : 'rgba(255, 255, 255, 0.12)',
                       background: isActive 
