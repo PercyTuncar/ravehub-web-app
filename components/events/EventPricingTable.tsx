@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Ticket, Calendar, Clock, CheckCircle2, XCircle, AlertCircle, ShoppingCart, Star } from 'lucide-react';
+import { Ticket, Calendar, Clock, CheckCircle2, XCircle, AlertCircle, ShoppingCart } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { useEventColors } from './EventColorContext';
 import { format } from 'date-fns';
@@ -370,7 +370,6 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                       </thead>
                       <tbody>
                         {zones.map((zone, zoneIndex) => {
-                          const isMostPopular = zone.zoneId === mostSoldZoneId;
                           const isSoldOut = zone.available === 0;
 
                           return (
@@ -388,16 +387,6 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                                     <div className={`font-semibold text-sm text-white/87 ${isSoldOut ? 'line-through' : ''}`}>
                                       {zone.zoneName}
                                     </div>
-                                    {isMostPopular && !isSoldOut && (
-                                      <Badge className="text-[10px] px-1.5 py-0.5 backdrop-blur-md font-medium" style={{
-                                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                                        color: 'rgba(251, 191, 36, 0.8)',
-                                        borderColor: 'rgba(245, 158, 11, 0.2)',
-                                      }}>
-                                        <Star className="h-2.5 w-2.5 mr-0.5" />
-                                        Más elegido
-                                      </Badge>
-                                    )}
                                     {isSoldOut && (
                                       <Badge className="text-[10px] px-1.5 py-0.5 backdrop-blur-md font-medium" style={{
                                         backgroundColor: 'rgba(239, 68, 68, 0.1)',
