@@ -402,14 +402,14 @@ export function DJSocialPreview({ djData, upcomingEvents = [] }: DJSocialPreview
                   <div>
                     <h4 className="font-medium mb-3 text-sm">Optimizaciones Recomendadas</h4>
                     <div className="space-y-2">
-                      {[
-                        { label: 'Título optimizado (solo nombre)', value: !previewData.title.includes(' - ') && !previewData.title.includes('|'), current: previewData.title.length },
-                        { label: 'Descripción SEO (≤160 caracteres)', value: previewData.description.length <= 160, current: previewData.description.length },
-                        { label: 'Keywords SEO', value: !!(djData.seoKeywords && djData.seoKeywords.length > 0) || !!(djData.genres && djData.genres.length > 0), field: (djData.seoKeywords?.length || djData.genres?.length || 0) },
-                        { label: 'Imagen de calidad (500x500px+)', value: !!djData.imageUrl, field: 'Recomendado' },
-                        { label: 'Próximos eventos en descripción', value: transformedEvents && transformedEvents.length > 0, field: transformedEvents?.length || 0 },
-                        { label: 'Schema.org válido', value: true, field: 'Auto-generado' },
-                      ].map((item, index) => (
+                      {([
+                        { label: 'Título optimizado (solo nombre)', value: !previewData.title.includes(' - ') && !previewData.title.includes('|'), current: previewData.title.length as number | undefined },
+                        { label: 'Descripción SEO (≤160 caracteres)', value: previewData.description.length <= 160, current: previewData.description.length as number | undefined },
+                        { label: 'Keywords SEO', value: !!(djData.seoKeywords && djData.seoKeywords.length > 0) || !!(djData.genres && djData.genres.length > 0), field: (djData.seoKeywords?.length || djData.genres?.length || 0) as string | number },
+                        { label: 'Imagen de calidad (500x500px+)', value: !!djData.imageUrl, field: 'Recomendado' as string | number },
+                        { label: 'Próximos eventos en descripción', value: transformedEvents && transformedEvents.length > 0, field: (transformedEvents?.length || 0) as string | number },
+                        { label: 'Schema.org válido', value: true, field: 'Auto-generado' as string | number },
+                      ] as Array<{ label: string; value: boolean; current?: number; field?: string | number }>).map((item, index) => (
                         <div key={index} className="flex items-center justify-between">
                           <span className="text-sm">{item.label}</span>
                           <div className="flex items-center gap-2">
@@ -418,7 +418,12 @@ export function DJSocialPreview({ djData, upcomingEvents = [] }: DJSocialPreview
                             </span>
                             {item.current !== undefined && (
                               <span className="text-xs text-muted-foreground">
-                                {typeof item.current === 'number' ? `${item.current} chars` : item.field}
+                                {`${item.current} chars`}
+                              </span>
+                            )}
+                            {item.current === undefined && item.field !== undefined && (
+                              <span className="text-xs text-muted-foreground">
+                                {typeof item.field === 'number' ? `${item.field}` : item.field}
                               </span>
                             )}
                           </div>
