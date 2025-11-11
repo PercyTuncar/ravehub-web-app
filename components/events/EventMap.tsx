@@ -344,19 +344,24 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
     markerColorRef.current = accentColor;
 
     // Add popup for destination with colors from palette
+    // Don't open popup automatically to prevent scroll
     const popupHTML = `
       <div style="color: ${dominantColor}; font-weight: 600; font-size: 14px; margin-bottom: ${address ? '4px' : '0'}; transition: color 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
         ${venue}
       </div>
       ${address ? `<div style="color: ${colorPalette?.muted || '#6b7280'}; font-size: 12px; transition: color 0.8s cubic-bezier(0.4, 0, 0.2, 1);">${address}</div>` : ''}
     `;
-    new maplibregl.Popup({ 
+    const popup = new maplibregl.Popup({ 
       offset: 25,
-      className: 'venue-popup'
+      className: 'venue-popup',
+      closeOnClick: false,
+      closeButton: false
     })
       .setLngLat([lng, lat])
-      .setHTML(popupHTML)
-      .addTo(map.current);
+      .setHTML(popupHTML);
+    
+    // Only add popup to marker, don't open it automatically
+    marker.current.setPopup(popup);
     
     // Store initial popup color in ref
     popupColorRef.current = dominantColor;
@@ -722,14 +727,29 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
             }
           }
 
-          // Fit bounds to route
+          // Fit bounds to route (only if user has interacted with the page)
+          // Prevent auto-scroll on initial page load
           const coordinates = geometry.coordinates as [number, number][];
           if (coordinates && coordinates.length > 0) {
             const bounds = coordinates.reduce(
               (bounds, coord) => bounds.extend(coord as maplibregl.LngLatLike),
               new maplibregl.LngLatBounds(coordinates[0] as maplibregl.LngLatLike, coordinates[0] as maplibregl.LngLatLike)
             );
-            map.current.fitBounds(bounds, { padding: 50 });
+            // Only fit bounds if user has scrolled or interacted with the page
+            // This prevents auto-scroll on initial page load
+            const hasUserInteracted = typeof window !== 'undefined' && (
+              window.scrollY > 0 || 
+              document.querySelector(':focus') !== null ||
+              sessionStorage.getItem('ravehub_user_interacted') === 'true'
+            );
+            
+            if (hasUserInteracted) {
+              map.current.fitBounds(bounds, { padding: 50 });
+            } else {
+              // Just center on destination without fitting bounds to avoid scroll
+              map.current.setCenter([lng, lat]);
+              map.current.setZoom(15);
+            }
           }
         } catch (error) {
           console.error('❌ Error adding route to map:', error);
@@ -1167,11 +1187,55 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
     }
   }, [processLocation, startWatchingLocation, hasAutoLoaded]);
 
+  // Mark user interaction to allow auto-load after first interaction
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const markUserInteraction = () => {
+      sessionStorage.setItem('ravehub_user_interacted', 'true');
+    };
+    
+    // Mark interaction on scroll, click, or touch
+    window.addEventListener('scroll', markUserInteraction, { once: true, passive: true });
+    window.addEventListener('click', markUserInteraction, { once: true });
+    window.addEventListener('touchstart', markUserInteraction, { once: true, passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', markUserInteraction);
+      window.removeEventListener('click', markUserInteraction);
+      window.removeEventListener('touchstart', markUserInteraction);
+    };
+  }, []);
+
   // Check geolocation permission status and auto-load route if granted
   useEffect(() => {
+    // Prevent any auto-load on initial page load
+    // Wait for user interaction before attempting to load route
     const checkPermissionAndLoadRoute = async () => {
       if (typeof navigator === 'undefined' || !navigator.geolocation) {
         setLocationPermission('denied');
+        return;
+      }
+
+      // NEVER auto-load on initial page load to prevent auto-scroll
+      // Only auto-load if user has explicitly interacted with the page
+      const hasUserInteracted = typeof window !== 'undefined' && (
+        sessionStorage.getItem('ravehub_user_interacted') === 'true'
+      );
+      
+      // If no interaction, just set permission status and return
+      if (!hasUserInteracted) {
+        // Check permission status but don't auto-load
+        if (navigator.permissions) {
+          try {
+            const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+            setLocationPermission(result.state);
+          } catch (error) {
+            setLocationPermission('prompt');
+          }
+        } else {
+          setLocationPermission('prompt');
+        }
         return;
       }
 
@@ -1186,8 +1250,8 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
           if (daysSinceCached < 30) {
             console.log('📍 Using cached permission status: granted');
             setLocationPermission('granted');
-            // Try to auto-load, but don't wait if it fails
-            if (!hasAutoLoaded && !isAutoLoadingRef.current) {
+            // Only auto-load if user has interacted with the page
+            if (hasUserInteracted && !hasAutoLoaded && !isAutoLoadingRef.current) {
               handleGetLocationAuto();
             }
             return;
@@ -1203,7 +1267,11 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
           console.log('📍 Location permission status:', result.state);
 
           // If permission is already granted, automatically get location and show route
-          if (result.state === 'granted' && !hasAutoLoaded && !isAutoLoadingRef.current) {
+          // But ONLY if user has explicitly interacted with the page to prevent auto-scroll on load
+          const hasUserInteracted = typeof window !== 'undefined' && (
+            sessionStorage.getItem('ravehub_user_interacted') === 'true'
+          );
+          if (result.state === 'granted' && hasUserInteracted && !hasAutoLoaded && !isAutoLoadingRef.current) {
             handleGetLocationAuto();
           }
 

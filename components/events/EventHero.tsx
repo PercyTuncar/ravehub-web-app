@@ -180,9 +180,26 @@ export function EventHero({ event }: EventHeroProps) {
       }}
       aria-label={`Hero del evento ${event.name}`}
     >
-      {/* Background Image */}
+      {/* Background Video (Mobile Only) */}
+      {event.videoUrl && (
+        <div className="absolute inset-0 md:hidden">
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+          >
+            <source src={event.videoUrl} type="video/mp4" />
+          </video>
+        </div>
+      )}
+
+      {/* Background Image (Desktop) or Fallback (Mobile if no video) */}
       {event.bannerImageUrl ? (
-        <div className="absolute inset-0">
+        <div className={`absolute inset-0 ${event.videoUrl ? 'hidden md:block' : ''}`}>
           <Image
             src={event.bannerImageUrl}
             alt={event.imageAltTexts?.main || event.name}
@@ -193,7 +210,7 @@ export function EventHero({ event }: EventHeroProps) {
           />
         </div>
       ) : event.mainImageUrl ? (
-        <div className="absolute inset-0">
+        <div className={`absolute inset-0 ${event.videoUrl ? 'hidden md:block' : ''}`}>
           <Image
             src={event.mainImageUrl}
             alt={event.imageAltTexts?.main || event.name}
@@ -204,7 +221,7 @@ export function EventHero({ event }: EventHeroProps) {
           />
         </div>
       ) : (
-        <div className="absolute inset-0 bg-[#141618]" />
+        <div className={`absolute inset-0 bg-[#141618] ${event.videoUrl ? 'hidden md:block' : ''}`} />
       )}
 
       {/* Cinematic Overlays */}

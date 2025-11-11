@@ -23,6 +23,7 @@ import { EventWhatsAppWidget } from '@/components/events/EventWhatsAppWidget';
 import { EventPricingTable } from '@/components/events/EventPricingTable';
 import { EventStageMap } from '@/components/events/EventStageMap';
 import { EventPaymentInfo } from '@/components/events/EventPaymentInfo';
+import { PreventAutoScroll } from '@/components/events/PreventAutoScroll';
 
 // ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
 export const revalidate = 180;
@@ -154,6 +155,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       <JsonLdArray data={schemas} id="event-schema" />
       <EventColorProvider>
         <ForceDarkMode />
+        <PreventAutoScroll />
         <div className="min-h-screen bg-[#141618] text-[#FAFDFF]" suppressHydrationWarning>
           {/* Hero Section with Dynamic Colors */}
           <EventHero event={event} />
