@@ -681,7 +681,7 @@ export default function NewEventPage() {
                 )}
                 {eventData.slug && eventData.name && (
                   <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                    ✅ URL: http://localhost:3000/eventos/{eventData.slug}
+                    ✅ URL: https://www.ravehublatam.com/eventos/{eventData.slug}
                   </p>
                 )}
               </div>
