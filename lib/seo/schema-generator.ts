@@ -2140,35 +2140,93 @@ export class SchemaGenerator {
     // Collect events to add (prioritize upcoming over past)
     const eventsToAdd: any[] = [];
 
-    // First, add upcoming events (priority - show all upcoming events)
-    if (djData.upcomingEvents && Array.isArray(djData.upcomingEvents) && djData.upcomingEvents.length > 0) {
-      djData.upcomingEvents.forEach((event: any) => {
-        const eventSchema = generateEventSchema(event);
+    // Helper to map eventsSummary item to schema format
+    const mapSummaryToSchema = (summaryEvent: any) => {
+      // Basic mapping from eventsSummary structure to what generateEventSchema expects
+      return {
+        slug: summaryEvent.slug,
+        name: summaryEvent.eventName,
+        shortDescription: `Evento ${summaryEvent.eventName} en ${summaryEvent.city}, ${summaryEvent.country}`,
+        startDate: summaryEvent.startDate,
+        endDate: summaryEvent.endDate,
+        // Time is not in summary, default to evening
+        startTime: '20:00:00',
+        eventType: 'music_event', // Default
+        mainImageUrl: summaryEvent.mainImageUrl,
+        location: {
+          venue: summaryEvent.venue,
+          city: summaryEvent.city,
+          country: summaryEvent.country,
+          // We don't have full address or coords in summary, but venue+city is enough for basic schema
+        },
+        currency: 'PEN', // Default or derived
+        // Create a minimal salesPhase to generate an offer if needed
+        salesPhases: [
+          {
+            name: 'General',
+            startDate: new Date().toISOString(), // Assume available
+            zonesPricing: [
+              {
+                zoneId: 'general',
+                price: 0 // Price not in summary, maybe omit price or put 0
+              }
+            ]
+          }
+        ],
+        zones: [
+          { id: 'general', name: 'General' }
+        ]
+      };
+    };
+
+    // Process eventsSummary if available (New Structure)
+    if (djData.eventsSummary && Array.isArray(djData.eventsSummary)) {
+      djData.eventsSummary.forEach((summaryEvent: any) => {
+        // Map summary event to full event structure for schema generator
+        const eventData = mapSummaryToSchema(summaryEvent);
+        const eventSchema = generateEventSchema(eventData);
+
         if (eventSchema) {
-          // Set status as scheduled for upcoming events
-          eventSchema.eventStatus = 'https://schema.org/EventScheduled';
+          // Set status based on isPast flag
+          if (summaryEvent.isPast) {
+            eventSchema.eventStatus = 'https://schema.org/EventPast';
+          } else {
+            eventSchema.eventStatus = 'https://schema.org/EventScheduled';
+          }
           eventsToAdd.push(eventSchema);
         }
       });
     }
+    // Fallback to legacy fields if eventsSummary is empty
+    else {
+      // First, add upcoming events (priority - show all upcoming events)
+      if (djData.upcomingEvents && Array.isArray(djData.upcomingEvents) && djData.upcomingEvents.length > 0) {
+        djData.upcomingEvents.forEach((event: any) => {
+          const eventSchema = generateEventSchema(event);
+          if (eventSchema) {
+            // Set status as scheduled for upcoming events
+            eventSchema.eventStatus = 'https://schema.org/EventScheduled';
+            eventsToAdd.push(eventSchema);
+          }
+        });
+      }
 
-    // Then, add past events only if no upcoming events were added
-    // This ensures we prioritize upcoming events but still show past events if no upcoming exist
-    if (eventsToAdd.length === 0 && djData.pastEvents && Array.isArray(djData.pastEvents) && djData.pastEvents.length > 0) {
-      // Limit past events to avoid schema bloat (show most recent past events only)
-      const pastEventsToShow = djData.pastEvents.slice(0, 5); // Show up to 5 most recent past events
-      pastEventsToShow.forEach((event: any) => {
-        const eventSchema = generateEventSchema(event);
-        if (eventSchema) {
-          // Set status as past for past events
-          eventSchema.eventStatus = 'https://schema.org/EventPast';
-          eventsToAdd.push(eventSchema);
-        }
-      });
+      // Then, add past events only if no upcoming events were added
+      if (eventsToAdd.length === 0 && djData.pastEvents && Array.isArray(djData.pastEvents) && djData.pastEvents.length > 0) {
+        // Limit past events to avoid schema bloat (show most recent past events only)
+        const pastEventsToShow = djData.pastEvents.slice(0, 5); // Show up to 5 most recent past events
+        pastEventsToShow.forEach((event: any) => {
+          const eventSchema = generateEventSchema(event);
+          if (eventSchema) {
+            // Set status as past for past events
+            eventSchema.eventStatus = 'https://schema.org/EventPast';
+            eventsToAdd.push(eventSchema);
+          }
+        });
+      }
     }
 
     // Add all valid event schemas to the graph (only if we have events)
-    // This ensures events are only added dynamically when they exist
     if (eventsToAdd.length > 0) {
       eventsToAdd.forEach(eventSchema => {
         (schema['@graph'] as any[]).push(eventSchema);
