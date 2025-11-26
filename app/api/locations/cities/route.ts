@@ -68,6 +68,29 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Error fetching cities:', error);
+
+    // Fallback to static data
+    try {
+      const { getStaticCities } = await import('@/lib/data/locations');
+      const staticCities = getStaticCities(countryCode, regionCode || undefined);
+
+      if (staticCities.length > 0) {
+        const cities = staticCities.map((cityName, index) => ({
+          id: `${countryCode}-${regionCode || 'main'}-${index}`,
+          countryCode: countryCode,
+          regionCode: regionCode,
+          name: cityName,
+          state: regionCode,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }));
+
+        return NextResponse.json(cities);
+      }
+    } catch (fallbackError) {
+      console.error('Error loading static cities:', fallbackError);
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch cities' },
       { status: 500 }

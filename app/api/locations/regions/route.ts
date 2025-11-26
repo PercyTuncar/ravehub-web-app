@@ -72,6 +72,29 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Error fetching regions:', error);
+
+    // Fallback to static data
+    try {
+      const { getStaticRegions } = await import('@/lib/data/locations');
+      const staticRegions = getStaticRegions(countryCode);
+
+      if (staticRegions.length > 0) {
+        const regions = staticRegions.map((name, index) => ({
+          id: `${countryCode}-${index}`,
+          countryCode: countryCode,
+          code: `${countryCode}-${index}`,
+          name: name,
+          type: 'state',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }));
+
+        return NextResponse.json(regions);
+      }
+    } catch (fallbackError) {
+      console.error('Error loading static regions:', fallbackError);
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch regions' },
       { status: 500 }
