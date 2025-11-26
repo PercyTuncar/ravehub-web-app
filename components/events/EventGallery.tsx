@@ -46,16 +46,16 @@ export function EventGallery({
   return (
     <Card className="overflow-hidden bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
-          <ImageIcon 
-            className="h-5 w-5" 
-            style={{ 
+        <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 text-[#FAFDFF]">
+          <ImageIcon
+            className="h-5 w-5"
+            style={{
               color: dominantColor,
               transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-            }} 
+            }}
           />
           Multimedia
-        </CardTitle>
+        </h2>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Image Gallery Carousel */}
@@ -116,12 +116,12 @@ export function EventGallery({
         {allVideos.length > 0 && (
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2 text-[#FAFDFF]">
-              <Video 
-                className="h-5 w-5" 
-                style={{ 
+              <Video
+                className="h-5 w-5"
+                style={{
                   color: dominantColor,
                   transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }} 
+                }}
               />
               Videos
             </h3>
@@ -141,7 +141,7 @@ export function EventGallery({
                         playsInline
                         onMouseEnter={(e) => {
                           const video = e.currentTarget;
-                          video.play().catch(() => {});
+                          video.play().catch(() => { });
                         }}
                         onMouseLeave={(e) => {
                           const video = e.currentTarget;

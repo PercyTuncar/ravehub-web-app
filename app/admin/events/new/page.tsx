@@ -46,72 +46,72 @@ async function revalidateSitemap() {
 }
 
 const STEPS = [
-  { 
-    id: 'basic', 
-    title: 'Información Básica', 
+  {
+    id: 'basic',
+    title: 'Información Básica',
     description: 'Nombre, tipo y descripción',
     icon: Sparkles,
     color: 'from-purple-500 to-pink-500'
   },
-  { 
-    id: 'dates', 
-    title: 'Fechas y Ubicación', 
+  {
+    id: 'dates',
+    title: 'Fechas y Ubicación',
     description: 'Cuándo y dónde se realiza',
     icon: Clock,
     color: 'from-blue-500 to-cyan-500'
   },
-  { 
-    id: 'media', 
-    title: 'Multimedia', 
+  {
+    id: 'media',
+    title: 'Multimedia',
     description: 'Imágenes y contenido visual',
     icon: Image,
     color: 'from-green-500 to-emerald-500'
   },
-  { 
-    id: 'lineup', 
-    title: 'Lineup', 
+  {
+    id: 'lineup',
+    title: 'Lineup',
     description: 'Artistas y DJs',
     icon: Circle,
     color: 'from-orange-500 to-red-500'
   },
-  { 
-    id: 'zones', 
-    title: 'Zonas y Fases', 
+  {
+    id: 'zones',
+    title: 'Zonas y Fases',
     description: 'Capacidad y precios',
     icon: Circle,
     color: 'from-yellow-500 to-orange-500'
   },
-  { 
-    id: 'tickets', 
-    title: 'Tickets y Pagos', 
+  {
+    id: 'tickets',
+    title: 'Tickets y Pagos',
     description: 'Configuración de venta',
     icon: Circle,
     color: 'from-indigo-500 to-purple-500'
   },
-  { 
-    id: 'organizer', 
-    title: 'Organizador', 
+  {
+    id: 'organizer',
+    title: 'Organizador',
     description: 'Información de contacto',
     icon: Circle,
     color: 'from-teal-500 to-green-500'
   },
-  { 
-    id: 'seo', 
-    title: 'SEO y Schema', 
+  {
+    id: 'seo',
+    title: 'SEO y Schema',
     description: 'Optimización y metadatos',
     icon: Circle,
     color: 'from-pink-500 to-rose-500'
   },
-  { 
-    id: 'preview', 
-    title: 'Previsualización', 
+  {
+    id: 'preview',
+    title: 'Previsualización',
     description: 'SEO y redes sociales',
     icon: Eye,
     color: 'from-emerald-500 to-teal-500'
   },
-  { 
-    id: 'review', 
-    title: 'Revisión', 
+  {
+    id: 'review',
+    title: 'Revisión',
     description: 'Validación final',
     icon: CheckCircle,
     color: 'from-green-500 to-emerald-500'
@@ -168,6 +168,9 @@ export default function NewEventPage() {
     subEvents: [],
     salesPhases: [],
     zones: [],
+    mainImageUrl: '',
+    squareImageUrl: '',
+    bannerImageUrl: '',
     imageGallery: [],
     imageAltTexts: {},
     videoUrl: '',
@@ -347,7 +350,7 @@ export default function NewEventPage() {
   // Función helper para recalcular estados de fases antes de guardar
   const recalculatePhaseStatuses = (phases: any[]): any[] => {
     if (!phases || phases.length === 0) return phases;
-    
+
     const now = new Date();
     return phases.map((phase) => {
       // Si tiene estado manual, mantenerlo
@@ -357,15 +360,15 @@ export default function NewEventPage() {
           status: phase.manualStatus === 'sold_out' ? 'sold_out' : 'active',
         };
       }
-      
+
       // Calcular estado automático
       if (!phase.startDate || !phase.endDate) {
         return { ...phase, status: 'upcoming' };
       }
-      
+
       const startDate = new Date(phase.startDate);
       const endDate = new Date(phase.endDate);
-      
+
       if (now < startDate) {
         return { ...phase, status: 'upcoming' };
       } else if (now > endDate) {
@@ -381,7 +384,7 @@ export default function NewEventPage() {
     try {
       // Recalcular estados de fases antes de guardar
       const updatedPhases = recalculatePhaseStatuses(dataToSave.salesPhases || []);
-      
+
       const eventToSave = {
         ...dataToSave,
         salesPhases: updatedPhases,
@@ -418,7 +421,7 @@ export default function NewEventPage() {
     try {
       // Recalcular estados de fases antes de guardar
       const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
-      
+
       const eventToSave = {
         ...eventData,
         salesPhases: updatedPhases,
@@ -426,9 +429,9 @@ export default function NewEventPage() {
         artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
         createdBy: 'admin', // TODO: Get from auth context
       };
-      
+
       let eventId = tempEventId;
-      
+
       if (eventId) {
         // Actualizar evento existente
         await eventsCollection.update(eventId, eventToSave);
@@ -437,14 +440,14 @@ export default function NewEventPage() {
         eventId = await eventsCollection.create(eventToSave);
         setTempEventId(eventId);
       }
-      
+
       // Sync DJ events for drafts too
       await syncEventWithDjs(eventId);
-      
+
       // Limpiar localStorage
       localStorage.removeItem('event_draft_new');
       localStorage.removeItem('event_draft_new_timestamp');
-      
+
       router.push(`/admin/events/${eventId}`);
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -458,7 +461,7 @@ export default function NewEventPage() {
     try {
       // Recalcular estados de fases antes de guardar
       const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
-      
+
       const eventToSave = {
         ...eventData,
         salesPhases: updatedPhases,
@@ -468,7 +471,7 @@ export default function NewEventPage() {
       };
 
       let eventId = tempEventId;
-      
+
       if (eventId) {
         // Actualizar evento existente
         await eventsCollection.update(eventId, eventToSave);
@@ -785,17 +788,30 @@ export default function NewEventPage() {
                 </p>
               </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
-                <input
-                  type="checkbox"
-                  id="isMultiDay"
-                  checked={eventData.isMultiDay || false}
-                  onChange={(e) => updateEventData('isMultiDay', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <Label htmlFor="isMultiDay" className="text-sm font-medium text-foreground cursor-pointer">
-                  🎪 Evento multi-día
-                </Label>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Imagen Principal (16:9) *</Label>
+                  <FileUpload
+                    currentUrl={eventData.mainImageUrl}
+                    onUploadComplete={(url) => updateEventData('mainImageUrl', url)}
+                    folder={`events/${eventData.slug || 'temp'}/images`}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Recomendado: 1920x1080px. Se usará en listados y portada.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Imagen para Google (1:1) *</Label>
+                  <FileUpload
+                    currentUrl={eventData.squareImageUrl}
+                    onUploadComplete={(url) => updateEventData('squareImageUrl', url)}
+                    folder={`events/${eventData.slug || 'temp'}/images`}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Recomendado: 1080x1080px. Se usará en resultados de búsqueda de Google (móvil).
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -1032,7 +1048,7 @@ export default function NewEventPage() {
                         variant="default"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
                       <Input
@@ -1047,7 +1063,7 @@ export default function NewEventPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50">
                     <p className="text-xs text-blue-700 dark:text-blue-300">
                       📐 Recomendado: 1200x675px (16:9) • Formatos: JPG, PNG, WebP • Máximo: 5MB
@@ -1071,7 +1087,7 @@ export default function NewEventPage() {
                       <p className="text-xs text-green-600 dark:text-green-400 mb-4">
                         Describe la imagen para motores de búsqueda y accesibilidad (importante para SEO)
                       </p>
-                      
+
                       <div className="border-2 border-green-200 dark:border-green-800 rounded-lg p-3 bg-white dark:bg-gray-900">
                         <img
                           src={eventData.mainImageUrl}
@@ -1114,7 +1130,7 @@ export default function NewEventPage() {
                         variant="banner"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
                       <Input
@@ -1129,7 +1145,7 @@ export default function NewEventPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800/50">
                     <p className="text-xs text-orange-700 dark:text-orange-300">
                       📐 Recomendado: 1920x1080px (16:9) • Formatos: JPG, PNG, WebP • Máximo: 10MB
@@ -1188,7 +1204,7 @@ export default function NewEventPage() {
                         variant="default"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
                       <Input
@@ -1203,7 +1219,7 @@ export default function NewEventPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800/50">
                     <p className="text-xs text-purple-700 dark:text-purple-300">
                       📐 Recomendado: 1200x1200px (1:1) o 1920x1080px (16:9) • Formatos: JPG, PNG, WebP • Máximo: 10MB
@@ -1282,7 +1298,7 @@ export default function NewEventPage() {
                                 variant="default"
                               />
                             </div>
-                            
+
                             <div className="space-y-2">
                               <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
                               <Input
@@ -1301,7 +1317,7 @@ export default function NewEventPage() {
                               </p>
                             </div>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label className="text-sm font-semibold text-foreground">Texto Alternativo (SEO)</Label>
                             <Input
@@ -1366,7 +1382,7 @@ export default function NewEventPage() {
                       </Card>
                     ))}
                   </div>
-                  
+
                   <Button
                     type="button"
                     variant="outline"
@@ -1415,7 +1431,7 @@ export default function NewEventPage() {
                           folder="events/videos"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
                         <Input
@@ -1430,7 +1446,7 @@ export default function NewEventPage() {
                         </p>
                       </div>
                     </div>
-                    
+
                     {eventData.videoUrl && (
                       <div className="border-2 border-dashed border-red-300 dark:border-red-700 rounded-lg p-4 bg-white dark:bg-gray-900">
                         <video
@@ -1452,7 +1468,7 @@ export default function NewEventPage() {
                         </Badge>
                       )}
                     </div>
-                    
+
                     <div className="space-y-4">
                       {eventData.videoGallery?.map((videoUrl, index) => (
                         <Card key={index} className="border-2 border-red-200 dark:border-red-800">
@@ -1477,7 +1493,7 @@ export default function NewEventPage() {
                                   folder="events/videos"
                                 />
                               </div>
-                              
+
                               <div className="space-y-2">
                                 <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
                                 <Input
@@ -1525,7 +1541,7 @@ export default function NewEventPage() {
                         </Card>
                       ))}
                     </div>
-                    
+
                     <Button
                       type="button"
                       variant="outline"
@@ -1823,16 +1839,16 @@ export default function NewEventPage() {
                     const calculatePhaseStatus = (phase: any): 'upcoming' | 'active' | 'sold_out' | 'expired' => {
                       if (phase.manualStatus === 'sold_out') return 'sold_out';
                       if (!phase.startDate || !phase.endDate) return 'upcoming';
-                      
+
                       const now = new Date();
                       const startDate = new Date(phase.startDate);
                       const endDate = new Date(phase.endDate);
-                      
+
                       if (now < startDate) return 'upcoming';
                       if (now > endDate) return 'expired';
                       if (phase.manualStatus === 'active') return 'active';
                       if (now >= startDate && now <= endDate) return 'active';
-                      
+
                       return 'upcoming';
                     };
 
@@ -1894,7 +1910,7 @@ export default function NewEventPage() {
                                   const now = new Date();
                                   const startDate = new Date(e.target.value);
                                   const endDate = phase.endDate ? new Date(phase.endDate) : null;
-                                  
+
                                   if (updatedPhase.manualStatus === null) {
                                     if (endDate && now > endDate) {
                                       updatedPhase.status = 'expired';
@@ -1904,7 +1920,7 @@ export default function NewEventPage() {
                                       updatedPhase.status = 'active';
                                     }
                                   }
-                                  
+
                                   newPhases[phaseIndex] = updatedPhase;
                                   updateEventData('salesPhases', newPhases);
                                 }}
@@ -1926,7 +1942,7 @@ export default function NewEventPage() {
                                   const now = new Date();
                                   const startDate = phase.startDate ? new Date(phase.startDate) : null;
                                   const endDate = new Date(e.target.value);
-                                  
+
                                   if (updatedPhase.manualStatus === null) {
                                     if (now > endDate) {
                                       updatedPhase.status = 'expired';
@@ -1936,7 +1952,7 @@ export default function NewEventPage() {
                                       updatedPhase.status = 'active';
                                     }
                                   }
-                                  
+
                                   newPhases[phaseIndex] = updatedPhase;
                                   updateEventData('salesPhases', newPhases);
                                 }}
@@ -1950,14 +1966,14 @@ export default function NewEventPage() {
                                 onValueChange={(value) => {
                                   const newPhases = [...(eventData.salesPhases || [])];
                                   const updatedPhase = { ...phase };
-                                  
+
                                   if (value === 'auto') {
                                     updatedPhase.manualStatus = null;
                                     // Recalcular automáticamente
                                     const now = new Date();
                                     const startDate = phase.startDate ? new Date(phase.startDate) : null;
                                     const endDate = phase.endDate ? new Date(phase.endDate) : null;
-                                    
+
                                     if (startDate && endDate) {
                                       if (now > endDate) {
                                         updatedPhase.status = 'expired';
@@ -1971,7 +1987,7 @@ export default function NewEventPage() {
                                     updatedPhase.manualStatus = value as 'active' | 'sold_out';
                                     updatedPhase.status = value as 'active' | 'sold_out';
                                   }
-                                  
+
                                   newPhases[phaseIndex] = updatedPhase;
                                   updateEventData('salesPhases', newPhases);
                                 }}
@@ -1986,7 +2002,7 @@ export default function NewEventPage() {
                                 </SelectContent>
                               </Select>
                               <p className="text-xs text-muted-foreground">
-                                {phase.manualStatus === null 
+                                {phase.manualStatus === null
                                   ? 'El estado se calcula automáticamente según las fechas'
                                   : 'Estado manual activado - ignora las fechas'}
                               </p>
@@ -2374,10 +2390,9 @@ export default function NewEventPage() {
                       <p className="text-xs text-muted-foreground">
                         Longitud recomendada: 50-60 caracteres
                       </p>
-                      <span className={`text-xs font-medium ${
-                        (eventData.seoTitle || eventData.name || '').length > 60 ? 'text-red-500' :
+                      <span className={`text-xs font-medium ${(eventData.seoTitle || eventData.name || '').length > 60 ? 'text-red-500' :
                         (eventData.seoTitle || eventData.name || '').length > 50 ? 'text-green-500' : 'text-yellow-500'
-                      }`}>
+                        }`}>
                         {(eventData.seoTitle || eventData.name || '').length}/60
                       </span>
                     </div>
@@ -2414,10 +2429,9 @@ export default function NewEventPage() {
                       <p className="text-xs text-muted-foreground">
                         Longitud recomendada: 150-160 caracteres para Google
                       </p>
-                      <span className={`text-xs font-medium ${
-                        (eventData.seoDescription || eventData.shortDescription || '').length > 160 ? 'text-red-500' :
+                      <span className={`text-xs font-medium ${(eventData.seoDescription || eventData.shortDescription || '').length > 160 ? 'text-red-500' :
                         (eventData.seoDescription || eventData.shortDescription || '').length > 150 ? 'text-green-500' : 'text-yellow-500'
-                      }`}>
+                        }`}>
                         {(eventData.seoDescription || eventData.shortDescription || '').length}/160
                       </span>
                     </div>
@@ -2750,7 +2764,7 @@ export default function NewEventPage() {
                 const isCompleted = completedSteps.has(index);
                 const isCurrent = index === currentStep;
                 const isAccessible = index <= currentStep || isCompleted;
-                
+
                 return (
                   <div key={step.id} className="flex flex-col items-center group">
                     <button
@@ -2758,13 +2772,13 @@ export default function NewEventPage() {
                       disabled={!isAccessible}
                       className={`
                         relative flex items-center justify-center w-12 h-12 rounded-full text-sm font-medium transition-all duration-300 
-                        ${isCurrent 
-                          ? `bg-gradient-to-r ${step.color} text-white shadow-lg scale-110 ring-4 ring-white/20` 
+                        ${isCurrent
+                          ? `bg-gradient-to-r ${step.color} text-white shadow-lg scale-110 ring-4 ring-white/20`
                           : isCompleted
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md hover:scale-105'
-                          : isAccessible
-                          ? 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground cursor-pointer'
-                          : 'bg-muted/50 text-muted-foreground/50 cursor-not-allowed'
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md hover:scale-105'
+                            : isAccessible
+                              ? 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground cursor-pointer'
+                              : 'bg-muted/50 text-muted-foreground/50 cursor-not-allowed'
                         }
                       `}
                     >
@@ -2773,7 +2787,7 @@ export default function NewEventPage() {
                       ) : (
                         <IconComponent className="h-5 w-5" />
                       )}
-                      
+
                       {/* Step number for non-completed steps */}
                       {!isCompleted && (
                         <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 dark:text-white border-2 border-current">
@@ -2781,11 +2795,10 @@ export default function NewEventPage() {
                         </span>
                       )}
                     </button>
-                    
+
                     <div className="mt-2 text-center max-w-20">
-                      <p className={`text-xs font-medium transition-colors ${
-                        isCurrent ? 'text-foreground' : isCompleted ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
-                      }`}>
+                      <p className={`text-xs font-medium transition-colors ${isCurrent ? 'text-foreground' : isCompleted ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                        }`}>
                         {step.title}
                       </p>
                     </div>
@@ -2793,7 +2806,7 @@ export default function NewEventPage() {
                 );
               })}
             </div>
-            
+
             {/* Current step info */}
             <div className="text-center bg-gradient-to-r from-muted/50 to-muted/30 backdrop-blur-sm rounded-xl p-4 border border-muted/50">
               <h2 className="text-xl font-semibold text-foreground">{STEPS[currentStep].title}</h2>
@@ -2843,9 +2856,9 @@ export default function NewEventPage() {
               </div>
 
               {/* Botones de Acción */}
-              <Button 
-                variant="outline" 
-                onClick={saveAsDraft} 
+              <Button
+                variant="outline"
+                onClick={saveAsDraft}
                 disabled={saving}
                 className="flex items-center gap-2 h-12 px-6 transition-all duration-200 hover:bg-muted/50"
               >
@@ -2854,8 +2867,8 @@ export default function NewEventPage() {
               </Button>
 
               {eventData.eventStatus === 'published' && (
-                <Button 
-                  onClick={publishEvent} 
+                <Button
+                  onClick={publishEvent}
                   disabled={saving}
                   className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
                 >
@@ -2865,8 +2878,8 @@ export default function NewEventPage() {
               )}
 
               {eventData.eventStatus === 'cancelled' && (
-                <Button 
-                  onClick={cancelEvent} 
+                <Button
+                  onClick={cancelEvent}
                   disabled={saving}
                   className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
                 >
@@ -2876,8 +2889,8 @@ export default function NewEventPage() {
               )}
 
               {eventData.eventStatus === 'finished' && (
-                <Button 
-                  onClick={finishEvent} 
+                <Button
+                  onClick={finishEvent}
                   disabled={saving}
                   className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
                 >
@@ -2887,7 +2900,7 @@ export default function NewEventPage() {
               )}
 
               {currentStep < STEPS.length - 1 && (
-                <Button 
+                <Button
                   onClick={nextStep}
                   className="flex items-center gap-2 h-12 px-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg transition-all duration-200 hover:scale-105"
                 >

@@ -21,16 +21,16 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
   return (
     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-[#FAFDFF]">Información del Evento</CardTitle>
+        <h2 className="text-2xl font-semibold leading-none tracking-tight text-[#FAFDFF]">Información del Evento</h2>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-start gap-3 text-sm">
-          <Calendar 
-            className="h-5 w-5 mt-0.5 flex-shrink-0" 
-            style={{ 
+          <Calendar
+            className="h-5 w-5 mt-0.5 flex-shrink-0"
+            style={{
               color: dominantColor,
               transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-            }} 
+            }}
           />
           <div className="space-y-1">
             <div className="text-[#FAFDFF] font-medium">
@@ -47,12 +47,12 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
         <Separator className="bg-white/10" />
 
         <div className="flex items-start gap-3 text-sm">
-          <Clock 
-            className="h-5 w-5 mt-0.5 flex-shrink-0" 
-            style={{ 
+          <Clock
+            className="h-5 w-5 mt-0.5 flex-shrink-0"
+            style={{
               color: dominantColor,
               transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-            }} 
+            }}
           />
           <div className="space-y-1">
             {event.startTime && (
@@ -79,12 +79,12 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
         <Separator className="bg-white/10" />
 
         <div className="flex items-start gap-3 text-sm">
-          <MapPin 
-            className="h-5 w-5 mt-0.5 flex-shrink-0" 
-            style={{ 
+          <MapPin
+            className="h-5 w-5 mt-0.5 flex-shrink-0"
+            style={{
               color: dominantColor,
               transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-            }} 
+            }}
           />
           <div className="space-y-1">
             <div className="text-[#FAFDFF] font-medium">{event.location.venue}</div>
@@ -116,9 +116,9 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
             </Badge>
           )}
           {event.isAccessibleForFree && (
-            <Badge 
-              className="text-[#141618]" 
-              style={{ 
+            <Badge
+              className="text-[#141618]"
+              style={{
                 backgroundColor: dominantColor,
                 transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
@@ -136,9 +136,9 @@ export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
               <div className="text-xs text-white/70 mb-3 uppercase tracking-wider">Categorías</div>
               <div className="flex flex-wrap gap-2">
                 {event.categories.map((cat, index) => (
-                  <Badge 
-                    key={`cat-${index}-${cat}`} 
-                    variant="outline" 
+                  <Badge
+                    key={`cat-${index}-${cat}`}
+                    variant="outline"
                     className="text-xs border-white/20 text-white/90 bg-white/5"
                   >
                     {cat}

@@ -116,6 +116,7 @@ export interface Event {
   };
 
   mainImageUrl: string;
+  squareImageUrl?: string; // Imagen 1:1 para SEO/Google
   bannerImageUrl?: string;
   stageMapUrl?: string; // Mapa del stage/escenario
   imageGallery?: string[]; // Galería de imágenes adicionales
@@ -483,7 +484,7 @@ export interface EventDj {
     stage?: string;
     isHeadliner?: boolean;
   }>;
-  
+
   pastEvents?: Array<{
     eventId: string;
     eventName: string;

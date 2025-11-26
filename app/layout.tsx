@@ -20,7 +20,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.ravehublatam.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com'),
   title: { default: 'Ravehub', template: '%s | Ravehub' },
   description: 'Eventos de música electrónica en LATAM. Entradas, fechas y lineups.',
   alternates: {
@@ -91,8 +91,8 @@ export default function RootLayout({
               </CurrencyProvider>
             </NotificationsProvider>
           </AuthProvider>
-        </ThemeProvider> 
-        <Toaster 
+        </ThemeProvider>
+        <Toaster
           position="top-right"
           toastOptions={{
             duration: 4000,

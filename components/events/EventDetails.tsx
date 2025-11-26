@@ -36,16 +36,16 @@ export function EventDetails({
       {description && (
         <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
-              <FileText 
-                className="h-5 w-5" 
-                style={{ 
+            <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 text-[#FAFDFF]">
+              <FileText
+                className="h-5 w-5"
+                style={{
                   color: dominantColor,
                   transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }} 
+                }}
               />
               Acerca del Evento
-            </CardTitle>
+            </h2>
           </CardHeader>
           <CardContent>
             <div className="prose prose-invert max-w-none">
@@ -57,7 +57,7 @@ export function EventDetails({
                   <button
                     onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
                     className="mt-4 hover:underline flex items-center gap-1"
-                    style={{ 
+                    style={{
                       color: dominantColor,
                       transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
@@ -85,7 +85,7 @@ export function EventDetails({
       {specifications && specifications.length > 0 && (
         <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-[#FAFDFF]">Especificaciones</CardTitle>
+            <h2 className="text-2xl font-semibold leading-none tracking-tight text-[#FAFDFF]">Especificaciones</h2>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -116,19 +116,19 @@ export function EventDetails({
       {faqSection && faqSection.length > 0 && (
         <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-[#FAFDFF]">Preguntas Frecuentes</CardTitle>
+            <h2 className="text-2xl font-semibold leading-none tracking-tight text-[#FAFDFF]">Preguntas Frecuentes</h2>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
               {faqSection.map((faq, index) => (
-                  <AccordionItem 
-                  key={index} 
+                <AccordionItem
+                  key={index}
                   value={`faq-${index}`}
                   className="border-white/10"
                 >
-                  <AccordionTrigger 
+                  <AccordionTrigger
                     className="text-left text-[#FAFDFF]"
-                    style={{ 
+                    style={{
                       '--hover-color': dominantColor,
                       transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     } as React.CSSProperties & { '--hover-color': string }}
@@ -155,22 +155,22 @@ export function EventDetails({
       {tags && tags.length > 0 && (
         <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
-              <Tag 
-                className="h-5 w-5" 
-                style={{ 
+            <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 text-[#FAFDFF]">
+              <Tag
+                className="h-5 w-5"
+                style={{
                   color: dominantColor,
                   transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }} 
+                }}
               />
               Etiquetas
-            </CardTitle>
+            </h2>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag, index) => (
-                <Badge 
-                  key={`tag-${index}-${tag}`} 
+                <Badge
+                  key={`tag-${index}-${tag}`}
                   variant="outline"
                   className="border-white/20 text-white/90 bg-white/5"
                 >

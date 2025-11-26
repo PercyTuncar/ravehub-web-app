@@ -21,7 +21,7 @@ interface EventPricingTableProps {
 function getPhaseStatusBadge(status: string | undefined, manualStatus: string | null | undefined, size: 'sm' | 'md' = 'sm') {
   const finalStatus = manualStatus || status;
   const sizeClasses = size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1';
-  
+
   switch (finalStatus) {
     case 'active':
       return (
@@ -164,7 +164,7 @@ function AvailabilityBar({ endDate }: { endDate: string }) {
   const maxDays = 30;
   const daysRemaining = timeLeft.days;
   const percentage = Math.min((daysRemaining / maxDays) * 100, 100);
-  
+
   // Color based on days remaining
   const isLow = daysRemaining <= 3;
   const isWarning = daysRemaining <= 7 && daysRemaining > 3;
@@ -177,7 +177,7 @@ function AvailabilityBar({ endDate }: { endDate: string }) {
     <div className="flex items-center gap-2 text-xs text-white/60">
       <span>Disponibilidad:</span>
       <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-        <div 
+        <div
           className="h-full rounded-full transition-all duration-300"
           style={{
             width: `${Math.min(percentage, 100)}%`,
@@ -220,7 +220,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
       }) || [];
 
       // Find most sold zone (most popular)
-      const mostSoldZone = zones.length > 0 
+      const mostSoldZone = zones.length > 0
         ? zones.reduce((max, zone) => zone.sold > max.sold ? zone : max, zones[0])
         : null;
 
@@ -259,23 +259,23 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
     <Card className="bg-white/5 border-white/5 backdrop-blur-sm overflow-hidden shadow-lg" style={{ boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)' }}>
       <CardHeader className="bg-gradient-to-r from-white/10 to-transparent border-b border-white/10 px-3 sm:px-4 py-2.5 sm:py-3">
         <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
-          <div 
+          <div
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{
               background: `linear-gradient(135deg, ${dominantColor}20, ${accentColor}20)`,
               border: `2px solid ${dominantColor}40`,
             }}
           >
-            <Ticket 
-              className="h-3.5 w-3.5 sm:h-4 sm:w-4" 
-              style={{ 
+            <Ticket
+              className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+              style={{
                 color: dominantColor,
                 transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-              }} 
+              }}
             />
           </div>
           <div className="min-w-0">
-            <h3 className="text-base sm:text-lg font-bold truncate text-white/87">Precios y Zonas</h3>
+            <h2 className="text-base sm:text-lg font-bold truncate text-white/87">Precios y Zonas</h2>
             <p className="text-xs text-white/60 font-normal mt-0.5">
               Selecciona tu etapa y revisa precios
             </p>
@@ -284,7 +284,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
       </CardHeader>
       <CardContent className="p-3 sm:p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList 
+          <TabsList
             className="grid w-full mb-4 sm:mb-6 bg-transparent border-0 p-0 gap-1"
             style={{ gridTemplateColumns: `repeat(${pricingData.length}, minmax(0, 1fr))` }}
           >
@@ -318,7 +318,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
 
             return (
               <TabsContent key={phase.id} value={`phase-${index}`} className="mt-4 sm:mt-6">
-                <div 
+                <div
                   className="rounded-lg sm:rounded-xl overflow-hidden transition-all duration-300"
                   style={{
                     borderColor: isActive ? `${dominantColor}30` : 'rgba(255, 255, 255, 0.1)',
@@ -326,11 +326,11 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                   }}
                 >
                   {/* Phase Header */}
-                  <div 
+                  <div
                     className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white/8"
                     style={{
                       borderColor: isActive ? `${dominantColor}30` : 'rgba(255, 255, 255, 0.12)',
-                      background: isActive 
+                      background: isActive
                         ? `linear-gradient(135deg, ${dominantColor}15, ${accentColor}10)`
                         : 'rgba(255, 255, 255, 0.08)',
                     }}
@@ -360,7 +360,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr 
+                        <tr
                           className="border-b bg-white/8"
                           style={{ borderColor: 'rgba(255, 255, 255, 0.12)' }}
                         >
@@ -373,10 +373,10 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                           const isSoldOut = zone.available === 0;
 
                           return (
-                            <tr 
+                            <tr
                               key={zone.zoneId}
                               className={`border-b transition-all duration-150 hover:bg-white/5 ${isSoldOut ? 'opacity-60' : 'cursor-pointer'}`}
-                              style={{ 
+                              style={{
                                 borderColor: 'rgba(255, 255, 255, 0.08)',
                                 minHeight: '56px',
                               }}
@@ -398,9 +398,9 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                                     )}
                                   </div>
                                   {zone.zoneDescription && (
-                                    <div 
+                                    <div
                                       className="text-xs mt-0.5 line-clamp-1"
-                                      style={{ 
+                                      style={{
                                         color: dominantColor,
                                         transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                                       }}
@@ -411,8 +411,8 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                                 </div>
                               </td>
                               <td className="px-4 sm:px-5 py-3 sm:py-4 text-right align-top">
-                                <ZonePrice 
-                                  price={zone.price} 
+                                <ZonePrice
+                                  price={zone.price}
                                   currency={currency}
                                   dominantColor={dominantColor}
                                 />

@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Copy, ExternalLink } from 'lucide-react';
 import { Calendar, MapPin, Users, Share2, Eye, CheckCircle } from 'lucide-react';
-import { PreviewValidator } from '@/lib/seo/preview-validator';
 
 interface SocialPreviewProps {
   eventData: any;
@@ -30,7 +29,9 @@ export function SocialPreview({ eventData }: SocialPreviewProps) {
   const previewData = useMemo(() => {
     const title = eventData.seoTitle || eventData.name || 'Evento sin título';
     const description = eventData.seoDescription || eventData.shortDescription || 'Descripción del evento';
+    // Prioritize square image for Google preview if available, otherwise use main image
     const image = eventData.mainImageUrl || '/images/default-event.jpg';
+    const googleImage = eventData.squareImageUrl || image;
     const url = localhostUrl || `http://localhost:3000/eventos/${eventData.slug || 'evento'}`;
 
     // Generate Open Graph and Twitter Card meta tags
@@ -50,7 +51,7 @@ export function SocialPreview({ eventData }: SocialPreviewProps) {
       keywords: (eventData.seoKeywords?.join(', ') || eventData.tags?.join(', ') || ''),
     };
 
-    return { title, description, image, url, metaTags };
+    return { title, description, image, googleImage, url, metaTags };
   }, [eventData, localhostUrl]);
 
   const formatDate = (dateString: string) => {
@@ -93,10 +94,10 @@ export function SocialPreview({ eventData }: SocialPreviewProps) {
           <CardContent className="p-4">
             <div className="border rounded-lg p-4 bg-gray-50">
               <div className="flex items-start gap-3">
-                {previewData.image && (
+                {previewData.googleImage && (
                   <div className="w-16 h-16 bg-gray-200 rounded flex-shrink-0 overflow-hidden">
                     <img
-                      src={previewData.image}
+                      src={previewData.googleImage}
                       alt=""
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -273,7 +274,7 @@ export function SocialPreview({ eventData }: SocialPreviewProps) {
                     <div><span className="text-blue-600">og:type</span> = {previewData.metaTags.ogType}</div>
                   </div>
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium mb-3 text-sm">Twitter Card Tags</h4>
                   <div className="space-y-2 text-xs font-mono">
@@ -316,7 +317,7 @@ export function SocialPreview({ eventData }: SocialPreviewProps) {
                       `<meta name="description" content="${previewData.metaTags.description}" />`,
                       ...(previewData.metaTags.keywords ? [`<meta name="keywords" content="${previewData.metaTags.keywords}" />`] : [])
                     ].join('\n');
-                    
+
                     try {
                       await navigator.clipboard.writeText(metaTagsString);
                       setCopied(true);
