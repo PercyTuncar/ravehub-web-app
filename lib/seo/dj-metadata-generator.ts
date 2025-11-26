@@ -73,19 +73,36 @@ export function generateDJMetadata(
   );
 
   if (validUpcomingEvents.length > 0) {
-    // Extract unique city, country combinations - EXACTLY as in generateMetadata
-    const locations = new Set<string>();
-    validUpcomingEvents.forEach((event: EventForMetadata) => {
-      if (event.location && event.location.city && event.location.country) {
-        const locationStr = `${event.location.city}, ${event.location.country}`;
-        locations.add(locationStr);
-      }
-    });
+    // Extract city and date combinations
+    const eventDetails = validUpcomingEvents
+      .slice(0, 3) // Limit to 3 events to avoid too long description
+      .map((event: EventForMetadata) => {
+        if (event.location && event.location.city && event.startDate) {
+          const date = new Date(event.startDate);
+          const day = date.getDate();
+          const month = date.toLocaleString('es-ES', { month: 'short' });
+          // Capitalize first letter of month
+          const formattedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+          return `${event.location.city} (${day} ${formattedMonth})`;
+        }
+        return null;
+      })
+      .filter(Boolean);
 
-    if (locations.size > 0) {
-      const locationsArray = Array.from(locations);
-      const locationsText = locationsArray.join(', ');
-      description = `${description} Próximos eventos en: ${locationsText}.`;
+    if (eventDetails.length > 0) {
+      const eventsText = eventDetails.join(', ');
+      // Ensure description doesn't exceed 160 chars roughly, but we prioritize the event info
+      // If description is too long, we might truncate the bio part, but here we just append.
+      // The user requirement says: "Cortar el string total a 160 caracteres para evitar truncamiento excesivo en Google."
+
+      const suffix = ` | Próximos eventos en: ${eventsText}.`;
+      const availableSpace = 160 - suffix.length;
+
+      if (description.length > availableSpace) {
+        description = description.substring(0, availableSpace - 3) + '...';
+      }
+
+      description = `${description}${suffix}`;
     }
   }
 

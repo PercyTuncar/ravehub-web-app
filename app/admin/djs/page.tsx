@@ -104,6 +104,28 @@ export default function DjManagementPage() {
     approved: false,
   });
 
+  const [imageAspectRatioWarning, setImageAspectRatioWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (editForm.imageUrl) {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = img.width / img.height;
+        if (Math.abs(ratio - 1) > 0.05) { // Allow small margin of error (5%)
+          setImageAspectRatioWarning('⚠️ La imagen no es cuadrada (1:1). Se recomienda usar una imagen cuadrada para asegurar la mejor visualización en Google y redes sociales.');
+        } else {
+          setImageAspectRatioWarning(null);
+        }
+      };
+      img.onerror = () => {
+         // Ignore error or handle it
+      };
+      img.src = editForm.imageUrl;
+    } else {
+      setImageAspectRatioWarning(null);
+    }
+  }, [editForm.imageUrl]);
+
   useEffect(() => {
     loadDjs();
     loadCountries();
@@ -1290,6 +1312,14 @@ export default function DjManagementPage() {
                               <p className="text-xs text-green-600 dark:text-green-400 mt-3">
                                 🚀 La imagen se optimizará automáticamente para web
                               </p>
+                              {imageAspectRatioWarning && (
+                                <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start gap-2">
+                                  <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                                  <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                                    {imageAspectRatioWarning}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

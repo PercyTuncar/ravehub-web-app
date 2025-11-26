@@ -2055,23 +2055,21 @@ export class SchemaGenerator {
       }
 
       // Add location if available
-      if (event.location && event.location.venue) {
+      if (event.location) {
         const location: any = {
           '@type': 'Place',
-          name: event.location.venue
+          name: event.location.venue || event.location.city || 'Ubicación del evento'
         };
 
         if (event.location.city || event.location.region || event.location.country) {
           location.address = {
             '@type': 'PostalAddress'
           };
+          if (event.location.address) location.address.streetAddress = event.location.address;
           if (event.location.city) location.address.addressLocality = event.location.city;
           if (event.location.region) location.address.addressRegion = event.location.region;
           if (event.location.countryCode || event.location.country) {
             location.address.addressCountry = event.location.countryCode || event.location.country;
-          }
-          if (event.location.address) {
-            location.address.streetAddress = event.location.address;
           }
         }
 
@@ -2088,10 +2086,45 @@ export class SchemaGenerator {
 
       // Add performer (the DJ)
       eventSchema.performer = {
-        '@id': personId,
         '@type': 'Person',
-        name: djData.name
+        name: djData.name,
+        sameAs: djData.socialLinks?.website || djUrl
       };
+
+      // Add organizer
+      eventSchema.organizer = {
+        '@type': 'Organization',
+        name: 'Ravehub',
+        url: this.BASE_URL
+      };
+
+      // Add offers (CRITICAL)
+      if (event.salesPhases && Array.isArray(event.salesPhases)) {
+        const offers: any[] = [];
+        event.salesPhases.forEach((phase: any) => {
+          if (phase.zonesPricing && Array.isArray(phase.zonesPricing)) {
+            phase.zonesPricing.forEach((zonePricing: any) => {
+              const zone = event.zones?.find((z: any) => z.id === zonePricing.zoneId);
+              if (zone && typeof zonePricing.price === 'number') {
+                offers.push({
+                  '@type': 'Offer',
+                  url: eventUrl,
+                  price: zonePricing.price.toString(), // Must be string for some validators, but number is also accepted. User asked for string.
+                  priceCurrency: event.currency || 'PEN',
+                  availability: 'https://schema.org/InStock',
+                  validFrom: phase.startDate ? formatDateWithTimezone(phase.startDate, undefined, event.timezone) : undefined,
+                  name: `${zone.name} - ${phase.name}`,
+                  category: zone.name
+                });
+              }
+            });
+          }
+        });
+
+        if (offers.length > 0) {
+          eventSchema.offers = offers.length === 1 ? offers[0] : offers; // Can be single object or array
+        }
+      }
 
       // Remove undefined values
       const cleanSchema: any = {};
