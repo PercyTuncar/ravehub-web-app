@@ -63,46 +63,70 @@ export function generateDJMetadata(
   // Title: Only the DJ name (or seoTitle if provided) - EXACTLY as in generateMetadata
   const title = djData.seoTitle || djData.name || 'DJ sin nombre';
 
-  // Description: Base description + upcoming events info if available - EXACTLY as in generateMetadata
-  let description = djData.seoDescription || djData.description || `Perfil de ${djData.name || 'DJ'}, DJ de ${djData.country || 'Latinoamérica'}. Descubre su música, próximos eventos y biografía completa.`;
+  // Description logic based on requirements
+  // Case A: Has events -> [DJ Name] en [City List]. Tickets y fechas confirmadas para el tour [Year]. [Bio...]
+  // Case B: No events -> [Bio...]
 
-  // Add upcoming events information if available - EXACTLY as in generateMetadata
-  // Filter to ensure events have location data (same filter as in generateMetadata)
+  // Base bio/description
+  const baseBio = djData.seoDescription || djData.description || `Perfil de ${djData.name || 'DJ'}, DJ de ${djData.country || 'Latinoamérica'}. Descubre su música, próximos eventos y biografía completa.`;
+
+  let description = baseBio;
+
+  // Filter to ensure events have location data
   const validUpcomingEvents = (upcomingEvents || []).filter((event: EventForMetadata) =>
     event && event.slug && event.name && event.location && event.location.city
   );
 
   if (validUpcomingEvents.length > 0) {
-    // Extract city and date combinations
-    const eventDetails = validUpcomingEvents
-      .slice(0, 3) // Limit to 3 events to avoid too long description
-      .map((event: EventForMetadata) => {
-        if (event.location && event.location.city && event.startDate) {
-          const date = new Date(event.startDate);
-          const day = date.getDate();
-          const month = date.toLocaleString('es-ES', { month: 'short' });
-          // Capitalize first letter of month
-          const formattedMonth = month.charAt(0).toUpperCase() + month.slice(1);
-          return `${event.location.city} (${day} ${formattedMonth})`;
-        }
-        return null;
-      })
-      .filter(Boolean);
+    // CASO A: El DJ TIENE eventos próximos
 
-    if (eventDetails.length > 0) {
-      const eventsText = eventDetails.join(', ');
-      // Ensure description doesn't exceed 160 chars roughly, but we prioritize the event info
-      // If description is too long, we might truncate the bio part, but here we just append.
-      // The user requirement says: "Cortar el string total a 160 caracteres para evitar truncamiento excesivo en Google."
+    // 1. Extract unique cities
+    // We use a Set to remove duplicates, and filter out any empty values
+    const cities = Array.from(new Set(
+      validUpcomingEvents
+        .map(e => e.location?.city)
+        .filter((city): city is string => Boolean(city))
+    ));
 
-      const suffix = ` | Próximos eventos en: ${eventsText}.`;
-      const availableSpace = 160 - suffix.length;
+    // 2. Format City List
+    // "Lima", "Lima y Bogotá", "Lima, Santiago y Bogotá"
+    // Cast to any to avoid TypeScript error if lib is not configured for ES2020+
+    const listFormatter = new (Intl as any).ListFormat('es', { style: 'long', type: 'conjunction' });
+    const cityList = listFormatter.format(cities);
 
-      if (description.length > availableSpace) {
-        description = description.substring(0, availableSpace - 3) + '...';
+    // 3. Get Year from nearest event (first one since they are sorted by date)
+    // We assume validUpcomingEvents are sorted by date as they come from getDjUpcomingEvents
+    const nearestEventDate = new Date(validUpcomingEvents[0].startDate);
+    const year = nearestEventDate.getFullYear();
+
+    // 4. Construct Prefix
+    const prefix = `${djData.name} en ${cityList}. Tickets y fechas confirmadas para el tour ${year}. `;
+
+    // 5. Truncate Bio to fit remaining space
+    // Max total length 155-160 chars
+    const maxTotalLength = 155;
+    const availableSpace = maxTotalLength - prefix.length;
+
+    if (availableSpace > 10) {
+      // If there is space for bio, append it truncated
+      let truncatedBio = baseBio;
+      // Remove newlines and extra spaces from bio to save space
+      truncatedBio = truncatedBio.replace(/\s+/g, ' ').trim();
+
+      if (truncatedBio.length > availableSpace) {
+        truncatedBio = truncatedBio.substring(0, availableSpace - 3).trim() + '...';
       }
-
-      description = `${description}${suffix}`;
+      description = `${prefix}${truncatedBio}`;
+    } else {
+      // If prefix alone is too long or takes up all space, just use prefix
+      // We might want to truncate prefix if it's extremely long, but usually we prioritize the tour info
+      description = prefix.trim();
+    }
+  } else {
+    // CASO B: El DJ NO TIENE eventos próximos (Fallback)
+    description = baseBio.replace(/\s+/g, ' ').trim();
+    if (description.length > 155) {
+      description = description.substring(0, 152).trim() + '...';
     }
   }
 
@@ -169,4 +193,3 @@ export function getBaseUrl(): string {
   // Server-side: use environment variable or default
   return process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com';
 }
-
