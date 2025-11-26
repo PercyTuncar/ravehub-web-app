@@ -1,5 +1,6 @@
 import { BlogPost } from '@/lib/types';
 import { getLanguageCodeFromCountry, getTimezoneOffset } from '@/lib/utils/country-language';
+import { getReadableFirebaseUrl } from '@/lib/utils/url-helpers';
 interface SchemaInput {
   type: 'blog' | 'news' | 'festival' | 'concert' | 'product' | 'dj';
   data: any;
@@ -191,7 +192,7 @@ export class SchemaGenerator {
       logo: {
         '@type': 'ImageObject',
         '@id': `${baseUrl}/#logo`,
-        url: `${baseUrl}/icons/logo.png`,
+        url: getReadableFirebaseUrl(`${baseUrl}/icons/logo.png`),
         width: 600,
         height: 60,
         caption: 'Ravehub Logo'
@@ -250,7 +251,7 @@ export class SchemaGenerator {
       ...(eventData.mainImageUrl ? {
         primaryImageOfPage: {
           '@type': 'ImageObject',
-          url: cleanFirebaseUrl(eventData.mainImageUrl),
+          url: getReadableFirebaseUrl(cleanFirebaseUrl(eventData.mainImageUrl)),
           width: 1200,
           height: 675,
           caption: eventData.name
@@ -465,7 +466,7 @@ export class SchemaGenerator {
     if (eventData.squareImageUrl) {
       imageObjects.push({
         '@type': 'ImageObject',
-        url: cleanFirebaseUrl(eventData.squareImageUrl),
+        url: getReadableFirebaseUrl(cleanFirebaseUrl(eventData.squareImageUrl)),
         width: 1080,
         height: 1080,
         caption: `${eventData.name} (1:1)`
@@ -475,7 +476,7 @@ export class SchemaGenerator {
     if (eventData.mainImageUrl) {
       imageObjects.push({
         '@type': 'ImageObject',
-        url: cleanFirebaseUrl(eventData.mainImageUrl),
+        url: getReadableFirebaseUrl(cleanFirebaseUrl(eventData.mainImageUrl)),
         width: 1200,
         height: 675,
         caption: eventData.name
@@ -485,7 +486,7 @@ export class SchemaGenerator {
     if (eventData.bannerImageUrl) {
       imageObjects.push({
         '@type': 'ImageObject',
-        url: cleanFirebaseUrl(eventData.bannerImageUrl),
+        url: getReadableFirebaseUrl(cleanFirebaseUrl(eventData.bannerImageUrl)),
         width: 1200,
         height: 675,
         caption: `${eventData.name} Banner`

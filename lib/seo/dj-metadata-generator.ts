@@ -3,6 +3,7 @@
  * This function replicates the exact logic from generateMetadata in the DJ page
  * to ensure previews match exactly what will be shown in Google and social media
  */
+import { getReadableFirebaseUrl } from '@/lib/utils/url-helpers';
 
 export interface DJMetadataResult {
   title: string;
@@ -93,7 +94,7 @@ export function generateDJMetadata(
   const url = `${baseUrl}/djs/${slug}`;
 
   // Image - use imageUrl or fallback
-  const image = djData.imageUrl || '/images/default-dj.jpg';
+  const image = getReadableFirebaseUrl(djData.imageUrl) || '/images/default-dj.jpg';
 
   // Keywords - EXACTLY as in generateMetadata
   // Filter out undefined/null values and ensure all are strings
