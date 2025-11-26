@@ -33,16 +33,16 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
   return (
     <Card className="bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md overflow-hidden relative group">
       {/* Animated gradient background */}
-      <div 
+      <div
         className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-500"
         style={{
           background: `radial-gradient(circle at top right, ${dominantColor}40, transparent 50%), 
                        radial-gradient(circle at bottom left, ${accentColor}30, transparent 50%)`,
         }}
       />
-      
+
       {/* Shine effect on hover */}
-      <div 
+      <div
         className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500"
         style={{
           background: `linear-gradient(135deg, transparent 0%, ${dominantColor}40 50%, transparent 100%)`,
@@ -54,30 +54,30 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
       <CardContent className="relative z-10 p-6 space-y-5">
         {/* Header with icon and title */}
         <div className="flex items-center gap-3 mb-4">
-          <div 
+          <div
             className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
             style={{
               background: `linear-gradient(135deg, ${dominantColor}20, ${accentColor}20)`,
               border: `2px solid ${dominantColor}40`,
             }}
           >
-            <MessageCircle 
-              className="h-6 w-6" 
-              style={{ 
+            <MessageCircle
+              className="h-6 w-6"
+              style={{
                 color: dominantColor,
                 transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-              }} 
+              }}
             />
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-bold text-[#FAFDFF] flex items-center gap-2">
               Comunidad y Soporte
-              <Sparkles 
-                className="h-4 w-4" 
-                style={{ 
+              <Sparkles
+                className="h-4 w-4"
+                style={{
                   color: accentColor,
                   transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }} 
+                }}
               />
             </h3>
             <p className="text-xs text-white/60 mt-0.5">
@@ -95,7 +95,7 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
               fill
               className="object-cover"
             />
-            <div 
+            <div
               className="absolute inset-0"
               style={{
                 background: `linear-gradient(to top, ${dominantColor}40 0%, transparent 100%)`,
@@ -147,7 +147,7 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-3 relative z-10 text-white"
             >
-              <div 
+              <div
                 className="w-6 h-6 rounded-full flex items-center justify-center"
                 style={{
                   backgroundColor: `${dominantColor}30`,
@@ -156,7 +156,7 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
                 <HelpCircle className="h-4 w-4 text-white" />
               </div>
               <span className="text-white">¿Tienes preguntas?</span>
-              <div 
+              <div
                 className="absolute inset-0 opacity-0 group-hover/button:opacity-100 transition-opacity duration-300"
                 style={{
                   background: `linear-gradient(135deg, ${dominantColor}30, ${accentColor}30)`,
@@ -169,14 +169,14 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
         {/* Feature highlights */}
         <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
           <div className="flex items-center gap-2 text-xs text-white/70">
-            <div 
+            <div
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: dominantColor }}
             />
             <span>Comunidad activa</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-white/70">
-            <div 
+            <div
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: accentColor }}
             />

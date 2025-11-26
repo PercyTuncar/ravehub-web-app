@@ -61,16 +61,16 @@ export function generateDJMetadata(
 ): DJMetadataResult {
   // Title: Only the DJ name (or seoTitle if provided) - EXACTLY as in generateMetadata
   const title = djData.seoTitle || djData.name || 'DJ sin nombre';
-  
+
   // Description: Base description + upcoming events info if available - EXACTLY as in generateMetadata
   let description = djData.seoDescription || djData.description || `Perfil de ${djData.name || 'DJ'}, DJ de ${djData.country || 'Latinoamérica'}. Descubre su música, próximos eventos y biografía completa.`;
-  
+
   // Add upcoming events information if available - EXACTLY as in generateMetadata
   // Filter to ensure events have location data (same filter as in generateMetadata)
-  const validUpcomingEvents = (upcomingEvents || []).filter((event: EventForMetadata) => 
+  const validUpcomingEvents = (upcomingEvents || []).filter((event: EventForMetadata) =>
     event && event.slug && event.name && event.location && event.location.city
   );
-  
+
   if (validUpcomingEvents.length > 0) {
     // Extract unique city, country combinations - EXACTLY as in generateMetadata
     const locations = new Set<string>();
@@ -80,21 +80,21 @@ export function generateDJMetadata(
         locations.add(locationStr);
       }
     });
-    
+
     if (locations.size > 0) {
       const locationsArray = Array.from(locations);
       const locationsText = locationsArray.join(', ');
       description = `${description} Próximos eventos en: ${locationsText}.`;
     }
   }
-  
+
   // URL generation - use baseUrl parameter for consistency
   const slug = djData.slug || (djData.name ? djData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'dj');
   const url = `${baseUrl}/djs/${slug}`;
-  
+
   // Image - use imageUrl or fallback
   const image = djData.imageUrl || '/images/default-dj.jpg';
-  
+
   // Keywords - EXACTLY as in generateMetadata
   // Filter out undefined/null values and ensure all are strings
   const keywords = (djData.seoKeywords && djData.seoKeywords.length > 0
@@ -138,17 +138,17 @@ export function getBaseUrl(): string {
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
     const port = window.location.port;
-    
+
     // If localhost, use localhost URL
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
     }
-    
+
     // Otherwise use production URL
     return 'https://www.ravehublatam.com';
   }
-  
+
   // Server-side: use environment variable or default
-  return process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
+  return process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com';
 }
 

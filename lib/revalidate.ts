@@ -11,11 +11,11 @@ const REVALIDATE_TOKEN = process.env.REVALIDATE_TOKEN || process.env.NEXT_PUBLIC
 function getBaseUrl(): string {
   // In client environment, use window.location.origin if available
   if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
   }
-  
+
   // In server environment, use environment variable or default
-  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 }
 
 /**
@@ -30,7 +30,7 @@ export async function revalidatePath(path: string): Promise<{ success: boolean; 
 
   try {
     const baseUrl = getBaseUrl();
-    
+
     // Validate URL before attempting fetch
     if (!baseUrl || baseUrl === 'undefined') {
       if (process.env.NODE_ENV === 'development') {
@@ -40,7 +40,7 @@ export async function revalidatePath(path: string): Promise<{ success: boolean; 
     }
 
     const url = `${baseUrl}/api/revalidate`;
-    
+
     // Create abort controller for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
@@ -74,7 +74,7 @@ export async function revalidatePath(path: string): Promise<{ success: boolean; 
       return { success: true, message: data.message || 'Path revalidated successfully' };
     } catch (fetchError) {
       clearTimeout(timeoutId);
-      
+
       // Handle abort (timeout)
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         if (process.env.NODE_ENV === 'development') {
@@ -82,7 +82,7 @@ export async function revalidatePath(path: string): Promise<{ success: boolean; 
         }
         return { success: false, message: 'Revalidation timeout' };
       }
-      
+
       throw fetchError; // Re-throw to be caught by outer catch
     }
   } catch (error) {
@@ -90,7 +90,7 @@ export async function revalidatePath(path: string): Promise<{ success: boolean; 
     if (process.env.NODE_ENV === 'development') {
       console.warn('Revalidation error (non-blocking):', error);
     }
-    
+
     // Return failure but don't throw - this is intentional
     return { success: false, message: 'Revalidation failed silently' };
   }
@@ -108,7 +108,7 @@ export async function revalidateTag(tag: string): Promise<{ success: boolean; me
 
   try {
     const baseUrl = getBaseUrl();
-    
+
     // Validate URL before attempting fetch
     if (!baseUrl || baseUrl === 'undefined') {
       if (process.env.NODE_ENV === 'development') {
@@ -118,7 +118,7 @@ export async function revalidateTag(tag: string): Promise<{ success: boolean; me
     }
 
     const url = `${baseUrl}/api/revalidate`;
-    
+
     // Create abort controller for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
@@ -152,7 +152,7 @@ export async function revalidateTag(tag: string): Promise<{ success: boolean; me
       return { success: true, message: data.message || 'Tag revalidated successfully' };
     } catch (fetchError) {
       clearTimeout(timeoutId);
-      
+
       // Handle abort (timeout)
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         if (process.env.NODE_ENV === 'development') {
@@ -160,7 +160,7 @@ export async function revalidateTag(tag: string): Promise<{ success: boolean; me
         }
         return { success: false, message: 'Revalidation timeout' };
       }
-      
+
       throw fetchError; // Re-throw to be caught by outer catch
     }
   } catch (error) {
@@ -168,7 +168,7 @@ export async function revalidateTag(tag: string): Promise<{ success: boolean; me
     if (process.env.NODE_ENV === 'development') {
       console.warn('Revalidation error (non-blocking):', error);
     }
-    
+
     // Return failure but don't throw - this is intentional
     return { success: false, message: 'Revalidation failed silently' };
   }

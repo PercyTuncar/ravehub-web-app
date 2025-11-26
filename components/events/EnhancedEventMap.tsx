@@ -8,15 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MapPin, 
-  Navigation, 
-  Car, 
-  Bike, 
-  Footprints, 
-  Bus, 
-  ExternalLink, 
-  Loader2, 
+import {
+  MapPin,
+  Navigation,
+  Car,
+  Bike,
+  Footprints,
+  Bus,
+  ExternalLink,
+  Loader2,
   AlertCircle,
   Clock,
   Route,
@@ -84,23 +84,23 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
     const mapStyle: string | maplibregl.StyleSpecification = maptilerKey
       ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${maptilerKey}`
       : {
-          version: 8 as const,
-          sources: {
-            'osm-tiles': {
-              type: 'raster' as const,
-              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-              tileSize: 256,
-              attribution: '© OpenStreetMap contributors',
-            },
+        version: 8 as const,
+        sources: {
+          'osm-tiles': {
+            type: 'raster' as const,
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors',
           },
-          layers: [
-            {
-              id: 'osm-tiles',
-              type: 'raster' as const,
-              source: 'osm-tiles',
-            },
-          ],
-        };
+        },
+        layers: [
+          {
+            id: 'osm-tiles',
+            type: 'raster' as const,
+            source: 'osm-tiles',
+          },
+        ],
+      };
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
@@ -192,7 +192,7 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
   useEffect(() => {
     const checkServices = async () => {
       const newStatus = { ...serviceStatus };
-      
+
       // Check OpenRouteService
       newStatus['driving-car'] = isServiceAvailable('openRouteService') ? 'available' : 'unavailable';
       newStatus['foot-walking'] = isServiceAvailable('openRouteService') ? 'available' : 'unavailable';
@@ -253,16 +253,16 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
 
       // If all services fail, offer Google Maps fallback
       throw new Error('Todos los servicios de enrutamiento fallaron. Usar Google Maps como alternativa.');
-      
+
     } catch (error) {
       console.error('Route calculation failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error al calcular la ruta';
-      
+
       setRouteError(`${errorMessage}. Usa "Ver en Google Maps" para obtener direcciones.`);
-      
+
       // Offer Google Maps as fallback
       const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lng}&destination=${lat},${lng}&travelmode=${routeMode === 'transit' ? 'transit' : 'driving'}`;
-      
+
       return null;
     } finally {
       setIsLoadingRoute(false);
@@ -302,7 +302,7 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
     }
 
     const data = await response.json();
-    
+
     if (data.error) {
       throw new Error(data.error.message || 'OpenRouteService API error');
     }
@@ -329,7 +329,7 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
     if (!hereKey) throw new Error('HERE API key not available');
 
     const mode = routeMode === 'driving-car' ? 'car' :
-                routeMode === 'cycling' ? 'bicycle' : 'pedestrian';
+      routeMode === 'cycling' ? 'bicycle' : 'pedestrian';
 
     const response = await fetch(
       `https://router.hereapi.com/v8/routes?origin=${origin.lat},${origin.lng}&destination=${lat},${lng}&transportMode=${mode}&apikey=${hereKey}`
@@ -340,7 +340,7 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
     }
 
     const data = await response.json();
-    
+
     if (!data.routes || data.routes.length === 0) {
       throw new Error('No route found');
     }
@@ -362,13 +362,13 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
 
   // Open Google Maps with current location
   const openGoogleMaps = useCallback(() => {
-    const origin = userLocation 
+    const origin = userLocation
       ? `${userLocation.lat},${userLocation.lng}`
       : addressInput || 'Mi ubicación';
-    
+
     const destination = `${lat},${lng}`;
     const travelMode = routeMode === 'transit' ? 'transit' : 'driving';
-    
+
     const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=${travelMode}`;
     window.open(url, '_blank');
   }, [userLocation, addressInput, lat, lng, routeMode]);
@@ -417,8 +417,8 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
         {/* Route mode tabs with service status */}
         <Tabs value={routeMode} onValueChange={(v) => setRouteMode(v as RouteMode)}>
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger 
-              value="driving-car" 
+            <TabsTrigger
+              value="driving-car"
               className="flex items-center gap-2"
               disabled={serviceStatus['driving-car'] === 'unavailable'}
             >
@@ -428,8 +428,8 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
                 <Zap className="h-3 w-3 text-green-500" />
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="foot-walking" 
+            <TabsTrigger
+              value="foot-walking"
               className="flex items-center gap-2"
               disabled={serviceStatus['foot-walking'] === 'unavailable'}
             >
@@ -439,8 +439,8 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
                 <Zap className="h-3 w-3 text-green-500" />
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="cycling" 
+            <TabsTrigger
+              value="cycling"
               className="flex items-center gap-2"
               disabled={serviceStatus['cycling'] === 'unavailable'}
             >
@@ -450,8 +450,8 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
                 <Zap className="h-3 w-3 text-green-500" />
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="transit" 
+            <TabsTrigger
+              value="transit"
               className="flex items-center gap-2"
               disabled={serviceStatus['transit'] === 'unavailable'}
             >

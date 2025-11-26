@@ -258,7 +258,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
   return (
     <Card className="bg-white/5 border-white/5 backdrop-blur-sm overflow-hidden shadow-lg" style={{ boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)' }}>
       <CardHeader className="bg-gradient-to-r from-white/10 to-transparent border-b border-white/10 px-3 sm:px-4 py-2.5 sm:py-3">
-        <CardTitle className="flex items-center gap-2 text-[#FAFDFF]">
+        <div className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 text-[#FAFDFF]">
           <div
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{
@@ -280,7 +280,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
               Selecciona tu etapa y revisa precios
             </p>
           </div>
-        </CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="p-3 sm:p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

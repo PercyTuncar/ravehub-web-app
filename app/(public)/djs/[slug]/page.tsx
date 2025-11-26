@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
       try {
         upcomingEvents = await getDjUpcomingEvents(dj.id);
         // Filter to ensure events have location data (same filter as in generateDJMetadata)
-        upcomingEvents = (upcomingEvents || []).filter((event: any) => 
+        upcomingEvents = (upcomingEvents || []).filter((event: any) =>
           event && event.slug && event.name && event.location && event.location.city
         );
       } catch (eventsError) {
@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
     }
 
     // Use the shared metadata generator to ensure exact consistency
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com';
     const metadata = generateDJMetadata(
       {
         name: dj.name,
@@ -165,11 +165,11 @@ export default async function DJPage({ params }: DJPageProps) {
       const djs = await djsCollection.query([
         { field: 'slug', operator: '==', value: slug }
       ]);
-      
+
       if (djs.length > 0) {
         dj = djs[0] as any;
         isInEventDjs = false;
-        
+
         // Convert Dj type to EventDj type for compatibility
         if (dj) {
           dj = {
@@ -203,18 +203,18 @@ export default async function DJPage({ params }: DJPageProps) {
     // Get dynamic events for the DJ (only if in eventDjs collection)
     let upcomingEvents: any[] = [];
     let pastEvents: any[] = [];
-    
+
     if (isInEventDjs && dj.id) {
       try {
         const [upcoming, past] = await Promise.all([
           getDjUpcomingEvents(dj.id),
           getDjPastEvents(dj.id)
         ]);
-        
+
         // Filter events to ensure they have required properties (slug is essential for schema)
         upcomingEvents = (upcoming || []).filter((event: any) => event && event.slug && event.name);
         pastEvents = (past || []).filter((event: any) => event && event.slug && event.name);
-        
+
         // Log for debugging (only in development)
         if (process.env.NODE_ENV === 'development') {
           if (upcomingEvents.length > 0) {

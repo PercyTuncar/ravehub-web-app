@@ -10,9 +10,9 @@ import { es } from 'date-fns/locale';
 export const revalidate = 180;
 
 async function getEventData(slug: string): Promise<Event | null> {
-    try {
-      const conditions = [{ field: 'slug', operator: '==', value: slug }];
-      const events = await eventsCollection.query(conditions);
+  try {
+    const conditions = [{ field: 'slug', operator: '==', value: slug }];
+    const events = await eventsCollection.query(conditions);
 
     if (events.length === 0) {
       return null;
@@ -37,38 +37,38 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       };
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com';
     const url = `${baseUrl}/eventos/${slug}/comprar`;
     const eventUrl = `${baseUrl}/eventos/${slug}`;
-    
+
     // Get main performer for SEO
-    const mainPerformer = event.artistLineup?.find((artist) => artist.isHeadliner) 
+    const mainPerformer = event.artistLineup?.find((artist) => artist.isHeadliner)
       || event.artistLineup?.[0];
-    
+
     // Extract city and year from event data
     const city = event.location?.city || 'Lima';
     const eventYear = new Date(event.startDate).getFullYear();
     const performerName = mainPerformer?.name || event.name.split(' ')[0]; // Fallback to first word of event name
-    
+
     // Format date: "12 de diciembre 2025"
     const formattedDate = format(new Date(event.startDate), "d 'de' MMMM yyyy", { locale: es });
-    
+
     // Get currency symbol
     const currencySymbol = event.currencySymbol || getCurrencySymbol(event.currency || 'PEN');
-    
+
     // Collect all unique zone prices from all active phases
     const zonePrices: Array<{ name: string; price: number }> = [];
     const processedZones = new Set<string>();
-    
+
     if (event.salesPhases && event.salesPhases.length > 0) {
       // Get the first active phase or the first phase
       const activePhase = event.salesPhases.find(phase => {
-          const now = new Date();
-          const startDate = new Date(phase.startDate);
-          const endDate = new Date(phase.endDate);
-          return now >= startDate && now <= endDate;
+        const now = new Date();
+        const startDate = new Date(phase.startDate);
+        const endDate = new Date(phase.endDate);
+        return now >= startDate && now <= endDate;
       }) || event.salesPhases[0];
-      
+
       if (activePhase?.zonesPricing && event.zones) {
         activePhase.zonesPricing.forEach((zonePricing) => {
           const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
@@ -82,21 +82,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         });
       }
     }
-    
+
     // Sort by price (ascending)
     zonePrices.sort((a, b) => a.price - b.price);
-    
+
     // Generate title: "Entradas [Artista] [Ciudad] [Año]"
     const seoTitle = `Entradas ${performerName} ${city} ${eventYear}`;
-    
+
     // Generate description with prices
     let seoDescription = `Compra entradas oficiales para ${performerName} — ${formattedDate}.`;
-    
+
     if (zonePrices.length > 0) {
       const priceList = zonePrices
         .map(zone => {
           // Format price: show without decimals if it's a whole number
-          const formattedPrice = zone.price % 1 === 0 
+          const formattedPrice = zone.price % 1 === 0
             ? zone.price.toLocaleString('es-PE', { maximumFractionDigits: 0 })
             : zone.price.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           return `${zone.name} ${currencySymbol} ${formattedPrice}`;
@@ -188,7 +188,7 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
     <>
       {/* JSON-LD Schema for Event with Offers */}
       <JsonLd data={jsonLd} id="event-purchase-jsonld" />
-      
+
       {/* Client Component for Interactive UI */}
       <BuyTicketsClient event={event} />
     </>

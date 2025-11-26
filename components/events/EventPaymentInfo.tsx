@@ -18,7 +18,7 @@ export function EventPaymentInfo({ event }: EventPaymentInfoProps) {
   const dominantColor = colorPalette?.dominant || '#FBA905';
   const accentColor = colorPalette?.accent || '#FBA905';
 
-  const hasPaymentInfo = 
+  const hasPaymentInfo =
     event.allowInstallmentPayments !== undefined ||
     event.allowOfflinePayments !== undefined ||
     event.ticketDeliveryMode ||
@@ -32,19 +32,19 @@ export function EventPaymentInfo({ event }: EventPaymentInfoProps) {
     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-[#FAFDFF]">
-          <div 
+          <div
             className="w-10 h-10 rounded-lg flex items-center justify-center"
             style={{
               background: `linear-gradient(135deg, ${dominantColor}20, ${accentColor}20)`,
               border: `2px solid ${dominantColor}40`,
             }}
           >
-            <CreditCard 
-              className="h-5 w-5" 
-              style={{ 
+            <CreditCard
+              className="h-5 w-5"
+              style={{
                 color: dominantColor,
                 transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-              }} 
+              }}
             />
           </div>
           <div>
@@ -117,7 +117,7 @@ export function EventPaymentInfo({ event }: EventPaymentInfoProps) {
                 <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-white/80">Modo de entrega</span>
-                    <Badge 
+                    <Badge
                       className="text-xs"
                       style={{
                         backgroundColor: `${dominantColor}20`,
@@ -129,7 +129,7 @@ export function EventPaymentInfo({ event }: EventPaymentInfoProps) {
                     </Badge>
                   </div>
                   <p className="text-xs text-white/60 mt-2">
-                    {event.ticketDeliveryMode === 'automatic' 
+                    {event.ticketDeliveryMode === 'automatic'
                       ? 'Las entradas se enviarán automáticamente después de la compra.'
                       : 'Las entradas se cargarán manualmente después de la compra.'}
                   </p>

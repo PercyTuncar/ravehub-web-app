@@ -115,7 +115,7 @@ export function EventGallery({
         {/* Video Gallery */}
         {allVideos.length > 0 && (
           <div className="space-y-4">
-            <h3 className="font-semibold flex items-center gap-2 text-[#FAFDFF]">
+            <h2 className="font-semibold flex items-center gap-2 text-[#FAFDFF]">
               <Video
                 className="h-5 w-5"
                 style={{
@@ -124,7 +124,7 @@ export function EventGallery({
                 }}
               />
               Videos
-            </h3>
+            </h2>
             <div className="grid gap-4 md:grid-cols-2">
               {allVideos.map((videoUrl, index) => (
                 <Dialog key={index}>

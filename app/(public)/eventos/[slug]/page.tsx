@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 
     const event = events[0] as Event;
-    const url = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.ravehublatam.com'}/eventos/${slug}`;
+    const url = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com'}/eventos/${slug}`;
     const isDraft = event.eventStatus !== 'published';
 
     return {
@@ -178,7 +178,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   )}
 
                   {/* Stage Map */}
-                  <EventStageMap 
+                  <EventStageMap
                     stageMapUrl={event.stageMapUrl}
                     specifications={event.specifications}
                   />
@@ -237,8 +237,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                           Las entradas para este evento se venden en una plataforma externa.
                         </p>
                         <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="w-full border-white/20 text-white hover:bg-white/10"
                           >
                             Comprar en Plataforma Externa

@@ -98,7 +98,7 @@ export function safeJSONStringify(value: unknown): string {
 export class SchemaGenerator {
   private static get BASE_URL() {
     // Always use production URL for schema generation (Google ignores localhost)
-    const envUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim();
+    const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
     if (envUrl && envUrl.startsWith('http') && !envUrl.includes('localhost')) {
       return envUrl.replace(/\/$/, '');
     }

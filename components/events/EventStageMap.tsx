@@ -29,7 +29,7 @@ export function EventStageMap({ stageMapUrl, specifications }: EventStageMapProp
   return (
     <Card className="bg-white/5 border-white/10 backdrop-blur-sm overflow-hidden">
       <CardHeader>
-        <CardTitle className="flex items-center gap-3 text-[#FAFDFF]">
+        <div className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-3 text-[#FAFDFF]">
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center"
             style={{
@@ -51,7 +51,7 @@ export function EventStageMap({ stageMapUrl, specifications }: EventStageMapProp
               Ubicación de zonas y áreas del evento
             </p>
           </div>
-        </CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="relative w-full aspect-video bg-white/5 rounded-lg overflow-hidden group">
