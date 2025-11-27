@@ -17,7 +17,9 @@ const mockDjData = {
 
 try {
     const schema = SchemaGenerator.generateDjProfile(mockDjData);
-    console.log(JSON.stringify(schema, null, 2));
+    const fs = require('fs');
+    fs.writeFileSync('schema_debug.json', JSON.stringify(schema, null, 2));
+    console.log('Schema written to schema_debug.json');
 } catch (error) {
     console.error(error);
 }
