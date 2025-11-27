@@ -376,9 +376,11 @@ export class SchemaGenerator {
 
     const offers: any[] = Array.isArray(eventData.salesPhases)
       ? eventData.salesPhases.flatMap((phase: any, phaseIndex: number) => {
-        if (!Array.isArray(phase.zonesPricing)) return [];
+        const pricingList = Array.isArray(phase.zonesPricing) ? phase.zonesPricing : (Array.isArray(phase.prices) ? phase.prices : []);
+        if (pricingList.length === 0) return [];
+
         const phaseName = phase.name || 'Fase';
-        return phase.zonesPricing
+        return pricingList
           .map((zonePricing: any, zoneIndex: number) => {
             const zone = eventData.zones?.find((z: any) => z.id === zonePricing.zoneId);
             if (!zone || typeof zonePricing.price !== 'number') {

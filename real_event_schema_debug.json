@@ -1,0 +1,321 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://www.ravehublatam.com/#website",
+    "url": "https://www.ravehublatam.com",
+    "name": "Ravehub",
+    "alternateName": "Ravehub Latam",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://www.ravehublatam.com/buscar?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://www.ravehublatam.com/#organization",
+    "name": "Ravehub",
+    "url": "https://www.ravehublatam.com",
+    "logo": {
+      "@type": "ImageObject",
+      "@id": "https://www.ravehublatam.com/#logo",
+      "url": "https://www.ravehublatam.com/icons/logo.png",
+      "width": 600,
+      "height": 60,
+      "caption": "Ravehub Logo"
+    },
+    "sameAs": [
+      "https://www.instagram.com/ravehub.pe",
+      "https://www.facebook.com/ravehub"
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#webpage",
+    "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025",
+    "name": "Boris Brejcha Lima 2025",
+    "description": "Boris Brejcha en Lima. Reflections Tour. Viernes 12 de diciembre 2025, en Peru. Zonas, precios y mapa. Compra tus entradas oficiales aquí.",
+    "isPartOf": {
+      "@id": "https://www.ravehublatam.com/#website"
+    },
+    "about": {
+      "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#event"
+    },
+    "datePublished": "2025-11-27T04:38:06.677Z",
+    "dateModified": "2025-11-27T04:38:06.677Z",
+    "primaryImageOfPage": {
+      "@type": "ImageObject",
+      "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/events%2Fimages%2F1762623070873_1jaryd.jpg?alt=media",
+      "width": 1200,
+      "height": 675,
+      "caption": "Boris Brejcha Lima 2025"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "MusicEvent",
+    "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#event",
+    "name": "Boris Brejcha Lima 2025",
+    "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025",
+    "description": "Boris Brejcha en Lima. Reflections Tour. Viernes 12 de diciembre 2025, en Peru. Zonas, precios y mapa. Compra tus entradas oficiales aquí.",
+    "inLanguage": "es-PE",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "isAccessibleForFree": false,
+    "startDate": "2025-12-12T22:00:00-05:00",
+    "endDate": "2025-12-13T04:00:00-05:00",
+    "doorTime": "2025-12-12T20:00:00-05:00",
+    "location": {
+      "@type": "Place",
+      "name": "Paradiso Lima, Chorrillos",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Av. Alameda Sur 1530",
+        "addressLocality": "Lima",
+        "addressRegion": "Lima",
+        "postalCode": "15067",
+        "addressCountry": "PE"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": -12.2096,
+        "longitude": -77.02053
+      }
+    },
+    "image": [
+      {
+        "@type": "ImageObject",
+        "url": "https://firebasestorage.googleapis.com/v0/b/event-ticket-website-6b541.firebasestorage.app/o/events%2Fimages%2F1762623070873_1jaryd.jpg?alt=media",
+        "width": 1200,
+        "height": 675,
+        "caption": "Boris Brejcha Lima 2025"
+      }
+    ],
+    "organizer": {
+      "@type": "Organization",
+      "name": "Ravehub",
+      "url": "https://www.ravehublatam.com/",
+      "email": "contacto@ravehublatam.com",
+      "telephone": "+51944784488"
+    },
+    "performer": [
+      {
+        "@type": "Person",
+        "name": "Boris Brejcha"
+      },
+      {
+        "@type": "Person",
+        "name": "Moritz Hofbauer"
+      },
+      {
+        "@type": "Person",
+        "name": "Frieder & Jakob"
+      }
+    ],
+    "offers": [
+      {
+        "@type": "Offer",
+        "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#offer-general-11-pm-preventa-1",
+        "name": "General 11 PM - PREVENTA 1",
+        "category": "General 11 PM",
+        "price": 99,
+        "priceCurrency": "PEN",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/comprar",
+        "seller": {
+          "@id": "https://www.ravehublatam.com/#organization"
+        },
+        "validFrom": "2025-10-01T20:42:00-05:00",
+        "availabilityStarts": "2025-10-01T20:42:00-05:00",
+        "availabilityEnds": "2025-11-01T07:42:00-05:00",
+        "priceValidUntil": "2025-11-01T07:42:00-05:00",
+        "inventoryLevel": {
+          "@type": "QuantitativeValue",
+          "value": 100
+        }
+      },
+      {
+        "@type": "Offer",
+        "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#offer-general-all-day-preventa-1",
+        "name": "General All Day - PREVENTA 1",
+        "category": "General All Day",
+        "price": 150,
+        "priceCurrency": "PEN",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/comprar",
+        "seller": {
+          "@id": "https://www.ravehublatam.com/#organization"
+        },
+        "validFrom": "2025-10-01T20:42:00-05:00",
+        "availabilityStarts": "2025-10-01T20:42:00-05:00",
+        "availabilityEnds": "2025-11-01T07:42:00-05:00",
+        "priceValidUntil": "2025-11-01T07:42:00-05:00",
+        "inventoryLevel": {
+          "@type": "QuantitativeValue",
+          "value": 100
+        }
+      },
+      {
+        "@type": "Offer",
+        "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#offer-vip-preventa-1",
+        "name": "VIP - PREVENTA 1",
+        "category": "VIP",
+        "price": 190,
+        "priceCurrency": "PEN",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/comprar",
+        "seller": {
+          "@id": "https://www.ravehublatam.com/#organization"
+        },
+        "validFrom": "2025-10-01T20:42:00-05:00",
+        "availabilityStarts": "2025-10-01T20:42:00-05:00",
+        "availabilityEnds": "2025-11-01T07:42:00-05:00",
+        "priceValidUntil": "2025-11-01T07:42:00-05:00",
+        "inventoryLevel": {
+          "@type": "QuantitativeValue",
+          "value": 100
+        }
+      },
+      {
+        "@type": "Offer",
+        "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#offer-palco-ultra-vip-preventa-1",
+        "name": "Palco Ultra VIP - PREVENTA 1",
+        "category": "Palco Ultra VIP",
+        "price": 220,
+        "priceCurrency": "PEN",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/comprar",
+        "seller": {
+          "@id": "https://www.ravehublatam.com/#organization"
+        },
+        "validFrom": "2025-10-01T20:42:00-05:00",
+        "availabilityStarts": "2025-10-01T20:42:00-05:00",
+        "availabilityEnds": "2025-11-01T07:42:00-05:00",
+        "priceValidUntil": "2025-11-01T07:42:00-05:00",
+        "inventoryLevel": {
+          "@type": "QuantitativeValue",
+          "value": 100
+        }
+      },
+      {
+        "@type": "Offer",
+        "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#offer-general-11-pm-preventa-2",
+        "name": "General 11 PM - PREVENTA 2",
+        "category": "General 11 PM",
+        "price": 135,
+        "priceCurrency": "PEN",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/comprar",
+        "seller": {
+          "@id": "https://www.ravehublatam.com/#organization"
+        },
+        "validFrom": "2025-11-01T17:43:00-05:00",
+        "availabilityStarts": "2025-11-01T17:43:00-05:00",
+        "availabilityEnds": "2025-12-02T17:43:00-05:00",
+        "priceValidUntil": "2025-12-02T17:43:00-05:00",
+        "inventoryLevel": {
+          "@type": "QuantitativeValue",
+          "value": 100
+        }
+      },
+      {
+        "@type": "Offer",
+        "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#offer-general-all-day-preventa-2",
+        "name": "General All Day - PREVENTA 2",
+        "category": "General All Day",
+        "price": 155,
+        "priceCurrency": "PEN",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/comprar",
+        "seller": {
+          "@id": "https://www.ravehublatam.com/#organization"
+        },
+        "validFrom": "2025-11-01T17:43:00-05:00",
+        "availabilityStarts": "2025-11-01T17:43:00-05:00",
+        "availabilityEnds": "2025-12-02T17:43:00-05:00",
+        "priceValidUntil": "2025-12-02T17:43:00-05:00",
+        "inventoryLevel": {
+          "@type": "QuantitativeValue",
+          "value": 100
+        }
+      },
+      {
+        "@type": "Offer",
+        "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#offer-vip-preventa-2",
+        "name": "VIP - PREVENTA 2",
+        "category": "VIP",
+        "price": 215,
+        "priceCurrency": "PEN",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/comprar",
+        "seller": {
+          "@id": "https://www.ravehublatam.com/#organization"
+        },
+        "validFrom": "2025-11-01T17:43:00-05:00",
+        "availabilityStarts": "2025-11-01T17:43:00-05:00",
+        "availabilityEnds": "2025-12-02T17:43:00-05:00",
+        "priceValidUntil": "2025-12-02T17:43:00-05:00",
+        "inventoryLevel": {
+          "@type": "QuantitativeValue",
+          "value": 100
+        }
+      },
+      {
+        "@type": "Offer",
+        "@id": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/#offer-palco-ultra-vip-preventa-2",
+        "name": "Palco Ultra VIP - PREVENTA 2",
+        "category": "Palco Ultra VIP",
+        "price": 314.92,
+        "priceCurrency": "PEN",
+        "availability": "https://schema.org/InStock",
+        "url": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025/comprar",
+        "seller": {
+          "@id": "https://www.ravehublatam.com/#organization"
+        },
+        "validFrom": "2025-11-01T17:43:00-05:00",
+        "availabilityStarts": "2025-11-01T17:43:00-05:00",
+        "availabilityEnds": "2025-12-02T17:43:00-05:00",
+        "priceValidUntil": "2025-12-02T17:43:00-05:00",
+        "inventoryLevel": {
+          "@type": "QuantitativeValue",
+          "value": 100
+        }
+      }
+    ],
+    "maximumAttendeeCapacity": 400,
+    "audience": {
+      "@type": "PeopleAudience",
+      "requiredMinAge": 18
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Inicio",
+        "item": "https://www.ravehublatam.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Eventos",
+        "item": "https://www.ravehublatam.com/eventos"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Boris Brejcha Lima 2025",
+        "item": "https://www.ravehublatam.com/eventos/boris-brejcha-lima-2025"
+      }
+    ]
+  }
+]
