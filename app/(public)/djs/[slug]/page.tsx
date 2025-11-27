@@ -240,10 +240,40 @@ export default async function DJPage({ params }: DJPageProps) {
         upcomingEvents = (upcoming || []).filter((event: any) => event && event.slug && event.name);
         pastEvents = (past || []).filter((event: any) => event && event.slug && event.name);
 
+        // FALLBACK: If DB fetch returns empty but we have summary data, use summary data
+        // This ensures Schema matches UI (which uses summary) even if DB fetch fails or returns nothing
+        if (upcomingEvents.length === 0 && dj.eventsSummary && dj.eventsSummary.length > 0) {
+          console.warn('[DJ Schema] DB fetch returned 0 events, falling back to eventsSummary');
+          const now = new Date();
+          const today = now.toISOString().split('T')[0];
+
+          const processedEvents = dj.eventsSummary.map(e => ({
+            ...e,
+            id: e.eventId, // Map eventId to id for consistency
+            name: e.eventName,
+            slug: e.slug || e.eventId, // Ensure slug exists (fallback to ID)
+            location: {
+              venue: e.venue,
+              city: e.city,
+              country: e.country
+            }
+            // Note: Summary data doesn't have salesPhases, so offers won't be generated
+            // This is a trade-off to ensure the Event Node at least exists
+          }));
+
+          upcomingEvents = processedEvents.filter(e => !e.isPast && e.startDate >= today);
+          // Only overwrite pastEvents if empty, to avoid losing data if fetch partially worked
+          if (pastEvents.length === 0) {
+            pastEvents = processedEvents.filter(e => e.isPast || e.startDate < today);
+          }
+        }
+
         // Log for debugging (only in development)
         if (process.env.NODE_ENV === 'development') {
           if (upcomingEvents.length > 0) {
             console.log(`[DJ Schema] Found ${upcomingEvents.length} upcoming events for ${dj.name}`);
+          } else {
+            console.log(`[DJ Schema] No upcoming events found for ${dj.name}`);
           }
         }
       } catch (eventsError) {
@@ -254,7 +284,9 @@ export default async function DJPage({ params }: DJPageProps) {
           const today = now.toISOString().split('T')[0];
           const processedEvents = dj.eventsSummary.map(e => ({
             ...e,
+            id: e.eventId,
             name: e.eventName,
+            slug: e.slug || e.eventId,
             location: {
               venue: e.venue,
               city: e.city,
