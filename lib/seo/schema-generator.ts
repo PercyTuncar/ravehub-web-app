@@ -1836,181 +1836,67 @@ export class SchemaGenerator {
       return sameAs;
     };
 
-    // Helper function to create event references (only if not empty)
-    const getEventReferences = (upcomingEvents: any[], pastEvents: any[]) => {
-      const eventRefs: Array<{ '@id': string }> = [];
-      // Add upcoming events
-      if (upcomingEvents?.length > 0) {
-        upcomingEvents.forEach((event: any) => {
-          eventRefs.push({
-            '@id': `${this.BASE_URL}/eventos/${event.slug || event.eventId}#event`
-          });
-        });
-      }
-      // Add past events
-      if (pastEvents?.length > 0) {
-        pastEvents.forEach((event: any) => {
-          eventRefs.push({
-            '@id': `${this.BASE_URL}/eventos/${event.slug || event.eventId}#event`
-          });
-        });
-      }
-      return eventRefs;
-    };
-
-    // Helper function to format dates - Handles Firestore Timestamps and regular dates
+    // Helper function to format dates
     const formatDate = (dateValue: any) => {
       if (!dateValue) {
         return new Date().toISOString();
       }
       try {
-        // Handle Firestore Timestamp objects
         if (typeof dateValue === 'object' && dateValue.seconds !== undefined) {
           return new Date(dateValue.seconds * 1000).toISOString();
         }
-        // Handle regular date strings or Date objects
         const parsedDate = new Date(dateValue);
-        // Check if the date is valid
         if (isNaN(parsedDate.getTime())) {
-          console.warn(`Invalid date value: ${dateValue}, using current date as fallback`);
           return new Date().toISOString();
         }
         return parsedDate.toISOString();
       } catch (error) {
-        console.error(`Error formatting date ${dateValue}:`, error);
         return new Date().toISOString();
       }
     };
 
-    const schema = {
-      '@context': 'https://schema.org',
-      '@graph': [
-        // Website
-        {
-          '@type': 'WebSite',
-          '@id': websiteId,
-          url: this.BASE_URL,
-          name: 'Ravehub',
-          alternateName: ['Ravehub'],
-        },
-        // Organization
-        {
-          '@type': 'Organization',
-          '@id': organizationId,
-          name: 'Ravehub',
-          url: this.BASE_URL,
-          logo: {
-            '@type': 'ImageObject',
-            '@id': `${this.BASE_URL}/#logo`,
-            url: `${this.BASE_URL}/icons/logo.png`,
-            width: 600,
-            height: 60,
-          },
-          sameAs: [
-            'https://www.instagram.com/ravehub.pe',
-            'https://www.facebook.com/ravehub'
-          ],
-        },
-        // ProfilePage
-        {
-          '@type': 'ProfilePage',
-          '@id': profilePageId,
-          url: djUrl,
-          name: djData.seoTitle || `${djData.name} - Perfil del DJ`,
-          description: djData.seoDescription || djData.description || djData.bio,
-          isPartOf: { '@id': websiteId },
-          publisher: { '@id': organizationId },
-          dateCreated: formatDate(djData.createdAt),
-          dateModified: formatDate(djData.updatedAt),
-          mainEntity: { '@id': personId }
-        },
-        // Person (DJ)
-        {
-          '@type': djData.performerType === 'Group' ? 'MusicGroup' : 'Person',
-          '@id': personId,
-          name: djData.name,
-          alternateName: djData.alternateName || [djData.name.split(' ')[0]], // First name as alternate
-          birthDate: djData.birthDate,
-          description: djData.description || djData.bio || `${djData.name} es un DJ especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
-          ...(djData.imageUrl ? {
-            image: {
-              '@type': 'ImageObject',
-              url: getReadableFirebaseUrl(djData.imageUrl),
-              caption: djData.name,
-              encodingFormat: 'image/jpeg'
-            }
-          } : {}),
-          url: djData.socialLinks?.website || djUrl,
-          sameAs: getSocialLinks(djData.socialLinks),
-          nationality: djData.country ? {
-            '@type': 'Country',
-            name: djData.country
-          } : undefined,
-          hasOccupation: [
-            { '@type': 'Occupation', name: 'DJ' },
-            ...(djData.jobTitle || ['Music Producer']).filter((title: string) => title !== 'DJ').map((title: string) => ({
-              '@type': 'Occupation',
-              name: title
-            }))
-          ],
-          knowsAbout: djData.genres || [],
-          identifier: [
-            { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id },
-            { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug }
-          ],
-          mainEntityOfPage: { '@id': profilePageId }, // Point to ProfilePage @id
-          performerIn: undefined as any // Will be set later based on events
-        },
-        // BreadcrumbList
-        {
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            {
-              '@type': 'ListItem',
-              position: 1,
-              name: 'Inicio',
-              item: {
-                '@type': 'Thing',
-                '@id': this.BASE_URL,
-                name: 'Inicio'
-              }
-            },
-            {
-              '@type': 'ListItem',
-              position: 2,
-              name: 'DJs',
-              item: {
-                '@type': 'Thing',
-                '@id': `${this.BASE_URL}/djs`,
-                name: 'DJs'
-              }
-            },
-            {
-              '@type': 'ListItem',
-              position: 3,
-              name: djData.name,
-              item: {
-                '@type': 'Thing',
-                '@id': djUrl,
-                name: djData.name
-              }
-            }
-          ]
-        }
-      ]
+    // 1. Define the Person Node (The Artist)
+    const personNode: any = {
+      '@type': djData.performerType === 'Group' ? 'MusicGroup' : 'Person',
+      '@id': personId,
+      name: djData.name,
+      alternateName: djData.alternateName || [djData.name.split(' ')[0]],
+      birthDate: djData.birthDate,
+      description: djData.description || djData.bio || `${djData.name} es un DJ especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
+      url: djData.socialLinks?.website || djUrl,
+      sameAs: getSocialLinks(djData.socialLinks),
+      nationality: djData.country ? {
+        '@type': 'Country',
+        name: djData.country
+      } : undefined,
+      hasOccupation: [
+        { '@type': 'Occupation', name: 'DJ' },
+        ...(djData.jobTitle || ['Music Producer']).filter((title: string) => title !== 'DJ').map((title: string) => ({
+          '@type': 'Occupation',
+          name: title
+        }))
+      ],
+      knowsAbout: djData.genres || [],
+      identifier: [
+        { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id },
+        { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug }
+      ],
+      mainEntityOfPage: { '@id': profilePageId }
     };
 
-    // Only add performerIn if it has events
-    const eventRefs = getEventReferences(djData.upcomingEvents || [], djData.pastEvents || []);
-    if (eventRefs.length > 0) {
-      // Add event references if they exist
-      const personNode = schema['@graph'].find((node: any) => node['@type'] === 'Person' || node['@type'] === 'MusicGroup') as any;
-      if (personNode) {
-        personNode.performerIn = eventRefs;
-      }
+    if (djData.imageUrl) {
+      personNode.image = {
+        '@type': 'ImageObject',
+        url: getReadableFirebaseUrl(djData.imageUrl),
+        caption: djData.name,
+        encodingFormat: 'image/jpeg'
+      };
     }
 
-    // Add MusicEvent nodes for upcoming events
+    // 2. Prepare Event Nodes and References
+    const musicEventNodes: any[] = [];
+    const eventReferences: any[] = [];
+
     if (djData.upcomingEvents?.length > 0) {
       djData.upcomingEvents.forEach((event: any) => {
         const eventSlug = event.slug || event.eventId;
@@ -2022,7 +1908,8 @@ export class SchemaGenerator {
         const addressLocality = event.location?.city || event.city || 'Lima';
         const addressCountry = event.location?.country || event.country || 'PE';
         
-        (schema['@graph'] as any[]).push({
+        // Create MusicEvent Node
+        musicEventNodes.push({
           '@type': 'MusicEvent',
           '@id': eventId,
           name: event.name,
@@ -2048,7 +1935,7 @@ export class SchemaGenerator {
             }
           },
           organizer: { '@id': organizationId },
-          performer: { '@id': personId },
+          performer: { '@id': personId }, // Reference to Person
           offers: {
             '@type': 'Offer',
             url: eventUrl,
@@ -2058,45 +1945,164 @@ export class SchemaGenerator {
             priceCurrency: 'PEN'
           }
         });
+
+        // Add reference for Person.performerIn
+        eventReferences.push({ '@id': eventId });
       });
     }
 
-    // Add famous albums as MusicAlbum nodes
+    // Add past events references only (no nodes generated for past events to keep schema light)
+    if (djData.pastEvents?.length > 0) {
+      djData.pastEvents.forEach((event: any) => {
+        const eventSlug = event.slug || event.eventId;
+        eventReferences.push({
+          '@id': `${this.BASE_URL}/eventos/${eventSlug}#event`
+        });
+      });
+    }
+
+    // Link events to Person
+    if (eventReferences.length > 0) {
+      personNode.performerIn = eventReferences;
+    }
+
+    // 3. Prepare Album Nodes
+    const musicAlbumNodes: any[] = [];
     if (djData.famousAlbums?.length > 0) {
       djData.famousAlbums.forEach((album: string, index: number) => {
-        (schema['@graph'] as any[]).push({
+        musicAlbumNodes.push({
           '@type': 'MusicAlbum',
           '@id': `${djUrl}/albums/${index}#album`,
           name: album,
-          byArtist: { '@id': personId },
+          byArtist: { '@id': personId }, // Reference to Person
           genre: djData.genres || []
         });
       });
     }
 
-    // Add famous tracks as MusicRecording nodes
+    // 4. Prepare Recording Nodes
+    const musicRecordingNodes: any[] = [];
     if (djData.famousTracks?.length > 0) {
       djData.famousTracks.forEach((track: string, index: number) => {
-        (schema['@graph'] as any[]).push({
+        musicRecordingNodes.push({
           '@type': 'MusicRecording',
           name: track,
-          byArtist: { '@id': personId },
+          byArtist: { '@id': personId }, // Reference to Person
           genre: djData.genres?.[0] || 'Electronic'
         });
       });
     }
 
-    // Filter out undefined values
-    schema['@graph'] = schema['@graph'].map((node: any) => {
-      const filtered: any = {};
-      Object.keys(node).forEach(key => {
-        if (node[key] !== undefined) {
-          filtered[key] = node[key];
-        }
-      });
-      return filtered;
-    });
+    // 5. Construct the Final Graph
+    const graph = [
+      // Website
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: this.BASE_URL,
+        name: 'Ravehub',
+        alternateName: ['Ravehub'],
+      },
+      // Organization
+      {
+        '@type': 'Organization',
+        '@id': organizationId,
+        name: 'Ravehub',
+        url: this.BASE_URL,
+        logo: {
+          '@type': 'ImageObject',
+          '@id': `${this.BASE_URL}/#logo`,
+          url: `${this.BASE_URL}/icons/logo.png`,
+          width: 600,
+          height: 60,
+        },
+        sameAs: [
+          'https://www.instagram.com/ravehub.pe',
+          'https://www.facebook.com/ravehub'
+        ],
+      },
+      // ProfilePage
+      {
+        '@type': 'ProfilePage',
+        '@id': profilePageId,
+        url: djUrl,
+        name: djData.seoTitle || `${djData.name} - Perfil del DJ`,
+        description: djData.seoDescription || djData.description || djData.bio,
+        isPartOf: { '@id': websiteId },
+        publisher: { '@id': organizationId },
+        dateCreated: formatDate(djData.createdAt),
+        dateModified: formatDate(djData.updatedAt),
+        mainEntity: { '@id': personId }
+      },
+      // Person
+      personNode,
+      // BreadcrumbList
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Inicio',
+            item: {
+              '@type': 'Thing',
+              '@id': this.BASE_URL,
+              name: 'Inicio'
+            }
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'DJs',
+            item: {
+              '@type': 'Thing',
+              '@id': `${this.BASE_URL}/djs`,
+              name: 'DJs'
+            }
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: djData.name,
+            item: {
+              '@type': 'Thing',
+              '@id': djUrl,
+              name: djData.name
+            }
+          }
+        ]
+      },
+      // Events
+      ...musicEventNodes,
+      // Albums
+      ...musicAlbumNodes,
+      // Recordings
+      ...musicRecordingNodes
+    ];
 
-    return schema;
+    // Filter out undefined values recursively
+    const removeUndefined = (obj: any): any => {
+      if (obj === undefined || obj === null) return undefined;
+      if (Array.isArray(obj)) {
+        const filtered = obj.map(removeUndefined).filter(item => item !== undefined);
+        return filtered.length > 0 ? filtered : undefined;
+      }
+      if (typeof obj === 'object') {
+        const filtered: any = {};
+        Object.keys(obj).forEach(key => {
+          const value = removeUndefined(obj[key]);
+          if (value !== undefined) {
+            filtered[key] = value;
+          }
+        });
+        return Object.keys(filtered).length > 0 ? filtered : undefined;
+      }
+      return obj;
+    };
+
+    return {
+      '@context': 'https://schema.org',
+      '@graph': graph.map(removeUndefined).filter(node => node !== undefined)
+    };
   }
 }
