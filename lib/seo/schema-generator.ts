@@ -2004,7 +2004,7 @@ export class SchemaGenerator {
     const eventRefs = getEventReferences(djData.upcomingEvents || [], djData.pastEvents || []);
     if (eventRefs.length > 0) {
       // Add event references if they exist
-      const personNode = schema['@graph'].find((node: any) => node['@type'] === 'Person' || node['@type'] === 'MusicGroup');
+      const personNode = schema['@graph'].find((node: any) => node['@type'] === 'Person' || node['@type'] === 'MusicGroup') as any;
       if (personNode) {
         personNode.performerIn = eventRefs;
       }
