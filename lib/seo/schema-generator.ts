@@ -1937,15 +1937,7 @@ export class SchemaGenerator {
             }
           },
           organizer: { '@id': organizationId },
-          performer: { '@id': personId }, // Reference to Person
-          offers: {
-            '@type': 'Offer',
-            url: eventUrl,
-            availability: 'https://schema.org/InStock',
-            category: 'General',
-            price: '0',
-            priceCurrency: 'PEN'
-          }
+          performer: { '@id': personId } // Reference to Person
         });
 
         // Add reference for Person.performerIn
