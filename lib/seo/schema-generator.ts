@@ -1869,7 +1869,10 @@ export class SchemaGenerator {
 
     if (djData.upcomingEvents?.length > 0) {
       djData.upcomingEvents.forEach((event: any) => {
+        // CAMBIO: Forzar el uso del slug si existe, o imprimir un warning si falta
         const eventSlug = event.slug || event.eventId;
+        if (!event.slug) console.warn('Schema Warning: Evento sin slug, usando ID:', event.eventId);
+
         const eventUrl = `${this.BASE_URL}/eventos/${eventSlug}`;
         const eventId = `${eventUrl}#event`;
 
