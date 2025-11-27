@@ -1932,11 +1932,12 @@ export class SchemaGenerator {
           alternateName: djData.alternateName || [djData.name.split(' ')[0]], // First name as alternate
           birthDate: djData.birthDate,
           description: djData.description || djData.bio || `${djData.name} es un DJ especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
-          image: [
-            djData.imageUrl, // Profile image (1:1) prioritized for Google
-            djData.coverImage,
-            ...(djData.galleryImages || [])
-          ].filter(Boolean).map(url => getReadableFirebaseUrl(url)),
+          image: {
+            '@type': 'ImageObject',
+            url: getReadableFirebaseUrl(djData.imageUrl),
+            caption: djData.name,
+            encodingFormat: 'image/jpeg'
+          },
           url: djData.socialLinks?.website || djUrl,
           sameAs: getSocialLinks(djData.socialLinks),
           nationality: djData.country ? {
@@ -1957,6 +1958,42 @@ export class SchemaGenerator {
           ],
           mainEntityOfPage: { '@id': profilePageId }, // Point to ProfilePage @id
           performerIn: undefined as any // Will be set later based on events
+        },
+        // BreadcrumbList
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Inicio',
+              item: {
+                '@type': 'Thing',
+                '@id': this.BASE_URL,
+                name: 'Inicio'
+              }
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'DJs',
+              item: {
+                '@type': 'Thing',
+                '@id': `${this.BASE_URL}/djs`,
+                name: 'DJs'
+              }
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: djData.name,
+              item: {
+                '@type': 'Thing',
+                '@id': djUrl,
+                name: djData.name
+              }
+            }
+          ]
         }
       ]
     };
@@ -1965,10 +2002,60 @@ export class SchemaGenerator {
     const eventRefs = getEventReferences(djData.upcomingEvents || [], djData.pastEvents || []);
     if (eventRefs.length > 0) {
       // Add event references if they exist
-      const personNode = schema['@graph'].find((node: any) => node['@type'] === 'Person');
+      const personNode = schema['@graph'].find((node: any) => node['@type'] === 'Person' || node['@type'] === 'MusicGroup');
       if (personNode) {
         personNode.performerIn = eventRefs;
       }
+    }
+
+    // Add MusicEvent nodes for upcoming events
+    if (djData.upcomingEvents?.length > 0) {
+      djData.upcomingEvents.forEach((event: any) => {
+        const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
+        const eventId = `${eventUrl}#event`;
+        
+        // Ensure we have valid location data
+        const locationName = event.location?.venue || event.venue || 'Ubicación por confirmar';
+        const addressLocality = event.location?.city || event.city || 'Lima';
+        const addressCountry = event.location?.country || event.country || 'PE';
+        
+        (schema['@graph'] as any[]).push({
+          '@type': 'MusicEvent',
+          '@id': eventId,
+          name: event.name,
+          description: event.description || `Evento ${event.name} en ${addressLocality}`,
+          url: eventUrl,
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          startDate: formatDate(event.startDate),
+          endDate: event.endDate ? formatDate(event.endDate) : undefined,
+          image: event.mainImageUrl ? {
+            '@type': 'ImageObject',
+            url: getReadableFirebaseUrl(event.mainImageUrl),
+            width: 1200,
+            height: 675
+          } : undefined,
+          location: {
+            '@type': 'Place',
+            name: locationName,
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: addressLocality,
+              addressCountry: addressCountry
+            }
+          },
+          organizer: { '@id': organizationId },
+          performer: { '@id': personId },
+          offers: {
+            '@type': 'Offer',
+            url: eventUrl,
+            availability: 'https://schema.org/InStock',
+            category: 'General',
+            price: '0',
+            priceCurrency: 'PEN'
+          }
+        });
+      });
     }
 
     // Add famous albums as MusicAlbum nodes
