@@ -282,6 +282,8 @@ export default async function DJPage({ params }: DJPageProps) {
         type: 'dj',
         data: {
           ...dj,
+          // Ensure slug is present
+          slug: slug,
           // Override with dynamic events (only valid events with slug and name)
           upcomingEvents: upcomingEvents.length > 0 ? upcomingEvents : undefined,
           pastEvents: pastEvents.length > 0 ? pastEvents : undefined

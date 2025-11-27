@@ -301,6 +301,7 @@ export default function DjManagementPage() {
           { ...selectedDj, ...djDataToSave } :
           { ...djDataToSave, id: savedDjId, createdAt: new Date() };
 
+        // Generate schema using the updated generator
         const schema = SchemaGenerator.generate({
           type: 'dj',
           data: djData

@@ -1859,10 +1859,10 @@ export class SchemaGenerator {
     const personNode: any = {
       '@type': djData.performerType === 'Group' ? 'MusicGroup' : 'Person',
       '@id': personId,
-      name: djData.name,
-      alternateName: djData.alternateName || [djData.name.split(' ')[0]],
+      name: djData.name || 'DJ',
+      alternateName: djData.alternateName || (djData.name ? [djData.name.split(' ')[0]] : []),
       birthDate: djData.birthDate,
-      description: djData.description || djData.bio || `${djData.name} es un DJ especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
+      description: djData.description || djData.bio || `${djData.name || 'Este DJ'} es un artista especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
       url: djData.socialLinks?.website || djUrl,
       sameAs: getSocialLinks(djData.socialLinks),
       nationality: djData.country ? {
@@ -1878,8 +1878,8 @@ export class SchemaGenerator {
       ],
       knowsAbout: djData.genres || [],
       identifier: [
-        { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id },
-        { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug }
+        { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id || '' },
+        { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug || '' }
       ],
       mainEntityOfPage: { '@id': profilePageId }
     };
