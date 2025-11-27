@@ -1784,6 +1784,7 @@ export class SchemaGenerator {
     const organizationId = `${this.BASE_URL}/#organization`;
     const profilePageId = `${djUrl}#webpage`;
     const personId = `${djUrl}#person`;
+
     // Helper function to process social links
     const getSocialLinks = (socialLinks: any) => {
       const sameAs: string[] = [];
@@ -1834,6 +1835,7 @@ export class SchemaGenerator {
       }
       return sameAs;
     };
+
     // Helper function to create event references (only if not empty)
     const getEventReferences = (upcomingEvents: any[], pastEvents: any[]) => {
       const eventRefs: Array<{ '@id': string }> = [];
@@ -1841,7 +1843,7 @@ export class SchemaGenerator {
       if (upcomingEvents?.length > 0) {
         upcomingEvents.forEach((event: any) => {
           eventRefs.push({
-            '@id': `${this.BASE_URL}/eventos/${event.eventId}#event`
+            '@id': `${this.BASE_URL}/eventos/${event.slug || event.eventId}#event`
           });
         });
       }
@@ -1849,12 +1851,13 @@ export class SchemaGenerator {
       if (pastEvents?.length > 0) {
         pastEvents.forEach((event: any) => {
           eventRefs.push({
-            '@id': `${this.BASE_URL}/eventos/${event.eventId}#event`
+            '@id': `${this.BASE_URL}/eventos/${event.slug || event.eventId}#event`
           });
         });
       }
       return eventRefs;
     };
+
     // Helper function to format dates - Handles Firestore Timestamps and regular dates
     const formatDate = (dateValue: any) => {
       if (!dateValue) {
@@ -1878,6 +1881,7 @@ export class SchemaGenerator {
         return new Date().toISOString();
       }
     };
+
     const schema = {
       '@context': 'https://schema.org',
       '@graph': [
@@ -1912,7 +1916,8 @@ export class SchemaGenerator {
           '@type': 'ProfilePage',
           '@id': profilePageId,
           url: djUrl,
-          name: `${djData.name} - Perfil del DJ`,
+          name: djData.seoTitle || `${djData.name} - Perfil del DJ`,
+          description: djData.seoDescription || djData.description || djData.bio,
           isPartOf: { '@id': websiteId },
           publisher: { '@id': organizationId },
           dateCreated: formatDate(djData.createdAt),
@@ -1921,17 +1926,17 @@ export class SchemaGenerator {
         },
         // Person (DJ)
         {
-          '@type': 'Person',
+          '@type': djData.performerType === 'Group' ? 'MusicGroup' : 'Person',
           '@id': personId,
           name: djData.name,
           alternateName: djData.alternateName || [djData.name.split(' ')[0]], // First name as alternate
+          birthDate: djData.birthDate,
           description: djData.description || djData.bio || `${djData.name} es un DJ especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
-          image: djData.imageUrl ? {
-            '@type': 'ImageObject',
-            url: djData.imageUrl.replace(/[?&]token=[^&]*/, ''), // Remove Firebase tokens
-            caption: djData.name,
-            encodingFormat: 'image/jpeg'
-          } : undefined,
+          image: [
+            djData.imageUrl, // Profile image (1:1) prioritized for Google
+            djData.coverImage,
+            ...(djData.galleryImages || [])
+          ].filter(Boolean).map(url => getReadableFirebaseUrl(url)),
           url: djData.socialLinks?.website || djUrl,
           sameAs: getSocialLinks(djData.socialLinks),
           nationality: djData.country ? {
@@ -1955,6 +1960,7 @@ export class SchemaGenerator {
         }
       ]
     };
+
     // Only add performerIn if it has events
     const eventRefs = getEventReferences(djData.upcomingEvents || [], djData.pastEvents || []);
     if (eventRefs.length > 0) {
@@ -1964,6 +1970,7 @@ export class SchemaGenerator {
         personNode.performerIn = eventRefs;
       }
     }
+
     // Add famous albums as MusicAlbum nodes
     if (djData.famousAlbums?.length > 0) {
       djData.famousAlbums.forEach((album: string, index: number) => {
@@ -1976,6 +1983,7 @@ export class SchemaGenerator {
         });
       });
     }
+
     // Add famous tracks as MusicRecording nodes
     if (djData.famousTracks?.length > 0) {
       djData.famousTracks.forEach((track: string, index: number) => {
@@ -1987,287 +1995,7 @@ export class SchemaGenerator {
         });
       });
     }
-    // Helper function to format date with timezone
-    const formatDateWithTimezone = (dateStr: string, timeStr?: string, timezone?: string) => {
-      if (!dateStr) return undefined;
-      try {
-        let dateTimeStr = dateStr;
-        if (timeStr) {
-          dateTimeStr = `${dateStr}T${timeStr}`;
-        } else {
-          dateTimeStr = `${dateStr}T00:00:00`;
-        }
-        if (timezone) {
-          // Try to format with timezone
-          const date = new Date(dateTimeStr);
-          return date.toISOString();
-        }
-        return new Date(dateTimeStr).toISOString();
-      } catch (error) {
-        console.error('Error formatting date:', error);
-        return new Date(dateStr).toISOString();
-      }
-    };
-    // Helper function to generate event schema from Event object
-    const generateEventSchema = (event: any): any | null => {
-      // Check if event has minimum required properties (slug is essential)
-      if (!event || !event.slug) {
-        return null;
-      }
 
-      const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
-      const eventId = `${eventUrl}#event`;
-
-      // Build event schema
-      const eventSchema: any = {
-        '@type': event.eventType === 'festival' ? 'Festival' : 'MusicEvent',
-        '@id': eventId,
-        name: event.name,
-        url: eventUrl,
-      };
-
-      // Add description if available
-      if (event.shortDescription || event.description) {
-        eventSchema.description = event.shortDescription || event.description;
-      }
-
-      // Add dates
-      if (event.startDate) {
-        eventSchema.startDate = formatDateWithTimezone(event.startDate, event.startTime, event.timezone);
-      }
-      if (event.endDate) {
-        eventSchema.endDate = formatDateWithTimezone(event.endDate, event.endTime, event.timezone);
-      }
-
-      // Add event status - use EventScheduled for upcoming, EventPast for past events
-      // This will be set by the caller based on whether it's upcoming or past
-      eventSchema.eventStatus = 'https://schema.org/EventScheduled';
-      eventSchema.eventAttendanceMode = 'https://schema.org/OfflineEventAttendanceMode';
-
-      // Add image if available
-      if (event.mainImageUrl) {
-        eventSchema.image = {
-          '@type': 'ImageObject',
-          url: event.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
-          width: 1200,
-          height: 675
-        };
-      }
-
-      // Add location if available
-      if (event.location) {
-        const location: any = {
-          '@type': 'Place',
-          name: event.location.venue || event.location.city || 'Ubicación del evento'
-        };
-
-        if (event.location.city || event.location.region || event.location.country) {
-          location.address = {
-            '@type': 'PostalAddress'
-          };
-          if (event.location.address) location.address.streetAddress = event.location.address;
-          if (event.location.city) location.address.addressLocality = event.location.city;
-          if (event.location.region) location.address.addressRegion = event.location.region;
-          if (event.location.countryCode || event.location.country) {
-            location.address.addressCountry = event.location.countryCode || event.location.country;
-          }
-        }
-
-        if (event.location.geo && event.location.geo.lat && event.location.geo.lng) {
-          location.geo = {
-            '@type': 'GeoCoordinates',
-            latitude: event.location.geo.lat,
-            longitude: event.location.geo.lng
-          };
-        }
-
-        eventSchema.location = location;
-      }
-
-      // Add performer (the DJ)
-      eventSchema.performer = {
-        '@type': 'Person',
-        name: djData.name,
-        sameAs: djData.socialLinks?.website || djUrl
-      };
-
-      // Add organizer
-      eventSchema.organizer = {
-        '@type': 'Organization',
-        name: 'Ravehub',
-        url: this.BASE_URL
-      };
-
-      // Add offers (CRITICAL)
-      if (event.salesPhases && Array.isArray(event.salesPhases)) {
-        const offers: any[] = [];
-        event.salesPhases.forEach((phase: any) => {
-          if (phase.zonesPricing && Array.isArray(phase.zonesPricing)) {
-            phase.zonesPricing.forEach((zonePricing: any) => {
-              const zone = event.zones?.find((z: any) => z.id === zonePricing.zoneId);
-              if (zone && typeof zonePricing.price === 'number') {
-                offers.push({
-                  '@type': 'Offer',
-                  url: eventUrl,
-                  price: zonePricing.price.toString(), // Must be string for some validators, but number is also accepted. User asked for string.
-                  priceCurrency: event.currency || 'PEN',
-                  availability: 'https://schema.org/InStock',
-                  validFrom: phase.startDate ? formatDateWithTimezone(phase.startDate, undefined, event.timezone) : undefined,
-                  name: `${zone.name} - ${phase.name}`,
-                  category: zone.name
-                });
-              }
-            });
-          }
-        });
-
-        if (offers.length > 0) {
-          eventSchema.offers = offers.length === 1 ? offers[0] : offers; // Can be single object or array
-        }
-      }
-
-      // Remove undefined values
-      const cleanSchema: any = {};
-      Object.keys(eventSchema).forEach(key => {
-        if (eventSchema[key] !== undefined) {
-          cleanSchema[key] = eventSchema[key];
-        }
-      });
-
-      return cleanSchema;
-    };
-
-    // Collect events to add (prioritize upcoming over past)
-    const eventsToAdd: any[] = [];
-
-    // Helper to map eventsSummary item to schema format
-    const mapSummaryToSchema = (summaryEvent: any) => {
-      // Basic mapping from eventsSummary structure to what generateEventSchema expects
-      return {
-        slug: summaryEvent.slug,
-        name: summaryEvent.eventName,
-        shortDescription: `Evento ${summaryEvent.eventName} en ${summaryEvent.city}, ${summaryEvent.country}`,
-        startDate: summaryEvent.startDate,
-        endDate: summaryEvent.endDate,
-        // Time is not in summary, default to evening
-        startTime: '20:00:00',
-        eventType: 'music_event', // Default
-        mainImageUrl: summaryEvent.mainImageUrl,
-        location: {
-          venue: summaryEvent.venue,
-          city: summaryEvent.city,
-          country: summaryEvent.country,
-          // We don't have full address or coords in summary, but venue+city is enough for basic schema
-        },
-        currency: 'PEN', // Default or derived
-        // Create a minimal salesPhase to generate an offer if needed
-        salesPhases: [
-          {
-            name: 'General',
-            startDate: new Date().toISOString(), // Assume available
-            zonesPricing: [
-              {
-                zoneId: 'general',
-                price: 0 // Price not in summary, maybe omit price or put 0
-              }
-            ]
-          }
-        ],
-        zones: [
-          { id: 'general', name: 'General' }
-        ]
-      };
-    };
-
-    // Process eventsSummary if available (New Structure)
-    if (djData.eventsSummary && Array.isArray(djData.eventsSummary)) {
-      djData.eventsSummary.forEach((summaryEvent: any) => {
-        // Map summary event to full event structure for schema generator
-        const eventData = mapSummaryToSchema(summaryEvent);
-        const eventSchema = generateEventSchema(eventData);
-
-        if (eventSchema) {
-          // Set status based on isPast flag
-          if (summaryEvent.isPast) {
-            eventSchema.eventStatus = 'https://schema.org/EventPast';
-          } else {
-            eventSchema.eventStatus = 'https://schema.org/EventScheduled';
-          }
-          eventsToAdd.push(eventSchema);
-        }
-      });
-    }
-    // Fallback to legacy fields if eventsSummary is empty
-    else {
-      // First, add upcoming events (priority - show all upcoming events)
-      if (djData.upcomingEvents && Array.isArray(djData.upcomingEvents) && djData.upcomingEvents.length > 0) {
-        djData.upcomingEvents.forEach((event: any) => {
-          const eventSchema = generateEventSchema(event);
-          if (eventSchema) {
-            // Set status as scheduled for upcoming events
-            eventSchema.eventStatus = 'https://schema.org/EventScheduled';
-            eventsToAdd.push(eventSchema);
-          }
-        });
-      }
-
-      // Then, add past events only if no upcoming events were added
-      if (eventsToAdd.length === 0 && djData.pastEvents && Array.isArray(djData.pastEvents) && djData.pastEvents.length > 0) {
-        // Limit past events to avoid schema bloat (show most recent past events only)
-        const pastEventsToShow = djData.pastEvents.slice(0, 5); // Show up to 5 most recent past events
-        pastEventsToShow.forEach((event: any) => {
-          const eventSchema = generateEventSchema(event);
-          if (eventSchema) {
-            // Set status as past for past events
-            eventSchema.eventStatus = 'https://schema.org/EventPast';
-            eventsToAdd.push(eventSchema);
-          }
-        });
-      }
-    }
-
-    // Add all valid event schemas to the graph (only if we have events)
-    if (eventsToAdd.length > 0) {
-      eventsToAdd.forEach(eventSchema => {
-        (schema['@graph'] as any[]).push(eventSchema);
-      });
-    }
-    // Add BreadcrumbList with proper object structure
-    (schema['@graph'] as any[]).push({
-      '@type': 'BreadcrumbList',
-      'itemListElement': [
-        {
-          '@type': 'ListItem',
-          'position': 1,
-          'name': 'Inicio',
-          'item': {
-            '@type': 'Thing',
-            '@id': this.BASE_URL,
-            name: 'Inicio'
-          }
-        },
-        {
-          '@type': 'ListItem',
-          'position': 2,
-          'name': 'DJs',
-          'item': {
-            '@type': 'Thing',
-            '@id': `${this.BASE_URL}/djs`,
-            name: 'DJs'
-          }
-        },
-        {
-          '@type': 'ListItem',
-          'position': 3,
-          'name': djData.name,
-          'item': {
-            '@type': 'Thing',
-            '@id': djUrl,
-            name: djData.name
-          }
-        }
-      ]
-    });
     // Filter out undefined values
     schema['@graph'] = schema['@graph'].map((node: any) => {
       const filtered: any = {};
@@ -2278,6 +2006,7 @@ export class SchemaGenerator {
       });
       return filtered;
     });
+
     return schema;
   }
 }

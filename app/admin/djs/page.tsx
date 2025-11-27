@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, EyeOff, Music, Star, Instagram, Globe, Calendar, Users, Award, Filter, CheckCircle, ExternalLink, Upload, Download, FileText, AlertCircle, CheckCircle2, XCircle, Loader2, Share2 } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, EyeOff, Music, Star, Instagram, Globe, Calendar, Users, Award, Filter, CheckCircle, ExternalLink, Upload, Download, FileText, AlertCircle, CheckCircle2, XCircle, Loader2, Share2, Image, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -108,7 +108,7 @@ export default function DjManagementPage() {
 
   useEffect(() => {
     if (editForm.imageUrl) {
-      const img = new Image();
+      const img = document.createElement('img');
       img.onload = () => {
         const ratio = img.width / img.height;
         if (Math.abs(ratio - 1) > 0.05) { // Allow small margin of error (5%)
@@ -187,35 +187,18 @@ export default function DjManagementPage() {
     setFilteredDjs(filtered);
   };
 
-  const handleEditDj = (dj: EventDj) => {
-    setSelectedDj(dj);
-    setEditForm({
-      name: dj.name,
-      description: dj.description,
-      bio: dj.bio,
-      country: dj.country,
-      genres: dj.genres,
-      instagramHandle: dj.instagramHandle,
-      imageUrl: dj.imageUrl,
-      socialLinks: dj.socialLinks,
-      famousTracks: dj.famousTracks,
-      famousAlbums: dj.famousAlbums,
-      approved: dj.approved,
-      seoTitle: dj.seoTitle,
-      seoDescription: dj.seoDescription,
-      seoKeywords: dj.seoKeywords,
-      slug: dj.slug,
-    });
-    setIsEditDialogOpen(true);
-  };
-
   const handleCreateDj = () => {
+    setSelectedDj(null);
     setEditForm({
       name: '',
+      alternateName: '',
       description: '',
       bio: '',
       country: '',
       genres: [],
+      jobTitle: ['DJ', 'Music Producer'],
+      performerType: 'DJ',
+      birthDate: '',
       instagramHandle: '',
       imageUrl: '',
       socialLinks: {
@@ -230,110 +213,93 @@ export default function DjManagementPage() {
       famousTracks: [],
       famousAlbums: [],
       approved: false,
+      seoTitle: '',
+      seoDescription: '',
+      seoKeywords: [],
+      coverImage: '',
+      galleryImages: [],
     });
     setIsCreateDialogOpen(true);
   };
 
-  const handleSaveDj = async (isEdit: boolean) => {
+  const handleEditDj = (dj: EventDj) => {
+    setSelectedDj(dj);
+    setEditForm({
+      name: dj.name,
+      alternateName: dj.alternateName || '',
+      description: dj.description,
+      bio: dj.bio,
+      country: dj.country,
+      genres: dj.genres,
+      jobTitle: dj.jobTitle || ['DJ', 'Music Producer'],
+      performerType: dj.performerType || 'DJ',
+      birthDate: dj.birthDate || '',
+      instagramHandle: dj.instagramHandle,
+      imageUrl: dj.imageUrl,
+      coverImage: dj.coverImage || '',
+      galleryImages: dj.galleryImages || [],
+      socialLinks: {
+        instagram: dj.socialLinks?.instagram || '',
+        facebook: dj.socialLinks?.facebook || '',
+        twitter: dj.socialLinks?.twitter || '',
+        youtube: dj.socialLinks?.youtube || '',
+        spotify: dj.socialLinks?.spotify || '',
+        tiktok: dj.socialLinks?.tiktok || '',
+        website: dj.socialLinks?.website || '',
+      },
+      famousTracks: dj.famousTracks || [],
+      famousAlbums: dj.famousAlbums || [],
+      approved: dj.approved,
+      seoTitle: dj.seoTitle || dj.name,
+      seoDescription: dj.seoDescription || dj.description,
+      seoKeywords: dj.seoKeywords || dj.genres,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveDj = async () => {
     try {
-      let savedDjId;
-      const djSlug = generateSlug(editForm.name || '');
+      let savedDjId: string;
 
-      // Check for duplicates before saving (only for new DJs or when name/country changes)
-      if (!isEdit || (editForm.name !== selectedDj?.name || editForm.country !== selectedDj?.country)) {
-        const existingDjs = await eventDjsCollection.query([
-          { field: 'name', operator: '==', value: editForm.name },
-          { field: 'country', operator: '==', value: editForm.country }
-        ]);
+      // Ensure SEO fields are populated if empty
+      const seoTitle = editForm.seoTitle || editForm.name || '';
+      const seoDescription = editForm.seoDescription || editForm.description || '';
+      const seoKeywords = (editForm.seoKeywords && editForm.seoKeywords.length > 0) 
+        ? editForm.seoKeywords 
+        : (editForm.genres || []);
 
-        // Filter out the current DJ if we're editing
-        const duplicates = isEdit ?
-          existingDjs.filter(dj => dj.id !== selectedDj?.id) :
-          existingDjs;
+      const djDataToSave = {
+        ...editForm,
+        slug: generateSlug(editForm.name || ''),
+        seoTitle,
+        seoDescription,
+        seoKeywords,
+        updatedAt: new Date(),
+      };
 
-        if (duplicates.length > 0) {
-          const duplicate = duplicates[0];
-          const confirmOverwrite = confirm(
-            `⚠️ DJ DUPLICADO DETECTADO\n\n` +
-            `Ya existe un DJ con el nombre "${editForm.name}" de ${editForm.country}.\n\n` +
-            `DJ existente:\n` +
-            `• Nombre: ${duplicate.name}\n` +
-            `• País: ${duplicate.country}\n` +
-            `• Slug: ${duplicate.slug}\n\n` +
-            `¿Desea sobrescribir el DJ existente?`
-          );
-
-          if (!confirmOverwrite) {
-            return; // User cancelled
-          }
-
-          // If overwriting, update the existing DJ instead of creating a new one
-          if (duplicates.length > 0) {
-            savedDjId = duplicate.id;
-            await eventDjsCollection.update(duplicate.id, {
-              ...editForm,
-              slug: djSlug,
-              updatedAt: new Date(),
-            });
-
-            // Generate schema and SEO data for the updated DJ
-            try {
-              const updatedDjData = { ...duplicate, ...editForm, slug: djSlug, id: savedDjId };
-              const schema = SchemaGenerator.generate({
-                type: 'dj',
-                data: updatedDjData
-              });
-
-              await eventDjsCollection.update(savedDjId, {
-                jsonLdSchema: schema,
-                seoTitle: editForm.name || '', // Only the name, no suffix
-                seoDescription: editForm.description || editForm.seoDescription || `${editForm.name || 'DJ'} es un DJ profesional de ${editForm.country || 'Latinoamérica'}. Descubre su música, próximos eventos y biografía completa.`,
-                seoKeywords: editForm.seoKeywords || editForm.genres || [],
-              });
-
-              console.log('✅ Generated and saved JSONLD Schema for DJ (overwrite):', editForm.name);
-            } catch (schemaError) {
-              console.error('❌ Error generating DJ schema during overwrite:', schemaError);
-            }
-
-            setIsEditDialogOpen(false);
-            setIsCreateDialogOpen(false);
-            await loadDjs();
-
-            // Revalidate sitemap when DJ is overwritten
-            await revalidateSitemap();
-            return;
-          }
-        }
-      }
-
-      if (isEdit && selectedDj) {
+      if (selectedDj) {
+        // Edit existing DJ
         savedDjId = selectedDj.id;
-        await eventDjsCollection.update(selectedDj.id, {
-          ...editForm,
-          slug: djSlug,
-          updatedAt: new Date(),
-        });
+        await eventDjsCollection.update(selectedDj.id, djDataToSave);
       } else {
-        const djData = {
-          ...editForm,
-          slug: djSlug,
-          performerType: 'DJ',
-          jobTitle: ['DJ', 'Music Producer'],
-          birthDate: '',
+        // Create new DJ
+        const newDjData = {
+          ...djDataToSave,
+          performerType: editForm.performerType || 'DJ',
+          jobTitle: editForm.jobTitle || ['DJ', 'Music Producer'],
+          birthDate: editForm.birthDate || '',
           createdBy: 'admin',
           createdAt: new Date(),
-          updatedAt: new Date(),
         } as Omit<EventDj, 'id'>;
 
-        savedDjId = await eventDjsCollection.create(djData);
+        savedDjId = await eventDjsCollection.create(newDjData);
       }
 
       // Generate JSONLD schema for the DJ and save it
       try {
-        const djData = isEdit ?
-          { ...selectedDj, ...editForm, slug: djSlug } :
-          { ...editForm, slug: djSlug, id: savedDjId, createdAt: new Date(), updatedAt: new Date() };
+        const djData = selectedDj ?
+          { ...selectedDj, ...djDataToSave } :
+          { ...djDataToSave, id: savedDjId, createdAt: new Date() };
 
         const schema = SchemaGenerator.generate({
           type: 'dj',
@@ -341,12 +307,8 @@ export default function DjManagementPage() {
         });
 
         // Save the schema to the database
-        // Title: Only the DJ name (as per user requirement - no "- DJ Profile | Ravehub")
         await eventDjsCollection.update(savedDjId, {
-          jsonLdSchema: schema,
-          seoTitle: editForm.name || '', // Only the name, no suffix
-          seoDescription: editForm.description || editForm.seoDescription || `${editForm.name || 'DJ'} es un DJ profesional de ${editForm.country || 'Latinoamérica'}. Descubre su música, próximos eventos y biografía completa.`,
-          seoKeywords: editForm.seoKeywords || editForm.genres || [],
+          jsonLdSchema: schema
         });
 
         console.log('✅ Generated and saved JSONLD Schema for DJ:', editForm.name);
@@ -406,7 +368,7 @@ export default function DjManagementPage() {
     }));
   };
 
-  const addArrayItem = (field: 'genres' | 'famousTracks' | 'famousAlbums', value: string) => {
+  const addArrayItem = (field: 'genres' | 'famousTracks' | 'famousAlbums' | 'galleryImages', value: string) => {
     if (value.trim()) {
       setEditForm(prev => ({
         ...prev,
@@ -415,7 +377,7 @@ export default function DjManagementPage() {
     }
   };
 
-  const removeArrayItem = (field: 'genres' | 'famousTracks' | 'famousAlbums', index: number) => {
+  const removeArrayItem = (field: 'genres' | 'famousTracks' | 'famousAlbums' | 'galleryImages', index: number) => {
     setEditForm(prev => ({
       ...prev,
       [field]: (prev[field] || []).filter((_, i) => i !== index)
@@ -701,6 +663,7 @@ export default function DjManagementPage() {
       // Refresh DJ list if successful uploads
       if (result.summary.successful > 0) {
         await loadDjs();
+
       }
 
     } catch (error) {
@@ -866,7 +829,6 @@ export default function DjManagementPage() {
           </TabsList>
 
           <TabsContent value="djs" className="space-y-6">
-
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <Card>
@@ -1097,725 +1059,658 @@ export default function DjManagementPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                          {isCreateDialogOpen ? 'Nuevo' : 'Edición'}
-                        </div>
+                        <Button onClick={handleSaveDj} className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4" />
+                          Guardar DJ
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setIsCreateDialogOpen(false);
+                            setIsEditDialogOpen(false);
+                          }}
+                        >
+                          Cancelar
+                        </Button>
                       </div>
                     </div>
                   </DialogHeader>
 
-                  {/* Content Area */}
-                  <div className="flex-1 overflow-hidden min-h-0">
-                    <Tabs defaultValue="basic" className="h-full flex flex-col">
-                      <div className="px-6 pt-6 pb-4 bg-muted/20 flex-shrink-0">
-                        <TabsList className="grid w-full grid-cols-4 bg-background/80 backdrop-blur border border-border/50 shadow-sm p-1">
-                          <TabsTrigger
-                            value="basic"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-medium text-sm"
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 rounded-sm bg-current opacity-60"></div>
-                              Información Básica
-                            </div>
-                          </TabsTrigger>
-                          <TabsTrigger
-                            value="music"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-medium text-sm"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Music className="w-4 h-4" />
-                              Música
-                            </div>
-                          </TabsTrigger>
-                          <TabsTrigger
-                            value="social"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-medium text-sm"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Globe className="w-4 h-4" />
-                              Redes Sociales
-                            </div>
-                          </TabsTrigger>
-                          <TabsTrigger
-                            value="schema"
-                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-medium text-sm"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Share2 className="w-4 h-4" />
-                              SEO y Vista Previa
-                            </div>
-                          </TabsTrigger>
+                  <div className="flex-1 overflow-y-auto p-0">
+                    <Tabs defaultValue="general" className="w-full h-full flex flex-col">
+                      <div className="px-8 pt-6 pb-2 border-b border-border bg-muted/10">
+                        <TabsList className="grid w-full grid-cols-3">
+                          <TabsTrigger value="general">Información General</TabsTrigger>
+                          <TabsTrigger value="media">Multimedia y Redes</TabsTrigger>
+                          <TabsTrigger value="seo">SEO y Vista Previa</TabsTrigger>
                         </TabsList>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 px-6 py-6">
-                        <TabsContent value="basic" className="space-y-8 mt-0">
-                          {/* Form Field Grid - Enhanced Layout */}
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                              <Label htmlFor="name" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                Nombre del DJ *
-                              </Label>
+                      <div className="flex-1 overflow-y-auto p-8">
+                        <TabsContent value="general" className="mt-0 space-y-6">
+                          {/* Basic Information */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <Label htmlFor="name">Nombre del DJ *</Label>
                               <Input
                                 id="name"
-                                value={editForm.name}
-                                onChange={(e) => {
-                                  updateEditForm('name', e.target.value);
-                                  // Auto-generate slug when name changes
-                                  const slug = generateSlug(e.target.value);
-                                  setEditForm(prev => ({ ...prev, slug }));
-                                }}
-                                placeholder="Nombre artístico del DJ"
-                                className="bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 h-12 text-foreground placeholder:text-muted-foreground shadow-sm hover:shadow-md"
+                                value={editForm.name || ''}
+                                onChange={(e) => updateEditForm('name', e.target.value)}
+                                placeholder="Ej: Martin Garrix"
                               />
                             </div>
-                            <div className="space-y-3">
-                              <Label htmlFor="slug" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                URL/Slug *
-                              </Label>
+                            <div className="space-y-2">
+                              <Label htmlFor="alternateName">Nombre Real / Alternativo</Label>
                               <Input
-                                id="slug"
-                                value={editForm.slug || generateSlug(editForm.name || '')}
-                                onChange={(e) => {
-                                  const cleanSlug = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-                                  updateEditForm('slug', cleanSlug);
-                                }}
-                                placeholder="url-del-dj"
-                                className="bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 h-12 text-foreground placeholder:text-muted-foreground shadow-sm hover:shadow-md"
+                                id="alternateName"
+                                value={editForm.alternateName || ''}
+                                onChange={(e) => updateEditForm('alternateName', e.target.value)}
+                                placeholder="Ej: Martijn Gerard Garritsen"
                               />
                             </div>
-                            <div className="space-y-3">
-                              <Label htmlFor="country" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                País *
-                              </Label>
-                              <Combobox
-                                options={countries.map(country => ({
-                                  value: country.name,
-                                  label: country.name,
-                                  flag: country.flag
-                                }))}
-                                value={editForm.country}
+                            <div className="space-y-2">
+                              <Label htmlFor="country">País *</Label>
+                              <Select
+                                value={editForm.country || ''}
                                 onValueChange={(value) => updateEditForm('country', value)}
-                                placeholder="Seleccionar país"
-                                searchPlaceholder="Buscar país..."
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecciona un país" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {countries.map(country => (
+                                    <SelectItem key={country.code} value={country.name}>
+                                      {country.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                              <Input
+                                id="birthDate"
+                                type="date"
+                                value={editForm.birthDate || ''}
+                                onChange={(e) => updateEditForm('birthDate', e.target.value)}
                               />
                             </div>
                           </div>
 
-                          {/* Enhanced Image Section */}
-                          <div className="bg-gradient-to-br from-muted/20 to-background rounded-xl p-8 border border-border/50 shadow-sm">
-                            <div className="flex items-center gap-3 mb-6">
-                              <div className="w-8 h-8 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                                <Music className="w-4 h-4 text-orange-500" />
-                              </div>
-                              <div>
-                                <Label className="text-base font-semibold text-foreground">Imagen del DJ</Label>
-                                <p className="text-xs text-muted-foreground mt-1">Recomendado: 500x500px • Formatos: JPG, PNG, WebP • Máximo: 5MB</p>
-                              </div>
-                            </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="description">Descripción breve *</Label>
+                            <Textarea
+                              id="description"
+                              value={editForm.description || ''}
+                              onChange={(e) => updateEditForm('description', e.target.value)}
+                              placeholder="Descripción corta para listados (máximo 160 caracteres)"
+                              rows={3}
+                            />
+                            <p className="text-xs text-muted-foreground text-right">
+                              {(editForm.description || '').length}/160 caracteres
+                            </p>
+                          </div>
 
-                            {/* Upload Method Toggle */}
-                            <div className="space-y-6">
-                              {(() => {
-                                const currentUrl = editForm.imageUrl || '';
-                                const isUploadMode = !currentUrl || currentUrl.includes('firebase') || currentUrl.startsWith('https://firebasestorage');
+                          <div className="space-y-2">
+                            <Label htmlFor="bio">Biografía completa *</Label>
+                            <Textarea
+                              id="bio"
+                              value={editForm.bio || ''}
+                              onChange={(e) => updateEditForm('bio', e.target.value)}
+                              placeholder="Biografía detallada del DJ"
+                              rows={8}
+                            />
+                          </div>
 
-                                return (
-                                  <>
-                                    <div className="flex gap-2 p-1 bg-muted/50 rounded-xl border border-border/50 w-fit">
-                                      <button
-                                        type="button"
-                                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${isUploadMode
-                                          ? 'bg-primary text-primary-foreground shadow-sm'
-                                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                                          }`}
-                                        onClick={() => {
-                                          if (!isUploadMode) {
-                                            updateEditForm('imageUrl', '');
-                                          }
-                                        }}
-                                      >
-                                        📁 Subir Archivo
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${!isUploadMode
-                                          ? 'bg-primary text-primary-foreground shadow-sm'
-                                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                                          }`}
-                                        onClick={() => {
-                                          updateEditForm('imageUrl', '');
-                                        }}
-                                      >
-                                        🔗 Usar URL
-                                      </button>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                      {/* Upload Section */}
-                                      <div className={`space-y-3 ${!isUploadMode ? 'opacity-50 pointer-events-none' : ''}`}>
-                                        <div className="bg-muted/30 p-6 rounded-xl border border-border/50">
-                                          <FileUpload
-                                            onUploadComplete={(url: string) => updateEditForm('imageUrl', url)}
-                                            currentUrl={isUploadMode ? currentUrl : undefined}
-                                            onClear={() => updateEditForm('imageUrl', '')}
-                                            accept="image/jpeg,image/png,image/webp"
-                                            maxSize={5}
-                                            folder="djs/images"
-                                            variant="default"
-                                          />
-                                        </div>
-                                      </div>
-
-                                      {/* URL Section */}
-                                      <div className={`space-y-3 ${isUploadMode ? 'opacity-50 pointer-events-none' : ''}`}>
-                                        <Label className="text-sm font-medium text-foreground">URL de la Imagen</Label>
-                                        <Input
-                                          type="url"
-                                          value={!isUploadMode ? currentUrl : ''}
-                                          onChange={(e) => updateEditForm('imageUrl', e.target.value)}
-                                          placeholder="https://example.com/dj-image.jpg"
-                                          className="bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground"
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                          Si ya tienes la imagen en un servidor externo
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </>
-                                );
-                              })()}
-
-                              {editForm.imageUrl && (
-                                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl p-6">
-                                  <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                                      <CheckCircle className="w-4 h-4 text-white" />
-                                    </div>
-                                    <span className="text-sm font-semibold text-green-800 dark:text-green-200">Vista Previa de la Imagen</span>
-                                  </div>
-                                  <div className="bg-background border border-green-200 dark:border-green-800 rounded-lg p-4 max-w-sm">
-                                    <img
-                                      src={editForm.imageUrl}
-                                      alt={editForm.name || 'Imagen del DJ'}
-                                      className="w-full h-48 object-cover rounded-lg"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                      }}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Genres */}
+                            <div className="space-y-2">
+                              <Label>Géneros musicales *</Label>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {(editForm.genres || []).map((genre, index) => (
+                                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                                    {genre}
+                                    <X
+                                      className="h-3 w-3 cursor-pointer"
+                                      onClick={() => removeArrayItem('genres', index)}
                                     />
-                                  </div>
-                                  <p className="text-xs text-green-600 dark:text-green-400 mt-3">
-                                    🚀 La imagen se optimizará automáticamente para web
-                                  </p>
-                                  {imageAspectRatioWarning && (
-                                    <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start gap-2">
-                                      <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                                      <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                                        {imageAspectRatioWarning}
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Description Fields - Enhanced */}
-                          <div className="grid grid-cols-1 gap-8">
-                            <div className="space-y-3">
-                              <Label htmlFor="description" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                Descripción Corta
-                              </Label>
-                              <Textarea
-                                id="description"
-                                value={editForm.description}
-                                onChange={(e) => updateEditForm('description', e.target.value)}
-                                placeholder="Descripción breve del DJ para mostrar en listados"
-                                rows={3}
-                                className="bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground resize-none shadow-sm hover:shadow-md"
-                              />
-                            </div>
-                            <div className="space-y-3">
-                              <Label htmlFor="bio" className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                Biografía Completa
-                              </Label>
-                              <Textarea
-                                id="bio"
-                                value={editForm.bio}
-                                onChange={(e) => updateEditForm('bio', e.target.value)}
-                                placeholder="Biografía detallada del DJ, su carrera, logros y estilo musical"
-                                rows={6}
-                                className="bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground resize-none shadow-sm hover:shadow-md"
-                              />
-                            </div>
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                Géneros Musicales
-                              </Label>
-                              <div className="flex gap-3">
-                                <Input
-                                  placeholder="Agregar género (presiona Enter)"
-                                  onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
-                                      addArrayItem('genres', e.currentTarget.value);
-                                      e.currentTarget.value = '';
-                                    }
-                                  }}
-                                  className="bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm"
-                                />
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {editForm.genres?.map((genre, index) => (
-                                  <Badge
-                                    key={index}
-                                    variant="secondary"
-                                    className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-all duration-200 bg-muted text-muted-foreground border border-border px-3 py-1"
-                                    onClick={() => removeArrayItem('genres', index)}
-                                  >
-                                    {genre} ×
                                   </Badge>
                                 ))}
                               </div>
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="Agregar género"
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      addArrayItem('genres', (e.target as HTMLInputElement).value);
+                                      (e.target as HTMLInputElement).value = '';
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const input = document.querySelector('input[placeholder="Agregar género"]') as HTMLInputElement;
+                                    if (input?.value) {
+                                      addArrayItem('genres', input.value);
+                                      input.value = '';
+                                    }
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Job Titles */}
+                            <div className="space-y-2">
+                              <Label>Ocupaciones / Roles</Label>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {(editForm.jobTitle || []).map((title, index) => (
+                                  <Badge key={index} variant="outline" className="flex items-center gap-1">
+                                    {title}
+                                    <X
+                                      className="h-3 w-3 cursor-pointer"
+                                      onClick={() => {
+                                        const newTitles = [...(editForm.jobTitle || [])];
+                                        newTitles.splice(index, 1);
+                                        updateEditForm('jobTitle', newTitles);
+                                      }}
+                                    />
+                                  </Badge>
+                                ))}
+                              </div>
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="Agregar ocupación (ej: Productor)"
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      const val = (e.target as HTMLInputElement).value;
+                                      if (val.trim()) {
+                                        updateEditForm('jobTitle', [...(editForm.jobTitle || []), val.trim()]);
+                                        (e.target as HTMLInputElement).value = '';
+                                      }
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const input = document.querySelector('input[placeholder="Agregar ocupación (ej: Productor)"]') as HTMLInputElement;
+                                    if (input?.value) {
+                                      updateEditForm('jobTitle', [...(editForm.jobTitle || []), input.value.trim()]);
+                                      input.value = '';
+                                    }
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
 
-                          {/* Approval Section */}
-                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
-                                <Eye className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                          <div className="space-y-2">
+                            <Label htmlFor="performerType">Tipo de Artista</Label>
+                            <Select
+                              value={editForm.performerType || 'DJ'}
+                              onValueChange={(value) => updateEditForm('performerType', value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecciona tipo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="DJ">DJ</SelectItem>
+                                <SelectItem value="Group">Grupo / Dúo</SelectItem>
+                                <SelectItem value="Person">Solista / Live Act</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="media" className="mt-0 space-y-6">
+                          {/* Image */}
+                          <div className="space-y-2">
+                            <Label htmlFor="imageUrl">Foto de Perfil (Cuadrada 1:1) *</Label>
+                            <div className="flex gap-4 items-start">
+                              <div className="flex-1 space-y-2">
+                                <FileUpload
+                                  folder="djs/images"
+                                  currentUrl={editForm.imageUrl}
+                                  onUploadComplete={(url) => updateEditForm('imageUrl', url)}
+                                  onClear={() => updateEditForm('imageUrl', '')}
+                                />
+                                {imageAspectRatioWarning && (
+                                  <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
+                                    {imageAspectRatioWarning}
+                                  </p>
+                                )}
                               </div>
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-3">
-                                  <input
-                                    type="checkbox"
-                                    id="approved"
-                                    checked={editForm.approved}
-                                    onChange={(e) => updateEditForm('approved', e.target.checked)}
-                                    className="w-5 h-5 rounded border-border bg-background text-primary focus:ring-primary/20 focus:ring-2 transition-all duration-200"
-                                  />
-                                  <Label htmlFor="approved" className="text-base font-semibold text-foreground cursor-pointer">
-                                    Aprobar DJ
-                                  </Label>
-                                  <Badge variant={editForm.approved ? "default" : "secondary"}>
-                                    {editForm.approved ? "Visible" : "Oculto"}
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-2">
-                                  Los DJs aprobados aparecerán en las búsquedas públicas y listados de eventos
+                            </div>
+                          </div>
+
+                          {/* Cover Image */}
+                          <div className="space-y-2">
+                            <Label htmlFor="coverImage">Foto de Portada (Horizontal 16:9) *</Label>
+                            <div className="flex gap-4 items-start">
+                              <div className="flex-1 space-y-2">
+                                <FileUpload
+                                  folder="djs/covers"
+                                  currentUrl={editForm.coverImage}
+                                  onUploadComplete={(url) => updateEditForm('coverImage', url)}
+                                  onClear={() => updateEditForm('coverImage', '')}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Se recomienda una imagen de alta resolución (min 1920x1080) para el encabezado del perfil.
                                 </p>
                               </div>
                             </div>
                           </div>
-                        </TabsContent>
 
-                        <TabsContent value="music" className="space-y-8 mt-0">
-                          <div className="grid grid-cols-1 gap-8">
-                            {/* Famous Tracks */}
-                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl p-8 border border-green-200 dark:border-green-800">
-                              <div className="flex items-center gap-3 mb-6">
-                                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
-                                  <Music className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          {/* Gallery Images */}
+                          <div className="space-y-2">
+                            <Label>Galería de Fotos</Label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                              {(editForm.galleryImages || []).map((img, index) => (
+                                <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
+                                  <img 
+                                    src={img} 
+                                    alt={`Gallery ${index + 1}`} 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
+                                  />
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Button
+                                      variant="destructive"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => removeArrayItem('galleryImages', index)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
                                 </div>
-                                <div>
-                                  <Label className="text-base font-semibold text-foreground">Tracks Famosos</Label>
-                                  <p className="text-xs text-muted-foreground mt-1">Las canciones más conocidas del DJ</p>
-                                </div>
-                              </div>
-                              <div className="space-y-4">
-                                <Input
-                                  placeholder="Agregar track famoso (presiona Enter)"
-                                  onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
-                                      addArrayItem('famousTracks', e.currentTarget.value);
-                                      e.currentTarget.value = '';
-                                    }
-                                  }}
-                                  className="bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm"
-                                />
-                                <div className="space-y-3">
-                                  {editForm.famousTracks?.map((track, index) => (
-                                    <div key={index} className="flex items-center justify-between bg-muted/50 p-4 rounded-lg border border-border/50 hover:bg-muted/70 transition-all duration-200 group">
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                                          <Music className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                        </div>
-                                        <span className="text-sm font-medium text-foreground">{track}</span>
-                                      </div>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => removeArrayItem('famousTracks', index)}
-                                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all duration-200"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
+                              ))}
                             </div>
-
-                            {/* Famous Albums */}
-                            <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 rounded-xl p-8 border border-orange-200 dark:border-orange-800">
-                              <div className="flex items-center gap-3 mb-6">
-                                <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
-                                  <Award className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                                </div>
-                                <div>
-                                  <Label className="text-base font-semibold text-foreground">Álbumes Famosos</Label>
-                                  <p className="text-xs text-muted-foreground mt-1">Los álbumes más reconocidos del DJ</p>
-                                </div>
-                              </div>
-                              <div className="space-y-4">
-                                <Input
-                                  placeholder="Agregar álbum famoso (presiona Enter)"
-                                  onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
-                                      addArrayItem('famousAlbums', e.currentTarget.value);
-                                      e.currentTarget.value = '';
-                                    }
-                                  }}
-                                  className="bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm"
-                                />
-                                <div className="space-y-3">
-                                  {editForm.famousAlbums?.map((album, index) => (
-                                    <div key={index} className="flex items-center justify-between bg-muted/50 p-4 rounded-lg border border-border/50 hover:bg-muted/70 transition-all duration-200 group">
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
-                                          <Award className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                                        </div>
-                                        <span className="text-sm font-medium text-foreground">{album}</span>
-                                      </div>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => removeArrayItem('famousAlbums', index)}
-                                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all duration-200"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
+                            
+                            <div className="mt-4">
+                              <Label className="text-sm text-muted-foreground mb-2 block">Agregar nueva imagen a la galería</Label>
+                              <FileUpload
+                                folder="djs/gallery"
+                                onUploadComplete={(url) => addArrayItem('galleryImages', url)}
+                                className="max-w-md"
+                              />
                             </div>
                           </div>
-                        </TabsContent>
 
-                        <TabsContent value="social" className="space-y-8 mt-0">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Social Media Fields */}
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <Instagram className="w-4 h-4 text-pink-500" />
-                                Instagram
-                              </Label>
-                              <div className="relative">
-                                <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          {/* Social Links */}
+                          <div className="space-y-4 pt-4 border-t border-border">
+                            <Label className="text-base">Redes Sociales y Plataformas</Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="instagram" className="flex items-center gap-2"><Instagram className="w-4 h-4" /> Instagram</Label>
                                 <Input
+                                  id="instagram"
                                   value={editForm.socialLinks?.instagram || ''}
-                                  onChange={(e) => {
-                                    updateSocialLink('instagram', e.target.value);
-                                    // Auto-extract Instagram handle from URL
-                                    const handle = extractInstagramHandle(e.target.value);
-                                    if (handle) {
-                                      updateEditForm('instagramHandle', handle);
-                                    }
-                                  }}
+                                  onChange={(e) => updateSocialLink('instagram', e.target.value)}
                                   placeholder="https://instagram.com/username"
-                                  className="pl-10 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm hover:shadow-md"
                                 />
                               </div>
-                              {/* Show extracted handle */}
-                              {editForm.instagramHandle && (
-                                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
-                                  <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                                    <CheckCircle className="w-3 h-3 text-white" />
-                                  </div>
-                                  <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                                    Handle extraído: @{editForm.instagramHandle}
-                                  </span>
-                                </div>
-                              )}
-                              {/* Validation error */}
-                              {editForm.socialLinks?.instagram && !editForm.instagramHandle && (
-                                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
-                                  <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                                  <span className="text-sm font-medium text-red-800 dark:text-red-200">
-                                    URL de Instagram inválida o formato no soportado
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-blue-500" />
-                                Facebook
-                              </Label>
-                              <div className="relative">
-                                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <div className="space-y-2">
+                                <Label htmlFor="facebook" className="flex items-center gap-2"><Share2 className="w-4 h-4" /> Facebook</Label>
                                 <Input
+                                  id="facebook"
                                   value={editForm.socialLinks?.facebook || ''}
                                   onChange={(e) => updateSocialLink('facebook', e.target.value)}
-                                  placeholder="https://facebook.com/..."
-                                  className="pl-10 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm hover:shadow-md"
+                                  placeholder="https://facebook.com/username"
                                 />
                               </div>
-                            </div>
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-sky-500" />
-                                Twitter
-                              </Label>
-                              <div className="relative">
-                                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <div className="space-y-2">
+                                <Label htmlFor="twitter" className="flex items-center gap-2"><Share2 className="w-4 h-4" /> Twitter/X</Label>
                                 <Input
+                                  id="twitter"
                                   value={editForm.socialLinks?.twitter || ''}
                                   onChange={(e) => updateSocialLink('twitter', e.target.value)}
-                                  placeholder="https://twitter.com/..."
-                                  className="pl-10 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm hover:shadow-md"
+                                  placeholder="https://twitter.com/username"
                                 />
                               </div>
-                            </div>
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-red-500" />
-                                YouTube
-                              </Label>
-                              <div className="relative">
-                                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <div className="space-y-2">
+                                <Label htmlFor="youtube" className="flex items-center gap-2"><Share2 className="w-4 h-4" /> YouTube</Label>
                                 <Input
+                                  id="youtube"
                                   value={editForm.socialLinks?.youtube || ''}
                                   onChange={(e) => updateSocialLink('youtube', e.target.value)}
-                                  placeholder="https://youtube.com/..."
-                                  className="pl-10 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm hover:shadow-md"
+                                  placeholder="https://youtube.com/channel/..."
                                 />
                               </div>
-                            </div>
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <Music className="w-4 h-4 text-green-500" />
-                                Spotify
-                              </Label>
-                              <div className="relative">
-                                <Music className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <div className="space-y-2">
+                                <Label htmlFor="spotify" className="flex items-center gap-2"><Music className="w-4 h-4" /> Spotify</Label>
                                 <Input
+                                  id="spotify"
                                   value={editForm.socialLinks?.spotify || ''}
                                   onChange={(e) => updateSocialLink('spotify', e.target.value)}
-                                  placeholder="https://spotify.com/artist/..."
-                                  className="pl-10 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm hover:shadow-md"
+                                  placeholder="https://open.spotify.com/artist/..."
                                 />
                               </div>
-                            </div>
-                            <div className="space-y-3">
-                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-black" />
-                                TikTok
-                              </Label>
-                              <div className="relative">
-                                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <div className="space-y-2">
+                                <Label htmlFor="tiktok" className="flex items-center gap-2"><Share2 className="w-4 h-4" /> TikTok</Label>
                                 <Input
+                                  id="tiktok"
                                   value={editForm.socialLinks?.tiktok || ''}
                                   onChange={(e) => updateSocialLink('tiktok', e.target.value)}
-                                  placeholder="https://tiktok.com/@..."
-                                  className="pl-10 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm hover:shadow-md"
+                                  placeholder="https://tiktok.com/@username"
+                                />
+                              </div>
+                              <div className="space-y-2 md:col-span-2">
+                                <Label htmlFor="website" className="flex items-center gap-2"><Globe className="w-4 h-4" /> Sitio web oficial</Label>
+                                <Input
+                                  id="website"
+                                  value={editForm.socialLinks?.website || ''}
+                                  onChange={(e) => updateSocialLink('website', e.target.value)}
+                                  placeholder="https://example.com"
                                 />
                               </div>
                             </div>
-                            <div className="md:col-span-2 space-y-3">
-                              <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-primary" />
-                                Sitio Web
-                              </Label>
-                              <div className="relative">
-                                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                  value={editForm.socialLinks?.website || ''}
-                                  onChange={(e) => updateSocialLink('website', e.target.value)}
-                                  placeholder="https://..."
-                                  className="pl-10 bg-background border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-foreground placeholder:text-muted-foreground shadow-sm hover:shadow-md"
-                                />
-                              </div>
+                          </div>
+
+                          {/* Famous Tracks */}
+                          <div className="space-y-2">
+                            <Label>Tracks más famosos</Label>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {(editForm.famousTracks || []).map((track, index) => (
+                                <Badge key={index} variant="outline" className="flex items-center gap-1">
+                                  {track}
+                                  <X
+                                    className="h-3 w-3 cursor-pointer"
+                                    onClick={() => removeArrayItem('famousTracks', index)}
+                                  />
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Agregar track famoso (ej: Animals - 2013)"
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    addArrayItem('famousTracks', (e.target as HTMLInputElement).value);
+                                    (e.target as HTMLInputElement).value = '';
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  const input = document.querySelector('input[placeholder="Agregar track famoso (ej: Animals - 2013)"]') as HTMLInputElement;
+                                  if (input?.value) {
+                                    addArrayItem('famousTracks', input.value);
+                                    input.value = '';
+                                  }
+                                }}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Famous Albums */}
+                          <div className="space-y-2">
+                            <Label>Álbumes destacados</Label>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {(editForm.famousAlbums || []).map((album, index) => (
+                                <Badge key={index} variant="outline" className="flex items-center gap-1">
+                                  {album}
+                                  <X
+                                    className="h-3 w-3 cursor-pointer"
+                                    onClick={() => removeArrayItem('famousAlbums', index)}
+                                  />
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Agregar álbum famoso"
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    addArrayItem('famousAlbums', (e.target as HTMLInputElement).value);
+                                    (e.target as HTMLInputElement).value = '';
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  const input = document.querySelector('input[placeholder="Agregar álbum famoso"]') as HTMLInputElement;
+                                  if (input?.value) {
+                                    addArrayItem('famousAlbums', input.value);
+                                    input.value = '';
+                                  }
+                                }}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
                         </TabsContent>
 
-                        <TabsContent value="schema" className="space-y-8 mt-0">
-                          {/* Social Preview Section */}
-                          <div className="space-y-6">
-                            <DJSocialPreview
-                              djData={{
-                                ...editForm,
-                                slug: editForm.slug || generateSlug(editForm.name || ''),
-                              }}
-                              upcomingEvents={(() => {
-                                // Use eventsSummary if available (has more complete data including location)
-                                // Otherwise fall back to upcomingEvents
-                                if (selectedDj?.eventsSummary) {
-                                  const now = new Date();
-                                  const today = now.toISOString().split('T')[0];
-                                  return selectedDj.eventsSummary
-                                    .filter((event: any) => !event.isPast && event.startDate >= today)
-                                    .map((event: any) => ({
-                                      slug: event.slug || event.eventId,
-                                      name: event.eventName,
-                                      startDate: event.startDate,
-                                      location: {
-                                        city: event.city,
-                                        country: event.country,
-                                        venue: event.venue,
-                                      },
-                                    }));
-                                }
-                                // Fallback to upcomingEvents (legacy format)
-                                return (selectedDj?.upcomingEvents || []).map((event: any) => ({
-                                  slug: event.eventId,
-                                  name: event.eventName,
-                                  startDate: event.startDate,
-                                  location: {}, // Location not available in legacy format
-                                }));
-                              })()}
-                            />
-                          </div>
-
-                          {/* Schema JSON-LD Preview */}
-                          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-xl p-8 border border-indigo-200 dark:border-indigo-800">
-                            <div className="flex items-center gap-3 mb-6">
-                              <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg flex items-center justify-center">
-                                <div className="w-4 h-4 bg-indigo-600 dark:bg-indigo-400 rounded-sm"></div>
+                        <TabsContent value="seo" className="mt-0 space-y-6">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                              <div className="space-y-2">
+                                <Label htmlFor="seoTitle">Título SEO (Meta Title)</Label>
+                                <Input
+                                  id="seoTitle"
+                                  value={editForm.seoTitle || editForm.name || ''}
+                                  onChange={(e) => updateEditForm('seoTitle', e.target.value)}
+                                  placeholder="Ej: Martin Garrix - DJ Profile, Songs & Tour Dates | RaveHub"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Recomendado: 50-60 caracteres. Si se deja vacío, se generará automáticamente.
+                                </p>
                               </div>
-                              <div>
-                                <Label className="text-base font-semibold text-foreground">Vista Previa del Schema JSONLD</Label>
-                                <p className="text-xs text-muted-foreground mt-1">Así se verá el schema de datos estructurados para este DJ</p>
+
+                              <div className="space-y-2">
+                                <Label htmlFor="seoDescription">Descripción SEO (Meta Description)</Label>
+                                <Textarea
+                                  id="seoDescription"
+                                  value={editForm.seoDescription || editForm.description || ''}
+                                  onChange={(e) => updateEditForm('seoDescription', e.target.value)}
+                                  placeholder="Descripción optimizada para motores de búsqueda..."
+                                  rows={4}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Recomendado: 150-160 caracteres. Aparecerá en los resultados de búsqueda.
+                                </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Palabras Clave (Keywords)</Label>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                  {(editForm.seoKeywords || editForm.genres || []).map((keyword, index) => (
+                                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                                      {keyword}
+                                      <X
+                                        className="h-3 w-3 cursor-pointer"
+                                        onClick={() => {
+                                          const newKeywords = [...(editForm.seoKeywords || editForm.genres || [])];
+                                          newKeywords.splice(index, 1);
+                                          updateEditForm('seoKeywords', newKeywords);
+                                        }}
+                                      />
+                                    </Badge>
+                                  ))}
+                                </div>
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="Agregar palabra clave"
+                                    onKeyPress={(e) => {
+                                      if (e.key === 'Enter') {
+                                        const val = (e.target as HTMLInputElement).value;
+                                        if (val.trim()) {
+                                          const currentKeywords = editForm.seoKeywords || editForm.genres || [];
+                                          updateEditForm('seoKeywords', [...currentKeywords, val.trim()]);
+                                          (e.target as HTMLInputElement).value = '';
+                                        }
+                                      }
+                                    }}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const input = document.querySelector('input[placeholder="Agregar palabra clave"]') as HTMLInputElement;
+                                      if (input?.value) {
+                                        const currentKeywords = editForm.seoKeywords || editForm.genres || [];
+                                        updateEditForm('seoKeywords', [...currentKeywords, input.value.trim()]);
+                                        input.value = '';
+                                      }
+                                    }}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Approval Status moved here as well for visibility */}
+                              <div className="pt-4 border-t border-border">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id="approved-seo"
+                                    checked={editForm.approved || false}
+                                    onChange={(e) => updateEditForm('approved', e.target.checked)}
+                                    className="rounded w-4 h-4"
+                                  />
+                                  <Label htmlFor="approved-seo" className="font-medium">Aprobado (visible públicamente)</Label>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1 ml-6">
+                                  Solo los DJs aprobados serán indexados por Google y aparecerán en el sitemap.
+                                </p>
                               </div>
                             </div>
 
-                            {(() => {
-                              try {
-                                // Generate real-time schema preview
-                                const previewData = {
-                                  ...editForm,
-                                  slug: editForm.slug || generateSlug(editForm.name || ''),
-                                  id: selectedDj?.id || 'preview-id',
-                                  createdAt: selectedDj?.createdAt || new Date(),
-                                  updatedAt: new Date(),
-                                  upcomingEvents: selectedDj?.upcomingEvents || [],
-                                  pastEvents: selectedDj?.pastEvents || [],
-                                };
-
-                                const schema = SchemaGenerator.generate({
-                                  type: 'dj',
-                                  data: previewData
-                                });
-
-                                return (
-                                  <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                        <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                                          Schema generado exitosamente
-                                        </span>
-                                      </div>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          navigator.clipboard.writeText(JSON.stringify(schema, null, 2));
-                                          // You could add a toast notification here
-                                        }}
-                                      >
-                                        Copiar JSON
-                                      </Button>
-                                    </div>
-
-                                    <div className="bg-slate-900 rounded-lg p-4 max-h-96 overflow-auto">
-                                      <pre className="text-xs text-slate-300 font-mono whitespace-pre-wrap">
-                                        {JSON.stringify(schema, null, 2)}
-                                      </pre>
-                                    </div>
-
-                                    {/* Schema validation indicators */}
-                                    <div className="grid grid-cols-2 gap-4 text-xs">
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${schema['@graph']?.find((node: any) => node['@type'] === 'Person') ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                        <span className="text-muted-foreground">ProfilePage: {schema['@graph']?.find((node: any) => node['@type'] === 'ProfilePage') ? '✅' : '❌'}</span>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${schema['@graph']?.find((node: any) => node['@type'] === 'Person') ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                        <span className="text-muted-foreground">Person (DJ): {schema['@graph']?.find((node: any) => node['@type'] === 'Person') ? '✅' : '❌'}</span>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${(schema['@graph']?.filter((node: any) => node['@type'] === 'MusicRecording')?.length || 0) > 0 ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                                        <span className="text-muted-foreground">Tracks ({schema['@graph']?.filter((node: any) => node['@type'] === 'MusicRecording')?.length || 0})</span>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${(schema['@graph']?.filter((node: any) => node['@type'] === 'MusicAlbum')?.length || 0) > 0 ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                                        <span className="text-muted-foreground">Albums ({schema['@graph']?.filter((node: any) => node['@type'] === 'MusicAlbum')?.length || 0})</span>
-                                      </div>
-                                    </div>
+                            {/* Google Preview Section */}
+                            <div className="space-y-4">
+                              <h3 className="font-semibold text-foreground flex items-center gap-2">
+                                <Globe className="w-4 h-4" />
+                                Vista Previa en Google
+                              </h3>
+                              
+                              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 max-w-[600px]">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                                    <img src="/icons/icon-192x192.png" alt="Logo" className="w-4 h-4 opacity-50" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
                                   </div>
-                                );
-                              } catch (error) {
-                                return (
-                                  <div className="space-y-4">
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                      <span className="text-sm font-medium text-red-700 dark:text-red-400">
-                                        Error generando schema
-                                      </span>
-                                    </div>
-                                    <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                                      <p className="text-sm text-red-800 dark:text-red-200 font-mono">
-                                        {error instanceof Error ? error.message : 'Error desconocido'}
-                                      </p>
-                                    </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm text-[#202124]">RaveHub</span>
+                                    <span className="text-xs text-[#5f6368]">https://www.ravehublatam.com › djs › {generateSlug(editForm.name || 'dj-name')}</span>
                                   </div>
-                                );
-                              }
-                            })()}
+                                  <div className="ml-auto">
+                                    <div className="text-[#5f6368] cursor-pointer">⋮</div>
+                                  </div>
+                                </div>
+                                <div className="flex gap-4">
+                                  <div className="flex-1">
+                                    <h3 className="text-xl text-[#1a0dab] hover:underline cursor-pointer truncate font-normal leading-snug mb-1">
+                                      {editForm.seoTitle || editForm.name || 'Nombre del DJ'} | Ravehub
+                                    </h3>
+                                    <p className="text-sm text-[#4d5156] leading-relaxed line-clamp-3">
+                                      {(() => {
+                                        // Replicate generateDJMetadata logic for description
+                                        const baseBio = editForm.seoDescription || editForm.description || `Perfil de ${editForm.name || 'DJ'}, DJ de ${editForm.country || 'Latinoamérica'}. Descubre su música, próximos eventos y biografía completa.`;
+                                        
+                                        // Check for upcoming events in selectedDj
+                                        // Prefer eventsSummary which has detailed info including city
+                                        const eventsSummary = selectedDj?.eventsSummary || [];
+                                        const upcomingEvents = selectedDj?.upcomingEvents || [];
+                                        
+                                        // Filter for future events
+                                        const now = new Date();
+                                        const today = now.toISOString().split('T')[0];
+                                        
+                                        let validEvents: any[] = [];
+                                        
+                                        if (eventsSummary.length > 0) {
+                                          validEvents = eventsSummary.filter(e => !e.isPast && e.startDate >= today && e.city);
+                                        } else if (upcomingEvents.length > 0) {
+                                          // Fallback to legacy upcomingEvents if they have location data (unlikely in legacy but possible)
+                                          validEvents = upcomingEvents.filter(e => e.startDate >= today);
+                                        }
+                                        
+                                        if (validEvents.length > 0) {
+                                          // Extract unique cities
+                                          const cities = Array.from(new Set(
+                                            validEvents
+                                              .map(e => e.city || (e.location && e.location.city)) // Handle both structures
+                                              .filter((city): city is string => Boolean(city))
+                                          ));
+                                          
+                                          if (cities.length > 0) {
+                                            const listFormatter = new (Intl as any).ListFormat('es', { style: 'long', type: 'conjunction' });
+                                            const cityList = listFormatter.format(cities);
+                                            
+                                            // Get year from nearest event
+                                            // Sort by date just in case
+                                            validEvents.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+                                            const year = new Date(validEvents[0].startDate).getFullYear();
+                                            
+                                            const prefix = `📅 Próximos eventos: ${editForm.name || 'DJ'} en ${cityList}. Tickets y fechas confirmadas para el tour ${year}. `;
+                                            
+                                            const maxTotalLength = 155;
+                                            const availableSpace = maxTotalLength - prefix.length;
+                                            
+                                            if (availableSpace > 10) {
+                                              let truncatedBio = baseBio.replace(/\s+/g, ' ').trim();
+                                              if (truncatedBio.length > availableSpace) {
+                                                truncatedBio = truncatedBio.substring(0, availableSpace - 3).trim() + '...';
+                                              }
+                                              return `${prefix}${truncatedBio}`;
+                                            }
+                                            return prefix;
+                                          }
+                                        }
+                                        
+                                        // Fallback if no events or no cities found
+                                        let description = baseBio.replace(/\s+/g, ' ').trim();
+                                        if (description.length > 155) {
+                                          description = description.substring(0, 152).trim() + '...';
+                                        }
+                                        return description;
+                                      })()}
+                                    </p>
+                                  </div>
+                                  {editForm.imageUrl && (
+                                    <div className="hidden sm:block flex-shrink-0">
+                                      <div className="w-[104px] h-[104px] rounded-lg overflow-hidden border border-gray-200">
+                                        <img 
+                                          src={editForm.imageUrl} 
+                                          alt={editForm.name || 'DJ'} 
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="bg-muted/30 p-4 rounded-lg border border-border mt-6">
+                                <h4 className="text-sm font-medium mb-2">Consejos de Optimización SEO</h4>
+                                <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
+                                  <li>El título debe ser conciso. Se agregará automáticamente "| Ravehub" al final.</li>
+                                  <li>Incluye palabras clave como "DJ", "Productor", "Eventos" y el país.</li>
+                                  <li>La descripción debe ser atractiva para aumentar el CTR (clics).</li>
+                                  <li>Usa una imagen de perfil cuadrada de alta calidad (se muestra a la derecha en resultados móviles).</li>
+                                  <li>Si el DJ tiene eventos próximos, la descripción se actualizará automáticamente para incluirlos.</li>
+                                </ul>
+                              </div>
+                            </div>
                           </div>
                         </TabsContent>
                       </div>
                     </Tabs>
-                  </div>
-
-                  {/* Enhanced Modal Footer */}
-                  <div className="border-t border-border/50 bg-gradient-to-r from-muted/20 to-background px-8 py-6 flex justify-between items-center flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setIsCreateDialogOpen(false);
-                        setIsEditDialogOpen(false);
-                      }}
-                      className="text-muted-foreground hover:text-foreground hover:bg-muted px-6 py-3 h-auto min-h-[44px] transition-all duration-200"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={() => handleSaveDj(isEditDialogOpen)}
-                      disabled={!editForm.name || !editForm.country}
-                      className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground font-medium px-8 py-3 h-auto min-h-[44px] shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {isEditDialogOpen ? (
-                        <>
-                          <CheckCircle className="w-4 h-4" />
-                          Actualizar DJ
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4" />
-                          Crear DJ
-                        </>
-                      )}
-                    </Button>
                   </div>
                 </div>
               </DialogContent>
@@ -1823,78 +1718,89 @@ export default function DjManagementPage() {
           </TabsContent>
 
           <TabsContent value="bulk-upload" className="space-y-6">
+            {/* Bulk Upload Content */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Carga Masiva de DJs
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 p-8">
                 {/* Template Download */}
                 <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-foreground">Plantilla de DJ</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Descarga la plantilla JSON para agregar múltiples DJs de una vez
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Plantilla de DJ
+                      </h3>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        Descarga la plantilla JSON para asegurar que tus datos tengan el formato correcto.
                       </p>
                     </div>
-                    <Button onClick={downloadTemplate} variant="outline" className="flex items-center gap-2">
-                      <Download className="h-4 w-4" />
-                      Descargar Plantilla
+                    <Button onClick={downloadTemplate} variant="outline" className="flex items-center gap-2 border-blue-200 hover:bg-blue-100 dark:border-blue-800 dark:hover:bg-blue-900/50" disabled={isDownloading}>
+                      {isDownloading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {downloadStatus || 'Generando...'}
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4" />
+                          Descargar Plantilla
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
 
                 {/* Upload Area */}
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${isDragOver
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50 hover:bg-muted/20'
+                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${isDragOver
+                    ? 'border-primary bg-primary/5 scale-[1.02]'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
                     }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  <div className="space-y-4">
-                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                      <Upload className="h-8 w-8 text-muted-foreground" />
+                  <div className="flex flex-col items-center gap-4">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors duration-200 ${isDragOver ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                      }`}>
+                      <Upload className="w-8 h-8" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">
-                        Arrastra tu archivo JSON aquí
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold">
+                        Arrastra y suelta tu archivo JSON aquí
                       </h3>
-                      <p className="text-muted-foreground">
-                        o haz clic para seleccionar un archivo
+                      <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                        O selecciona un archivo de tu computadora. Asegúrate de usar el formato de la plantilla.
                       </p>
                     </div>
-                    <Button
-                      onClick={() => {
-                        const input = document.createElement('input');
-                        input.type = 'file';
-                        input.accept = '.json';
-                        input.onchange = (e) => {
-                          const file = (e.target as HTMLInputElement).files?.[0];
-                          if (file) handleFileUpload(file);
-                        };
-                        input.click();
-                      }}
-                      disabled={isUploading}
-                      className="flex items-center gap-2"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Seleccionar Archivo JSON
-                    </Button>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".json"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) await handleFileUpload(file);
+                          // Reset input value to allow selecting the same file again
+                          e.target.value = '';
+                        }}
+                      />
+                      <Button variant="default" className="pointer-events-none">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Seleccionar Archivo JSON
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Upload Progress */}
                 {isUploading && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Procesando archivo...</span>
-                      <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                      <div className="flex items-center justify-between flex-1">
+                        <span className="text-sm font-medium">Procesando archivo...</span>
+                        <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
+                      </div>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div

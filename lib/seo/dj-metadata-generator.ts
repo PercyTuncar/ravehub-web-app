@@ -35,6 +35,7 @@ export interface DJDataForMetadata {
   description?: string;
   country?: string;
   imageUrl?: string;
+  coverImage?: string;
   slug: string;
   seoKeywords?: string[];
   genres?: string[];
@@ -134,8 +135,8 @@ export function generateDJMetadata(
   const slug = djData.slug || (djData.name ? djData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'dj');
   const url = `${baseUrl}/djs/${slug}`;
 
-  // Image - use imageUrl or fallback
-  const image = getReadableFirebaseUrl(djData.imageUrl) || '/images/default-dj.jpg';
+  // Image - use coverImage (preferred) or imageUrl or fallback
+  const image = getReadableFirebaseUrl(djData.coverImage) || getReadableFirebaseUrl(djData.imageUrl) || '/images/default-dj.jpg';
 
   // Keywords - EXACTLY as in generateMetadata
   // Filter out undefined/null values and ensure all are strings

@@ -456,9 +456,16 @@ export interface EventDj {
     website?: string;
   };
   approved: boolean;
+  featured?: boolean;
   createdAt: Date;
   createdBy: string;
   updatedAt: Date;
+
+  // SEO fields
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string[];
+  jsonLdSchema?: any;
 
   // Enhanced event summary for automatic synchronization
   eventsSummary?: Array<{
@@ -493,11 +500,9 @@ export interface EventDj {
     stage?: string;
   }>;
 
-  // SEO and Schema fields
-  jsonLdSchema?: any;
-  seoTitle?: string;
-  seoDescription?: string;
-  seoKeywords?: string[];
+  // New fields for redesign
+  coverImage?: string; // Rectangular cover image (16:9 or 3:1)
+  galleryImages?: string[]; // Array of image URLs for the gallery
 }
 
 // Event CTA types

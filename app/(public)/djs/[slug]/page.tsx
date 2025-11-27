@@ -53,16 +53,34 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
 
     // Get upcoming events for description (only if in eventDjs collection)
     let upcomingEvents: any[] = [];
-    if (isInEventDjs && dj.id) {
-      try {
-        upcomingEvents = await getDjUpcomingEvents(dj.id);
-        // Filter to ensure events have location data (same filter as in generateDJMetadata)
-        upcomingEvents = (upcomingEvents || []).filter((event: any) =>
-          event && event.slug && event.name && event.location && event.location.city
-        );
-      } catch (eventsError) {
-        // Continue without events if there's an error
-        console.error('Error fetching upcoming events for metadata:', eventsError);
+    if (isInEventDjs) {
+      // Priority: Use eventsSummary from the DJ document if available (faster and has city data)
+      if (dj.eventsSummary && dj.eventsSummary.length > 0) {
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        
+        upcomingEvents = dj.eventsSummary
+          .filter(e => !e.isPast && e.startDate >= today && e.city)
+          .map(e => ({
+            slug: e.slug || '',
+            name: e.eventName,
+            location: { city: e.city, country: e.country },
+            startDate: e.startDate
+          }));
+      } 
+      
+      // Fallback: Query events collection if eventsSummary is empty but we have an ID
+      if (upcomingEvents.length === 0 && dj.id) {
+        try {
+          const events = await getDjUpcomingEvents(dj.id);
+          // Filter to ensure events have location data (same filter as in generateDJMetadata)
+          upcomingEvents = (events || []).filter((event: any) =>
+            event && event.slug && event.name && event.location && event.location.city
+          );
+        } catch (eventsError) {
+          // Continue without events if there's an error
+          console.error('Error fetching upcoming events for metadata:', eventsError);
+        }
       }
     }
 
@@ -76,6 +94,7 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
         description: dj.description,
         country: dj.country,
         imageUrl: dj.imageUrl,
+        coverImage: dj.coverImage,
         slug: slug,
         seoKeywords: dj.seoKeywords,
         genres: dj.genres,
@@ -103,7 +122,12 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
         type: 'profile',
         url,
         siteName: 'Ravehub',
-        images: dj.imageUrl ? [{
+        images: dj.coverImage ? [{
+          url: dj.coverImage,
+          alt: `${dj.name} - DJ Profile`,
+          width: 1200,
+          height: 630,
+        }] : dj.imageUrl ? [{
           url: dj.imageUrl,
           alt: `${dj.name} - DJ Profile`,
           width: 1200,
@@ -115,7 +139,7 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
         card: 'summary_large_image',
         title,
         description,
-        images: dj.imageUrl,
+        images: dj.coverImage || dj.imageUrl,
         site: '@ravehublatam',
         creator: dj.instagramHandle ? `@${dj.instagramHandle}` : '@ravehublatam',
       },
