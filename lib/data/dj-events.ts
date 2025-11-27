@@ -18,13 +18,13 @@ export async function getDjEvents(djId: string): Promise<Event[]> {
   try {
     const eventsRef = collection(db, 'Events');
     const q = query(
-      eventsRef, 
+      eventsRef,
       where('artistLineupIds', 'array-contains', djId),
       where('eventStatus', '==', 'published')
     );
-    
+
     const querySnapshot = await getDocs(q);
-    
+
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -76,7 +76,7 @@ export async function getDjPastEvents(djId: string): Promise<Event[]> {
  */
 export function getDjEventInfo(event: Event, djId: string) {
   const artistInfo = event.artistLineup.find(artist => artist.eventDjId === djId);
-  
+
   if (!artistInfo) {
     return null;
   }
@@ -95,7 +95,7 @@ export function getDjEventInfo(event: Event, djId: string) {
  */
 export function transformEventForDjProfile(event: Event, djId: string) {
   const eventInfo = getDjEventInfo(event, djId);
-  
+
   if (!eventInfo) {
     return null;
   }

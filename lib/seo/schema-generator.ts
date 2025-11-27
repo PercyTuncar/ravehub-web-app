@@ -1906,8 +1906,7 @@ export class SchemaGenerator {
           },
           organizer: { '@id': organizationId },
           performer: { '@id': personId }, // Reference to Person
-          // Only include offers if they exist in the data (no hardcoded 0 price)
-          ...(event.offers ? { offers: event.offers } : {})
+          offers: this.generateEventOffers(event)
         });
 
         // Add reference for Person.performerIn

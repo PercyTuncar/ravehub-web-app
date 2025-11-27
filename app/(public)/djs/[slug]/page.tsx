@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
       if (dj.eventsSummary && dj.eventsSummary.length > 0) {
         const now = new Date();
         const today = now.toISOString().split('T')[0];
-        
+
         upcomingEvents = dj.eventsSummary
           .filter(e => !e.isPast && e.startDate >= today && e.city)
           .map(e => ({
@@ -67,8 +67,8 @@ export async function generateMetadata({ params }: DJPageProps): Promise<Metadat
             location: { city: e.city, country: e.country },
             startDate: e.startDate
           }));
-      } 
-      
+      }
+
       // Fallback: Query events collection if eventsSummary is empty but we have an ID
       if (upcomingEvents.length === 0 && dj.id) {
         try {
@@ -228,63 +228,53 @@ export default async function DJPage({ params }: DJPageProps) {
     let upcomingEvents: any[] = [];
     let pastEvents: any[] = [];
 
-    if (isInEventDjs) {
-      // Priority: Use eventsSummary from the DJ document if available (faster and has city data)
-      if (dj.eventsSummary && dj.eventsSummary.length > 0) {
-        const now = new Date();
-        const today = now.toISOString().split('T')[0];
-        
-        // Process events from summary
-        const processedEvents = dj.eventsSummary.map(e => ({
-          ...e,
-          name: e.eventName, // Map eventName to name for schema generator
-          location: {
-            venue: e.venue,
-            city: e.city,
-            country: e.country
+    if (isInEventDjs && dj.id) {
+      try {
+        // Always fetch full event data to ensure we have pricing/offers for schema
+        const [upcoming, past] = await Promise.all([
+          getDjUpcomingEvents(dj.id),
+          getDjPastEvents(dj.id)
+        ]);
+
+        // Filter events to ensure they have required properties
+        upcomingEvents = (upcoming || []).filter((event: any) => event && event.slug && event.name);
+        pastEvents = (past || []).filter((event: any) => event && event.slug && event.name);
+
+        // Log for debugging (only in development)
+        if (process.env.NODE_ENV === 'development') {
+          if (upcomingEvents.length > 0) {
+            console.log(`[DJ Schema] Found ${upcomingEvents.length} upcoming events for ${dj.name}`);
           }
-        }));
-
-        upcomingEvents = processedEvents.filter(e => !e.isPast && e.startDate >= today);
-        pastEvents = processedEvents.filter(e => e.isPast || e.startDate < today);
-      } 
-      
-      // Fallback: Query events collection if eventsSummary is empty but we have an ID
-      if (upcomingEvents.length === 0 && dj.id) {
-        try {
-          const [upcoming, past] = await Promise.all([
-            getDjUpcomingEvents(dj.id),
-            getDjPastEvents(dj.id)
-          ]);
-
-          // Filter events to ensure they have required properties (slug is essential for schema)
-          upcomingEvents = (upcoming || []).filter((event: any) => event && event.slug && event.name);
-          pastEvents = (past || []).filter((event: any) => event && event.slug && event.name);
-
-          // Log for debugging (only in development)
-          if (process.env.NODE_ENV === 'development') {
-            if (upcomingEvents.length > 0) {
-              console.log(`[DJ Schema] Found ${upcomingEvents.length} upcoming events for ${dj.name}`);
+        }
+      } catch (eventsError) {
+        console.error('Error fetching DJ events for schema:', eventsError);
+        // Fallback to eventsSummary if DB fetch fails
+        if (dj.eventsSummary && dj.eventsSummary.length > 0) {
+          const now = new Date();
+          const today = now.toISOString().split('T')[0];
+          const processedEvents = dj.eventsSummary.map(e => ({
+            ...e,
+            name: e.eventName,
+            location: {
+              venue: e.venue,
+              city: e.city,
+              country: e.country
             }
-          }
-        } catch (eventsError) {
-          console.error('Error fetching DJ events for schema:', eventsError);
-          // Continue without events if there's an error
+          }));
+          upcomingEvents = processedEvents.filter(e => !e.isPast && e.startDate >= today);
+          pastEvents = processedEvents.filter(e => e.isPast || e.startDate < today);
         }
       }
     }
 
     // Generate JSON-LD schema with dynamic events
-    // Always regenerate to include latest events dynamically
     let schema;
     try {
       const schemaData = SchemaGenerator.generate({
         type: 'dj',
         data: {
           ...dj,
-          // Ensure slug is present
           slug: slug,
-          // Override with dynamic events (only valid events with slug and name)
           upcomingEvents: upcomingEvents.length > 0 ? upcomingEvents : undefined,
           pastEvents: pastEvents.length > 0 ? pastEvents : undefined
         }
@@ -292,7 +282,6 @@ export default async function DJPage({ params }: DJPageProps) {
       schema = schemaData;
     } catch (schemaError) {
       console.error('Error generating schema:', schemaError);
-      // Fallback to stored schema if generation fails
       schema = dj.jsonLdSchema;
     }
 
