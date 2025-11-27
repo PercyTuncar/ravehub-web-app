@@ -1782,89 +1782,66 @@ export class SchemaGenerator {
   }
   static generateDjProfile(djData: any): any {
     const djUrl = `${this.BASE_URL}/djs/${djData.slug}`;
+    const personId = `${djUrl}#person`;
     const websiteId = `${this.BASE_URL}/#website`;
     const organizationId = `${this.BASE_URL}/#organization`;
     const profilePageId = `${djUrl}#webpage`;
-    const personId = `${djUrl}#person`;
 
-    // Helper function to process social links
+    // Helper to format dates
+    const formatDate = (dateValue: any) => {
+      if (!dateValue) return undefined;
+      try {
+        const d = new Date(dateValue);
+        return isNaN(d.getTime()) ? undefined : d.toISOString();
+      } catch (e) {
+        return undefined;
+      }
+    };
+
+    // Helper to process social links
     const getSocialLinks = (socialLinks: any) => {
       const sameAs: string[] = [];
-      if (socialLinks?.instagram) {
-        sameAs.push(
-          socialLinks.instagram.startsWith('http')
-            ? socialLinks.instagram
-            : `https://instagram.com/${socialLinks.instagram.replace('@', '')}`
-        );
+      if (!socialLinks) return sameAs;
+
+      if (socialLinks.instagram) {
+        sameAs.push(socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram.replace('@', '')}`);
       }
-      if (socialLinks?.facebook) {
-        sameAs.push(
-          socialLinks.facebook.startsWith('http')
-            ? socialLinks.facebook
-            : `https://facebook.com/${socialLinks.facebook}`
-        );
+      if (socialLinks.facebook) {
+        sameAs.push(socialLinks.facebook.startsWith('http') ? socialLinks.facebook : `https://facebook.com/${socialLinks.facebook}`);
       }
-      if (socialLinks?.twitter) {
-        sameAs.push(
-          socialLinks.twitter.startsWith('http')
-            ? socialLinks.twitter
-            : `https://x.com/${socialLinks.twitter.replace('@', '')}`
-        );
+      if (socialLinks.twitter) {
+        sameAs.push(socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://x.com/${socialLinks.twitter.replace('@', '')}`);
       }
-      if (socialLinks?.youtube) {
-        sameAs.push(
-          socialLinks.youtube.startsWith('http')
-            ? socialLinks.youtube
-            : `https://youtube.com/channel/${socialLinks.youtube}`
-        );
+      if (socialLinks.youtube) {
+        sameAs.push(socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://youtube.com/channel/${socialLinks.youtube}`);
       }
-      if (socialLinks?.spotify) {
-        sameAs.push(
-          socialLinks.spotify.startsWith('http')
-            ? socialLinks.spotify
-            : `https://open.spotify.com/artist/${socialLinks.spotify}`
-        );
+      if (socialLinks.spotify) {
+        // Ensure Spotify URL is correct. If it's just an ID, construct the URL.
+        const spotifyId = socialLinks.spotify.replace('https://open.spotify.com/artist/', '');
+        sameAs.push(socialLinks.spotify.startsWith('http') ? socialLinks.spotify : `https://open.spotify.com/artist/${spotifyId}`);
       }
-      if (socialLinks?.tiktok) {
-        sameAs.push(
-          socialLinks.tiktok.startsWith('http')
-            ? socialLinks.tiktok
-            : `https://www.tiktok.com/${socialLinks.tiktok}?lang=es`
-        );
+      if (socialLinks.tiktok) {
+        sameAs.push(socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://www.tiktok.com/${socialLinks.tiktok}?lang=es`);
       }
-      if (socialLinks?.website) {
+      if (socialLinks.website) {
         sameAs.push(socialLinks.website);
       }
       return sameAs;
     };
 
-    // Helper function to format dates
-    const formatDate = (dateValue: any) => {
-      if (!dateValue) {
-        return new Date().toISOString();
-      }
-      try {
-        if (typeof dateValue === 'object' && dateValue.seconds !== undefined) {
-          return new Date(dateValue.seconds * 1000).toISOString();
-        }
-        const parsedDate = new Date(dateValue);
-        if (isNaN(parsedDate.getTime())) {
-          return new Date().toISOString();
-        }
-        return parsedDate.toISOString();
-      } catch (error) {
-        return new Date().toISOString();
-      }
-    };
-
-    // 1. Define the Person Node (The Artist)
+    // 1. Create Person Node (The Artist) - Defined ONCE
     const personNode: any = {
-      '@type': djData.performerType === 'Group' ? 'MusicGroup' : 'Person',
+      '@type': 'Person',
       '@id': personId,
-      name: djData.name || 'DJ',
-      alternateName: djData.alternateName || (djData.name ? [djData.name.split(' ')[0]] : []),
-      birthDate: djData.birthDate,
-      description: djData.description || djData.bio || `${djData.name || 'Este DJ'} es un artista especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
+      name: djData.name,
+      alternateName: djData.alternateName || djData.name,
+      description: djData.description || djData.bio,
+      image: djData.imageUrl ? {
+        '@type': 'ImageObject',
+        url: getReadableFirebaseUrl(djData.imageUrl),
+        caption: djData.name,
+        encodingFormat: 'image/jpeg'
+      } : undefined,
       url: djData.socialLinks?.website || djUrl,
       sameAs: getSocialLinks(djData.socialLinks),
       nationality: djData.country ? {
@@ -1873,29 +1850,20 @@ export class SchemaGenerator {
       } : undefined,
       hasOccupation: [
         { '@type': 'Occupation', name: 'DJ' },
-        ...(djData.jobTitle || ['Music Producer']).filter((title: string) => title !== 'DJ').map((title: string) => ({
+        ...(djData.jobTitle || ['Music Producer']).filter((t: string) => t !== 'DJ').map((t: string) => ({
           '@type': 'Occupation',
-          name: title
+          name: t
         }))
       ],
       knowsAbout: djData.genres || [],
       identifier: [
-        { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id || '' },
-        { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug || '' }
+        { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id },
+        { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug }
       ],
       mainEntityOfPage: { '@id': profilePageId }
     };
 
-    if (djData.imageUrl) {
-      personNode.image = {
-        '@type': 'ImageObject',
-        url: getReadableFirebaseUrl(djData.imageUrl),
-        caption: djData.name,
-        encodingFormat: 'image/jpeg'
-      };
-    }
-
-    // 2. Prepare Event Nodes and References
+    // 2. Create Event Nodes and References
     const musicEventNodes: any[] = [];
     const eventReferences: any[] = [];
 
@@ -1937,7 +1905,9 @@ export class SchemaGenerator {
             }
           },
           organizer: { '@id': organizationId },
-          performer: { '@id': personId } // Reference to Person
+          performer: { '@id': personId }, // Reference to Person
+          // Only include offers if they exist in the data (no hardcoded 0 price)
+          ...(event.offers ? { offers: event.offers } : {})
         });
 
         // Add reference for Person.performerIn
@@ -1945,7 +1915,7 @@ export class SchemaGenerator {
       });
     }
 
-    // Add past events references only (no nodes generated for past events to keep schema light)
+    // Add past events references only
     if (djData.pastEvents?.length > 0) {
       djData.pastEvents.forEach((event: any) => {
         const eventSlug = event.slug || event.eventId;
@@ -1960,7 +1930,7 @@ export class SchemaGenerator {
       personNode.performerIn = eventReferences;
     }
 
-    // 3. Prepare Album Nodes
+    // 3. Create Album Nodes
     const musicAlbumNodes: any[] = [];
     if (djData.famousAlbums?.length > 0) {
       djData.famousAlbums.forEach((album: string, index: number) => {
@@ -1974,7 +1944,7 @@ export class SchemaGenerator {
       });
     }
 
-    // 4. Prepare Recording Nodes
+    // 4. Create Recording Nodes
     const musicRecordingNodes: any[] = [];
     if (djData.famousTracks?.length > 0) {
       djData.famousTracks.forEach((track: string, index: number) => {

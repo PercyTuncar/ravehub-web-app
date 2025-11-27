@@ -31,10 +31,14 @@ class DjSchemaMigrator {
   generateDjSchema(djData) {
     const baseUrl = 'https://www.ravehublatam.com';
     const djUrl = `${baseUrl}/djs/${djData.slug}`;
+    const personId = `${djUrl}#person`;
+    const websiteId = `${baseUrl}/#website`;
+    const organizationId = `${baseUrl}/#organization`;
+    const profilePageId = `${djUrl}#webpage`;
 
     // Helper function to format dates
     const formatDate = (dateValue) => {
-      if (!dateValue) return new Date().toISOString();
+      if (!dateValue) return undefined;
 
       try {
         // Handle Firestore Timestamp objects
@@ -44,219 +48,264 @@ class DjSchemaMigrator {
 
         // Handle regular date strings or Date objects
         const parsedDate = new Date(dateValue);
-        return isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString();
+        return isNaN(parsedDate.getTime()) ? undefined : parsedDate.toISOString();
       } catch (error) {
-        console.error(`Error formatting date:`, error);
-        return new Date().toISOString();
+        return undefined;
       }
     };
 
     // Helper function to process social links
     const getSocialLinks = (socialLinks) => {
       const sameAs = [];
+      if (!socialLinks) return sameAs;
 
-      if (socialLinks?.instagram) {
+      if (socialLinks.instagram) {
         sameAs.push(socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram.replace('@', '')}`);
       }
-      if (socialLinks?.facebook) {
+      if (socialLinks.facebook) {
         sameAs.push(socialLinks.facebook.startsWith('http') ? socialLinks.facebook : `https://facebook.com/${socialLinks.facebook}`);
       }
-      if (socialLinks?.twitter) {
+      if (socialLinks.twitter) {
         sameAs.push(socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://x.com/${socialLinks.twitter.replace('@', '')}`);
       }
-      if (socialLinks?.youtube) {
+      if (socialLinks.youtube) {
         sameAs.push(socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://youtube.com/channel/${socialLinks.youtube}`);
       }
-      if (socialLinks?.spotify) {
-        sameAs.push(socialLinks.spotify.startsWith('http') ? socialLinks.spotify : `https://open.spotify.com/artist/${socialLinks.spotify}`);
+      if (socialLinks.spotify) {
+        const spotifyId = socialLinks.spotify.replace('https://open.spotify.com/artist/', '');
+        sameAs.push(socialLinks.spotify.startsWith('http') ? socialLinks.spotify : `https://open.spotify.com/artist/${spotifyId}`);
       }
-      if (socialLinks?.tiktok) {
+      if (socialLinks.tiktok) {
         sameAs.push(socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://www.tiktok.com/${socialLinks.tiktok}?lang=es`);
       }
-      if (socialLinks?.website) {
+      if (socialLinks.website) {
         sameAs.push(socialLinks.website);
       }
 
       return sameAs;
     };
 
-    const schema = {
-      '@context': 'https://schema.org',
-      '@graph': [
-        // Website
-        {
-          '@type': 'WebSite',
-          '@id': `${baseUrl}/#website`,
-          url: baseUrl,
-          name: 'Ravehub',
-          alternateName: ['Ravehub'],
-        },
-        // Organization
-        {
-          '@type': 'Organization',
-          '@id': `${baseUrl}/#organization`,
-          name: 'Ravehub',
-          url: baseUrl,
-          logo: {
-            '@type': 'ImageObject',
-            '@id': `${baseUrl}/#logo`,
-            url: `${baseUrl}/icons/logo.png`,
-            width: 600,
-            height: 60,
-          },
-          sameAs: [
-            'https://www.instagram.com/ravehub.pe',
-            'https://www.facebook.com/ravehub'
-          ],
-        },
-        // ProfilePage
-        {
-          '@type': 'ProfilePage',
-          '@id': `${djUrl}#webpage`,
-          url: djUrl,
-          name: `${djData.name} - Perfil del DJ`,
-          isPartOf: { '@id': `${baseUrl}/#website` },
-          publisher: { '@id': `${baseUrl}/#organization` },
-          dateCreated: formatDate(djData.createdAt),
-          dateModified: formatDate(djData.updatedAt),
-          mainEntity: { '@id': `${djUrl}#person` }
-        },
-        // Person (DJ)
-        {
-          '@type': 'Person',
-          '@id': `${djUrl}#person`,
-          name: djData.name,
-          alternateName: djData.alternateName || [djData.name.split(' ')[0]],
-          description: djData.description || djData.bio || `${djData.name} es un DJ especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
-          image: djData.imageUrl ? {
-            '@type': 'ImageObject',
-            url: djData.imageUrl.replace(/[?&]token=[^&]*/, ''),
-            caption: djData.name,
-            encodingFormat: 'image/jpeg'
-          } : undefined,
-          url: djData.socialLinks?.website || djUrl,
-          sameAs: getSocialLinks(djData.socialLinks),
-          nationality: djData.country ? {
-            '@type': 'Country',
-            name: djData.country
-          } : undefined,
-          hasOccupation: [
-            { '@type': 'Occupation', name: 'DJ' },
-            ...(djData.jobTitle || ['Music Producer']).filter(title => title !== 'DJ').map(title => ({
-              '@type': 'Occupation',
-              name: title
-            }))
-          ],
-          knowsAbout: djData.genres || [],
-          identifier: [
-            { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id },
-            { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug }
-          ],
-          mainEntityOfPage: { '@id': `${djUrl}#webpage` }
-        }
-      ]
+    // 1. Person Node (The Artist)
+    const personNode = {
+      '@type': 'Person',
+      '@id': personId,
+      name: djData.name,
+      alternateName: djData.alternateName || djData.name,
+      description: djData.description || djData.bio,
+      image: djData.imageUrl ? {
+        '@type': 'ImageObject',
+        url: djData.imageUrl.replace(/[?&]token=[^&]*/, ''),
+        caption: djData.name,
+        encodingFormat: 'image/jpeg'
+      } : undefined,
+      url: djData.socialLinks?.website || djUrl,
+      sameAs: getSocialLinks(djData.socialLinks),
+      nationality: djData.country ? {
+        '@type': 'Country',
+        name: djData.country
+      } : undefined,
+      hasOccupation: [
+        { '@type': 'Occupation', name: 'DJ' },
+        ...(djData.jobTitle || ['Music Producer']).filter(title => title !== 'DJ').map(title => ({
+          '@type': 'Occupation',
+          name: title
+        }))
+      ],
+      knowsAbout: djData.genres || [],
+      identifier: [
+        { '@type': 'PropertyValue', propertyID: 'internalId', value: djData.id },
+        { '@type': 'PropertyValue', propertyID: 'slug', value: djData.slug }
+      ],
+      mainEntityOfPage: { '@id': profilePageId }
     };
 
-    // Add famous albums as MusicAlbum nodes
+    // 2. Event Nodes
+    const musicEventNodes = [];
+    const eventReferences = [];
+
+    if (djData.upcomingEvents?.length > 0) {
+      djData.upcomingEvents.forEach(event => {
+        const eventSlug = event.slug || event.eventId;
+        const eventUrl = `${baseUrl}/eventos/${eventSlug}`;
+        const eventId = `${eventUrl}#event`;
+
+        // Create MusicEvent Node
+        musicEventNodes.push({
+          '@type': 'MusicEvent',
+          '@id': eventId,
+          name: event.name,
+          description: event.description || `Evento ${event.name}`,
+          url: eventUrl,
+          eventStatus: 'https://schema.org/EventScheduled',
+          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          startDate: formatDate(event.startDate),
+          endDate: event.endDate ? formatDate(event.endDate) : undefined,
+          image: event.mainImageUrl ? {
+            '@type': 'ImageObject',
+            url: event.mainImageUrl.replace(/[?&]token=[^&]*/, ''),
+            width: 1200,
+            height: 675
+          } : undefined,
+          location: {
+            '@type': 'Place',
+            name: event.venue || 'Ubicación por confirmar',
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: event.city || 'Lima',
+              addressCountry: event.country || 'PE'
+            }
+          },
+          organizer: { '@id': organizationId },
+          performer: { '@id': personId }
+        });
+
+        eventReferences.push({ '@id': eventId });
+      });
+    }
+
+    if (djData.pastEvents?.length > 0) {
+      djData.pastEvents.forEach(event => {
+        const eventSlug = event.slug || event.eventId;
+        eventReferences.push({
+          '@id': `${baseUrl}/eventos/${eventSlug}#event`
+        });
+      });
+    }
+
+    if (eventReferences.length > 0) {
+      personNode.performerIn = eventReferences;
+    }
+
+    // 3. Album Nodes
+    const musicAlbumNodes = [];
     if (djData.famousAlbums?.length > 0) {
       djData.famousAlbums.forEach((album, index) => {
-        schema['@graph'].push({
+        musicAlbumNodes.push({
           '@type': 'MusicAlbum',
           '@id': `${djUrl}/albums/${index}#album`,
           name: album,
-          byArtist: { '@id': `${djUrl}#person` }, // Reference to Person (Flattened)
+          byArtist: { '@id': personId },
           genre: djData.genres || []
         });
       });
     }
 
-    // Add famous tracks as MusicRecording nodes
+    // 4. Recording Nodes
+    const musicRecordingNodes = [];
     if (djData.famousTracks?.length > 0) {
       djData.famousTracks.forEach((track, index) => {
-        schema['@graph'].push({
+        musicRecordingNodes.push({
           '@type': 'MusicRecording',
           name: track,
-          byArtist: { '@id': `${djUrl}#person` },
+          byArtist: { '@id': personId },
           genre: djData.genres?.[0] || 'Electronic'
         });
       });
     }
 
-    // Add event references if they exist
-    if (djData.upcomingEvents?.length > 0 || djData.pastEvents?.length > 0) {
-      const personNode = schema['@graph'].find(node => node['@type'] === 'Person');
-      if (personNode) {
-        personNode.performerIn = [];
+    // 5. Graph
+    const graph = [
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        url: baseUrl,
+        name: 'Ravehub',
+        alternateName: ['Ravehub'],
+      },
+      {
+        '@type': 'Organization',
+        '@id': organizationId,
+        name: 'Ravehub',
+        url: baseUrl,
+        logo: {
+          '@type': 'ImageObject',
+          '@id': `${baseUrl}/#logo`,
+          url: `${baseUrl}/icons/logo.png`,
+          width: 600,
+          height: 60,
+        },
+        sameAs: [
+          'https://www.instagram.com/ravehub.pe',
+          'https://www.facebook.com/ravehub'
+        ],
+      },
+      {
+        '@type': 'ProfilePage',
+        '@id': profilePageId,
+        url: djUrl,
+        name: `${djData.name} - Perfil del DJ`,
+        description: djData.seoDescription || djData.description || djData.bio,
+        isPartOf: { '@id': websiteId },
+        publisher: { '@id': organizationId },
+        dateCreated: formatDate(djData.createdAt),
+        dateModified: formatDate(djData.updatedAt),
+        mainEntity: { '@id': personId }
+      },
+      personNode,
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Inicio',
+            item: {
+              '@type': 'Thing',
+              '@id': baseUrl,
+              name: 'Inicio'
+            }
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'DJs',
+            item: {
+              '@type': 'Thing',
+              '@id': `${baseUrl}/djs`,
+              name: 'DJs'
+            }
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: djData.name,
+            item: {
+              '@type': 'Thing',
+              '@id': djUrl,
+              name: djData.name
+            }
+          }
+        ]
+      },
+      ...musicEventNodes,
+      ...musicAlbumNodes,
+      ...musicRecordingNodes
+    ];
 
-        // Add upcoming events
-        if (djData.upcomingEvents?.length > 0) {
-          djData.upcomingEvents.forEach(event => {
-            personNode.performerIn.push({
-              '@id': `${baseUrl}/eventos/${event.eventId}#event`
-            });
-          });
-        }
-
-        // Add past events  
-        if (djData.pastEvents?.length > 0) {
-          djData.pastEvents.forEach(event => {
-            personNode.performerIn.push({
-              '@id': `${baseUrl}/eventos/${event.eventId}#event`
-            });
-          });
-        }
+    // Filter out undefined values recursively
+    const removeUndefined = (obj) => {
+      if (obj === undefined || obj === null) return undefined;
+      if (Array.isArray(obj)) {
+        const filtered = obj.map(removeUndefined).filter(item => item !== undefined);
+        return filtered.length > 0 ? filtered : undefined;
       }
-    }
-
-    // Add BreadcrumbList
-    schema['@graph'].push({
-      '@type': 'BreadcrumbList',
-      'itemListElement': [
-        {
-          '@type': 'ListItem',
-          'position': 1,
-          'name': 'Inicio',
-          'item': {
-            '@type': 'Thing',
-            '@id': baseUrl,
-            name: 'Inicio'
+      if (typeof obj === 'object') {
+        const filtered = {};
+        Object.keys(obj).forEach(key => {
+          const value = removeUndefined(obj[key]);
+          if (value !== undefined) {
+            filtered[key] = value;
           }
-        },
-        {
-          '@type': 'ListItem',
-          'position': 2,
-          'name': 'DJs',
-          'item': {
-            '@type': 'Thing',
-            '@id': `${baseUrl}/djs`,
-            name: 'DJs'
-          }
-        },
-        {
-          '@type': 'ListItem',
-          'position': 3,
-          'name': djData.name,
-          'item': {
-            '@type': 'Thing',
-            '@id': djUrl,
-            name: djData.name
-          }
-        }
-      ]
-    });
+        });
+        return Object.keys(filtered).length > 0 ? filtered : undefined;
+      }
+      return obj;
+    };
 
-    // Filter out undefined values
-    schema['@graph'] = schema['@graph'].map(node => {
-      const filtered = {};
-      Object.keys(node).forEach(key => {
-        if (node[key] !== undefined) {
-          filtered[key] = node[key];
-        }
-      });
-      return filtered;
-    });
-
-    return schema;
+    return {
+      '@context': 'https://schema.org',
+      '@graph': graph.map(removeUndefined).filter(node => node !== undefined)
+    };
   }
 
   /**
