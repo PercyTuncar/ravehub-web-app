@@ -228,29 +228,49 @@ export default async function DJPage({ params }: DJPageProps) {
     let upcomingEvents: any[] = [];
     let pastEvents: any[] = [];
 
-    if (isInEventDjs && dj.id) {
-      try {
-        const [upcoming, past] = await Promise.all([
-          getDjUpcomingEvents(dj.id),
-          getDjPastEvents(dj.id)
-        ]);
-
-        // Filter events to ensure they have required properties (slug is essential for schema)
-        upcomingEvents = (upcoming || []).filter((event: any) => event && event.slug && event.name);
-        pastEvents = (past || []).filter((event: any) => event && event.slug && event.name);
-
-        // Log for debugging (only in development)
-        if (process.env.NODE_ENV === 'development') {
-          if (upcomingEvents.length > 0) {
-            console.log(`[DJ Schema] Found ${upcomingEvents.length} upcoming events for ${dj.name}`);
+    if (isInEventDjs) {
+      // Priority: Use eventsSummary from the DJ document if available (faster and has city data)
+      if (dj.eventsSummary && dj.eventsSummary.length > 0) {
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        
+        // Process events from summary
+        const processedEvents = dj.eventsSummary.map(e => ({
+          ...e,
+          name: e.eventName, // Map eventName to name for schema generator
+          location: {
+            venue: e.venue,
+            city: e.city,
+            country: e.country
           }
-          if (pastEvents.length > 0 && upcomingEvents.length === 0) {
-            console.log(`[DJ Schema] Found ${pastEvents.length} past events for ${dj.name} (no upcoming events)`);
+        }));
+
+        upcomingEvents = processedEvents.filter(e => !e.isPast && e.startDate >= today);
+        pastEvents = processedEvents.filter(e => e.isPast || e.startDate < today);
+      } 
+      
+      // Fallback: Query events collection if eventsSummary is empty but we have an ID
+      if (upcomingEvents.length === 0 && dj.id) {
+        try {
+          const [upcoming, past] = await Promise.all([
+            getDjUpcomingEvents(dj.id),
+            getDjPastEvents(dj.id)
+          ]);
+
+          // Filter events to ensure they have required properties (slug is essential for schema)
+          upcomingEvents = (upcoming || []).filter((event: any) => event && event.slug && event.name);
+          pastEvents = (past || []).filter((event: any) => event && event.slug && event.name);
+
+          // Log for debugging (only in development)
+          if (process.env.NODE_ENV === 'development') {
+            if (upcomingEvents.length > 0) {
+              console.log(`[DJ Schema] Found ${upcomingEvents.length} upcoming events for ${dj.name}`);
+            }
           }
+        } catch (eventsError) {
+          console.error('Error fetching DJ events for schema:', eventsError);
+          // Continue without events if there's an error
         }
-      } catch (eventsError) {
-        console.error('Error fetching DJ events for schema:', eventsError);
-        // Continue without events if there's an error
       }
     }
 

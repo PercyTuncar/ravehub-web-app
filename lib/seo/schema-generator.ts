@@ -1932,12 +1932,14 @@ export class SchemaGenerator {
           alternateName: djData.alternateName || [djData.name.split(' ')[0]], // First name as alternate
           birthDate: djData.birthDate,
           description: djData.description || djData.bio || `${djData.name} es un DJ especializado en ${djData.genres?.join(', ') || 'música electrónica'}.`,
-          image: {
-            '@type': 'ImageObject',
-            url: getReadableFirebaseUrl(djData.imageUrl),
-            caption: djData.name,
-            encodingFormat: 'image/jpeg'
-          },
+          ...(djData.imageUrl ? {
+            image: {
+              '@type': 'ImageObject',
+              url: getReadableFirebaseUrl(djData.imageUrl),
+              caption: djData.name,
+              encodingFormat: 'image/jpeg'
+            }
+          } : {}),
           url: djData.socialLinks?.website || djUrl,
           sameAs: getSocialLinks(djData.socialLinks),
           nationality: djData.country ? {
@@ -2011,7 +2013,8 @@ export class SchemaGenerator {
     // Add MusicEvent nodes for upcoming events
     if (djData.upcomingEvents?.length > 0) {
       djData.upcomingEvents.forEach((event: any) => {
-        const eventUrl = `${this.BASE_URL}/eventos/${event.slug}`;
+        const eventSlug = event.slug || event.eventId;
+        const eventUrl = `${this.BASE_URL}/eventos/${eventSlug}`;
         const eventId = `${eventUrl}#event`;
         
         // Ensure we have valid location data
