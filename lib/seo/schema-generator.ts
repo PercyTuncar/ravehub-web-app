@@ -1902,12 +1902,12 @@ export class SchemaGenerator {
         const eventSlug = event.slug || event.eventId;
         const eventUrl = `${this.BASE_URL}/eventos/${eventSlug}`;
         const eventId = `${eventUrl}#event`;
-        
+
         // Ensure we have valid location data
         const locationName = event.location?.venue || event.venue || 'Ubicación por confirmar';
         const addressLocality = event.location?.city || event.city || 'Lima';
         const addressCountry = event.location?.country || event.country || 'PE';
-        
+
         // Create MusicEvent Node
         musicEventNodes.push({
           '@type': 'MusicEvent',
@@ -1974,7 +1974,7 @@ export class SchemaGenerator {
           '@type': 'MusicAlbum',
           '@id': `${djUrl}/albums/${index}#album`,
           name: album,
-          byArtist: { '@id': personId }, // Reference to Person
+          byArtist: { '@id': personId }, // Reference to Person (Flattened)
           genre: djData.genres || []
         });
       });

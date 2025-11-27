@@ -31,17 +31,17 @@ class DjSchemaMigrator {
   generateDjSchema(djData) {
     const baseUrl = 'https://www.ravehublatam.com';
     const djUrl = `${baseUrl}/djs/${djData.slug}`;
-    
+
     // Helper function to format dates
     const formatDate = (dateValue) => {
       if (!dateValue) return new Date().toISOString();
-      
+
       try {
         // Handle Firestore Timestamp objects
         if (typeof dateValue === 'object' && dateValue.seconds !== undefined) {
           return new Date(dateValue.seconds * 1000).toISOString();
         }
-        
+
         // Handle regular date strings or Date objects
         const parsedDate = new Date(dateValue);
         return isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString();
@@ -54,7 +54,7 @@ class DjSchemaMigrator {
     // Helper function to process social links
     const getSocialLinks = (socialLinks) => {
       const sameAs = [];
-      
+
       if (socialLinks?.instagram) {
         sameAs.push(socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram.replace('@', '')}`);
       }
@@ -76,7 +76,7 @@ class DjSchemaMigrator {
       if (socialLinks?.website) {
         sameAs.push(socialLinks.website);
       }
-      
+
       return sameAs;
     };
 
@@ -164,7 +164,7 @@ class DjSchemaMigrator {
           '@type': 'MusicAlbum',
           '@id': `${djUrl}/albums/${index}#album`,
           name: album,
-          byArtist: { '@id': `${djUrl}#person` },
+          byArtist: { '@id': `${djUrl}#person` }, // Reference to Person (Flattened)
           genre: djData.genres || []
         });
       });
@@ -187,7 +187,7 @@ class DjSchemaMigrator {
       const personNode = schema['@graph'].find(node => node['@type'] === 'Person');
       if (personNode) {
         personNode.performerIn = [];
-        
+
         // Add upcoming events
         if (djData.upcomingEvents?.length > 0) {
           djData.upcomingEvents.forEach(event => {
@@ -196,7 +196,7 @@ class DjSchemaMigrator {
             });
           });
         }
-        
+
         // Add past events  
         if (djData.pastEvents?.length > 0) {
           djData.pastEvents.forEach(event => {
@@ -264,18 +264,18 @@ class DjSchemaMigrator {
    */
   async migrateEventDjs() {
     console.log('🔄 Iniciando migración de schemas para eventDjs...');
-    
+
     try {
       const eventDjsRef = collection(this.db, 'eventDjs');
       const q = query(eventDjsRef);
       const querySnapshot = await getDocs(q);
-      
+
       this.stats.total = querySnapshot.size;
       console.log(`📊 Encontrados ${this.stats.total} DJs en eventDjs`);
-      
+
       for (const docSnap of querySnapshot.docs) {
         const djData = { id: docSnap.id, ...docSnap.data() };
-        
+
         try {
           // Skip if already has schema
           if (djData.jsonLdSchema) {
@@ -283,10 +283,10 @@ class DjSchemaMigrator {
             this.stats.skipped++;
             continue;
           }
-          
+
           // Generate schema
           const schema = this.generateDjSchema(djData);
-          
+
           // Update document with schema and SEO data
           await updateDoc(doc(this.db, 'eventDjs', djData.id), {
             jsonLdSchema: schema,
@@ -295,22 +295,22 @@ class DjSchemaMigrator {
             seoKeywords: djData.seoKeywords || djData.genres || [],
             updatedAt: new Date()
           });
-          
+
           this.stats.updated++;
           console.log(`✅ Schema generado para ${djData.name}`);
-          
+
         } catch (error) {
           this.stats.errors++;
           console.error(`❌ Error con ${djData.name}:`, error.message);
         }
       }
-      
+
       console.log(`\n🎉 Migración de eventDjs completada:`);
       console.log(`   • Total procesados: ${this.stats.total}`);
       console.log(`   • Actualizados: ${this.stats.updated}`);
       console.log(`   • Saltados: ${this.stats.skipped}`);
       console.log(`   • Errores: ${this.stats.errors}`);
-      
+
     } catch (error) {
       console.error('❌ Error en migración de eventDjs:', error);
     }
@@ -321,27 +321,27 @@ class DjSchemaMigrator {
    */
   async run() {
     console.log('🚀 Iniciando proceso de migración de schemas de DJs...\n');
-    
+
     // Reset stats
     this.stats = { total: 0, updated: 0, skipped: 0, errors: 0 };
-    
+
     // Migrate eventDjs
     await this.migrateEventDjs();
-    
+
     console.log('\n✅ Proceso de migración completado');
-    
+
     // Save report
     const report = {
       timestamp: new Date().toISOString(),
       stats: this.stats,
       summary: {
         success: this.stats.errors === 0,
-        message: this.stats.errors === 0 
+        message: this.stats.errors === 0
           ? 'Todos los schemas se generaron correctamente'
           : `Se completaron con ${this.stats.errors} errores`
       }
     };
-    
+
     const reportPath = path.join(__dirname, 'dj-schema-migration-report.json');
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
     console.log(`📄 Reporte guardado en: ${reportPath}`);
