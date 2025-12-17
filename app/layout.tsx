@@ -75,7 +75,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning className="dark">
-      <body className={`${inter.variable} ${inter.className} dark`}>
+      <body className={`${inter.variable} ${inter.className} dark`} suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
             <NotificationsProvider>

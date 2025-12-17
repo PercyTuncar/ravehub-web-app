@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, MapPin, ArrowRight, CreditCard, Tag, Clock, Users, Archive, Eye, Share2, Ticket } from 'lucide-react';
+import { Calendar, MapPin, ArrowRight, CreditCard, Tag, Clock, Users, Archive, Eye, Share2, Ticket, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,9 @@ import { es } from 'date-fns/locale';
 import { parseEventDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useCurrency } from '@/lib/contexts/CurrencyContext';
+import { convertCurrency, getCurrencySymbol } from '@/lib/utils/currency-converter';
+import { useState, useEffect } from 'react';
 
 interface EventCardProps {
     event: Event;
@@ -21,6 +24,11 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, featured = false, aspectRatio = "aspect-[4/3]", isPastEvent = false }: EventCardProps) {
+    const { currency: targetCurrency } = useCurrency();
+    const [displayPrice, setDisplayPrice] = useState<number>(0);
+    const [priceSymbol, setPriceSymbol] = useState<string>('S/');
+    const [calculatingPrice, setCalculatingPrice] = useState(false);
+
     const isSoldOut = event.eventStatus === 'soldout' || event.eventStatus === 'cancelled';
     const isUpcoming = new Date(event.startDate).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000 && new Date(event.startDate) > new Date();
 
@@ -37,6 +45,42 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
     });
     // Fallback if no specific zoning price found but event has generic price (rare in this model but safe)
     if (minPrice === Infinity) minPrice = 0;
+
+    // Currency Conversion Effect
+    useEffect(() => {
+        const updatePrice = async () => {
+            if (minPrice <= 0) {
+                setDisplayPrice(0);
+                return;
+            }
+
+            // Default event currency to PEN if not specified (common in this app)
+            const eventCurrency = event.currency || 'PEN';
+            const symbol = getCurrencySymbol(targetCurrency);
+            setPriceSymbol(symbol);
+
+            // If currencies match, no need to convert
+            if (eventCurrency === targetCurrency) {
+                setDisplayPrice(minPrice);
+                return;
+            }
+
+            setCalculatingPrice(true);
+            try {
+                const result = await convertCurrency(minPrice, eventCurrency, targetCurrency);
+                setDisplayPrice(result.amount);
+            } catch (error) {
+                console.error('Error converting currency:', error);
+                // Fallback to original price if conversion fails
+                setDisplayPrice(minPrice);
+                setPriceSymbol(getCurrencySymbol(eventCurrency));
+            } finally {
+                setCalculatingPrice(false);
+            }
+        };
+
+        updatePrice();
+    }, [minPrice, event.currency, targetCurrency]);
 
     const startDate = parseEventDate(event.startDate);
     const formattedDate = format(startDate, "d 'de' MMM", { locale: es });
@@ -236,11 +280,23 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
                                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">
                                     {isSoldOut ? 'Estado' : 'Precio desde'}
                                 </span>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-2xl font-black text-foreground tracking-tight">
-                                        {minPrice > 0 ? `S/ ${minPrice}` : isSoldOut ? 'SOLD OUT' : 'Gratis'}
-                                    </span>
-                                    {minPrice > 0 && !isSoldOut && <span className="text-xs text-muted-foreground font-medium">.00</span>}
+                                <div className="flex items-center gap-2 h-8">
+                                    {calculatingPrice ? (
+                                        <div className="h-6 w-20 bg-muted/20 animate-pulse rounded" />
+                                    ) : (
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-2xl font-black text-foreground tracking-tight">
+                                                {minPrice > 0
+                                                    ? `${priceSymbol} ${Math.floor(displayPrice).toLocaleString('es-ES')}`
+                                                    : isSoldOut ? 'SOLD OUT' : 'Gratis'}
+                                            </span>
+                                            {minPrice > 0 && !isSoldOut && (
+                                                <span className="text-xs text-muted-foreground font-medium">
+                                                    {(displayPrice % 1).toFixed(2).substring(1)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

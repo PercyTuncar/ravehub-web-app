@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, MapPin, ArrowRight, Clock, Ticket, Users, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, ArrowRight, Clock, Ticket, Users, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Event } from '@/lib/types';
@@ -11,12 +11,19 @@ import { es } from 'date-fns/locale';
 import { parseEventDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { useCurrency } from '@/lib/contexts/CurrencyContext';
+import { convertCurrency, getCurrencySymbol } from '@/lib/utils/currency-converter';
 
 interface EventHeroProps {
   event: Event;
 }
 
 export default function EventHero({ event }: EventHeroProps) {
+  const { currency: targetCurrency } = useCurrency();
+  const [displayPrice, setDisplayPrice] = useState<number>(0);
+  const [priceSymbol, setPriceSymbol] = useState<string>('S/');
+  const [calculatingPrice, setCalculatingPrice] = useState(false);
+
   const calculateTimeLeft = () => {
     const difference = +parseEventDate(event.startDate) - +new Date();
     if (difference > 0) {
@@ -53,6 +60,42 @@ export default function EventHero({ event }: EventHeroProps) {
     }
   });
   if (minPrice === Infinity) minPrice = 0;
+
+  // Currency Conversion Effect
+  useEffect(() => {
+    const updatePrice = async () => {
+      if (minPrice <= 0) {
+        setDisplayPrice(0);
+        return;
+      }
+
+      // Default event currency to PEN if not specified (common in this app)
+      const eventCurrency = event.currency || 'PEN';
+      const symbol = getCurrencySymbol(targetCurrency);
+      setPriceSymbol(symbol);
+
+      // If currencies match, no need to convert
+      if (eventCurrency === targetCurrency) {
+        setDisplayPrice(minPrice);
+        return;
+      }
+
+      setCalculatingPrice(true);
+      try {
+        const result = await convertCurrency(minPrice, eventCurrency, targetCurrency);
+        setDisplayPrice(result.amount);
+      } catch (error) {
+        console.error('Error converting currency:', error);
+        // Fallback to original price if conversion fails
+        setDisplayPrice(minPrice);
+        setPriceSymbol(getCurrencySymbol(eventCurrency));
+      } finally {
+        setCalculatingPrice(false);
+      }
+    };
+
+    updatePrice();
+  }, [minPrice, event.currency, targetCurrency]);
 
   if (!mounted) return null;
 
@@ -239,9 +282,15 @@ export default function EventHero({ event }: EventHeroProps) {
                     <Ticket className="w-3.5 h-3.5 text-primary" />
                     <span className="text-[9px] font-bold text-white/60 uppercase tracking-[0.2em]">Desde</span>
                   </div>
-                  <p className="text-xl lg:text-2xl font-black text-white tracking-tight leading-none">
-                    {minPrice > 0 ? `S/ ${minPrice}` : 'Gratis'}
-                  </p>
+                  {calculatingPrice ? (
+                    <div className="h-6 w-24 bg-white/10 animate-pulse rounded mt-1" />
+                  ) : (
+                    <p className="text-xl lg:text-2xl font-black text-white tracking-tight leading-none">
+                      {minPrice > 0
+                        ? `${priceSymbol} ${Math.floor(displayPrice).toLocaleString('es-ES')}`
+                        : 'Gratis'}
+                    </p>
+                  )}
                 </div>
               </div>
 
