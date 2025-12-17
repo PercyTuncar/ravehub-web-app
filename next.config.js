@@ -77,13 +77,7 @@ const nextConfig = {
           { key: 'Cache-Control', value: 'private, no-store' },
         ],
       },
-      {
-        source: '/eventos/:slug/comprar',
-        headers: [
-          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
-          { key: 'Cache-Control', value: 'private, no-store' },
-        ],
-      },
+
     ];
   },
 
