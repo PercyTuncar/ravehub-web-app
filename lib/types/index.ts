@@ -68,6 +68,7 @@ export interface Event {
   doorTime?: string;
 
   eventType: 'festival' | 'concert' | 'club';
+  musicGenre?: string;
   eventStatus: string;
   eventAttendanceMode: string;
   inLanguage: string;
