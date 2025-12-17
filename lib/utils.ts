@@ -11,10 +11,10 @@ export const SOUTH_AMERICAN_CURRENCIES: Array<{
   code,
   name: info.name,
   symbol: info.symbol,
-  region: info.countries.some(c => ['AR', 'BO', 'BR', 'CL', 'CO', 'EC', 'GY', 'PE', 'PY', 'SR', 'UY', 'VE'].includes(c)) 
-    ? 'South America' 
-    : info.countries.includes('MX') 
-      ? 'Mexico' 
+  region: info.countries.some(c => ['AR', 'BO', 'BR', 'CL', 'CO', 'EC', 'GY', 'PE', 'PY', 'SR', 'UY', 'VE'].includes(c))
+    ? 'South America'
+    : info.countries.includes('MX')
+      ? 'Mexico'
       : 'International',
 }));
 
@@ -32,6 +32,28 @@ export const formatPrice = (price: number, currencyCode: string): string => {
 };
 
 // Existing utility functions
+
+/**
+ * Parses an event start date string (YYYY-MM-DD or ISO) into a Date object
+ * that represents the exact date in local time, avoiding timezone shifts.
+ * Use this when you want "2026-05-02" to display as "May 2" regardless of browser timezone.
+ */
+export function parseEventDate(dateString: string | Date): Date {
+  if (!dateString) return new Date();
+  if (dateString instanceof Date) return dateString;
+
+  // Extract YYYY-MM-DD
+  const datePart = dateString.includes('T') ? dateString.split('T')[0] : dateString;
+  const parts = datePart.split('-');
+
+  if (parts.length === 3) {
+    const [year, month, day] = parts.map(Number);
+    // Construct local date (month is 0-indexed)
+    return new Date(year, month - 1, day);
+  }
+  return new Date(dateString); // Fallback
+}
+
 export function cn(...classes: (string | undefined | null | boolean)[]): string {
   return classes.filter(Boolean).join(' ');
 }

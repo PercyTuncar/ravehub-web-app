@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Clock, CreditCard, ArrowRight, Share2 } from 'lucide-react';
 import { Event } from '@/lib/types';
+import { parseEventDate } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -41,7 +42,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
     }, [event.startDate]);
 
     const isSoldOut = event.eventStatus === 'soldout' || event.eventStatus === 'cancelled';
-    const startDate = new Date(event.startDate);
+    const startDate = parseEventDate(event.startDate);
 
     // Calculate lowest price for "Desde S/..."
     let minPrice = Infinity;
@@ -90,7 +91,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                             </Badge>
                         )}
                         {event.allowInstallmentPayments && !isSoldOut && (
-                             <Badge variant="secondary" className="bg-emerald-500/90 hover:bg-emerald-500 text-white border-none px-4 py-1.5 rounded-full text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg shadow-emerald-500/20 animate-pulse">
+                            <Badge variant="secondary" className="bg-emerald-500/90 hover:bg-emerald-500 text-white border-none px-4 py-1.5 rounded-full text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg shadow-emerald-500/20 animate-pulse">
                                 <CreditCard className="w-3 h-3 mr-1.5" />
                                 Pago en Cuotas
                             </Badge>
@@ -117,7 +118,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                         </div>
 
                         <div className="flex items-center gap-4 group">
-                             <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
+                            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
                                 <MapPin className="w-6 h-6 text-white group-hover:text-primary transition-colors" />
                             </div>
                             <div>
@@ -128,8 +129,8 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                             </div>
                         </div>
 
-                         <div className="flex items-center gap-4 group">
-                             <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
+                        <div className="flex items-center gap-4 group">
+                            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
                                 <Clock className="w-6 h-6 text-white group-hover:text-primary transition-colors" />
                             </div>
                             <div>
@@ -143,11 +144,11 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
 
                     {/* Description / Summary */}
                     <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mb-10 max-w-2xl animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                         <p className="text-lg text-gray-200 leading-relaxed">
+                        <p className="text-lg text-gray-200 leading-relaxed">
                             {event.shortDescription || `Prepárate para vivir la experiencia de ${event.name}. Una producción de primer nivel en ${event.location.venue}.`}
                         </p>
                         {minPrice > 0 && !isSoldOut && (
-                             <div className="mt-4 flex items-center gap-2 text-primary font-bold">
+                            <div className="mt-4 flex items-center gap-2 text-primary font-bold">
                                 <span>Entradas desde S/ {minPrice}</span>
                                 <ArrowRight className="w-4 h-4" />
                             </div>
@@ -156,10 +157,10 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
 
                     {/* Countdown & Actions */}
                     <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-                        
+
                         {/* Countdown */}
                         {!isSoldOut && (
-                             <div className="flex gap-4 sm:gap-6 bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/5">
+                            <div className="flex gap-4 sm:gap-6 bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/5">
                                 {[
                                     { label: 'DÍAS', value: timeLeft.days },
                                     { label: 'HRS', value: timeLeft.hours },

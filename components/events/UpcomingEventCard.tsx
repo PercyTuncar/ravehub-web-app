@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { parseEventDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -18,7 +19,7 @@ interface UpcomingEventCardProps {
 
 export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
     const isSoldOut = event.eventStatus === 'soldout' || event.eventStatus === 'cancelled';
-    const isUpcoming = new Date(event.startDate).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000 && new Date(event.startDate) > new Date();
+    const isUpcoming = parseEventDate(event.startDate).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000 && parseEventDate(event.startDate) > new Date();
 
     // Price calculation
     let minPrice = Infinity;
@@ -31,7 +32,7 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
     });
     if (minPrice === Infinity) minPrice = 0;
 
-    const startDate = new Date(event.startDate);
+    const startDate = parseEventDate(event.startDate);
     const dayNumber = format(startDate, "d");
     const monthName = format(startDate, "MMM", { locale: es }).toUpperCase().replace('.', '');
     const dayName = format(startDate, "EEE", { locale: es }).toUpperCase().replace('.', '');
@@ -110,14 +111,14 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
                     <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
                         {/* Share Button */}
                         <Button
-                             size="icon"
-                             variant="secondary"
-                             className="h-8 w-8 rounded-full bg-black/40 hover:bg-white text-white hover:text-black backdrop-blur-md border border-white/10 transition-all duration-300 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
-                             onClick={handleShare}
-                             aria-label="Compartir evento"
-                         >
-                             <Share2 className="h-4 w-4" />
-                         </Button>
+                            size="icon"
+                            variant="secondary"
+                            className="h-8 w-8 rounded-full bg-black/40 hover:bg-white text-white hover:text-black backdrop-blur-md border border-white/10 transition-all duration-300 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
+                            onClick={handleShare}
+                            aria-label="Compartir evento"
+                        >
+                            <Share2 className="h-4 w-4" />
+                        </Button>
 
                         <div className="flex flex-col gap-2 items-end">
                             {isSoldOut ? (
@@ -129,7 +130,7 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
                                     {event.eventType}
                                 </Badge>
                             )}
-                            
+
                             {isUpcoming && !isSoldOut && (
                                 <Badge className="bg-red-500/90 text-white animate-pulse shadow-lg font-bold uppercase tracking-wider text-[10px] px-3 py-1.5">
                                     ¡Pronto!
@@ -150,7 +151,7 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
                 </div>
 
                 {/* Content Section */}
-                <div className="flex flex-col flex-1 p-6 pt-5 bg-background/20 backdrop-blur-sm border-t border-white/10">
+                <div className="flex flex-col flex-1 p-6 pt-5 pb-8 bg-background/20 backdrop-blur-sm border-t border-white/10">
 
                     {/* Location */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
@@ -160,7 +161,7 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
 
                     {/* Title */}
                     <Link href={`/eventos/${event.slug}`} className="block mb-4 group-hover:text-primary transition-colors duration-200">
-                        <h3 className="text-xl font-bold text-foreground leading-tight line-clamp-2 min-h-[3.5rem] tracking-tight">
+                        <h3 className="text-lg md:text-xl font-bold text-foreground leading-tight line-clamp-2 min-h-[3rem] md:min-h-[3.5rem] tracking-tight">
                             {event.name}
                         </h3>
                     </Link>
@@ -195,7 +196,7 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
                         ) : (
                             <span className="text-xs text-muted-foreground/70 italic">Ver detalles del evento</span>
                         )}
-                        
+
                         {event.allowInstallmentPayments && !isSoldOut && (
                             <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-medium px-2.5 py-1">
                                 <CreditCard className="w-3 h-3 mr-1" />
