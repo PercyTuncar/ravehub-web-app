@@ -46,8 +46,8 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
     const description = filterTitle
       ? `Eventos de música electrónica ${tipo ? `tipo ${tipo}` : ''} ${region ? `en ${region}` : ''} en Latinoamérica.`
       : currentPage === 1
-      ? `Descubre ${totalEvents} eventos de música electrónica en Latinoamérica. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más géneros.`
-      : `Página ${currentPage} de eventos de música electrónica en Latinoamérica. Descubre ${totalEvents} eventos totales de techno, house, trance y más géneros.`;
+        ? `Descubre ${totalEvents} eventos de música electrónica en Latinoamérica. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más géneros.`
+        : `Página ${currentPage} de eventos de música electrónica en Latinoamérica. Descubre ${totalEvents} eventos totales de techno, house, trance y más géneros.`;
 
     const canonicalUrl = (() => {
       const params = new URLSearchParams();
@@ -110,22 +110,22 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
   const { page: pageParam, tipo, region } = await searchParams;
 
   const currentPage = Math.max(1, parseInt(pageParam || '1', 10));
-  const eventsPerPage = 12;
-  const offset = (currentPage - 1) * eventsPerPage;
+  // const eventsPerPage = 12; // Removed pagination to allow full temporal sorting client-side
+  // const offset = (currentPage - 1) * eventsPerPage;
 
   const allEvents = await getEvents();
   const totalEvents = allEvents.length;
-  const totalPages = Math.ceil(totalEvents / eventsPerPage);
+  // const totalPages = Math.ceil(totalEvents / eventsPerPage);
 
   // Paginate events
-  const paginatedEvents = allEvents.slice(offset, offset + eventsPerPage);
+  // const paginatedEvents = allEvents.slice(offset, offset + eventsPerPage);
 
   return (
     <div>
       <EventsClient
-        initialEvents={paginatedEvents}
+        initialEvents={allEvents} // Pass ALL events
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={1} // Disable server pagination UI
         totalEvents={totalEvents}
         searchParams={{ tipo, region }}
       />

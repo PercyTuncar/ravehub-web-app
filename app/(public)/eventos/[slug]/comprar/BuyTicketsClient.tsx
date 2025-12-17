@@ -36,7 +36,8 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
   const { currency: selectedCurrency } = useCurrency();
   const [selectedPhase, setSelectedPhase] = useState<string>('');
   const [ticketSelections, setTicketSelections] = useState<TicketSelection[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline'>('online');
+  // Start with offline selected
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline'>('offline');
   const [installments, setInstallments] = useState<number>(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -90,8 +91,14 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
   };
 
   const getInstallmentOptions = () => {
-    if (!event?.allowInstallmentPayments || !event.maxInstallments) return [];
-    return Array.from({ length: event.maxInstallments }, (_, i) => i + 1);
+    // Check if installments are allowed
+    if (!event?.allowInstallmentPayments) return [];
+
+    // Default to 12 if maxInstallments is undefined/null/0 but allowInstallments is true
+    // This ensures the selector shows up for "true" even if "max" is missing
+    const max = (event.maxInstallments && event.maxInstallments > 0) ? event.maxInstallments : 12;
+
+    return Array.from({ length: max }, (_, i) => i + 1);
   };
 
   const handlePurchase = async () => {
@@ -126,8 +133,34 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
           // Redirect to payment gateway
           window.location.href = result.paymentUrl;
         } else {
-          // Show success message for offline payment
-          alert('Compra realizada exitosamente. Revisa tu perfil para el estado del pago.');
+          // Format WhatsApp message for offline payment
+          const ticketsList = ticketSelections
+            .filter(s => s.quantity > 0)
+            .map(s => `• ${s.quantity}x ${s.zoneName} (S/ ${s.price})`)
+            .join('%0A');
+
+          let paymentDetails = `📝 *Método:* Pago Offline (Transferencia/Depósito)`;
+          if (installments > 1) {
+            paymentDetails += `%0A📉 *Facilidad de Pago:* ${installments} cuotas`;
+          }
+
+          const message = `🎟️ *NUEVA RESERVA DE ENTRADAS* 🎟️%0A%0A` +
+            `📍 *Evento:* ${event.name}%0A` +
+            `📅 *Fecha:* ${format(new Date(event.startDate), 'dd/MM/yyyy', { locale: es })}%0A` +
+            `🏢 *Lugar:* ${event.location.venue}%0A%0A` +
+            `🎫 *Detalle del Pedido:*%0A` +
+            ticketsList +
+            `%0A%0A` +
+            `💰 *TOTAL A PAGAR:* ${event.currency || 'S/'} ${getTotalAmount()}%0A%0A` +
+            `🆔 *ID de Pedido:* ${result.orderId || result.id || 'N/A'}%0A` +
+            paymentDetails;
+
+          const whatsappUrl = `https://wa.me/51944784488?text=${message}`;
+
+          // Open WhatsApp in new tab
+          window.open(whatsappUrl, '_blank');
+
+          // Redirect to profile/tickets
           router.push('/profile/tickets');
         }
       } else {
@@ -219,7 +252,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
                             <p className="text-sm text-muted-foreground">{zone.description}</p>
                           )}
                           <div className="text-lg font-bold">
-                            <ConvertedPrice 
+                            <ConvertedPrice
                               amount={selection.price}
                               currency={event.currency}
                               showOriginal={false}
@@ -290,15 +323,17 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
                     </div>
                   )}
 
-                  <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                    <RadioGroupItem value="online" id="online" />
-                    <Label htmlFor="online" className="flex-1 cursor-pointer">
+                  {/* Disable Online Payment Visuals */}
+                  <div className="flex items-center space-x-2 p-4 border rounded-lg opacity-50 cursor-not-allowed relative">
+                    <div className="absolute inset-0 z-10" /> {/* Click Blocker */}
+                    <RadioGroupItem value="online" id="online" disabled />
+                    <Label htmlFor="online" className="flex-1 text-muted-foreground">
                       <div className="flex items-center gap-3">
-                        <CreditCard className="h-5 w-5 text-muted-foreground" />
+                        <CreditCard className="h-5 w-5" />
                         <div>
                           <div className="font-medium">Pago Online</div>
-                          <div className="text-sm text-muted-foreground">
-                            Pago inmediato con tarjeta de crédito/débito.
+                          <div className="text-sm">
+                            Pago inmediato con tarjeta de crédito/débito. (Próximamente)
                           </div>
                         </div>
                       </div>
@@ -306,8 +341,8 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
                   </div>
                 </RadioGroup>
 
-                {/* Installments */}
-                {paymentMethod === 'online' && event.allowInstallmentPayments && installmentOptions.length > 1 && (
+                {/* Installments show if allowInstallmentPayments is true (regardless of online/offline) */}
+                {event.allowInstallmentPayments && installmentOptions.length > 0 && (
                   <div className="mt-4">
                     <Label className="text-sm font-medium">Número de cuotas</Label>
                     <Select value={installments.toString()} onValueChange={(value) => setInstallments(parseInt(value))}>
@@ -319,7 +354,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
                           <SelectItem key={num} value={num.toString()}>
                             <span className="flex items-center gap-2">
                               {num} cuota{num > 1 ? 's' : ''} de{' '}
-                              <ConvertedPrice 
+                              <ConvertedPrice
                                 amount={totalAmount / num}
                                 currency={event.currency}
                                 showOriginal={false}
@@ -391,7 +426,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
                       <span>
                         {selection.quantity}x {selection.zoneName}
                       </span>
-                      <ConvertedPrice 
+                      <ConvertedPrice
                         amount={selection.quantity * selection.price}
                         currency={event.currency}
                         showOriginal={false}
@@ -403,7 +438,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
 
                 <div className="flex justify-between font-medium text-lg">
                   <span>Total</span>
-                  <ConvertedPrice 
+                  <ConvertedPrice
                     amount={totalAmount}
                     currency={event.currency}
                     showOriginal={false}
@@ -411,10 +446,10 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
                   />
                 </div>
 
-                {paymentMethod === 'online' && installments > 1 && (
+                {installments > 1 && (
                   <div className="text-sm text-muted-foreground flex items-center gap-2">
                     <span>{installments} cuotas de</span>
-                    <ConvertedPrice 
+                    <ConvertedPrice
                       amount={totalAmount / installments}
                       currency={event.currency}
                       showOriginal={false}
@@ -439,12 +474,3 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-

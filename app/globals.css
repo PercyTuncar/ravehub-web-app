@@ -40,43 +40,50 @@
   .safe-area-bottom {
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
-  
+
   .safe-area-top {
     padding-top: max(0.5rem, env(safe-area-inset-top));
   }
-  
+
   .safe-area-left {
     padding-left: max(0.5rem, env(safe-area-inset-left));
   }
-  
+
   .safe-area-right {
     padding-right: max(0.5rem, env(safe-area-inset-right));
   }
 }
 
-/* Custom Scrollbar Styles for consistency - Using brand colors */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+/* Custom Scrollbar Styles - Modern & Sleek */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(40, 45, 49, 0.3); /* #282D31 with opacity */
-  border-radius: 2px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(251, 169, 5, 0.4); /* #FBA905 with opacity */
-  border-radius: 2px;
-  transition: background 0.3s ease;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(251, 169, 5, 0.6); /* #FBA905 with opacity */
-}
-
-.custom-scrollbar::-webkit-scrollbar-corner {
+::-webkit-scrollbar-track {
   background: transparent;
 }
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Specific class for hidden scrollbar but functional */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 
 /* Force modal to be fully responsive without height constraints */
 [data-radix-dialog-content] {
@@ -103,7 +110,7 @@
     /* ============================================
        RAVEHUB BRAND COLOR PALETTE - DARK MODE
        ============================================ */
-    
+
     /* Principal */
     /* #FBA905 */
     --primary: 41 96% 50%;
@@ -190,7 +197,7 @@
     /* ============================================
        RAVEHUB BRAND COLOR PALETTE - DARK MODE
        ============================================ */
-    
+
     /* Principal */
     /* #FBA905 */
     --primary: 41 96% 50%;
@@ -277,11 +284,11 @@
   * {
     @apply border-border;
   }
-  
+
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
     @apply bg-[#282D31] text-[#FAFDFF];
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -289,40 +296,41 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   /* Consistent container max-width for all sections */
   .container-content {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
-  
+
   /* Typography scale - 8px based spacing */
   h1 {
     @apply text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight;
     line-height: 1.1;
   }
-  
+
   h2 {
     @apply text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight;
     line-height: 1.2;
   }
-  
+
   h3 {
     @apply text-2xl sm:text-3xl font-semibold tracking-tight;
     line-height: 1.3;
   }
-  
+
   h4 {
     @apply text-xl sm:text-2xl font-semibold;
     line-height: 1.4;
   }
-  
+
   /* Section spacing - consistent 8px scale */
   .section-spacing {
     @apply py-16 sm:py-20 md:py-24 lg:py-32;
   }
-  
+
   /* Accessibility improvements */
   @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -338,28 +346,28 @@
   .text-base {
     @apply text-xl md:text-2xl text-[#FAFDFF];
   }
-  
+
   /* Premium animations */
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
-  
+
   .animate-float-delay {
     animation: float 6s ease-in-out infinite 2s;
   }
-  
+
   .animate-bounce-slow {
     animation: bounce 3s infinite;
   }
-  
+
   .animation-delay-1000 {
     animation-delay: 1s;
   }
-  
+
   .animation-delay-2000 {
     animation-delay: 2s;
   }
-  
+
   /* Loading states - Dark mode optimized */
   .skeleton {
     @apply animate-pulse bg-[#282D31] rounded;
@@ -377,19 +385,8 @@
     @apply skeleton rounded-full;
   }
 
-  /* Custom scrollbar - Dark mode */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-[#141618] rounded-lg;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-[#FBA905] rounded-lg hover:bg-[#F1A000];
-  }
+  /* Custom scrollbar - Dark mode (Removed redundant overrides) */
+  /* Handled globally now for consistency */
 
   /* Glass effect - Dark mode adapted */
   .glass {
@@ -414,7 +411,7 @@
   .text-glow {
     text-shadow: 0 0 20px rgba(251, 169, 5, 0.4);
   }
-  
+
   /* Line clamping utilities */
   .line-clamp-1 {
     overflow: hidden;
@@ -422,14 +419,14 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
   }
-  
+
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
-  
+
   .line-clamp-3 {
     overflow: hidden;
     display: -webkit-box;
@@ -439,24 +436,25 @@
 }
 
 @layer utilities {
+
   /* Performance utilities */
   .gpu-accelerated {
     transform: translateZ(0);
     will-change: transform;
   }
-  
+
   /* Smooth scrolling for anchor links */
   .scroll-smooth {
     scroll-behavior: smooth;
   }
-  
+
   /* High contrast mode support */
   @media (prefers-contrast: high) {
     .high-contrast {
       filter: contrast(1.5);
     }
   }
-  
+
   /* Focus visible improvements - Dark mode */
   .focus-visible:focus-visible {
     @apply outline-none ring-2 ring-[#FBA905] ring-offset-2 ring-offset-[#282D31];
@@ -465,9 +463,12 @@
 
 /* Keyframe animations */
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-20px);
   }
@@ -478,6 +479,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -489,6 +491,7 @@
     opacity: 0;
     transform: translateX(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -500,6 +503,7 @@
     opacity: 0;
     transform: translateX(30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -511,6 +515,7 @@
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -712,17 +717,20 @@ img {
 }
 
 /* High DPI display optimizations */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
   .high-dpi {
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
   }
 }
+
 /* Modern Animation Classes for Peru Page */
 @keyframes shimmer {
   0% {
     background-position: -200% center;
   }
+
   100% {
     background-position: 200% center;
   }
@@ -733,6 +741,7 @@ img {
     transform: translateX(-100px);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0);
     opacity: 1;
@@ -744,6 +753,7 @@ img {
     transform: translateX(100px);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0);
     opacity: 1;
@@ -755,6 +765,7 @@ img {
     transform: translateY(30px);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -766,6 +777,7 @@ img {
     transform: translateY(20px);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -773,52 +785,117 @@ img {
 }
 
 @keyframes fade-in-delay-1 {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fade-in-delay-2 {
-  0%, 20% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+
+  0%,
+  20% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fade-in-delay-3 {
-  0%, 40% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+
+  0%,
+  40% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fade-in-delay-4 {
-  0%, 60% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+
+  0%,
+  60% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fade-in-delay-5 {
-  0%, 80% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+
+  0%,
+  80% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes float-delay {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
 }
 
 @keyframes glow {
-  0%, 100% { 
+
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(251, 169, 5, 0.3);
   }
-  50% { 
+
+  50% {
     box-shadow: 0 0 30px rgba(251, 169, 5, 0.6);
   }
 }
 
 @keyframes spin-slow {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes count-up {
@@ -826,6 +903,7 @@ img {
     transform: scale(0.8);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -837,12 +915,15 @@ img {
     transform: scale(0.3);
     opacity: 0;
   }
+
   50% {
     transform: scale(1.05);
   }
+
   70% {
     transform: scale(0.9);
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -851,7 +932,7 @@ img {
 
 /* Animation Classes */
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -918,7 +999,7 @@ img {
 
 /* Cultural Pattern Backgrounds - Using brand colors */
 .bg-pattern-peru {
-  background-image: 
+  background-image:
     radial-gradient(circle at 25% 25%, rgba(251, 169, 5, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(251, 169, 5, 0.05) 0%, transparent 50%);
 }
@@ -953,7 +1034,7 @@ img {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s;
 }
 
@@ -966,62 +1047,86 @@ img {
   transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(251, 169, 5, 0.3);
 }
+
 /* Particles Animation for Cultural Backgrounds */
 @keyframes particle-float {
-  0%, 100% { 
+
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
     opacity: 0.3;
   }
-  50% { 
+
+  50% {
     transform: translateY(-20px) rotate(180deg);
     opacity: 0.8;
   }
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(251, 169, 5, 0.3);
   }
+
   50% {
     box-shadow: 0 0 30px rgba(251, 169, 5, 0.6);
   }
 }
 
 @keyframes cultural-spin {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.1); }
-  100% { transform: rotate(360deg) scale(1); }
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 @keyframes text-shimmer {
   0% {
     background-position: -200% center;
   }
+
   100% {
     background-position: 200% center;
   }
 }
 
 @keyframes hero-float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px) translateX(0px);
   }
+
   25% {
     transform: translateY(-10px) translateX(5px);
   }
+
   50% {
     transform: translateY(-5px) translateX(-5px);
   }
+
   75% {
     transform: translateY(-15px) translateX(3px);
   }
 }
 
 @keyframes cultural-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.4;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.8;
     transform: scale(1.05);
@@ -1042,7 +1147,7 @@ img {
 }
 
 .text-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   background-size: 200% 100%;
   animation: text-shimmer 2s infinite;
 }
@@ -1103,7 +1208,7 @@ img {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
   transition: left 0.5s;
 }
 

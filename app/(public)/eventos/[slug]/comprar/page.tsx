@@ -86,26 +86,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     // Sort by price (ascending)
     zonePrices.sort((a, b) => a.price - b.price);
 
-    // Generate title: "Entradas [Artista] [Ciudad] [Año]"
-    const seoTitle = `Entradas ${performerName} ${city} ${eventYear}`;
+    // Generate title: "{NombreEvento} - Comprar Entradas Oficiales"
+    const seoTitle = `${event.name} - Comprar Entradas Oficiales`;
 
-    // Generate description with prices
-    let seoDescription = `Compra entradas oficiales para ${performerName} — ${formattedDate}.`;
-
-    if (zonePrices.length > 0) {
-      const priceList = zonePrices
-        .map(zone => {
-          // Format price: show without decimals if it's a whole number
-          const formattedPrice = zone.price % 1 === 0
-            ? zone.price.toLocaleString('es-PE', { maximumFractionDigits: 0 })
-            : zone.price.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          return `${zone.name} ${currencySymbol} ${formattedPrice}`;
-        })
-        .join(' · ');
-      seoDescription += ` Precios: ${priceList}.`;
-    } else {
-      seoDescription += ' Entradas disponibles ahora.';
-    }
+    // Generate description using the event description
+    const seoDescription = event.description || `Compra entradas oficiales para ${event.name}.`;
 
     const isDraft = event.eventStatus !== 'published';
 

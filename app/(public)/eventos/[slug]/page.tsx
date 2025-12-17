@@ -10,7 +10,7 @@ import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import Image from 'next/image';
 import { EventColorProvider } from '@/components/events/EventColorContext';
 import { ForceDarkMode } from '@/components/events/ForceDarkMode';
-import { EventHero } from '@/components/events/EventHero';
+import EventDetailHero from '@/components/events/EventDetailHero';
 import { StickyTicketCTA } from '@/components/events/StickyTicketCTA';
 import { LineupTimeline } from '@/components/events/LineupTimeline';
 import { EventMap } from '@/components/events/EventMap';
@@ -158,7 +158,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         <PreventAutoScroll />
         <div className="min-h-screen bg-[#141618] text-[#FAFDFF]" suppressHydrationWarning>
           {/* Hero Section with Dynamic Colors */}
-          <EventHero event={event} />
+          <EventDetailHero event={event} />
 
           {/* Main Content */}
           <div className="relative isolate overflow-hidden bg-[#141618]">
