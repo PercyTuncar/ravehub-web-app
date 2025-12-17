@@ -31,32 +31,34 @@ export function EventDetails({
   const shouldTruncate = description.length > 300;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-12">
       {/* Description */}
       {description && (
-        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-          <CardHeader>
-            <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 text-[#FAFDFF]">
-              <FileText
-                className="h-5 w-5"
-                style={{
-                  color: dominantColor,
-                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
-              />
+        <section className="animate-fade-in-up">
+          <div className="flex items-center gap-3 mb-6">
+             <div className="p-2 rounded-lg bg-white/5 backdrop-blur-md border border-white/10">
+                <FileText
+                    className="h-6 w-6"
+                    style={{
+                      color: dominantColor,
+                      transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  />
+             </div>
+            <h2 className="text-3xl font-bold leading-none tracking-tight text-[#FAFDFF]">
               Acerca del Evento
             </h2>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-invert max-w-none">
+          </div>
+          
+          <div className="prose prose-lg prose-invert max-w-none text-gray-300 leading-relaxed">
               {shouldTruncate ? (
                 <>
-                  <p className="text-white/80 leading-relaxed">
+                  <p className="whitespace-pre-line">
                     {isDescriptionExpanded ? description : `${descriptionPreview}...`}
                   </p>
                   <button
                     onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                    className="mt-4 hover:underline flex items-center gap-1"
+                    className="mt-4 hover:underline flex items-center gap-2 font-medium text-sm"
                     style={{
                       color: dominantColor,
                       transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -68,118 +70,88 @@ export function EventDetails({
                       </>
                     ) : (
                       <>
-                        Ver más <ChevronDown className="h-4 w-4" />
+                        Leer descripción completa <ChevronDown className="h-4 w-4" />
                       </>
                     )}
                   </button>
                 </>
               ) : (
-                <p className="text-white/80 leading-relaxed">{description}</p>
+                <p className="whitespace-pre-line">{description}</p>
               )}
             </div>
-          </CardContent>
-        </Card>
+        </section>
       )}
 
       {/* Specifications */}
       {specifications && specifications.length > 0 && (
-        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-          <CardHeader>
-            <h2 className="text-2xl font-semibold leading-none tracking-tight text-[#FAFDFF]">Especificaciones</h2>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
+        <section className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <h2 className="text-2xl font-bold mb-6 text-[#FAFDFF]">Especificaciones</h2>
+          <div className="grid sm:grid-cols-2 gap-6">
               {specifications
                 .filter((spec: any) => {
-                  // Filter out stageMapUrl-only objects, as they're handled by EventStageMap
                   return spec.title && spec.items && Array.isArray(spec.items);
                 })
                 .map((spec: any, index: number) => (
-                  <div key={index}>
-                    <h4 className="font-semibold mb-2 text-[#FAFDFF]">{spec.title}</h4>
-                    <ul className="list-disc list-inside space-y-1 text-white/80">
+                  <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm hover:border-white/20 transition-colors">
+                    <h4 className="font-bold text-lg mb-4 text-[#FAFDFF] flex items-center gap-2">
+                        <span className="w-1.5 h-6 rounded-full bg-primary" style={{ backgroundColor: dominantColor }} />
+                        {spec.title}
+                    </h4>
+                    <ul className="space-y-3">
                       {spec.items.map((item: string, itemIndex: number) => (
-                        <li key={itemIndex}>{item}</li>
+                        <li key={itemIndex} className="flex items-start gap-2.5 text-gray-300">
+                           <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
+                           <span className="leading-relaxed">{item}</span>
+                        </li>
                       ))}
                     </ul>
-                    {index < specifications.filter((s: any) => s.title && s.items).length - 1 && (
-                      <Separator className="mt-4 bg-white/10" />
-                    )}
                   </div>
                 ))}
             </div>
-          </CardContent>
-        </Card>
+        </section>
       )}
 
       {/* FAQ */}
       {faqSection && faqSection.length > 0 && (
-        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-          <CardHeader>
-            <h2 className="text-2xl font-semibold leading-none tracking-tight text-[#FAFDFF]">Preguntas Frecuentes</h2>
-          </CardHeader>
-          <CardContent>
-            <Accordion type="single" collapsible className="w-full">
+        <section className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <h2 className="text-2xl font-bold mb-6 text-[#FAFDFF]">Preguntas Frecuentes</h2>
+          <div className="grid gap-4">
               {faqSection.map((faq, index) => (
-                <AccordionItem
-                  key={index}
-                  value={`faq-${index}`}
-                  className="border-white/10"
-                >
-                  <AccordionTrigger
-                    className="text-left text-[#FAFDFF]"
-                    style={{
-                      '--hover-color': dominantColor,
-                      transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                    } as React.CSSProperties & { '--hover-color': string }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = dominantColor;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#FAFDFF';
-                    }}
-                  >
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-white/80">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
+                <Accordion type="single" collapsible key={index} className="bg-white/5 border border-white/10 rounded-xl px-2 overflow-hidden hover:border-white/20 transition-colors">
+                    <AccordionItem value={`faq-${index}`} className="border-none">
+                      <AccordionTrigger
+                        className="px-4 py-4 text-left text-lg font-medium text-[#FAFDFF] hover:no-underline"
+                        style={{
+                          '--hover-color': dominantColor,
+                        } as React.CSSProperties & { '--hover-color': string }}
+                      >
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4 text-gray-300 text-base leading-relaxed">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
               ))}
-            </Accordion>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
       {/* Tags */}
       {tags && tags.length > 0 && (
-        <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-          <CardHeader>
-            <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 text-[#FAFDFF]">
-              <Tag
-                className="h-5 w-5"
-                style={{
-                  color: dominantColor,
-                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
-              />
-              Etiquetas
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
+        <section className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+           <div className="flex flex-wrap gap-2">
               {tags.map((tag, index) => (
                 <Badge
                   key={`tag-${index}-${tag}`}
                   variant="outline"
-                  className="border-white/20 text-white/90 bg-white/5"
+                  className="px-3 py-1.5 text-sm border-white/10 text-gray-400 bg-white/5 hover:bg-white/10 hover:text-white transition-colors cursor-default"
                 >
-                  {tag}
+                  #{tag}
                 </Badge>
               ))}
             </div>
-          </CardContent>
-        </Card>
+        </section>
       )}
     </div>
   );

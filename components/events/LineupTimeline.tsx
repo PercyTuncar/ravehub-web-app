@@ -51,176 +51,134 @@ export function LineupTimeline({ artistLineup, eventDjs }: LineupTimelineProps) 
   const accentColor = colorPalette?.accent || '#FBA905';
 
   return (
-    <Card className="overflow-hidden bg-white/5 border-white/10 backdrop-blur-sm">
-      <CardHeader>
-        <h2 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 text-[#FAFDFF]">
-          <Music
-            className="h-5 w-5"
-            style={{
-              color: dominantColor,
-              transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          />
-          Lineup
-        </h2>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {Object.entries(groupedByDate).map(([date, artists]) => (
-          <div key={date} className="space-y-4">
-            {date && (
-              <div className="flex items-center gap-2 pb-2 border-b border-white/10">
-                <Calendar
-                  className="h-4 w-4"
-                  style={{
-                    color: dominantColor,
-                    transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                />
-                <span className="font-semibold text-sm text-[#FAFDFF]">
-                  {format(parseLocalDate(date), 'EEEE, d MMMM', { locale: es })}
-                </span>
-              </div>
-            )}
+    <div className="space-y-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-lg bg-white/5 backdrop-blur-md border border-white/10">
+             <Music
+                className="h-6 w-6"
+                style={{
+                  color: dominantColor,
+                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+        </div>
+        <h2 className="text-3xl font-bold leading-none tracking-tight text-[#FAFDFF]">Lineup</h2>
+      </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {artists.map((artist, index) => {
-                const djProfile = getDjProfile(artist.eventDjId);
-                const imageUrl = djProfile?.imageUrl || artist.imageUrl;
+      {Object.entries(groupedByDate).map(([date, artists]) => (
+        <div key={date} className="space-y-6">
+          {date && (
+            <div className="flex items-center gap-3">
+               <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
+               <div className="px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md">
+                  <span className="font-bold text-sm text-[#FAFDFF] uppercase tracking-wider">
+                    {format(parseLocalDate(date), 'EEEE d', { locale: es })}
+                  </span>
+               </div>
+               <div className="h-px flex-1 bg-gradient-to-l from-white/20 to-transparent" />
+            </div>
+          )}
 
-                // Generate DJ profile URL
-                // Use slug if available, otherwise generate from name, or fallback to ID
-                const djSlug = djProfile?.slug || (artist.name ? generateSlug(artist.name) : null);
-                const djUrl = djSlug ? `/djs/${djSlug}` : (artist.eventDjId ? `/djs/${artist.eventDjId}` : null);
-                const isClickable = !!djUrl && !!djProfile;
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {artists.map((artist, index) => {
+              const djProfile = getDjProfile(artist.eventDjId);
+              const imageUrl = djProfile?.imageUrl || artist.imageUrl;
 
-                const artistCard = (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={cn(
-                      'flex items-center gap-4 p-4 rounded-lg border transition-all hover:shadow-lg hover:scale-[1.02]',
-                      artist.isHeadliner
-                        ? 'backdrop-blur-sm'
-                        : 'bg-white/5 border-white/10 backdrop-blur-sm hover:border-white/20',
-                      isClickable && 'cursor-pointer'
-                    )}
-                    style={artist.isHeadliner ? {
-                      backgroundColor: `${dominantColor}15`,
-                      borderColor: `${dominantColor}40`,
-                      transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                    } : undefined}
-                  >
-                    {/* Avatar */}
-                    <div className="relative flex-shrink-0">
-                      {imageUrl ? (
-                        <Image
-                          src={imageUrl}
-                          alt={artist.name}
-                          width={64}
-                          height={64}
-                          className="w-16 h-16 rounded-full object-cover ring-2 ring-offset-2"
-                          style={{
-                            '--tw-ring-color': accentColor,
-                            transition: '--tw-ring-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                          } as React.CSSProperties}
-                        />
-                      ) : (
-                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                          <Music className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                      )}
-                      {artist.isHeadliner && (
-                        <Badge
-                          className="absolute -top-1 -right-1"
-                          style={{
-                            backgroundColor: accentColor,
-                            color: '#141618',
-                            transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                          }}
-                        >
-                          ★
-                        </Badge>
-                      )}
+              // Generate DJ profile URL
+              const djSlug = djProfile?.slug || (artist.name ? generateSlug(artist.name) : null);
+              const djUrl = djSlug ? `/djs/${djSlug}` : (artist.eventDjId ? `/djs/${artist.eventDjId}` : null);
+              const isClickable = !!djUrl && !!djProfile;
+
+              const artistCard = (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.05 }}
+                  className={cn(
+                    'group relative aspect-square overflow-hidden rounded-2xl bg-white/5 border border-white/10 transition-all duration-500',
+                    isClickable && 'cursor-pointer hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/50'
+                  )}
+                >
+                  {/* Image */}
+                  {imageUrl ? (
+                    <Image
+                      src={imageUrl}
+                      alt={artist.name}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-white/5">
+                      <Music className="h-12 w-12 text-white/20" />
                     </div>
+                  )}
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="font-semibold text-lg truncate text-[#FAFDFF]">{artist.name}</h4>
-                        {artist.isHeadliner && (
-                          <Badge
-                            className="text-xs flex-shrink-0 text-[#141618]"
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+
+                  {/* Content */}
+                  <div className="absolute inset-0 p-4 flex flex-col justify-end">
+                     {artist.isHeadliner && (
+                        <div className="absolute top-3 right-3">
+                           <Badge
+                            className="bg-primary text-primary-foreground border-none shadow-lg backdrop-blur-md"
                             style={{
-                              backgroundColor: dominantColor,
-                              transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                              backgroundColor: accentColor,
+                              color: '#141618',
                             }}
                           >
-                            Headliner
+                            ★ Headliner
                           </Badge>
-                        )}
-                      </div>
-
-                      {artist.stage && (
-                        <p className="text-sm text-white/70 mt-1">
-                          <Music
-                            className="h-3 w-3 inline mr-1"
-                            style={{
-                              color: dominantColor,
-                              transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                            }}
-                          />
-                          {artist.stage}
-                        </p>
-                      )}
-
-                      {artist.performanceTime && (
-                        <div className="flex items-center gap-1 text-sm text-white/70 mt-1">
-                          <Clock
-                            className="h-3 w-3"
-                            style={{
-                              color: dominantColor,
-                              transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                            }}
-                          />
-                          {artist.performanceTime}
                         </div>
-                      )}
+                     )}
 
-                      {djProfile?.country && (
-                        <p className="text-xs text-white/60 mt-1">
-                          {djProfile.country}
-                        </p>
-                      )}
+                    <h3 className="text-lg sm:text-xl font-bold text-white leading-tight mb-1 drop-shadow-md transform group-hover:-translate-y-1 transition-transform duration-300">
+                        {artist.name}
+                    </h3>
+                    
+                    <div className="space-y-1 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                        {artist.stage && (
+                          <p className="text-xs text-white/80 font-medium flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" style={{ backgroundColor: dominantColor }} />
+                            {artist.stage}
+                          </p>
+                        )}
+                        {artist.performanceTime && (
+                          <p className="text-xs text-white/60 flex items-center gap-1.5">
+                             <Clock className="w-3 h-3" />
+                             {artist.performanceTime}
+                          </p>
+                        )}
                     </div>
-                  </motion.div>
-                );
-
-                // Wrap in Link if DJ profile is available, otherwise render as div
-                if (isClickable && djUrl) {
-                  return (
-                    <Link
-                      key={artist.eventDjId || artist.name || index}
-                      href={djUrl}
-                      className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FBA905] rounded-lg"
-                      aria-label={`Ver perfil de ${artist.name}`}
-                    >
-                      {artistCard}
-                    </Link>
-                  );
-                }
-
-                return (
-                  <div key={artist.eventDjId || artist.name || index}>
-                    {artistCard}
                   </div>
+                </motion.div>
+              );
+
+              if (isClickable && djUrl) {
+                return (
+                  <Link
+                    key={artist.eventDjId || artist.name || index}
+                    href={djUrl}
+                    className="block outline-none"
+                    aria-label={`Ver perfil de ${artist.name}`}
+                  >
+                    {artistCard}
+                  </Link>
                 );
-              })}
-            </div>
+              }
+
+              return (
+                <div key={artist.eventDjId || artist.name || index}>
+                  {artistCard}
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </CardContent>
-    </Card>
+        </div>
+      ))}
+    </div>
   );
 }
 

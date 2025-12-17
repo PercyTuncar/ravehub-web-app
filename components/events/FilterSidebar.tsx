@@ -13,7 +13,7 @@ export interface FilterState {
     search: string;
     type: string;
     city: string;
-    date?: Date;
+    date?: string | Date; // Changed to allow string presets like 'weekend'
     minPrice: string;
     maxPrice: string;
 }
@@ -46,109 +46,175 @@ export default function FilterSidebar({ filters, setFilters, resultsCount }: Fil
         (filters.type !== 'all' ? 1 : 0) +
         (filters.city !== 'all' ? 1 : 0) +
         (filters.minPrice ? 1 : 0) +
-        (filters.search ? 1 : 0);
+        (filters.search ? 1 : 0) +
+        (filters.date ? 1 : 0);
 
     const FilterContent = () => (
-        <div className="space-y-6">
-            {/* Search */}
-            <div className="space-y-2">
-                <label className="text-sm font-medium">Búsqueda</label>
-                <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="space-y-8">
+            {/* Search Section - Enhanced */}
+            <div className="space-y-3">
+                <label className="text-sm font-bold text-foreground uppercase tracking-wider">Búsqueda</label>
+                <div className="relative group">
+                    <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <Input
                         placeholder="Evento, artista, lugar..."
-                        className="pl-9"
+                        className="pl-11 h-12 rounded-xl border-2 border-white/10 bg-white/5 backdrop-blur-sm focus:border-primary/50 focus:bg-white/10 transition-all duration-300 placeholder:text-muted-foreground/60"
                         value={filters.search}
                         onChange={(e) => updateFilter('search', e.target.value)}
                     />
                 </div>
             </div>
 
-            {/* Type */}
-            <div className="space-y-2">
-                <label className="text-sm font-medium">Tipo de Evento</label>
-                <div className="flex flex-wrap gap-2">
-                    {['all', 'festival', 'concert', 'club'].map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => updateFilter('type', type)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${filters.type === type
-                                ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                : 'bg-background hover:bg-muted text-muted-foreground border-input hover:border-primary/50'
-                                }`}
-                            aria-pressed={filters.type === type}
-                            aria-label={`Filtrar por tipo: ${type === 'all' ? 'Todos' : type}`}
-                        >
-                            {type === 'all' ? 'Todos' : type.charAt(0).toUpperCase() + type.slice(1)}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Cities (Manual list for now, could be dynamic) */}
-            <div className="space-y-2">
-                <label className="text-sm font-medium">Ciudad</label>
-                <div className="grid grid-cols-2 gap-2">
-                    {['all', 'Lima', 'Santiago', 'Buenos Aires', 'CDMX', 'Bogotá', 'Medellín'].map((city) => (
-                        <button
-                            key={city}
-                            onClick={() => updateFilter('city', city)}
-                            className={`flex items-center space-x-2 text-sm p-3 rounded-lg cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${filters.city === city
-                                ? 'bg-secondary font-medium border border-primary/20 shadow-sm'
-                                : 'hover:bg-muted/50 border border-transparent hover:border-primary/20'
-                                }`}
-                            aria-pressed={filters.city === city}
-                            aria-label={`Filtrar por ciudad: ${city === 'all' ? 'Todas' : city}`}
-                        >
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${filters.city === city ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
-                                {filters.city === city && <div className="w-2 h-2 rounded-full bg-white" />}
-                            </div>
-                            <span className="text-left">{city === 'all' ? 'Todas' : city}</span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Price Range (Inputs) */}
+            {/* Type Section - Enhanced with Icons */}
             <div className="space-y-3">
-                <label className="text-sm font-medium">Precio (Estimado)</label>
-                <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                        <label htmlFor="min-price" className="sr-only">Precio mínimo</label>
-                        <Input
-                            id="min-price"
-                            type="number"
-                            placeholder="Min"
-                            min="0"
-                            value={filters.minPrice}
-                            onChange={(e) => updateFilter('minPrice', e.target.value)}
-                            className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                            aria-describedby="price-range-help"
-                        />
-                    </div>
-                    <span className="text-muted-foreground text-sm font-medium">-</span>
-                    <div className="flex-1">
-                        <label htmlFor="max-price" className="sr-only">Precio máximo</label>
-                        <Input
-                            id="max-price"
-                            type="number"
-                            placeholder="Max"
-                            min="0"
-                            value={filters.maxPrice}
-                            onChange={(e) => updateFilter('maxPrice', e.target.value)}
-                            className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                            aria-describedby="price-range-help"
-                        />
-                    </div>
+                <label className="text-sm font-bold text-foreground uppercase tracking-wider">Tipo de Evento</label>
+                <div className="grid grid-cols-2 gap-3">
+                    {[
+                        { value: 'all', label: 'Todos', icon: '🎪' },
+                        { value: 'festival', label: 'Festival', icon: '🎪' },
+                        { value: 'concert', label: 'Concierto', icon: '🎵' },
+                        { value: 'club', label: 'Club', icon: '🏢' }
+                    ].map((type) => (
+                        <button
+                            key={type.value}
+                            onClick={() => updateFilter('type', type.value)}
+                            className={`group relative p-4 rounded-xl text-sm font-medium transition-all duration-300 border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background overflow-hidden ${
+                                filters.type === type.value
+                                    ? 'bg-gradient-to-br from-primary/20 to-primary/5 border-primary/50 text-foreground shadow-lg shadow-primary/10'
+                                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-primary/30 text-muted-foreground hover:text-foreground'
+                            }`}
+                            aria-pressed={filters.type === type.value}
+                            aria-label={`Filtrar por tipo: ${type.label}`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg">{type.icon}</span>
+                                <span className="font-semibold">{type.label}</span>
+                            </div>
+                            {filters.type === type.value && (
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                            )}
+                        </button>
+                    ))}
                 </div>
-                <p id="price-range-help" className="text-xs text-muted-foreground">
-                    Ingresa rangos de precios en soles peruanos (S/)
-                </p>
             </div>
 
-            {/* Clear Button */}
+            {/* Cities Section - Enhanced */}
+            <div className="space-y-3">
+                <label className="text-sm font-bold text-foreground uppercase tracking-wider">Ciudad</label>
+                <div className="grid grid-cols-2 gap-3">
+                    {[
+                        { value: 'all', label: 'Todas', icon: '🌎' },
+                        { value: 'Lima', label: 'Lima', icon: '📍' },
+                        { value: 'Santiago', label: 'Santiago', icon: '📍' },
+                        { value: 'Buenos Aires', label: 'Buenos Aires', icon: '📍' },
+                        { value: 'CDMX', label: 'CDMX', icon: '📍' },
+                        { value: 'Bogotá', label: 'Bogotá', icon: '📍' },
+                        { value: 'Medellín', label: 'Medellín', icon: '📍' }
+                    ].map((city) => (
+                        <button
+                            key={city.value}
+                            onClick={() => updateFilter('city', city.value)}
+                            className={`group flex items-center gap-2 text-sm p-3 rounded-xl cursor-pointer transition-all duration-300 border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                                filters.city === city.value
+                                    ? 'bg-gradient-to-br from-secondary/20 to-secondary/5 border-secondary/50 text-foreground shadow-md shadow-secondary/10 font-medium'
+                                    : 'hover:bg-white/10 border-white/10 hover:border-primary/30 text-muted-foreground hover:text-foreground'
+                            }`}
+                            aria-pressed={filters.city === city.value}
+                            aria-label={`Filtrar por ciudad: ${city.label}`}
+                        >
+                            <span className="text-base">{city.icon}</span>
+                            <span className="truncate text-xs lg:text-sm">{city.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Date Section - New */}
+            <div className="space-y-3">
+                <label className="text-sm font-bold text-foreground uppercase tracking-wider">Fecha</label>
+                <div className="grid grid-cols-2 gap-3">
+                    {[
+                        { value: 'all', label: 'Cualquier fecha', icon: '📅' },
+                        { value: 'weekend', label: 'Este Fin de Semana', icon: '🎉' },
+                        { value: 'month', label: 'Este Mes', icon: '🗓️' },
+                        { value: 'next_month', label: 'Próximo Mes', icon: '🔜' }
+                    ].map((dateOption) => (
+                        <button
+                            key={dateOption.value}
+                            onClick={() => updateFilter('date', dateOption.value === 'all' ? undefined : dateOption.value)}
+                            className={`group flex items-center gap-2 text-sm p-3 rounded-xl cursor-pointer transition-all duration-300 border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                                (filters.date as any) === dateOption.value || (dateOption.value === 'all' && !filters.date)
+                                    ? 'bg-gradient-to-br from-accent/20 to-accent/5 border-accent/50 text-foreground shadow-md shadow-accent/10 font-medium'
+                                    : 'hover:bg-white/10 border-white/10 hover:border-primary/30 text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                            <span className="text-base">{dateOption.icon}</span>
+                            <span className="truncate text-xs lg:text-sm">{dateOption.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Price Range - Enhanced */}
+            <div className="space-y-4">
+                <label className="text-sm font-bold text-foreground uppercase tracking-wider">Precio (Estimado)</label>
+                <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        <div className="flex-1 relative">
+                            <label htmlFor="min-price" className="sr-only">Precio mínimo</label>
+                            <span className="absolute left-3 top-3.5 text-muted-foreground text-sm font-medium">S/</span>
+                            <Input
+                                id="min-price"
+                                type="number"
+                                placeholder="Min"
+                                min="0"
+                                value={filters.minPrice}
+                                onChange={(e) => updateFilter('minPrice', e.target.value)}
+                                className="pl-8 h-11 rounded-lg border-2 border-white/10 bg-white/5 focus:border-primary/50 focus:bg-white/10 transition-all duration-300"
+                                aria-describedby="price-range-help"
+                            />
+                        </div>
+                        <span className="text-muted-foreground text-sm font-medium">-</span>
+                        <div className="flex-1 relative">
+                            <label htmlFor="max-price" className="sr-only">Precio máximo</label>
+                            <span className="absolute left-3 top-3.5 text-muted-foreground text-sm font-medium">S/</span>
+                            <Input
+                                id="max-price"
+                                type="number"
+                                placeholder="Max"
+                                min="0"
+                                value={filters.maxPrice}
+                                onChange={(e) => updateFilter('maxPrice', e.target.value)}
+                                className="pl-8 h-11 rounded-lg border-2 border-white/10 bg-white/5 focus:border-primary/50 focus:bg-white/10 transition-all duration-300"
+                                aria-describedby="price-range-help"
+                            />
+                        </div>
+                    </div>
+                    <p id="price-range-help" className="text-xs text-muted-foreground/80">
+                        Rango de precios en soles peruanos
+                    </p>
+                </div>
+            </div>
+
+            {/* Results Counter */}
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-4 border border-primary/20">
+                <p className="text-sm text-foreground font-medium">
+                    Mostrando <span className="font-bold text-primary">{resultsCount}</span> eventos
+                </p>
+                {activeFiltersCount > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {activeFiltersCount} filtro{activeFiltersCount > 1 ? 's' : ''} activo{activeFiltersCount > 1 ? 's' : ''}
+                    </p>
+                )}
+            </div>
+
+            {/* Clear Filters - Enhanced */}
             {activeFiltersCount > 0 && (
-                <Button variant="ghost" className="w-full text-destructive hover:text-destructive/90" onClick={clearFilters}>
+                <Button 
+                    variant="outline" 
+                    className="w-full h-12 rounded-xl border-2 border-destructive/30 hover:border-destructive hover:bg-destructive/10 text-destructive hover:text-destructive font-medium transition-all duration-300" 
+                    onClick={clearFilters}
+                >
                     <X className="mr-2 h-4 w-4" />
                     Limpiar filtros
                 </Button>
@@ -160,35 +226,38 @@ export default function FilterSidebar({ filters, setFilters, resultsCount }: Fil
         <>
             {/* Desktop Sidebar */}
             <div className="hidden lg:block w-80 xl:w-96 shrink-0 space-y-6 sticky top-24 h-[calc(100vh-6rem)] overflow-y-auto pr-6 scrollbar-hide">
-                <div className="bg-background/50 backdrop-blur-sm border border-border/40 rounded-xl p-4">
-                    <h3 className="text-xl font-bold mb-1">Filtros</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                        Mostrando {resultsCount} eventos
+                {/* Header Section */}
+                <div className="bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent backdrop-blur-sm border border-primary/20 rounded-2xl p-6">
+                    <h3 className="text-2xl font-black mb-2 tracking-tight">Descubre tu próxima experiencia</h3>
+                    <p className="text-sm text-muted-foreground/80">
+                        Encuentra eventos perfectos para ti
                     </p>
                 </div>
-                <div className="bg-background/50 backdrop-blur-sm border border-border/40 rounded-xl p-4">
+                
+                {/* Filters Content */}
+                <div className="bg-background/30 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl">
                     <FilterContent />
                 </div>
             </div>
 
             {/* Mobile Filter Bar & Sheet */}
-            <div className="lg:hidden mb-6 sticky top-20 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2 -mx-4 px-4 border-b">
+            <div className="lg:hidden mb-6 sticky top-20 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2 -mx-4 px-4 border-b border-white/10">
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
                     <Sheet open={isOpen} onOpenChange={setIsOpen}>
                         <SheetTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 border-dashed shrink-0">
+                            <Button variant="outline" size="sm" className="h-9 border-dashed shrink-0 border-2 border-white/20 hover:border-primary/50 transition-all" suppressHydrationWarning>
                                 <Filter className="mr-2 h-4 w-4" />
                                 Filtros
                                 {activeFiltersCount > 0 && (
-                                    <Badge variant="secondary" className="ml-2 rounded-full px-1 font-normal lg:hidden">
+                                    <Badge variant="secondary" className="ml-2 rounded-full px-1 font-normal lg:hidden bg-primary/20 text-primary border-primary/30">
                                         {activeFiltersCount}
                                     </Badge>
                                 )}
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="bottom" className="h-[80vh] rounded-t-xl">
+                        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl bg-background/95 backdrop-blur">
                             <SheetHeader className="mb-6">
-                                <SheetTitle>Filtrar Eventos</SheetTitle>
+                                <SheetTitle className="text-2xl font-bold">Filtrar Eventos</SheetTitle>
                             </SheetHeader>
                             <div className="overflow-y-auto h-full pb-20">
                                 <FilterContent />
@@ -198,12 +267,12 @@ export default function FilterSidebar({ filters, setFilters, resultsCount }: Fil
 
                     {/* Quick Filter Chips for Mobile */}
                     {filters.type !== 'all' && (
-                        <Badge variant="secondary" className="h-9 shrink-0 flex items-center gap-1 cursor-pointer" onClick={() => updateFilter('type', 'all')}>
+                        <Badge variant="secondary" className="h-9 shrink-0 flex items-center gap-1 cursor-pointer bg-primary/20 text-primary border-primary/30 hover:bg-primary/30 transition-colors" onClick={() => updateFilter('type', 'all')}>
                             {filters.type} <X className="h-3 w-3" />
                         </Badge>
                     )}
                     {filters.city !== 'all' && (
-                        <Badge variant="secondary" className="h-9 shrink-0 flex items-center gap-1 cursor-pointer" onClick={() => updateFilter('city', 'all')}>
+                        <Badge variant="secondary" className="h-9 shrink-0 flex items-center gap-1 cursor-pointer bg-secondary/20 text-secondary border-secondary/30 hover:bg-secondary/30 transition-colors" onClick={() => updateFilter('city', 'all')}>
                             {filters.city} <X className="h-3 w-3" />
                         </Badge>
                     )}

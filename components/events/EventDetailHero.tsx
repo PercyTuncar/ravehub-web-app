@@ -57,7 +57,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
     if (!mounted) return null;
 
     return (
-        <div className="relative w-full min-h-[85vh] flex items-center bg-[#0a0a0a] overflow-hidden">
+        <div className="relative w-full min-h-[90vh] flex items-end sm:items-center bg-[#0a0a0a] overflow-hidden">
 
             {/* Background Image with Gradient Overlay */}
             <div className="absolute inset-0 z-0">
@@ -66,136 +66,138 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                         src={event.bannerImageUrl || event.mainImageUrl}
                         alt={event.name}
                         fill
-                        className="object-cover opacity-60"
+                        className="object-cover opacity-80"
                         priority
                     />
                 ) : null}
-                {/* Complex Gradient to create the "fade to black" effect on the left and bottom */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent sm:via-[#0a0a0a]/70" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#141618] via-transparent to-transparent" />
+                {/* Enhanced Gradients for better text readability and visual depth */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141618] via-[#141618]/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#141618]/90 via-[#141618]/40 to-transparent" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#141618_100%)] opacity-40" />
             </div>
 
-            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-                <div className="max-w-3xl">
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+                <div className="max-w-4xl">
 
-                    {/* Tags / Breadcrumbs */}
-                    <div className="flex flex-wrap items-center gap-3 mb-6">
-                        <Badge variant="outline" className="text-white border-white/20 bg-white/5 hover:bg-white/10 px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-semibold backdrop-blur-md">
+                    {/* Top Badges - Animated */}
+                    <div className="flex flex-wrap items-center gap-3 mb-8 animate-fade-in-up">
+                        <Badge className="bg-primary/90 hover:bg-primary text-primary-foreground border-none px-4 py-1.5 rounded-full text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg shadow-primary/20">
                             {event.eventType}
                         </Badge>
-                        {event.typicalAgeRange && event.typicalAgeRange.includes('18') && (
-                            <Badge variant="outline" className="text-white border-white/20 bg-white/5 hover:bg-white/10 px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-semibold backdrop-blur-md">
+                        {event.typicalAgeRange && (
+                            <Badge variant="outline" className="text-white border-white/30 bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-xs uppercase tracking-widest font-bold backdrop-blur-md">
                                 {event.typicalAgeRange}
+                            </Badge>
+                        )}
+                        {event.allowInstallmentPayments && !isSoldOut && (
+                             <Badge variant="secondary" className="bg-emerald-500/90 hover:bg-emerald-500 text-white border-none px-4 py-1.5 rounded-full text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg shadow-emerald-500/20 animate-pulse">
+                                <CreditCard className="w-3 h-3 mr-1.5" />
+                                Pago en Cuotas
                             </Badge>
                         )}
                     </div>
 
-                    {/* Title */}
-                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-tight tracking-tight mb-6 drop-shadow-2xl">
+                    {/* Title - Massive & Bold */}
+                    <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 drop-shadow-2xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                         {event.name}
                     </h1>
 
-                    {/* Description / Summary */}
-                    <p className="text-lg md:text-xl text-gray-300 mb-8 leading-relaxed max-w-2xl drop-shadow-md">
-                        {event.shortDescription || `Prepárate para vivir la experiencia de ${event.name}. Una producción de primer nivel en ${event.location.venue}.`}
-                        {minPrice > 0 && !isSoldOut && ` Entradas desde S/ ${minPrice}. ¡Asegura tu lugar!`}
-                    </p>
-
-                    {/* Meta Info Grid */}
-                    <div className="flex flex-wrap gap-4 mb-10">
-                        <div className="flex items-center gap-3 bg-white/5 border border-white/10 backdrop-blur-md rounded-xl px-5 py-3 min-w-[fit-content]">
-                            <Calendar className="w-5 h-5 text-gray-400" />
+                    {/* Meta Info Grid - Clean & Modern */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                        <div className="flex items-center gap-4 group">
+                            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
+                                <Calendar className="w-6 h-6 text-white group-hover:text-primary transition-colors" />
+                            </div>
                             <div>
-                                <div className="text-sm font-bold text-white capitalize">
-                                    {format(startDate, "d 'de' MMMM 'de' yyyy", { locale: es })}
-                                </div>
-                                <div className="text-xs text-gray-400 flex items-center gap-1">
-                                    {event.startTime || format(startDate, "HH:mm")} hrs
+                                <div className="text-sm text-gray-400 uppercase tracking-wider font-medium mb-0.5">Fecha</div>
+                                <div className="text-lg font-bold text-white capitalize leading-none">
+                                    {format(startDate, "d MMM yyyy", { locale: es })}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 bg-white/5 border border-white/10 backdrop-blur-md rounded-xl px-5 py-3 min-w-[fit-content]">
-                            <MapPin className="w-5 h-5 text-gray-400" />
+                        <div className="flex items-center gap-4 group">
+                             <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
+                                <MapPin className="w-6 h-6 text-white group-hover:text-primary transition-colors" />
+                            </div>
                             <div>
-                                <div className="text-sm font-bold text-white max-w-[200px] truncate">
+                                <div className="text-sm text-gray-400 uppercase tracking-wider font-medium mb-0.5">Ubicación</div>
+                                <div className="text-lg font-bold text-white leading-none truncate max-w-[200px]">
                                     {event.location.venue}
                                 </div>
-                                <div className="text-xs text-gray-400">
-                                    {event.location.city}
-                                </div>
                             </div>
                         </div>
 
-                        {event.doorTime && (
-                            <div className="flex items-center gap-3 bg-white/5 border border-white/10 backdrop-blur-md rounded-xl px-5 py-3 min-w-[fit-content]">
-                                <Clock className="w-5 h-5 text-gray-400" />
-                                <div>
-                                    <div className="text-sm font-bold text-white">
-                                        Puertas: {event.doorTime}
-                                    </div>
-                                    <div className="text-xs text-gray-400">
-                                        Apertura
-                                    </div>
+                         <div className="flex items-center gap-4 group">
+                             <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
+                                <Clock className="w-6 h-6 text-white group-hover:text-primary transition-colors" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-gray-400 uppercase tracking-wider font-medium mb-0.5">Hora</div>
+                                <div className="text-lg font-bold text-white leading-none">
+                                    {event.startTime || format(startDate, "HH:mm")}
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Description / Summary */}
+                    <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mb-10 max-w-2xl animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                         <p className="text-lg text-gray-200 leading-relaxed">
+                            {event.shortDescription || `Prepárate para vivir la experiencia de ${event.name}. Una producción de primer nivel en ${event.location.venue}.`}
+                        </p>
+                        {minPrice > 0 && !isSoldOut && (
+                             <div className="mt-4 flex items-center gap-2 text-primary font-bold">
+                                <span>Entradas desde S/ {minPrice}</span>
+                                <ArrowRight className="w-4 h-4" />
                             </div>
                         )}
                     </div>
 
-                    {/* Countdown */}
-                    {!isSoldOut && (
-                        <div className="mb-10 flex items-center gap-6">
-                            <div className="flex items-center gap-2 text-white/80 font-medium">
-                                <Clock className="w-5 h-5" />
-                                <span>Falta:</span>
-                            </div>
-                            <div className="flex gap-4 sm:gap-6">
+                    {/* Countdown & Actions */}
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                        
+                        {/* Countdown */}
+                        {!isSoldOut && (
+                             <div className="flex gap-4 sm:gap-6 bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/5">
                                 {[
-                                    { label: 'días', value: timeLeft.days },
-                                    { label: 'horas', value: timeLeft.hours },
-                                    { label: 'min', value: timeLeft.minutes },
-                                    { label: 'seg', value: timeLeft.seconds }
+                                    { label: 'DÍAS', value: timeLeft.days },
+                                    { label: 'HRS', value: timeLeft.hours },
+                                    { label: 'MIN', value: timeLeft.minutes },
+                                    { label: 'SEG', value: timeLeft.seconds }
                                 ].map((item, idx) => (
-                                    <div key={idx} className="flex flex-col items-center">
-                                        <span className="text-2xl sm:text-4xl font-black text-white leading-none tracking-tighter">
+                                    <div key={idx} className="flex flex-col items-center min-w-[3rem]">
+                                        <span className="text-2xl sm:text-3xl font-black text-white leading-none tabular-nums">
                                             {String(item.value).padStart(2, '0')}
                                         </span>
-                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{item.label}</span>
+                                        <span className="text-[10px] text-gray-500 font-bold mt-1">{item.label}</span>
                                     </div>
                                 ))}
                             </div>
+                        )}
+
+                        {/* Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                            {event.sellTicketsOnPlatform && !isSoldOut ? (
+                                <Link href={`/eventos/${event.slug}/comprar`} className="w-full sm:w-auto">
+                                    <Button size="lg" className="w-full sm:w-auto h-16 px-8 text-xl font-bold rounded-2xl bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white shadow-xl shadow-primary/25 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-primary/40 ring-offset-2 focus:ring-2">
+                                        Comprar Entradas
+                                        <ArrowRight className="w-6 h-6 ml-2" />
+                                    </Button>
+                                </Link>
+                            ) : isSoldOut ? (
+                                <Button size="lg" disabled className="w-full sm:w-auto h-16 px-8 text-xl font-bold rounded-2xl bg-zinc-800 text-zinc-500 cursor-not-allowed">
+                                    Agotado
+                                </Button>
+                            ) : (
+                                <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                                    <Button size="lg" className="w-full sm:w-auto h-16 px-8 text-xl font-bold rounded-2xl bg-white text-black hover:bg-gray-200 transition-all hover:scale-105 shadow-xl">
+                                        Sitio Oficial
+                                        <ArrowRight className="w-6 h-6 ml-2" />
+                                    </Button>
+                                </a>
+                            )}
                         </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        {event.sellTicketsOnPlatform && !isSoldOut ? (
-                            <Link href={`/eventos/${event.slug}/comprar`}>
-                                <Button size="lg" className="w-full sm:w-auto px-8 py-7 text-lg font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 transition-all hover:scale-105">
-                                    <CreditCard className="w-5 h-5 mr-3" />
-                                    Comprar Entradas
-                                    <ArrowRight className="w-5 h-5 ml-2 opacity-50" />
-                                </Button>
-                            </Link>
-                        ) : isSoldOut ? (
-                            <Button size="lg" disabled className="w-full sm:w-auto px-8 py-7 text-lg font-bold rounded-xl bg-zinc-800 text-zinc-500 cursor-not-allowed">
-                                Agotado
-                            </Button>
-                        ) : (
-                            <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer">
-                                <Button size="lg" className="w-full sm:w-auto px-8 py-7 text-lg font-bold rounded-xl bg-white text-black hover:bg-gray-200 transaction-all hover:scale-105">
-                                    Comprar en Sitio Oficial
-                                    <ArrowRight className="w-5 h-5 ml-2 opacity-50" />
-                                </Button>
-                            </a>
-                        )}
-
-                        {event.allowInstallmentPayments && !isSoldOut && (
-                            <div className="hidden sm:flex items-center gap-3 px-6 py-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
-                                <CreditCard className="w-5 h-5 text-gray-300" />
-                                <span className="text-sm font-semibold text-gray-300">Pago en efectivo disponible</span>
-                            </div>
-                        )}
                     </div>
 
                 </div>

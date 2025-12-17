@@ -1264,3 +1264,251 @@ img {
 .interactive-cultural:active {
   transform: scale(0.95);
 }
+
+/* ============================================
+   EVENTOS PAGE - MODERN MICRO-INTERACTIONS
+   ============================================ */
+
+/* Ken Burns Effect for Hero Images */
+@keyframes ken-burns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.1) translate(-2%, -1%);
+  }
+  100% {
+    transform: scale(1.05) translate(-1%, -0.5%);
+  }
+}
+
+.animate-ken-burns {
+  animation: ken-burns 20s ease-in-out infinite;
+}
+
+/* Stagger Animation Delays for Event Cards */
+.animate-stagger-1 {
+  animation-delay: 0.1s;
+}
+
+.animate-stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.animate-stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.animate-stagger-4 {
+  animation-delay: 0.4s;
+}
+
+.animate-stagger-5 {
+  animation-delay: 0.5s;
+}
+
+.animate-stagger-6 {
+  animation-delay: 0.6s;
+}
+
+/* Modern Glassmorphism Effects */
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glassmorphism-dark {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced Glow Effects */
+.glow-primary {
+  box-shadow: 0 0 20px rgba(251, 169, 5, 0.4), 0 0 40px rgba(251, 169, 5, 0.2);
+}
+
+.glow-primary-hover:hover {
+  box-shadow: 0 0 30px rgba(251, 169, 5, 0.6), 0 0 60px rgba(251, 169, 5, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Modern Ripple Effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.ripple-effect:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Enhanced Hover States */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.hover-scale {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+/* Modern Loading Spinner */
+@keyframes spin-modern {
+  0% {
+    transform: rotate(0deg);
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    filter: hue-rotate(360deg);
+  }
+}
+
+.animate-spin-modern {
+  animation: spin-modern 2s linear infinite;
+}
+
+/* Smooth Scrollbar for Event Lists */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(251, 169, 5, 0.3);
+  border-radius: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(251, 169, 5, 0.5);
+}
+
+/* Intersection Observer Animations */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-on-scroll.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Enhanced Filter Button States */
+.filter-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.filter-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.filter-button:hover::before {
+  left: 100%;
+}
+
+.filter-button.active {
+  background: linear-gradient(45deg, rgba(251, 169, 5, 0.2), rgba(241, 160, 0, 0.2));
+  border-color: rgba(251, 169, 5, 0.5);
+}
+
+/* Modern Badge Animations */
+.badge-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.badge-glow {
+  box-shadow: 0 0 10px rgba(251, 169, 5, 0.4);
+}
+
+/* Enhanced Focus States */
+.focus-ring {
+  transition: all 0.2s ease;
+}
+
+.focus-ring:focus {
+  outline: none;
+  ring: 2px solid rgba(251, 169, 5, 0.5);
+  ring-offset: 2px;
+  ring-offset-color: transparent;
+}
+
+/* Modern Card Grid Animation */
+@keyframes grid-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-grid-fade-in {
+  animation: grid-fade-in 0.6s ease-out forwards;
+}
+
+/* Progressive Enhancement for Mobile */
+@media (max-width: 768px) {
+  .animate-ken-burns {
+    animation: none; /* Disable on mobile for performance */
+  }
+  
+  .hover-lift:hover {
+    transform: none; /* Disable hover effects on mobile */
+  }
+  
+  .glassmorphism {
+    backdrop-filter: blur(5px); /* Reduced blur for mobile */
+  }
+}

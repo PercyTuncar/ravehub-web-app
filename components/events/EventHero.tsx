@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, MapPin, ArrowRight, Clock, Ticket } from 'lucide-react';
+import { Calendar, MapPin, ArrowRight, Clock, Ticket, Users, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Event } from '@/lib/types';
@@ -40,117 +40,240 @@ export default function EventHero({ event }: EventHeroProps) {
     return () => clearInterval(timer);
   }, [event.startDate]);
 
+  // Calculate lowest price
+  let minPrice = Infinity;
+  event.salesPhases?.forEach(phase => {
+    if (phase.status === 'active' || phase.status === 'upcoming') {
+      phase.zonesPricing?.forEach(zone => {
+        if (zone.price < minPrice) {
+          minPrice = zone.price;
+        }
+      });
+    }
+  });
+  if (minPrice === Infinity) minPrice = 0;
 
   if (!mounted) return null;
 
   return (
-    <div className="relative w-full max-w-full overflow-hidden rounded-2xl bg-background/50 border border-white/5 shadow-2xl">
-      <div className="relative h-[400px] sm:h-[450px] lg:h-[400px] xl:h-[450px] w-full flex flex-col lg:flex-row">
-
-        {/* 1. Visual/Image Area */}
-        <div className="relative h-[200px] sm:h-[250px] lg:h-full lg:w-[60%] overflow-hidden group border-b lg:border-b-0 lg:border-r border-white/5">
-          {event.mainImageUrl ? (
-            <Image
-              src={event.mainImageUrl}
-              alt={`Imagen del evento destacado ${event.name}`}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              priority
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 60vw"
-            />
-          ) : (
-            <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
-              <span className="text-zinc-500">Imagen no disponible</span>
-            </div>
-          )}
-
-          {/* Enhanced Gradient for Better Text Readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-black/20 lg:to-black/80 z-10" />
-        </div>
-
-        {/* 2. Content Area (Right/Bottom) - 40% Width on Desktop */}
-        <div className="relative lg:w-[40%] flex flex-col justify-center p-4 sm:p-5 lg:p-8 z-20 bg-black/60 lg:bg-transparent backdrop-blur-sm lg:backdrop-blur-none -mt-12 lg:mt-0">
-
-          {/* Floating Badge Group */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Badge
-              variant="default"
-              className="bg-primary hover:bg-primary/90 text-black font-bold text-[10px] uppercase tracking-wider shadow-glow px-2.5 py-1 transition-all duration-200 hover:scale-105"
-              aria-label="Evento destacado"
-            >
-              Destacado
-            </Badge>
-            <Badge
-              variant="outline"
-              className="border-white/30 text-white/80 text-[10px] uppercase tracking-wider px-2.5 py-1 bg-black/40 backdrop-blur-sm"
-              aria-label={`Tipo de evento: ${event.eventType}`}
-            >
-              {event.eventType}
-            </Badge>
+    <div className="relative w-full aspect-[4/5] md:aspect-[4/3] lg:aspect-video overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-black via-black/95 to-black/90 shadow-2xl border border-white/10 group">
+      
+      {/* Background Image with Ken Burns Effect */}
+      <div className="absolute inset-0">
+        {event.bannerImageUrl || event.mainImageUrl ? (
+          <Image
+            src={event.bannerImageUrl || event.mainImageUrl!}
+            alt={`Imagen del evento ${event.name}`}
+            fill
+            className="object-cover animate-ken-burns opacity-60"
+            priority
+            sizes="100vw"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 flex items-center justify-center">
+            <span className="text-zinc-500">Imagen no disponible</span>
           </div>
+        )}
+        
+        {/* Enhanced Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
+      </div>
 
-          {/* Title */}
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-white leading-tight mb-4 tracking-tight drop-shadow-lg line-clamp-2">
-            {event.name}
-          </h1>
+      {/* Floating Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-20 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 left-20 w-40 h-40 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
 
-          {/* Meta Info */}
-          <div className="space-y-3 mb-6 text-xs sm:text-sm text-gray-200">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="font-medium truncate">
-                {format(new Date(event.startDate), "EEEE d 'de' MMMM", { locale: es })}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="font-medium opacity-90 truncate">
-                {event.location.venue}, {event.location.city}
-              </span>
-            </div>
-          </div>
-
-          {/* Countdown Timer - Compact Row */}
-          <div className="flex gap-1.5 sm:gap-2 mb-6">
-            {[
-              { label: 'DÍAS', value: timeLeft.days },
-              { label: 'HRS', value: timeLeft.hours },
-              { label: 'MIN', value: timeLeft.minutes },
-              { label: 'SEG', value: timeLeft.seconds }
-            ].map((item, idx) => (
-              <div key={idx} className="flex-1 flex flex-col items-center justify-center bg-black/50 border border-white/20 rounded-lg py-2 backdrop-blur-sm">
-                <span className="text-sm sm:text-lg font-bold font-mono text-white/95 leading-none">
-                  {String(item.value).padStart(2, '0')}
-                </span>
-                <span className="text-[7px] sm:text-[8px] text-white/60 font-bold tracking-widest">{item.label}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-2">
-            {event.sellTicketsOnPlatform ? (
-              <Link href={`/eventos/${event.slug}/comprar`} className="flex-1">
-                <Button
-                  size="sm"
-                  className="w-full h-10 text-sm font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
-                  aria-label={`Comprar entradas para ${event.name}`}
+      {/* Main Content */}
+      <div className="relative z-20 h-full flex flex-col">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 h-full">
+          <div className="max-w-full mx-auto h-full flex flex-col justify-center lg:justify-end py-8 lg:py-10 gap-6 lg:gap-8">
+            
+            {/* Top Content: Title & Info */}
+            <div className="flex-1 flex flex-col justify-center max-w-4xl">
+                {/* Status and Type Badges */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className="flex flex-wrap items-center gap-3 mb-4"
                 >
-                  <Ticket className="w-4 h-4 mr-2" />
-                  Comprar
-                </Button>
-              </Link>
-            ) : null}
-            <Link href={`/eventos/${event.slug}`} className="flex-1">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full h-10 text-sm font-medium rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-black"
-                aria-label={`Ver información de ${event.name}`}
-              >
-                Ver Info
-              </Button>
-            </Link>
+                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold text-[10px] uppercase tracking-wider px-3 py-1 shadow-lg shadow-orange-500/25">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    DESTACADO
+                  </Badge>
+                  
+                  <Badge variant="outline" className="border-white/30 bg-white/10 backdrop-blur-sm text-white/90 text-[10px] uppercase tracking-wider px-3 py-1 hover:bg-white/20 transition-colors">
+                    {event.eventType}
+                  </Badge>
+
+                  {event.allowInstallmentPayments && (
+                    <Badge className="bg-blue-500/90 text-white text-[10px] font-medium px-3 py-1 backdrop-blur-sm">
+                      💳 Cuotas disponibles
+                    </Badge>
+                  )}
+                </motion.div>
+
+                {/* Event Title */}
+                <motion.h1 
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                  className="text-4xl sm:text-5xl lg:text-7xl font-black text-white leading-[0.9] mb-4 tracking-tighter drop-shadow-2xl"
+                  style={{ textShadow: '0 4px 30px rgba(0,0,0,0.8)' }}
+                >
+                  {event.name}
+                </motion.h1>
+
+                {/* Event Description */}
+                {event.shortDescription && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="text-sm sm:text-base text-white/80 leading-relaxed mb-6 max-w-xl font-light line-clamp-2 lg:line-clamp-3"
+                  >
+                    {event.shortDescription}
+                  </motion.p>
+                )}
+
+                {/* Call to Actions */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.0 }}
+                  className="flex flex-col sm:flex-row gap-3 mb-4"
+                >
+                  {event.sellTicketsOnPlatform ? (
+                    <Link href={`/eventos/${event.slug}/comprar`} className="flex-1 sm:flex-none">
+                      <Button
+                        size="lg"
+                        className="w-full sm:w-auto h-11 px-6 text-sm font-bold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.5)] transition-all duration-300 hover:scale-[1.02] border-none"
+                        aria-label={`Comprar entradas para ${event.name}`}
+                      >
+                        <Ticket className="w-4 h-4 mr-2" />
+                        Comprar Entradas
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
+                  ) : null}
+                  
+                  <Link href={`/eventos/${event.slug}`} className="flex-1 sm:flex-none">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full sm:w-auto h-11 px-6 text-sm font-bold rounded-xl bg-white/5 hover:bg-white/10 text-white border-2 border-white/10 hover:border-white/30 backdrop-blur-md transition-all duration-300 hover:scale-[1.02]"
+                      aria-label={`Ver información de ${event.name}`}
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Ver Detalles
+                    </Button>
+                  </Link>
+                </motion.div>
+                
+                 {/* Additional Info - Compact */}
+                 <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 1.2 }}
+                  className="flex flex-wrap items-center gap-4 text-[10px] text-white/60"
+                >
+                  <div className="flex items-center gap-1.5 bg-black/30 px-2 py-0.5 rounded-full border border-white/5">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]" />
+                    <span>Entradas disponibles</span>
+                  </div>
+                  {event.organizer && (
+                    <div className="flex items-center gap-1.5">
+                      <span>Organizado por:</span>
+                      <span className="font-bold text-white tracking-wide">{event.organizer.name}</span>
+                    </div>
+                  )}
+                </motion.div>
+            </div>
+
+            {/* Bottom Section: Meta Cards Bar */}
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="w-full grid grid-cols-2 lg:grid-cols-4 gap-3"
+            >
+                {/* Date */}
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors duration-300 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-1">
+                    <Calendar className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-[9px] font-bold text-white/60 uppercase tracking-[0.2em]">Fecha</span>
+                    </div>
+                    <p className="text-sm font-bold text-white leading-tight">
+                    {format(new Date(event.startDate), "EEEE d 'de' MMMM", { locale: es })}
+                    </p>
+                    {event.startTime && (
+                    <p className="text-[10px] text-white/60 font-medium mt-0.5">
+                        {event.startTime} hrs
+                    </p>
+                    )}
+                </div>
+
+                {/* Location */}
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors duration-300 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-1">
+                    <MapPin className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-[9px] font-bold text-white/60 uppercase tracking-[0.2em]">Ubicación</span>
+                    </div>
+                    <p className="text-sm font-bold text-white leading-tight truncate">
+                    {event.location.venue}
+                    </p>
+                    <p className="text-[10px] text-white/60 font-medium truncate mt-0.5">
+                    {event.location.city}, {event.location.region || event.location.country}
+                    </p>
+                </div>
+
+                {/* Price */}
+                <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent backdrop-blur-xl border border-primary/30 rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Ticket className="w-3.5 h-3.5 text-primary" />
+                            <span className="text-[9px] font-bold text-white/60 uppercase tracking-[0.2em]">Desde</span>
+                        </div>
+                        <p className="text-xl lg:text-2xl font-black text-white tracking-tight leading-none">
+                            {minPrice > 0 ? `S/ ${minPrice}` : 'Gratis'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Timer */}
+                {timeLeft.days > 0 ? (
+                    <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col justify-center">
+                    <p className="text-[9px] font-bold text-white/60 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1.5">
+                        <Clock className="w-3 h-3" />
+                        Tiempo restante
+                    </p>
+                    <div className="flex justify-between gap-1">
+                        {[
+                        { label: 'D', value: timeLeft.days },
+                        { label: 'H', value: timeLeft.hours },
+                        { label: 'M', value: timeLeft.minutes },
+                        { label: 'S', value: timeLeft.seconds }
+                        ].map((item, idx) => (
+                        <div key={idx} className="flex flex-col items-center min-w-[24px]">
+                            <span className="text-base font-black font-mono text-white leading-none">
+                            {String(item.value).padStart(2, '0')}
+                            </span>
+                            <span className="text-[8px] text-white/40 font-bold tracking-wider">{item.label}</span>
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+                ) : (
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex items-center justify-center">
+                         <span className="text-sm font-bold text-white/80">Evento Finalizado</span>
+                    </div>
+                )}
+            </motion.div>
+
           </div>
         </div>
       </div>
