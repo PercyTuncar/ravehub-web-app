@@ -108,7 +108,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         'entradas conciertos',
         ...(event.tags || []),
       ].filter(Boolean) as string[],
-      robots: isDraft ? { index: false, follow: true } : { index: true, follow: true },
+      robots: {
+        index: event.eventStatus !== 'draft' && event.eventStatus !== 'cancelled',
+        follow: true,
+        googleBot: {
+          index: event.eventStatus !== 'draft' && event.eventStatus !== 'cancelled',
+          follow: true,
+        }
+      },
       alternates: { canonical: url },
       openGraph: {
         title: seoTitle,
