@@ -12,7 +12,7 @@ import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Image from 'next/image';
-import EventsClient from '../../EventsClient';
+import EventsClient from '@/components/events/EventsClient';
 
 // ISR: Revalidate every 10 minutes (600 seconds) + on-demand revalidation
 export const revalidate = 600;
