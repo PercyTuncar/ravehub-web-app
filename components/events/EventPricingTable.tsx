@@ -200,13 +200,13 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
 
   return (
     <div ref={containerRef} className="w-full flex flex-col gap-2">
-       <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-zinc-300">
-              <div className={`w-2 h-2 rounded-full animate-pulse ${progress >= 100 ? 'bg-red-500' : 'bg-green-500'}`} />
-              <span className="font-medium text-white">Fase Activa:</span> 
+       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 text-sm text-zinc-300 overflow-hidden">
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 animate-pulse ${progress >= 100 ? 'bg-red-500' : 'bg-green-500'}`} />
+              <span className="font-medium text-white whitespace-nowrap">Fase Activa:</span> 
               <span className="truncate">{message}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-3 self-end sm:self-auto">
               <span className="text-xs font-bold tabular-nums text-zinc-400">
                 {Math.round(displayedProgress)}%
               </span>

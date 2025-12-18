@@ -219,7 +219,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
             }}
             className="lg:hidden fixed left-0 right-0 z-40 pointer-events-none px-3"
             style={{
-              bottom: 'calc(5.5rem + env(safe-area-inset-bottom, 0px))', // ~88px + safe area, arriba del navbar con espacio
+              bottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))', // ~72px + safe area, closer to navbar
             }}
           >
             <Link 

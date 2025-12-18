@@ -63,7 +63,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
     if (!mounted) return null;
 
     return (
-        <div className="relative w-full min-h-[90vh] flex items-end sm:items-center bg-[#0a0a0a] overflow-hidden">
+        <div className="relative w-full min-h-[75vh] md:min-h-[90vh] flex items-end sm:items-center bg-[#0a0a0a] overflow-hidden">
 
             {/* Background Image with Gradient Overlay */}
             <div className="absolute inset-0 z-0">
@@ -83,13 +83,13 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#141618_100%)] opacity-40" />
             </div>
 
-            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 md:pt-32 md:pb-32 animate-in fade-in duration-1000 slide-in-from-bottom-8">
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 md:pt-32 md:pb-32 animate-in fade-in duration-1000 slide-in-from-bottom-8">
                 <div className="max-w-4xl flex flex-col items-start text-left">
 
                     {/* Top Badges - Animated */}
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-6 animate-fade-in-up">
+                    <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 mb-4 sm:mb-6 animate-fade-in-up">
                         <Badge
-                            className="text-white border-none px-3 py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg transition-all duration-700 ease-in-out"
+                            className="text-white border-none px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg transition-all duration-700 ease-in-out"
                             style={{
                                 backgroundColor: colorPalette.dominant,
                                 boxShadow: `0 10px 15px -3px ${colorPalette.dominant}40`,
@@ -99,14 +99,14 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                             {event.eventType}
                         </Badge>
                         {event.typicalAgeRange && (
-                            <Badge variant="outline" className="text-white border-white/30 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md">
+                            <Badge variant="outline" className="text-white border-white/30 bg-white/10 hover:bg-white/20 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md">
                                 {event.typicalAgeRange}
                             </Badge>
                         )}
                         {event.allowInstallmentPayments && !isSoldOut && (
                             <Badge
                                 variant="secondary"
-                                className="text-white border-none px-3 py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg animate-pulse"
+                                className="text-white border-none px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg animate-pulse"
                                 style={{
                                     backgroundColor: '#10b981', // Keep emerald for payments
                                     boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.2)'
@@ -119,7 +119,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                     </div>
 
                     {/* Title - Optimized Size */}
-                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-6 drop-shadow-2xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                    <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-4 sm:mb-6 drop-shadow-2xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                         {event.name}
                     </h1>
 
