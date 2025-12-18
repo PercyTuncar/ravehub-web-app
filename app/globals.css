@@ -26,7 +26,7 @@
 
 @media (min-width: 768px) {
   :root {
-    --navbar-height: 5rem;
+    --navbar-height: 2rem;
   }
 }
 
@@ -1274,9 +1274,11 @@ img {
   0% {
     transform: scale(1) translate(0, 0);
   }
+
   50% {
     transform: scale(1.1) translate(-2%, -1%);
   }
+
   100% {
     transform: scale(1.05) translate(-1%, -0.5%);
   }
@@ -1340,6 +1342,7 @@ img {
     transform: scale(0);
     opacity: 1;
   }
+
   100% {
     transform: scale(4);
     opacity: 0;
@@ -1393,6 +1396,7 @@ img {
     transform: rotate(0deg);
     filter: hue-rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
     filter: hue-rotate(360deg);
@@ -1488,6 +1492,7 @@ img {
     opacity: 0;
     transform: translateY(20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1501,14 +1506,17 @@ img {
 /* Progressive Enhancement for Mobile */
 @media (max-width: 768px) {
   .animate-ken-burns {
-    animation: none; /* Disable on mobile for performance */
+    animation: none;
+    /* Disable on mobile for performance */
   }
-  
+
   .hover-lift:hover {
-    transform: none; /* Disable hover effects on mobile */
+    transform: none;
+    /* Disable hover effects on mobile */
   }
-  
+
   .glassmorphism {
-    backdrop-filter: blur(5px); /* Reduced blur for mobile */
+    backdrop-filter: blur(5px);
+    /* Reduced blur for mobile */
   }
 }

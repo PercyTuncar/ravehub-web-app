@@ -83,9 +83,9 @@ export default function EventsClient({
     }, [initialEvents, filters]);
 
     return (
-         <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background">
             {/* Main Content - Enhanced Layout */}
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
                 <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
                     {/* Sidebar Filters - Enhanced Responsive */}
                     <aside className="w-full lg:w-80 xl:w-96 shrink-0">
@@ -107,7 +107,7 @@ export default function EventsClient({
                                 {filters.type !== 'all' && (
                                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-xs font-medium">
                                         {filters.type}
-                                        <button 
+                                        <button
                                             onClick={() => setFilters({ ...filters, type: 'all' })}
                                             className="hover:bg-primary/30 rounded-full p-0.5 transition-colors"
                                         >
@@ -118,7 +118,7 @@ export default function EventsClient({
                                 {filters.city !== 'all' && (
                                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-secondary/20 text-secondary rounded-full text-xs font-medium">
                                         {filters.city}
-                                        <button 
+                                        <button
                                             onClick={() => setFilters({ ...filters, city: 'all' })}
                                             className="hover:bg-secondary/30 rounded-full p-0.5 transition-colors"
                                         >
@@ -129,7 +129,7 @@ export default function EventsClient({
                                 {filters.date && (
                                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-accent/20 text-accent rounded-full text-xs font-medium">
                                         {filters.date === 'weekend' ? 'Fin de semana' : filters.date === 'month' ? 'Este mes' : 'Próximo mes'}
-                                        <button 
+                                        <button
                                             onClick={() => setFilters({ ...filters, date: undefined })}
                                             className="hover:bg-accent/30 rounded-full p-0.5 transition-colors"
                                         >
@@ -140,7 +140,7 @@ export default function EventsClient({
                                 {filters.search && (
                                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-accent/20 text-accent rounded-full text-xs font-medium">
                                         "{filters.search}"
-                                        <button 
+                                        <button
                                             onClick={() => setFilters({ ...filters, search: '' })}
                                             className="hover:bg-accent/30 rounded-full p-0.5 transition-colors"
                                         >
@@ -151,7 +151,7 @@ export default function EventsClient({
                                 {(filters.minPrice || filters.maxPrice) && (
                                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
                                         S/ {filters.minPrice || '0'} - S/ {filters.maxPrice || '∞'}
-                                        <button 
+                                        <button
                                             onClick={() => setFilters({ ...filters, minPrice: '', maxPrice: '' })}
                                             className="hover:bg-green-500/30 rounded-full p-0.5 transition-colors"
                                         >

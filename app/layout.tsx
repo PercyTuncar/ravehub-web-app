@@ -68,6 +68,8 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: 'Ravehub', description: 'Eventos de música electrónica en LATAM. Entradas, fechas y lineups.' },
 }
 
+import PageWrapper from '@/components/layout/PageWrapper'
+
 export default function RootLayout({
   children,
 }: {
@@ -83,12 +85,9 @@ export default function RootLayout({
                 <CartProvider>
                   <MainNavbar />
                   <MobileNavbar />
-                  <div
-                    className="pb-20 md:pb-0"
-                    style={{ paddingTop: 'var(--navbar-height)' }}
-                  >
+                  <PageWrapper>
                     {children}
-                  </div>
+                  </PageWrapper>
                 </CartProvider>
               </CurrencyProvider>
             </NotificationsProvider>

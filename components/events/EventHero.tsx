@@ -133,7 +133,7 @@ export default function EventHero({ event }: EventHeroProps) {
       {/* Main Content */}
       <div className="relative z-20 h-full flex flex-col">
         <div className="container mx-auto px-6 sm:px-8 lg:px-12 h-full">
-          <div className="max-w-full mx-auto h-full flex flex-col justify-center lg:justify-end py-8 lg:py-10 gap-6 lg:gap-8">
+          <div className="max-w-full mx-auto h-full flex flex-col justify-center lg:justify-end py-6 lg:py-8 gap-4 lg:gap-6">
 
             {/* Top Content: Title & Info */}
             <div className="flex-1 flex flex-col justify-center max-w-4xl">
@@ -142,7 +142,7 @@ export default function EventHero({ event }: EventHeroProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="flex flex-wrap items-center gap-3 mb-4"
+                className="flex flex-wrap items-center gap-2 mb-3"
               >
                 <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold text-[10px] uppercase tracking-wider px-3 py-1 shadow-lg shadow-orange-500/25">
                   <Sparkles className="w-3 h-3 mr-1" />
@@ -165,7 +165,7 @@ export default function EventHero({ event }: EventHeroProps) {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="text-3xl sm:text-5xl lg:text-7xl font-black text-white leading-[0.95] mb-4 tracking-tighter drop-shadow-2xl"
+                className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-[0.95] mb-3 tracking-tighter drop-shadow-2xl"
                 style={{ textShadow: '0 4px 30px rgba(0,0,0,0.8)' }}
               >
                 {event.name}
@@ -177,7 +177,7 @@ export default function EventHero({ event }: EventHeroProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
-                  className="text-sm sm:text-base text-white/80 leading-relaxed mb-6 max-w-xl font-light line-clamp-2 lg:line-clamp-3"
+                  className="text-sm sm:text-base text-white/80 leading-relaxed mb-4 max-w-xl font-light line-clamp-2"
                 >
                   {event.shortDescription}
                 </motion.p>
@@ -194,7 +194,7 @@ export default function EventHero({ event }: EventHeroProps) {
                   <Link href={`/eventos/${event.slug}/comprar`} className="flex-1 sm:flex-none">
                     <Button
                       size="lg"
-                      className="w-full sm:w-auto h-11 px-6 text-sm font-bold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.5)] transition-all duration-300 hover:scale-[1.02] border-none"
+                      className="w-full sm:w-auto h-10 px-6 text-sm font-bold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.5)] transition-all duration-300 hover:scale-[1.02] border-none"
                       aria-label={`Comprar entradas para ${event.name}`}
                     >
                       <Ticket className="w-4 h-4 mr-2" />
@@ -208,7 +208,7 @@ export default function EventHero({ event }: EventHeroProps) {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full sm:w-auto h-11 px-6 text-sm font-bold rounded-xl bg-white/5 hover:bg-white/10 text-white border-2 border-white/10 hover:border-white/30 backdrop-blur-md transition-all duration-300 hover:scale-[1.02]"
+                    className="w-full sm:w-auto h-10 px-6 text-sm font-bold rounded-xl bg-white/5 hover:bg-white/10 text-white border-2 border-white/10 hover:border-white/30 backdrop-blur-md transition-all duration-300 hover:scale-[1.02]"
                     aria-label={`Ver información de ${event.name}`}
                   >
                     <Users className="w-4 h-4 mr-2" />
@@ -237,20 +237,20 @@ export default function EventHero({ event }: EventHeroProps) {
               </motion.div>
             </div>
 
-            {/* Bottom Section: Meta Cards Bar */}
+            {/* Bottom Section: Meta Cards Bar - Compact & Hierarchical */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="w-full grid grid-cols-2 lg:grid-cols-4 gap-3"
+              className="w-full grid grid-cols-2 lg:grid-cols-4 gap-2"
             >
               {/* Date */}
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors duration-300 flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-[9px] font-bold text-white/60 uppercase tracking-[0.2em]">Fecha</span>
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-2.5 hover:bg-white/10 transition-colors duration-300 flex flex-col justify-center min-h-[70px]">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Calendar className="w-3 h-3 text-primary/80" />
+                  <span className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Fecha</span>
                 </div>
-                <p className="text-sm font-bold text-white leading-tight">
+                <p className="text-xs font-bold text-white leading-tight">
                   {format(parseEventDate(event.startDate), "EEEE d 'de' MMMM", { locale: es })}
                 </p>
                 {event.startTime && (
@@ -261,12 +261,12 @@ export default function EventHero({ event }: EventHeroProps) {
               </div>
 
               {/* Location */}
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors duration-300 flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-[9px] font-bold text-white/60 uppercase tracking-[0.2em]">Ubicación</span>
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-2.5 hover:bg-white/10 transition-colors duration-300 flex flex-col justify-center min-h-[70px]">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <MapPin className="w-3 h-3 text-primary/80" />
+                  <span className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Ubicación</span>
                 </div>
-                <p className="text-sm font-bold text-white leading-tight truncate">
+                <p className="text-xs font-bold text-white leading-tight truncate">
                   {event.location.venue}
                 </p>
                 <p className="text-[10px] text-white/60 font-medium truncate mt-0.5">
@@ -275,17 +275,17 @@ export default function EventHero({ event }: EventHeroProps) {
               </div>
 
               {/* Price */}
-              <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent backdrop-blur-xl border border-primary/30 rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group">
-                <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-md border border-primary/20 rounded-lg p-2.5 flex flex-col justify-center min-h-[70px] relative overflow-hidden group">
+                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Ticket className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-[9px] font-bold text-white/60 uppercase tracking-[0.2em]">Desde</span>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <Ticket className="w-3 h-3 text-primary/80" />
+                    <span className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Desde</span>
                   </div>
                   {calculatingPrice ? (
-                    <div className="h-6 w-24 bg-white/10 animate-pulse rounded mt-1" />
+                    <div className="h-5 w-16 bg-white/10 animate-pulse rounded mt-0.5" />
                   ) : (
-                    <p className="text-xl lg:text-2xl font-black text-white tracking-tight leading-none">
+                    <p className="text-base font-black text-white tracking-tight leading-none">
                       {minPrice > 0
                         ? `${priceSymbol} ${Math.floor(displayPrice).toLocaleString('es-ES')}`
                         : 'Gratis'}
@@ -296,30 +296,30 @@ export default function EventHero({ event }: EventHeroProps) {
 
               {/* Timer */}
               {timeLeft.days > 0 ? (
-                <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex flex-col justify-center">
-                  <p className="text-[9px] font-bold text-white/60 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1.5">
-                    <Clock className="w-3 h-3" />
+                <div className="bg-black/30 backdrop-blur-md border border-white/10 rounded-lg p-2.5 flex flex-col justify-center min-h-[70px]">
+                  <p className="text-[9px] font-semibold text-white/50 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <Clock className="w-2.5 h-2.5" />
                     Tiempo restante
                   </p>
-                  <div className="flex justify-between gap-1">
+                  <div className="flex justify-between gap-0.5">
                     {[
                       { label: 'D', value: timeLeft.days },
                       { label: 'H', value: timeLeft.hours },
                       { label: 'M', value: timeLeft.minutes },
                       { label: 'S', value: timeLeft.seconds }
                     ].map((item, idx) => (
-                      <div key={idx} className="flex flex-col items-center min-w-[24px]">
-                        <span className="text-base font-black font-mono text-white leading-none">
+                      <div key={idx} className="flex flex-col items-center min-w-[18px]">
+                        <span className="text-sm font-black font-mono text-white leading-none">
                           {String(item.value).padStart(2, '0')}
                         </span>
-                        <span className="text-[8px] text-white/40 font-bold tracking-wider">{item.label}</span>
+                        <span className="text-[7px] text-white/30 font-bold mt-0.5">{item.label}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-3 flex items-center justify-center">
-                  <span className="text-sm font-bold text-white/80">Evento Finalizado</span>
+                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-2.5 flex items-center justify-center min-h-[70px]">
+                  <span className="text-xs font-bold text-white/70">Evento Finalizado</span>
                 </div>
               )}
             </motion.div>
