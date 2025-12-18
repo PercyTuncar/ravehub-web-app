@@ -21,8 +21,6 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
     // Enable dynamic color extraction
     useEnhancedColorExtraction(event.mainImageUrl || event.bannerImageUrl || '');
     const { colorPalette } = useEventColors();
-    const { currency: targetCurrency } = useCurrency();
-
     // Countdown Logic
     const calculateTimeLeft = () => {
         const difference = +new Date(event.startDate) - +new Date();
@@ -232,26 +230,6 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                                         </Button>
                                     </a>
                                 )}
-                            </div>
-                            
-                            {/* Mobile Only Micro-copy (Under Button) */}
-                            <div className="block sm:hidden text-center">
-                                <div className="text-xs text-gray-400 font-medium flex items-center justify-center gap-1">
-                                     <span>{event.salesPhases?.[0]?.name || 'Early Bird'}</span>
-                                     <span className="mx-1">•</span> 
-                                     {minPrice > 0 ? (
-                                        <div className="flex items-center gap-1">
-                                            <span>Desde</span>
-                                            <ConvertedPrice 
-                                                amount={minPrice}
-                                                currency={event.currency || 'PEN'}
-                                                showOriginal={false}
-                                            />
-                                        </div>
-                                     ) : (
-                                        'Entradas disponibles'
-                                     )}
-                                </div>
                             </div>
                         </div>
                     </div>
