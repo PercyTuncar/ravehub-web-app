@@ -131,6 +131,15 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
     const target = calculateProgress();
     setProgress(target);
 
+    // Interval to keep checking progress
+    const interval = setInterval(() => {
+       const newTarget = calculateProgress();
+       setProgress(newTarget);
+    }, 60000); 
+
+    return () => clearInterval(interval);
+  }, [startDate, endDate]);
+
   // Update messages based on target (actual) progress with dynamic rotation
   useEffect(() => {
       if (progress >= 100) {
@@ -157,15 +166,6 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
 
       return () => clearInterval(interval);
   }, [progress]);
-
-    // Interval to keep checking progress
-    const interval = setInterval(() => {
-       const newTarget = calculateProgress();
-       setProgress(newTarget);
-    }, 60000); 
-
-    return () => clearInterval(interval);
-  }, [startDate, endDate]);
 
   // Animate displayed progress from 0 to target
   useEffect(() => {
