@@ -111,35 +111,51 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const calculateProgress = () => {
-      const start = new Date(startDate).getTime();
-      const end = new Date(endDate).getTime();
-      const now = new Date().getTime();
-      
-      // Calculate percentage
-      const totalDuration = end - start;
-      const elapsed = now - start;
-      const p = totalDuration > 0 ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)) : 0;
-      
-      setProgress(p);
+    // Initial delay to ensure the animation starts from 0
+    const timer = setTimeout(() => {
+      const calculateProgress = () => {
+        const start = new Date(startDate).getTime();
+        const end = new Date(endDate).getTime();
+        const now = new Date().getTime();
+        
+        // Calculate percentage
+        const totalDuration = end - start;
+        const elapsed = now - start;
+        const p = totalDuration > 0 ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)) : 0;
+        
+        setProgress(p);
 
-      // Determine message based on progress
-      if (p >= 100) {
-        setMessage("Fase Finalizada");
-      } else if (p > 90) {
-        setMessage("¡Últimos momentos! Por finalizar");
-      } else if (p > 75) {
-        setMessage("Los precios subirán pronto");
-      } else if (p > 50) {
-        setMessage("La fase avanza rápido");
-      } else {
-        setMessage("Aprovecha los precios actuales");
-      }
+        // Determine message based on progress
+        if (p >= 100) {
+          setMessage("Fase Finalizada");
+        } else if (p > 90) {
+          setMessage("¡Últimos momentos! Por finalizar");
+        } else if (p > 75) {
+          setMessage("Los precios subirán pronto");
+        } else if (p > 50) {
+          setMessage("La fase avanza rápido");
+        } else {
+          setMessage("Aprovecha los precios actuales");
+        }
+      };
+
+      calculateProgress();
+    }, 100);
+
+    const interval = setInterval(() => {
+       const start = new Date(startDate).getTime();
+       const end = new Date(endDate).getTime();
+       const now = new Date().getTime();
+       const totalDuration = end - start;
+       const elapsed = now - start;
+       const p = totalDuration > 0 ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)) : 0;
+       setProgress(p);
+    }, 60000); 
+
+    return () => {
+        clearTimeout(timer);
+        clearInterval(interval);
     };
-
-    calculateProgress();
-    const interval = setInterval(calculateProgress, 60000); // Update every minute
-    return () => clearInterval(interval);
   }, [startDate, endDate]);
 
   return (
@@ -150,12 +166,17 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
               <span className="font-medium text-white">Fase Activa:</span> 
               <span className="truncate">{message}</span>
           </div>
-          <CountdownTimer endDate={endDate} />
+          <div className="flex items-center gap-3">
+              <span className="text-xs font-bold tabular-nums text-zinc-400">
+                {Math.round(progress)}%
+              </span>
+              <CountdownTimer endDate={endDate} />
+          </div>
        </div>
        
        <div className="w-full h-1.5 bg-zinc-800/50 rounded-full overflow-hidden border border-white/5">
           <div 
-            className="h-full transition-all duration-1000 ease-out relative"
+            className="h-full transition-all duration-[2000ms] ease-out relative"
             style={{ 
               width: `${progress}%`, 
               backgroundColor: progress >= 100 ? '#ef4444' : dominantColor 
