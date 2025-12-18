@@ -379,13 +379,13 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
 
           {/* Global Installment Badge - The RaveHub Differentiator */}
           {event.allowInstallmentPayments && (
-            <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3 sm:px-5 sm:py-3 backdrop-blur-md w-full sm:w-auto">
+            <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3 sm:px-5 sm:py-3 backdrop-blur-md w-full sm:w-auto max-w-full">
               <div className="bg-blue-500 rounded-full p-2 text-white shadow-lg shadow-blue-500/20 flex-shrink-0">
                 <CreditCard className="w-5 h-5" />
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs text-blue-300 font-bold uppercase tracking-wider truncate">Facilidad de pago</span>
-                <span className="text-sm font-semibold text-white">Reserva hoy y paga en cuotas</span>
+              <div className="flex flex-col min-w-0 overflow-hidden">
+                <span className="text-xs text-blue-300 font-bold uppercase tracking-wider truncate block">Facilidad de pago</span>
+                <span className="text-sm font-semibold text-white break-words whitespace-normal block leading-tight">Reserva hoy y paga en cuotas</span>
               </div>
             </div>
           )}
@@ -395,23 +395,31 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Phase Tabs Navigation */}
-          <div className="px-4 sm:px-6 md:px-8 border-b border-white/5">
-            <TabsList className="bg-transparent h-auto p-0 gap-3 sm:gap-6 w-full flex overflow-x-auto no-scrollbar justify-start sm:justify-start pb-1">
+          <div className="relative border-b border-white/5 w-full">
+            {/* Scroll Shadow Indicator (Right) */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/40 to-transparent z-20 pointer-events-none sm:hidden" />
+
+            <TabsList className="bg-transparent h-auto p-0 w-full flex overflow-x-auto no-scrollbar justify-start pb-0 scroll-smooth">
               {pricingData.map(({ phase, status, isActive }, index) => (
                 <TabsTrigger
                   key={phase.id}
                   value={`phase-${index}`}
-                  className="group relative bg-transparent border-0 rounded-none pb-3 pt-2 px-1 text-sm font-medium text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none transition-colors flex-shrink-0"
+                  className={`
+                    group relative bg-transparent border-0 rounded-none pb-3 pt-2 text-sm font-medium transition-colors flex-shrink-0
+                    first:ml-0 sm:first:ml-6 md:first:ml-8 last:mr-0 sm:last:mr-6 md:last:mr-8 px-4 sm:px-4
+                    text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none
+                  `}
                 >
-                  <span className="relative z-10 flex items-center gap-2">
-                    {phase.name}
+                  <div className="relative flex items-center gap-2 py-1">
+                    <span className="whitespace-nowrap">{phase.name}</span>
                     {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
-                  </span>
-                  {/* Active Indicator Line */}
-                  <span
-                    className="absolute bottom-0 left-0 w-full h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
-                    style={{ backgroundColor: activeTab === `phase-${index}` ? dominantColor : 'transparent' }}
-                  />
+                    
+                    {/* Active Indicator Line - Scoped to content width */}
+                    <span
+                      className="absolute -bottom-4 left-0 right-0 h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
+                      style={{ backgroundColor: activeTab === `phase-${index}` ? dominantColor : 'transparent' }}
+                    />
+                  </div>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -458,19 +466,19 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                         }}
                       >
                         {/* Zone Header */}
-                        <div className="flex justify-between items-start gap-3 mb-4">
-                          <div className="min-w-0">
-                            <h3 className="text-lg sm:text-xl font-bold text-white mb-1 group-hover:text-primary transition-colors truncate" style={{ color: !isZoneSoldOut ? undefined : undefined }}>
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4 w-full">
+                          <div className="min-w-0 w-full">
+                            <h3 className="text-lg sm:text-xl font-bold text-white mb-1 group-hover:text-primary transition-colors truncate w-full" style={{ color: !isZoneSoldOut ? undefined : undefined }}>
                               {zone.zoneName}
                             </h3>
-                            <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2">
+                            <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2 w-full">
                               {zone.zoneDescription}
                             </p>
                           </div>
 
                           {/* Savings Badge */}
                           {zone.savingsPercent > 0 && !isZoneSoldOut && (
-                            <Badge className="bg-emerald-500 text-white border-0 font-bold shadow-lg shadow-emerald-500/20 px-2 py-1 text-xs whitespace-nowrap flex-shrink-0">
+                            <Badge className="bg-emerald-500 text-white border-0 font-bold shadow-lg shadow-emerald-500/20 px-2 py-1 text-xs whitespace-nowrap flex-shrink-0 self-start sm:self-auto">
                               Ahorra {zone.savingsPercent}%
                             </Badge>
                           )}

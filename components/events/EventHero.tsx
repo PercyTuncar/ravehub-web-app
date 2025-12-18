@@ -242,7 +242,7 @@ export default function EventHero({ event }: EventHeroProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="w-full grid grid-cols-2 lg:grid-cols-4 gap-2"
+              className="w-full grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3"
             >
               {/* Date */}
               <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-2.5 hover:bg-white/10 transition-colors duration-300 flex flex-col justify-center min-h-[70px]">
@@ -250,8 +250,8 @@ export default function EventHero({ event }: EventHeroProps) {
                   <Calendar className="w-3 h-3 text-primary/80" />
                   <span className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Fecha</span>
                 </div>
-                <p className="text-xs font-bold text-white leading-tight">
-                  {format(parseEventDate(event.startDate), "EEEE d 'de' MMMM", { locale: es })}
+                <p className="text-xs font-bold text-white leading-tight capitalize truncate">
+                  {format(parseEventDate(event.startDate), "EEEE d MMM", { locale: es })}
                 </p>
                 {event.startTime && (
                   <p className="text-[10px] text-white/60 font-medium mt-0.5">
@@ -266,11 +266,11 @@ export default function EventHero({ event }: EventHeroProps) {
                   <MapPin className="w-3 h-3 text-primary/80" />
                   <span className="text-[10px] font-semibold text-white/50 uppercase tracking-wider">Ubicación</span>
                 </div>
-                <p className="text-xs font-bold text-white leading-tight truncate">
+                <p className="text-xs font-bold text-white leading-tight truncate w-full">
                   {event.location.venue}
                 </p>
-                <p className="text-[10px] text-white/60 font-medium truncate mt-0.5">
-                  {event.location.city}, {event.location.region || event.location.country}
+                <p className="text-[10px] text-white/60 font-medium truncate mt-0.5 w-full">
+                  {event.location.city}
                 </p>
               </div>
 
@@ -285,7 +285,7 @@ export default function EventHero({ event }: EventHeroProps) {
                   {calculatingPrice ? (
                     <div className="h-5 w-16 bg-white/10 animate-pulse rounded mt-0.5" />
                   ) : (
-                    <p className="text-base font-black text-white tracking-tight leading-none">
+                    <p className="text-base font-black text-white tracking-tight leading-none truncate">
                       {minPrice > 0
                         ? `${priceSymbol} ${Math.floor(displayPrice).toLocaleString('es-ES')}`
                         : 'Gratis'}
@@ -297,20 +297,20 @@ export default function EventHero({ event }: EventHeroProps) {
               {/* Timer */}
               {timeLeft.days > 0 ? (
                 <div className="bg-black/30 backdrop-blur-md border border-white/10 rounded-lg p-2.5 flex flex-col justify-center min-h-[70px]">
-                  <p className="text-[9px] font-semibold text-white/50 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <p className="text-[9px] font-semibold text-white/50 uppercase tracking-wider mb-1 flex items-center gap-1.5 justify-center sm:justify-start">
                     <Clock className="w-2.5 h-2.5" />
-                    Tiempo restante
+                    <span className="hidden sm:inline">Tiempo restante</span>
+                    <span className="sm:hidden">Restante</span>
                   </p>
-                  <div className="flex justify-between gap-0.5">
+                  <div className="flex justify-between sm:justify-start gap-1 sm:gap-2 px-1 sm:px-0">
                     {[
                       { label: 'D', value: timeLeft.days },
                       { label: 'H', value: timeLeft.hours },
                       { label: 'M', value: timeLeft.minutes },
-                      { label: 'S', value: timeLeft.seconds }
                     ].map((item, idx) => (
-                      <div key={idx} className="flex flex-col items-center min-w-[18px]">
-                        <span className="text-sm font-black font-mono text-white leading-none">
-                          {String(item.value).padStart(2, '0')}
+                      <div key={idx} className="flex flex-col items-center min-w-[14px] sm:min-w-[18px]">
+                        <span className="text-xs sm:text-sm font-black font-mono text-white leading-none">
+                          {item.value}
                         </span>
                         <span className="text-[7px] text-white/30 font-bold mt-0.5">{item.label}</span>
                       </div>
@@ -319,7 +319,7 @@ export default function EventHero({ event }: EventHeroProps) {
                 </div>
               ) : (
                 <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-2.5 flex items-center justify-center min-h-[70px]">
-                  <span className="text-xs font-bold text-white/70">Evento Finalizado</span>
+                  <span className="text-xs font-bold text-white/70">Finalizado</span>
                 </div>
               )}
             </motion.div>

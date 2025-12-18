@@ -161,49 +161,59 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           <EventDetailHero event={event} />
 
           {/* Main Content */}
-          <div className="relative isolate overflow-hidden bg-[#141618]">
+          <div className="relative isolate overflow-hidden bg-[#141618] w-full max-w-full">
             {/* Background Gradients - Dynamic based on image colors */}
             <DynamicBackgroundGradients />
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24 pb-24 sm:pb-28 lg:pb-24">
-              <div className="grid gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-3">
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24 pb-24 sm:pb-28 lg:pb-24 w-full">
+              <div className="grid gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-3 w-full">
                 {/* Main Content */}
-                <div className="lg:col-span-2 space-y-8 sm:space-y-10 lg:space-y-12">
+                <div className="lg:col-span-2 space-y-8 sm:space-y-10 lg:space-y-12 min-w-0 w-full max-w-full">
                   {/* Lineup */}
-                  <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
+                  <div className="w-full max-w-full overflow-hidden">
+                    <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
+                  </div>
 
                   {/* Pricing Table */}
                   {event.salesPhases && event.salesPhases.length > 0 && (
-                    <EventPricingTable event={event} />
+                    <div className="w-full max-w-full overflow-hidden">
+                      <EventPricingTable event={event} />
+                    </div>
                   )}
 
                   {/* Stage Map */}
-                  <EventStageMap
-                    stageMapUrl={event.stageMapUrl}
-                    specifications={event.specifications}
-                  />
+                  <div className="w-full max-w-full overflow-hidden">
+                    <EventStageMap
+                      stageMapUrl={event.stageMapUrl}
+                      specifications={event.specifications}
+                    />
+                  </div>
 
                   {/* Gallery */}
-                  <EventGallery
-                    mainImageUrl={event.mainImageUrl}
-                    imageGallery={event.imageGallery}
-                    videoGallery={event.videoGallery}
-                    videoUrl={event.videoUrl}
-                    imageAltTexts={event.imageAltTexts}
-                  />
+                  <div className="w-full max-w-full overflow-hidden">
+                    <EventGallery
+                      mainImageUrl={event.mainImageUrl}
+                      imageGallery={event.imageGallery}
+                      videoGallery={event.videoGallery}
+                      videoUrl={event.videoUrl}
+                      imageAltTexts={event.imageAltTexts}
+                    />
+                  </div>
 
                   {/* Event Details */}
-                  <EventDetails
-                    description={event.description}
-                    specifications={event.specifications}
-                    faqSection={event.faqSection}
-                    tags={event.tags}
-                    categories={event.categories}
-                  />
+                  <div className="w-full max-w-full overflow-hidden">
+                    <EventDetails
+                      description={event.description}
+                      specifications={event.specifications}
+                      faqSection={event.faqSection}
+                      tags={event.tags}
+                      categories={event.categories}
+                    />
+                  </div>
                 </div>
 
                 {/* Sidebar */}
-                <div className="space-y-4 sm:space-y-6">
+                <div className="space-y-4 sm:space-y-6 min-w-0 w-full max-w-full">
                   {/* Event Info Card */}
                   <EventInfoSidebar event={event} />
 
@@ -215,12 +225,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
                   {/* Map */}
                   {event.location.geo && (
-                    <EventMap
-                      lat={event.location.geo.lat}
-                      lng={event.location.geo.lng}
-                      venue={event.location.venue}
-                      address={event.location.address}
-                    />
+                    <div className="w-full max-w-full overflow-hidden rounded-xl">
+                      <EventMap
+                        lat={event.location.geo.lat}
+                        lng={event.location.geo.lng}
+                        venue={event.location.venue}
+                        address={event.location.address}
+                      />
+                    </div>
                   )}
 
                   {/* Organizer */}
@@ -228,7 +240,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
                   {/* External Tickets */}
                   {event.externalTicketUrl && (
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm w-full max-w-full overflow-hidden">
                       <CardHeader>
                         <CardTitle className="text-[#FAFDFF]">Entradas Externas</CardTitle>
                       </CardHeader>
