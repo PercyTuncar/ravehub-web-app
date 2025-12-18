@@ -1,10 +1,10 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Ticket, Calendar, Clock, CheckCircle2, XCircle, AlertCircle, ShoppingCart } from 'lucide-react';
+import { Ticket, Calendar, Clock, CheckCircle2, XCircle, AlertCircle, ShoppingCart, CreditCard, Sparkles, Zap, ArrowRight, Check } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { useEventColors } from './EventColorContext';
 import { format } from 'date-fns';
@@ -13,72 +13,10 @@ import { parseLocalDate } from '@/lib/utils/date-timezone';
 import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ZonePrice } from './ZonePrice';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface EventPricingTableProps {
   event: Event;
-}
-
-function getPhaseStatusBadge(status: string | undefined, manualStatus: string | null | undefined, size: 'sm' | 'md' = 'sm') {
-  const finalStatus = manualStatus || status;
-  const sizeClasses = size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1';
-
-  switch (finalStatus) {
-    case 'active':
-      return (
-        <Badge className={`${sizeClasses} backdrop-blur-sm font-semibold shadow-lg`} style={{
-          backgroundColor: '#10b981',
-          color: '#FFFFFF',
-          borderColor: '#10b981',
-          boxShadow: '0 0 12px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-        }}>
-          <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
-          Activa
-        </Badge>
-      );
-    case 'expired':
-      return (
-        <Badge className={`${sizeClasses} backdrop-blur-md font-medium`} style={{
-          backgroundColor: 'rgba(156, 163, 175, 0.1)',
-          color: 'rgba(255, 255, 255, 0.5)',
-          borderColor: 'rgba(156, 163, 175, 0.2)',
-        }}>
-          <XCircle className="h-2.5 w-2.5 mr-0.5" />
-          Finalizada
-        </Badge>
-      );
-    case 'upcoming':
-      return (
-        <Badge className={`${sizeClasses} backdrop-blur-md font-medium`} style={{
-          backgroundColor: 'rgba(245, 158, 11, 0.1)',
-          color: 'rgba(251, 191, 36, 0.8)',
-          borderColor: 'rgba(245, 158, 11, 0.2)',
-        }}>
-          <AlertCircle className="h-2.5 w-2.5 mr-0.5" />
-          Próximamente
-        </Badge>
-      );
-    case 'sold_out':
-      return (
-        <Badge className={`${sizeClasses} backdrop-blur-md font-medium`} style={{
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          color: 'rgba(248, 113, 113, 0.7)',
-          borderColor: 'rgba(239, 68, 68, 0.2)',
-        }}>
-          <XCircle className="h-2.5 w-2.5 mr-0.5" />
-          Agotada
-        </Badge>
-      );
-    default:
-      return (
-        <Badge className={`${sizeClasses} backdrop-blur-md font-medium`} style={{
-          backgroundColor: 'rgba(156, 163, 175, 0.1)',
-          color: 'rgba(255, 255, 255, 0.5)',
-          borderColor: 'rgba(156, 163, 175, 0.2)',
-        }}>
-          {finalStatus || 'Desconocido'}
-        </Badge>
-      );
-  }
 }
 
 function CountdownTimer({ endDate }: { endDate: string }) {
@@ -111,82 +49,36 @@ function CountdownTimer({ endDate }: { endDate: string }) {
 
   if (!timeLeft) return null;
 
-  if (timeLeft.days > 3) {
-    return (
-      <span className="text-xs text-white/60">
-        Termina el {format(parseLocalDate(endDate), 'd MMM', { locale: es })}, 23:59
-      </span>
-    );
-  }
-
   return (
-    <span className="text-xs text-white/87 font-medium tabular-nums" aria-live="polite">
-      Termina en {String(timeLeft.days).padStart(2, '0')}:{String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
-    </span>
+    <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-full">
+      <Clock className="w-3.5 h-3.5 text-red-400 animate-pulse" />
+      <span className="text-xs font-bold text-red-400 tabular-nums">
+        Termina en {String(timeLeft.days)}d {String(timeLeft.hours).padStart(2, '0')}h {String(timeLeft.minutes).padStart(2, '0')}m
+      </span>
+    </div>
   );
 }
 
-function AvailabilityBar({ endDate }: { endDate: string }) {
-  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number } | null>(null);
+function StockIndicator({ available, sold, capacity }: { available: number; sold: number; capacity: number }) {
+  // If no capacity data, don't show
+  if (!capacity || capacity === 0) return null;
 
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const end = new Date(endDate);
-      const now = new Date();
-      const difference = end.getTime() - now.getTime();
+  const percentageSold = (sold / capacity) * 100;
+  const isLowStock = percentageSold > 80;
+  const isCritical = percentageSold > 95;
 
-      if (difference <= 0) {
-        setTimeLeft(null);
-        return;
-      }
-
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-      setTimeLeft({ days, hours });
-    };
-
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000 * 60 * 60); // Update every hour
-
-    return () => clearInterval(interval);
-  }, [endDate]);
-
-  if (!timeLeft) {
-    return (
-      <div className="flex items-center gap-2 text-xs text-white/60">
-        <span>Fase finalizada</span>
-      </div>
-    );
-  }
-
-  // Calculate percentage based on days remaining (assuming max 30 days for a phase)
-  const maxDays = 30;
-  const daysRemaining = timeLeft.days;
-  const percentage = Math.min((daysRemaining / maxDays) * 100, 100);
-
-  // Color based on days remaining
-  const isLow = daysRemaining <= 3;
-  const isWarning = daysRemaining <= 7 && daysRemaining > 3;
-  const color = isLow ? '#ef4444' : isWarning ? '#f59e0b' : '#10b981';
-
-  const daysText = daysRemaining === 1 ? 'día' : 'días';
-  const hoursText = timeLeft.hours === 1 ? 'hora' : 'horas';
+  if (!isLowStock) return null;
 
   return (
-    <div className="flex items-center gap-2 text-xs text-white/60">
-      <span>Disponibilidad:</span>
-      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-300"
-          style={{
-            width: `${Math.min(percentage, 100)}%`,
-            backgroundColor: color,
-          }}
+    <div className="flex items-center gap-1.5 mt-2">
+      <div className="relative w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div 
+          className={`absolute top-0 left-0 h-full rounded-full ${isCritical ? 'bg-red-500' : 'bg-orange-500'}`} 
+          style={{ width: `${percentageSold}%` }}
         />
       </div>
-      <span className="tabular-nums font-medium text-white/87">
-        {daysRemaining} {daysText} {timeLeft.hours > 0 && daysRemaining < 7 && `y ${timeLeft.hours} ${hoursText}`} restantes
+      <span className={`text-[10px] font-bold uppercase tracking-wider ${isCritical ? 'text-red-500' : 'text-orange-500'}`}>
+        {isCritical ? '¡Últimos!' : 'Pocos'}
       </span>
     </div>
   );
@@ -212,17 +104,13 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
           zoneId: zp.zoneId,
           zoneName: zone?.name || 'Zona desconocida',
           zoneDescription: zone?.description || '',
+          features: zone?.features || [],
           price: zp.price,
           available: zp.available,
           sold: zp.sold,
           capacity: zone?.capacity || 0,
         };
       }) || [];
-
-      // Find most sold zone (most popular)
-      const mostSoldZone = zones.length > 0
-        ? zones.reduce((max, zone) => zone.sold > max.sold ? zone : max, zones[0])
-        : null;
 
       return {
         phase,
@@ -231,9 +119,6 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
         isActive: finalStatus === 'active',
         isExpired: finalStatus === 'expired',
         isUpcoming: finalStatus === 'upcoming',
-        mostSoldZoneId: mostSoldZone?.zoneId,
-        totalSold: zones.reduce((sum, z) => sum + z.sold, 0),
-        totalCapacity: zones.reduce((sum, z) => sum + z.capacity, 0),
       };
     });
   }, [event.salesPhases, event.zones]);
@@ -255,222 +140,205 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
     return null;
   }
 
+  const activePhaseData = pricingData.find((p, i) => `phase-${i}` === activeTab);
+  const buyUrl = `/eventos/${event.slug}/comprar`;
+
   return (
-    <Card className="bg-white/5 border-white/5 backdrop-blur-sm overflow-hidden shadow-lg" style={{ boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)' }}>
-      <CardHeader className="bg-gradient-to-r from-white/10 to-transparent border-b border-white/10 px-3 sm:px-4 py-2.5 sm:py-3">
-        <div className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2 text-[#FAFDFF]">
-          <div
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{
-              background: `linear-gradient(135deg, ${dominantColor}20, ${accentColor}20)`,
-              border: `2px solid ${dominantColor}40`,
-            }}
-          >
-            <Ticket
-              className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-              style={{
-                color: dominantColor,
-                transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-base sm:text-lg font-bold truncate text-white/87">Precios y Zonas</h2>
-            <p className="text-xs text-white/60 font-normal mt-0.5">
-              Selecciona tu etapa y revisa precios
-            </p>
-          </div>
+    <div className="w-full space-y-8 py-8">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-2 flex items-center gap-3">
+            <Ticket className="w-8 h-8 text-primary" />
+            Entradas y Precios
+          </h2>
+          <p className="text-white/60 text-lg font-light">
+            Selecciona la experiencia perfecta para ti
+          </p>
         </div>
-      </CardHeader>
-      <CardContent className="p-3 sm:p-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList
-            className="grid w-full mb-4 sm:mb-6 bg-transparent border-0 p-0 gap-1"
-            style={{ gridTemplateColumns: `repeat(${pricingData.length}, minmax(0, 1fr))` }}
-          >
-            {pricingData.map(({ phase, status }, index) => {
-              const isActive = status === 'active';
-              return (
-                <TabsTrigger
-                  key={phase.id}
-                  value={`phase-${index}`}
-                  className="data-[state=active]:bg-white/10 data-[state=active]:text-[#FAFDFF] data-[state=inactive]:text-white/60 data-[state=inactive]:bg-white/5 rounded-md sm:rounded-lg py-1 sm:py-1.5 px-1.5 sm:px-2 border border-white/10 transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
-                  style={{
-                    borderColor: isActive ? `${dominantColor}50` : 'rgba(255, 255, 255, 0.1)',
-                    '--focus-color': dominantColor,
-                  } as React.CSSProperties & { '--focus-color': string }}
-                >
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-xs font-medium truncate w-full text-center leading-tight">{phase.name}</span>
-                    <div className="scale-[0.65] sm:scale-75">
-                      {getPhaseStatusBadge(phase.status, phase.manualStatus, 'sm')}
-                    </div>
-                  </div>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+        
+        {/* Global Countdown for Active Phase */}
+        {activePhaseData?.isActive && (
+          <CountdownTimer endDate={activePhaseData.phase.endDate} />
+        )}
+      </div>
 
-          {pricingData.map(({ phase, zones, status, isActive, isExpired, isUpcoming, mostSoldZoneId, totalSold, totalCapacity }, index) => {
-            const startDate = format(parseLocalDate(phase.startDate), 'd MMM yyyy', { locale: es });
-            const endDate = format(parseLocalDate(phase.endDate), 'd MMM yyyy', { locale: es });
-            const buyUrl = `/eventos/${event.slug}/comprar`;
+      {/* Phase Selector Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full h-auto bg-transparent p-0 gap-2 flex-wrap justify-start border-b border-white/10 mb-8 pb-4 rounded-none">
+          {pricingData.map(({ phase, status, isActive }, index) => (
+            <TabsTrigger
+              key={phase.id}
+              value={`phase-${index}`}
+              className={`
+                relative px-6 py-3 rounded-full text-sm font-bold tracking-wide transition-all duration-300 border
+                ${isActive 
+                  ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]' 
+                  : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:border-white/30'
+                }
+              `}
+            >
+              {phase.name}
+              {isActive && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+              )}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-            return (
-              <TabsContent key={phase.id} value={`phase-${index}`} className="mt-4 sm:mt-6">
-                <div
-                  className="rounded-lg sm:rounded-xl overflow-hidden transition-all duration-300"
-                  style={{
-                    borderColor: isActive ? `${dominantColor}30` : 'rgba(255, 255, 255, 0.1)',
-                    backgroundColor: isActive ? `${dominantColor}10` : 'rgba(255, 255, 255, 0.03)',
-                  }}
-                >
-                  {/* Phase Header */}
-                  <div
-                    className="px-3 sm:px-4 py-2.5 sm:py-3 bg-white/8"
-                    style={{
-                      borderColor: isActive ? `${dominantColor}30` : 'rgba(255, 255, 255, 0.12)',
-                      background: isActive
-                        ? `linear-gradient(135deg, ${dominantColor}15, ${accentColor}10)`
-                        : 'rgba(255, 255, 255, 0.08)',
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                          <h4 className="text-xs sm:text-sm font-bold text-white/87">{phase.name}</h4>
-                          <span className="text-white/40">•</span>
-                          {getPhaseStatusBadge(phase.status, phase.manualStatus, 'sm')}
-                        </div>
-                      </div>
-                      {isActive && (
-                        <div className="flex-shrink-0">
-                          <CountdownTimer endDate={phase.endDate} />
+        <AnimatePresence mode="wait">
+          {pricingData.map(({ phase, zones, isActive, isUpcoming }, index) => (
+            <TabsContent key={phase.id} value={`phase-${index}`} className="mt-0">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {zones.map((zone, i) => {
+                  const isSoldOut = zone.available === 0;
+                  // Determine if this card should be highlighted (e.g. VIP or most popular)
+                  const isHighlighted = zone.zoneName.toLowerCase().includes('vip') || zone.zoneName.toLowerCase().includes('experience');
+                  
+                  return (
+                    <div 
+                      key={zone.zoneId}
+                      className={`
+                        group relative flex flex-col p-6 rounded-3xl border transition-all duration-300
+                        ${isSoldOut ? 'opacity-60 grayscale' : 'hover:scale-[1.02] hover:-translate-y-1'}
+                        ${isHighlighted 
+                          ? 'bg-gradient-to-b from-white/10 to-white/5 border-primary/50 shadow-2xl shadow-primary/10' 
+                          : 'bg-white/5 border-white/10 hover:border-white/20 hover:shadow-xl'
+                        }
+                      `}
+                    >
+                      {/* Highlight Badge */}
+                      {isHighlighted && !isSoldOut && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-orange-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          MÁS POPULAR
                         </div>
                       )}
+
+                      {/* Zone Header */}
+                      <div className="mb-6 text-center">
+                        <h3 className="text-xl font-black text-white tracking-tight mb-2 uppercase">
+                          {zone.zoneName}
+                        </h3>
+                        {zone.zoneDescription && (
+                          <p className="text-sm text-white/60 line-clamp-2 min-h-[2.5rem]">
+                            {zone.zoneDescription}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Price Section */}
+                      <div className="mb-8 text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <span className="text-sm text-white/40 font-medium">Desde</span>
+                        </div>
+                        <ZonePrice
+                          price={zone.price}
+                          currency={currency}
+                          dominantColor={dominantColor}
+                          className="text-4xl lg:text-5xl font-black text-white tracking-tighter"
+                        />
+                        
+                        {/* Installment Badge */}
+                        {event.allowInstallmentPayments && !isSoldOut && isActive && (
+                          <div className="mt-3 inline-flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-3 py-1 rounded-lg">
+                            <CreditCard className="w-3.5 h-3.5" />
+                            <span className="text-xs font-bold">Reserva con S/ 50</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Divider */}
+                      <div className="w-full h-px bg-white/10 mb-6" />
+
+                      {/* Benefits/Features (Mocked if not present) */}
+                      <div className="flex-1 space-y-3 mb-8">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                          <span className="text-sm text-white/80">Acceso a {zone.zoneName}</span>
+                        </div>
+                        {/* Add more generic features if zone features are empty */}
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                          <span className="text-sm text-white/80">Ingreso rápido y seguro</span>
+                        </div>
+                        {event.allowInstallmentPayments && (
+                           <div className="flex items-start gap-3">
+                            <div className="mt-1 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                            <span className="text-sm text-white/80">Pago en cuotas disponible</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Stock Indicator */}
+                      {isActive && !isSoldOut && (
+                        <div className="mb-4">
+                          <StockIndicator available={zone.available} sold={zone.sold} capacity={zone.capacity} />
+                        </div>
+                      )}
+
+                      {/* Status / CTA */}
+                      {isSoldOut ? (
+                        <Button disabled className="w-full bg-white/5 text-white/40 font-bold border border-white/5">
+                          AGOTADO
+                        </Button>
+                      ) : isActive ? (
+                        <div className="text-center text-xs text-white/40 font-medium animate-pulse">
+                          ¡Quedan pocas entradas!
+                        </div>
+                      ) : (
+                        <Button disabled variant="outline" className="w-full border-white/10 text-white/40">
+                          Próximamente
+                        </Button>
+                      )}
                     </div>
-                    {isActive && (
-                      <div className="mt-2">
-                        <AvailabilityBar endDate={phase.endDate} />
-                      </div>
-                    )}
-                  </div>
+                  );
+                })}
+              </motion.div>
+            </TabsContent>
+          ))}
+        </AnimatePresence>
+      </Tabs>
 
-                  {/* Zones Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr
-                          className="border-b bg-white/8"
-                          style={{ borderColor: 'rgba(255, 255, 255, 0.12)' }}
-                        >
-                          <th className="text-left px-4 sm:px-5 py-3 text-xs font-semibold text-white/87">Zona</th>
-                          <th className="text-right px-4 sm:px-5 py-3 text-xs font-semibold text-white/87">Precio</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {zones.map((zone, zoneIndex) => {
-                          const isSoldOut = zone.available === 0;
-
-                          return (
-                            <tr
-                              key={zone.zoneId}
-                              className={`border-b transition-all duration-150 hover:bg-white/5 ${isSoldOut ? 'opacity-60' : 'cursor-pointer'}`}
-                              style={{
-                                borderColor: 'rgba(255, 255, 255, 0.08)',
-                                minHeight: '56px',
-                              }}
-                            >
-                              <td className="px-4 sm:px-5 py-3 sm:py-4">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 mb-0.5">
-                                    <div className={`font-semibold text-sm text-white/87 ${isSoldOut ? 'line-through' : ''}`}>
-                                      {zone.zoneName}
-                                    </div>
-                                    {isSoldOut && (
-                                      <Badge className="text-[10px] px-1.5 py-0.5 backdrop-blur-md font-medium" style={{
-                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                        color: 'rgba(248, 113, 113, 0.7)',
-                                        borderColor: 'rgba(239, 68, 68, 0.2)',
-                                      }}>
-                                        Agotado
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  {zone.zoneDescription && (
-                                    <div
-                                      className="text-xs mt-0.5 line-clamp-1"
-                                      style={{
-                                        color: dominantColor,
-                                        transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                                      }}
-                                    >
-                                      {zone.zoneDescription}
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 sm:px-5 py-3 sm:py-4 text-right align-top">
-                                <ZonePrice
-                                  price={zone.price}
-                                  currency={currency}
-                                  dominantColor={dominantColor}
-                                />
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Buy Button */}
-                  <div className="px-3 sm:px-4 py-3 sm:py-4 border-t bg-white/5" style={{ borderColor: 'rgba(255, 255, 255, 0.12)' }}>
-                    {isActive ? (
-                      <Link href={buyUrl}>
-                        <Button
-                          className="w-full h-auto py-3 sm:py-3.5 px-4 sm:px-5 rounded-lg font-semibold text-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2"
-                          style={{
-                            backgroundColor: dominantColor,
-                            color: '#FFFFFF',
-                            '--focus-color': dominantColor,
-                          } as React.CSSProperties & { '--focus-color': string }}
-                        >
-                          <ShoppingCart className="h-4 w-4 mr-2 text-white" />
-                          <span className="text-white">Comprar entradas</span>
-                        </Button>
-                      </Link>
-                    ) : isUpcoming ? (
-                      <div className="space-y-2">
-                        <p className="text-xs text-white/60 text-center">Esta fase aún no está disponible</p>
-                        <Button
-                          disabled
-                          variant="outline"
-                          className="w-full h-auto py-2.5 px-4 rounded-lg font-semibold text-sm opacity-50 cursor-not-allowed border-white/20"
-                        >
-                          Notificarme cuando inicie
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        disabled
-                        className="w-full h-auto py-2.5 sm:py-3 px-4 sm:px-5 rounded-lg font-semibold text-sm opacity-50 cursor-not-allowed"
-                        style={{
-                          backgroundColor: `${dominantColor}30`,
-                          color: '#FAFDFF',
-                        }}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        <span className="truncate">Fase Finalizada</span>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </TabsContent>
-            );
-          })}
-        </Tabs>
-      </CardContent>
-    </Card>
+      {/* Global CTA - Sticky/Fixed feel */}
+      <div className="relative mt-12 p-1 rounded-2xl bg-gradient-to-r from-primary via-orange-500 to-primary animate-gradient-x">
+        <div className="bg-black/90 backdrop-blur-xl rounded-xl p-6 md:p-8 text-center">
+          <h3 className="text-2xl font-bold text-white mb-2">¿Listo para vivir la experiencia?</h3>
+          <p className="text-white/60 mb-6 max-w-2xl mx-auto">
+            Asegura tu lugar en {event.name} antes de que suban los precios. 
+            {event.allowInstallmentPayments && " Aprovecha el pago en cuotas."}
+          </p>
+          <Link href={buyUrl} className="inline-block w-full sm:w-auto">
+            <Button 
+              size="lg" 
+              className="w-full sm:min-w-[300px] h-14 text-lg font-black rounded-xl bg-white text-black hover:bg-white/90 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_50px_rgba(255,255,255,0.4)] transition-all duration-300 hover:scale-105"
+            >
+              <Ticket className="w-6 h-6 mr-2" />
+              COMPRAR ENTRADAS
+              <ArrowRight className="w-6 h-6 ml-2" />
+            </Button>
+          </Link>
+          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-white/40">
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Pago 100% Seguro</span>
+            <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Entrega Inmediata</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
