@@ -127,19 +127,10 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                   <div className="relative px-5 py-2.5 flex items-center gap-3.5">
                     {/* Icon */}
                     <div 
-                      className="flex-shrink-0 p-2 rounded-lg"
-                      style={{
-                        background: `${accentColor}15`,
-                        border: `1px solid ${accentColor}20`,
-                        transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                      }}
+                      className="flex-shrink-0 p-2 rounded-lg bg-zinc-800/50 border border-zinc-700/50"
                     >
                       <Ticket 
-                        className="h-4 w-4" 
-                        style={{ 
-                          color: accentColor,
-                          transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
+                        className="h-4 w-4 text-zinc-500" 
                       />
                     </div>
 
@@ -147,22 +138,14 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span 
-                          className="text-[9px] font-semibold uppercase tracking-wider opacity-75"
-                          style={{ 
-                            color: accentColor,
-                            transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                          }}
+                          className="text-[9px] font-semibold uppercase tracking-wider opacity-75 text-zinc-400"
                         >
                           Desde
                         </span>
                       </div>
                       <div className="flex items-baseline gap-2">
                         <div 
-                          className="text-xl font-bold leading-tight"
-                          style={{ 
-                            color: accentColor,
-                            transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                          }}
+                          className="text-xl font-bold leading-tight text-zinc-100"
                         >
                           {isConvertingPrice ? (
                             <span className="inline-block animate-pulse text-lg">---</span>
@@ -258,37 +241,20 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                 <div className="px-3.5 py-2.5 flex items-center justify-between gap-2.5">
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
                     <div 
-                      className="p-1 rounded-md flex-shrink-0"
-                      style={{
-                        backgroundColor: `${accentColor}12`,
-                        border: `1px solid ${accentColor}25`,
-                        transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                      }}
+                      className="p-1 rounded-md flex-shrink-0 bg-zinc-800/50 border border-zinc-700/50"
                     >
                       <Ticket 
-                        className="h-3.5 w-3.5" 
-                        style={{ 
-                          color: accentColor,
-                          transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
+                        className="h-3.5 w-3.5 text-zinc-500" 
                       />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div 
-                        className="text-[9px] font-semibold uppercase tracking-wider mb-0.5 opacity-90"
-                        style={{ 
-                          color: accentColor,
-                          transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
+                        className="text-[9px] font-semibold uppercase tracking-wider mb-0.5 opacity-90 text-zinc-400"
                       >
                         Desde
                       </div>
                       <div 
-                        className="text-lg font-bold leading-tight"
-                        style={{ 
-                          color: accentColor,
-                          transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
+                        className="text-lg font-bold leading-tight text-zinc-100"
                       >
                         {isConvertingPrice ? (
                           <span className="inline-block animate-pulse text-xs">---</span>
