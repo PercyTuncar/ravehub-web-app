@@ -10,8 +10,9 @@ import { useEventColors } from './EventColorContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { parseLocalDate } from '@/lib/utils/date-timezone';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useInView } from 'framer-motion';
 import { ZonePrice } from './ZonePrice';
 
 interface EventPricingTableProps {
@@ -110,6 +111,9 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
   const [progress, setProgress] = useState(0);
   const [displayedProgress, setDisplayedProgress] = useState(0);
   const [message, setMessage] = useState('');
+  
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef, { once: true, amount: 0.5 });
 
   // Calculate actual progress
   useEffect(() => {
@@ -151,10 +155,12 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
 
   // Animate displayed progress from 0 to target
   useEffect(() => {
-    // Duration of animation in ms
-    const duration = 2000;
+    if (!isInView) return;
+
+    // Duration of animation in ms - Slower as requested (3500ms)
+    const duration = 3500;
     const startTime = performance.now();
-    const startValue = 0; // Always animate from 0 on mount
+    const startValue = 0; // Always animate from 0
     
     let animationFrameId: number;
 
@@ -176,10 +182,10 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
     animationFrameId = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [progress]); // Re-run if target progress changes significantly, though mainly for initial load
+  }, [progress, isInView]); 
 
   return (
-    <div className="w-full flex flex-col gap-2">
+    <div ref={containerRef} className="w-full flex flex-col gap-2">
        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-zinc-300">
               <div className={`w-2 h-2 rounded-full animate-pulse ${progress >= 100 ? 'bg-red-500' : 'bg-green-500'}`} />
