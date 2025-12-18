@@ -1,10 +1,10 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Ticket, Calendar, Clock, CheckCircle2, XCircle, AlertCircle, ShoppingCart, CreditCard, Sparkles, Zap, ArrowRight, Check } from 'lucide-react';
+import { Ticket, Calendar, Clock, CheckCircle2, XCircle, AlertCircle, ShoppingCart, CreditCard, Flame, ArrowRight, TrendingUp } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { useEventColors } from './EventColorContext';
 import { format } from 'date-fns';
@@ -13,10 +13,46 @@ import { parseLocalDate } from '@/lib/utils/date-timezone';
 import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ZonePrice } from './ZonePrice';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface EventPricingTableProps {
   event: Event;
+}
+
+function getPhaseStatusBadge(status: string | undefined, manualStatus: string | null | undefined, size: 'sm' | 'md' = 'sm') {
+  const finalStatus = manualStatus || status;
+  const sizeClasses = size === 'sm' ? 'text-[10px] px-2 py-0.5' : 'text-xs px-2.5 py-1';
+
+  switch (finalStatus) {
+    case 'active':
+      return (
+        <Badge className={`${sizeClasses} border-transparent font-bold shadow-[0_0_10px_rgba(16,185,129,0.4)] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30`}>
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse" />
+          En Venta
+        </Badge>
+      );
+    case 'expired':
+      return (
+        <Badge className={`${sizeClasses} bg-zinc-500/10 text-zinc-400 border-zinc-500/20 border`}>
+          Finalizada
+        </Badge>
+      );
+    case 'upcoming':
+      return (
+        <Badge className={`${sizeClasses} bg-amber-500/10 text-amber-400 border-amber-500/20 border`}>
+          <Clock className="w-3 h-3 mr-1" />
+          Próximamente
+        </Badge>
+      );
+    case 'sold_out':
+      return (
+        <Badge className={`${sizeClasses} bg-red-500/10 text-red-400 border-red-500/20 border`}>
+          <XCircle className="w-3 h-3 mr-1" />
+          Agotada
+        </Badge>
+      );
+    default:
+      return null;
+  }
 }
 
 function CountdownTimer({ endDate }: { endDate: string }) {
@@ -43,43 +79,71 @@ function CountdownTimer({ endDate }: { endDate: string }) {
 
     calculateTimeLeft();
     const interval = setInterval(calculateTimeLeft, 1000);
-
     return () => clearInterval(interval);
   }, [endDate]);
 
   if (!timeLeft) return null;
 
+  const isUrgent = timeLeft.days < 2;
+
+  if (timeLeft.days > 3) {
+    return (
+      <div className="flex items-center text-xs text-zinc-400 bg-zinc-900/50 px-2 py-1 rounded-md border border-white/5">
+        <Calendar className="w-3 h-3 mr-1.5 opacity-70" />
+        <span>Hasta {format(parseLocalDate(endDate), 'd MMM', { locale: es })}</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-full">
-      <Clock className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-      <span className="text-xs font-bold text-red-400 tabular-nums">
-        Termina en {String(timeLeft.days)}d {String(timeLeft.hours).padStart(2, '0')}h {String(timeLeft.minutes).padStart(2, '0')}m
+    <div className={`flex items-center text-xs font-medium px-2 py-1 rounded-md border backdrop-blur-sm ${isUrgent ? 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+      <Clock className="w-3 h-3 mr-1.5" />
+      <span className="tabular-nums">
+        {timeLeft.days > 0 && `${timeLeft.days}d `}
+        {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
       </span>
     </div>
   );
 }
 
-function StockIndicator({ available, sold, capacity }: { available: number; sold: number; capacity: number }) {
+function StockProgressBar({ available, sold, capacity }: { available: number; sold: number; capacity: number }) {
   // If no capacity data, don't show
   if (!capacity || capacity === 0) return null;
 
-  const percentageSold = (sold / capacity) * 100;
-  const isLowStock = percentageSold > 80;
-  const isCritical = percentageSold > 95;
+  // Calculate percentage sold
+  // Note: 'sold' + 'available' might usually equal capacity, but sometimes manual adjustments happen.
+  // We'll trust 'sold' / 'capacity' or 'sold' / ('sold' + 'available')
+  const total = sold + available;
+  const percentageSold = Math.min((sold / total) * 100, 100);
+  
+  // Determine status
+  const isLowStock = available < 50 || percentageSold > 90;
+  const isSellingFast = percentageSold > 60;
 
-  if (!isLowStock) return null;
+  if (!isSellingFast && !isLowStock) return null;
 
   return (
-    <div className="flex items-center gap-1.5 mt-2">
-      <div className="relative w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+    <div className="mt-3">
+      <div className="flex justify-between items-center mb-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-zinc-400">
+          {isLowStock ? (
+            <span className="text-red-400 flex items-center">
+              <Flame className="w-3 h-3 mr-1" /> ¡Últimos tickets!
+            </span>
+          ) : (
+            <span className="text-amber-400 flex items-center">
+              <TrendingUp className="w-3 h-3 mr-1" /> Ventas rápidas
+            </span>
+          )}
+        </span>
+        <span className="text-[10px] text-zinc-500 font-medium">{Math.round(percentageSold)}% vendido</span>
+      </div>
+      <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
         <div 
-          className={`absolute top-0 left-0 h-full rounded-full ${isCritical ? 'bg-red-500' : 'bg-orange-500'}`} 
+          className={`h-full rounded-full transition-all duration-1000 ease-out ${isLowStock ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gradient-to-r from-amber-500 to-yellow-400'}`}
           style={{ width: `${percentageSold}%` }}
         />
       </div>
-      <span className={`text-[10px] font-bold uppercase tracking-wider ${isCritical ? 'text-red-500' : 'text-orange-500'}`}>
-        {isCritical ? '¡Últimos!' : 'Pocos'}
-      </span>
     </div>
   );
 }
@@ -90,40 +154,72 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
   const accentColor = colorPalette?.accent || '#FBA905';
   const currency = event.currency || 'USD';
 
-  // Organize pricing data by phase
+  // Organize pricing data
   const pricingData = useMemo(() => {
-    if (!event.salesPhases || event.salesPhases.length === 0) {
-      return [];
-    }
+    if (!event.salesPhases || event.salesPhases.length === 0) return [];
 
-    return event.salesPhases.map(phase => {
+    // Sort phases by date to determine order
+    const sortedPhases = [...event.salesPhases].sort((a, b) => 
+      new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
+
+    return sortedPhases.map((phase, index) => {
       const finalStatus = phase.manualStatus || phase.status;
       const zones = phase.zonesPricing?.map(zp => {
         const zone = event.zones?.find(z => z.id === zp.zoneId);
+        
+        // Calculate savings compared to next phase if available
+        let nextPhasePrice = null;
+        let savingsPercent = 0;
+        
+        // Find next active or upcoming phase
+        const nextPhase = sortedPhases.slice(index + 1).find(p => {
+            const s = p.manualStatus || p.status;
+            return s === 'active' || s === 'upcoming';
+        });
+
+        if (nextPhase && nextPhase.zonesPricing) {
+            const nextZonePrice = nextPhase.zonesPricing.find(nzp => nzp.zoneId === zp.zoneId);
+            if (nextZonePrice && nextZonePrice.price > zp.price) {
+                nextPhasePrice = nextZonePrice.price;
+                savingsPercent = Math.round(((nextPhasePrice - zp.price) / nextPhasePrice) * 100);
+            }
+        }
+
         return {
           zoneId: zp.zoneId,
-          zoneName: zone?.name || 'Zona desconocida',
-          zoneDescription: zone?.description || '',
-          features: zone?.features || [],
+          zoneName: zone?.name || 'Zona General',
+          zoneDescription: zone?.description || 'Acceso al evento',
           price: zp.price,
           available: zp.available,
           sold: zp.sold,
           capacity: zone?.capacity || 0,
+          nextPhasePrice,
+          savingsPercent,
+          features: zone?.features || []
         };
       }) || [];
+
+      // Find most popular zone
+      const mostSoldZone = zones.length > 0
+        ? zones.reduce((max, zone) => zone.sold > max.sold ? zone : max, zones[0])
+        : null;
 
       return {
         phase,
         zones,
         status: finalStatus,
         isActive: finalStatus === 'active',
-        isExpired: finalStatus === 'expired',
         isUpcoming: finalStatus === 'upcoming',
+        isExpired: finalStatus === 'expired',
+        isSoldOut: finalStatus === 'sold_out',
+        totalSold: zones.reduce((sum, z) => sum + z.sold, 0),
+        totalCapacity: zones.reduce((sum, z) => sum + z.capacity, 0),
       };
     });
   }, [event.salesPhases, event.zones]);
 
-  // Find active phase for default tab
+  // Determine default tab
   const activePhaseIndex = useMemo(() => {
     const index = pricingData.findIndex(p => p.isActive);
     return index >= 0 ? index : 0;
@@ -131,214 +227,203 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
 
   const [activeTab, setActiveTab] = useState(`phase-${activePhaseIndex}`);
 
-  // Update active tab when pricing data changes
+  // Update active tab only on mount/data change
   useEffect(() => {
     setActiveTab(`phase-${activePhaseIndex}`);
   }, [activePhaseIndex]);
 
-  if (pricingData.length === 0) {
-    return null;
-  }
-
-  const activePhaseData = pricingData.find((p, i) => `phase-${i}` === activeTab);
-  const buyUrl = `/eventos/${event.slug}/comprar`;
+  if (pricingData.length === 0) return null;
 
   return (
-    <div className="w-full space-y-8 py-8">
+    <Card className="border-0 bg-zinc-900/40 backdrop-blur-xl overflow-hidden shadow-2xl ring-1 ring-white/10 rounded-3xl">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-2 flex items-center gap-3">
-            <Ticket className="w-8 h-8 text-primary" />
-            Entradas y Precios
-          </h2>
-          <p className="text-white/60 text-lg font-light">
-            Selecciona la experiencia perfecta para ti
-          </p>
-        </div>
-        
-        {/* Global Countdown for Active Phase */}
-        {activePhaseData?.isActive && (
-          <CountdownTimer endDate={activePhaseData.phase.endDate} />
-        )}
-      </div>
-
-      {/* Phase Selector Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full h-auto bg-transparent p-0 gap-2 flex-wrap justify-start border-b border-white/10 mb-8 pb-4 rounded-none">
-          {pricingData.map(({ phase, status, isActive }, index) => (
-            <TabsTrigger
-              key={phase.id}
-              value={`phase-${index}`}
-              className={`
-                relative px-6 py-3 rounded-full text-sm font-bold tracking-wide transition-all duration-300 border
-                ${isActive 
-                  ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]' 
-                  : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:border-white/30'
-                }
-              `}
-            >
-              {phase.name}
-              {isActive && (
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <AnimatePresence mode="wait">
-          {pricingData.map(({ phase, zones, isActive, isUpcoming }, index) => (
-            <TabsContent key={phase.id} value={`phase-${index}`} className="mt-0">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {zones.map((zone, i) => {
-                  const isSoldOut = zone.available === 0;
-                  // Determine if this card should be highlighted (e.g. VIP or most popular)
-                  const isHighlighted = zone.zoneName.toLowerCase().includes('vip') || zone.zoneName.toLowerCase().includes('experience');
-                  
-                  return (
-                    <div 
-                      key={zone.zoneId}
-                      className={`
-                        group relative flex flex-col p-6 rounded-3xl border transition-all duration-300
-                        ${isSoldOut ? 'opacity-60 grayscale' : 'hover:scale-[1.02] hover:-translate-y-1'}
-                        ${isHighlighted 
-                          ? 'bg-gradient-to-b from-white/10 to-white/5 border-primary/50 shadow-2xl shadow-primary/10' 
-                          : 'bg-white/5 border-white/10 hover:border-white/20 hover:shadow-xl'
-                        }
-                      `}
-                    >
-                      {/* Highlight Badge */}
-                      {isHighlighted && !isSoldOut && (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-orange-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          MÁS POPULAR
-                        </div>
-                      )}
-
-                      {/* Zone Header */}
-                      <div className="mb-6 text-center">
-                        <h3 className="text-xl font-black text-white tracking-tight mb-2 uppercase">
-                          {zone.zoneName}
-                        </h3>
-                        {zone.zoneDescription && (
-                          <p className="text-sm text-white/60 line-clamp-2 min-h-[2.5rem]">
-                            {zone.zoneDescription}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Price Section */}
-                      <div className="mb-8 text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <span className="text-sm text-white/40 font-medium">Desde</span>
-                        </div>
-                        <ZonePrice
-                          price={zone.price}
-                          currency={currency}
-                          dominantColor={dominantColor}
-                          className="text-4xl lg:text-5xl font-black text-white tracking-tighter"
-                        />
-                        
-                        {/* Installment Badge */}
-                        {event.allowInstallmentPayments && !isSoldOut && isActive && (
-                          <div className="mt-3 inline-flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-3 py-1 rounded-lg">
-                            <CreditCard className="w-3.5 h-3.5" />
-                            <span className="text-xs font-bold">Reserva con S/ 50</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Divider */}
-                      <div className="w-full h-px bg-white/10 mb-6" />
-
-                      {/* Benefits/Features (Mocked if not present) */}
-                      <div className="flex-1 space-y-3 mb-8">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                          <span className="text-sm text-white/80">Acceso a {zone.zoneName}</span>
-                        </div>
-                        {/* Add more generic features if zone features are empty */}
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                          <span className="text-sm text-white/80">Ingreso rápido y seguro</span>
-                        </div>
-                        {event.allowInstallmentPayments && (
-                           <div className="flex items-start gap-3">
-                            <div className="mt-1 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                              <Check className="w-3 h-3 text-white" />
-                            </div>
-                            <span className="text-sm text-white/80">Pago en cuotas disponible</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Stock Indicator */}
-                      {isActive && !isSoldOut && (
-                        <div className="mb-4">
-                          <StockIndicator available={zone.available} sold={zone.sold} capacity={zone.capacity} />
-                        </div>
-                      )}
-
-                      {/* Status / CTA */}
-                      {isSoldOut ? (
-                        <Button disabled className="w-full bg-white/5 text-white/40 font-bold border border-white/5">
-                          AGOTADO
-                        </Button>
-                      ) : isActive ? (
-                        <div className="text-center text-xs text-white/40 font-medium animate-pulse">
-                          ¡Quedan pocas entradas!
-                        </div>
-                      ) : (
-                        <Button disabled variant="outline" className="w-full border-white/10 text-white/40">
-                          Próximamente
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
-              </motion.div>
-            </TabsContent>
-          ))}
-        </AnimatePresence>
-      </Tabs>
-
-      {/* Global CTA - Sticky/Fixed feel */}
-      <div className="relative mt-12 p-1 rounded-2xl bg-gradient-to-r from-primary via-orange-500 to-primary animate-gradient-x">
-        <div className="bg-black/90 backdrop-blur-xl rounded-xl p-6 md:p-8 text-center">
-          <h3 className="text-2xl font-bold text-white mb-2">¿Listo para vivir la experiencia?</h3>
-          <p className="text-white/60 mb-6 max-w-2xl mx-auto">
-            Asegura tu lugar en {event.name} antes de que suban los precios. 
-            {event.allowInstallmentPayments && " Aprovecha el pago en cuotas."}
-          </p>
-          <Link href={buyUrl} className="inline-block w-full sm:w-auto">
-            <Button 
-              size="lg" 
-              className="w-full sm:min-w-[300px] h-14 text-lg font-black rounded-xl bg-white text-black hover:bg-white/90 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_50px_rgba(255,255,255,0.4)] transition-all duration-300 hover:scale-105"
-            >
-              <Ticket className="w-6 h-6 mr-2" />
-              COMPRAR ENTRADAS
-              <ArrowRight className="w-6 h-6 ml-2" />
-            </Button>
-          </Link>
-          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-white/40">
-            <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Pago 100% Seguro</span>
-            <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Entrega Inmediata</span>
+      <div className="relative p-6 sm:p-8 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white mb-2 flex items-center gap-3">
+              <Ticket className="w-6 h-6 text-primary" style={{ color: dominantColor }} />
+              Entradas
+            </h2>
+            <p className="text-zinc-400 text-sm sm:text-base max-w-md">
+              Selecciona tu zona preferida. Los precios pueden aumentar conforme se agoten las fases.
+            </p>
           </div>
+          
+          {/* Global Installment Badge - The RaveHub Differentiator */}
+          {event.allowInstallmentPayments && (
+            <div className="inline-flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3 sm:px-5 sm:py-3 backdrop-blur-md">
+              <div className="bg-blue-500 rounded-full p-2 text-white shadow-lg shadow-blue-500/20">
+                <CreditCard className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-blue-300 font-bold uppercase tracking-wider">Facilidad de pago</span>
+                <span className="text-sm font-semibold text-white">Reserva hoy y paga en cuotas</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+
+      <CardContent className="p-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {/* Phase Tabs Navigation */}
+          <div className="px-6 sm:px-8 border-b border-white/5">
+            <TabsList className="bg-transparent h-auto p-0 gap-6 w-full flex overflow-x-auto no-scrollbar justify-start sm:justify-start">
+              {pricingData.map(({ phase, status, isActive }, index) => (
+                <TabsTrigger
+                  key={phase.id}
+                  value={`phase-${index}`}
+                  className="group relative bg-transparent border-0 rounded-none pb-4 pt-2 px-1 text-sm font-medium text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none transition-colors"
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    {phase.name}
+                    {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
+                  </span>
+                  {/* Active Indicator Line */}
+                  <span 
+                    className="absolute bottom-0 left-0 w-full h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
+                    style={{ backgroundColor: activeTab === `phase-${index}` ? dominantColor : 'transparent' }}
+                  />
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          {/* Phase Content */}
+          {pricingData.map(({ phase, zones, isActive, isUpcoming, isExpired, isSoldOut }, index) => {
+            const buyUrl = `/eventos/${event.slug}/comprar`;
+            
+            return (
+              <TabsContent key={phase.id} value={`phase-${index}`} className="focus:outline-none animate-in fade-in slide-in-from-bottom-2 duration-300">
+                
+                {/* Active Phase Banner */}
+                {isActive && (
+                  <div className="px-6 sm:px-8 py-4 bg-white/5 flex items-center justify-between gap-4 border-b border-white/5">
+                    <div className="flex items-center gap-2 text-sm text-zinc-300">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="font-medium text-white">Fase Activa:</span> Los precios subirán pronto
+                    </div>
+                    <CountdownTimer endDate={phase.endDate} />
+                  </div>
+                )}
+
+                {/* Zones Grid */}
+                <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  {zones.map((zone) => {
+                    const isZoneSoldOut = zone.available === 0;
+                    const isLowStock = zone.available < 20 && zone.available > 0;
+
+                    return (
+                      <Link 
+                        key={zone.zoneId}
+                        href={isActive && !isZoneSoldOut ? buyUrl : '#'}
+                        className={`block relative group flex flex-col p-5 sm:p-6 rounded-2xl border transition-all duration-300 ${
+                          isZoneSoldOut 
+                            ? 'bg-zinc-900/20 border-white/5 opacity-60 grayscale cursor-not-allowed' 
+                            : isActive 
+                                ? 'bg-zinc-900/40 border-white/10 hover:border-white/20 hover:bg-white/5 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 cursor-pointer'
+                                : 'bg-zinc-900/40 border-white/10 cursor-default'
+                        }`}
+                        onClick={(e) => {
+                            if (isZoneSoldOut || !isActive) {
+                                e.preventDefault();
+                            }
+                        }}
+                      >
+                        {/* Zone Header */}
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-white mb-1 group-hover:text-primary transition-colors" style={{ color: !isZoneSoldOut ? undefined : undefined }}>
+                              {zone.zoneName}
+                            </h3>
+                            <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2">
+                              {zone.zoneDescription}
+                            </p>
+                          </div>
+                          
+                          {/* Savings Badge */}
+                          {zone.savingsPercent > 0 && !isZoneSoldOut && (
+                            <Badge className="bg-emerald-500 text-white border-0 font-bold shadow-lg shadow-emerald-500/20 px-2 py-1 text-xs whitespace-nowrap">
+                              Ahorra {zone.savingsPercent}%
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Stock Progress */}
+                        {!isZoneSoldOut && !isUpcoming && !isExpired && (
+                            <StockProgressBar available={zone.available} sold={zone.sold} capacity={zone.capacity} />
+                        )}
+
+                        <div className="mt-auto pt-6 flex items-end justify-between gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-1">Precio</span>
+                            <div className="flex items-baseline gap-1">
+                                <ZonePrice price={zone.price} currency={currency} dominantColor={dominantColor} />
+                            </div>
+                            
+                            {/* Installment micro-copy */}
+                            {event.allowInstallmentPayments && !isZoneSoldOut && (
+                                <span className="text-[10px] text-blue-400 font-medium mt-1 flex items-center gap-1">
+                                    <CheckCircle2 className="w-3 h-3" /> Opción a cuotas
+                                </span>
+                            )}
+                          </div>
+
+                          {/* Zone Selection Indicator (Visual only, actual selection is on next page) */}
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${
+                              isZoneSoldOut 
+                                ? 'border-zinc-700 bg-zinc-800 text-zinc-500' 
+                                : 'border-white/20 bg-white/5 text-white group-hover:bg-primary group-hover:border-primary'
+                          }`}
+                          style={{ backgroundColor: !isZoneSoldOut ? undefined : undefined }} // Let hover handle dynamic color via CSS if possible, but hard with inline dominantColor. Using default styles.
+                          >
+                             {isZoneSoldOut ? <XCircle className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Footer CTA */}
+                <div className="p-6 sm:p-8 pt-0 mt-2">
+                    {isActive ? (
+                        <Link href={buyUrl} className="block">
+                            <Button 
+                                size="lg" 
+                                className="w-full h-14 sm:h-16 text-lg font-bold rounded-2xl shadow-xl hover:scale-[1.01] transition-all duration-300 relative overflow-hidden group"
+                                style={{
+                                    backgroundColor: dominantColor,
+                                    boxShadow: `0 10px 30px -10px ${dominantColor}66`
+                                }}
+                            >
+                                <span className="relative z-10 flex items-center gap-3">
+                                    <ShoppingCart className="w-6 h-6" />
+                                    Comprar Entradas
+                                </span>
+                                {/* Shine Effect */}
+                                <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                            </Button>
+                        </Link>
+                    ) : (
+                        <Button disabled className="w-full h-14 rounded-2xl bg-zinc-800 text-zinc-500 font-medium">
+                            {isUpcoming ? 'Fase Próximamente' : 'Venta Finalizada'}
+                        </Button>
+                    )}
+                    
+                    {isActive && (
+                        <p className="text-center text-xs text-zinc-500 mt-4 flex items-center justify-center gap-2">
+                            <CheckCircle2 className="w-3 h-3" /> Compra segura y garantizada por RaveHub
+                        </p>
+                    )}
+                </div>
+
+              </TabsContent>
+            );
+          })}
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 }
