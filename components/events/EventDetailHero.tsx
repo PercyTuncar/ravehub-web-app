@@ -21,6 +21,8 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
     // Enable dynamic color extraction
     useEnhancedColorExtraction(event.mainImageUrl || event.bannerImageUrl || '');
     const { colorPalette } = useEventColors();
+    const { currency: targetCurrency } = useCurrency();
+
     // Countdown Logic
     const calculateTimeLeft = () => {
         const difference = +new Date(event.startDate) - +new Date();
@@ -87,9 +89,9 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                 <div className="max-w-4xl flex flex-col items-start text-left w-full">
 
                     {/* Top Badges - Animated */}
-                    <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 mb-3 sm:mb-6 animate-fade-in-up">
+                    <div className="flex flex-wrap items-center justify-start gap-2 mb-2 sm:mb-6 animate-fade-in-up">
                         <Badge
-                            className="text-white border-none px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg transition-all duration-700 ease-in-out"
+                            className="text-white border-none px-2 py-0.5 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg transition-all duration-700 ease-in-out"
                             style={{
                                 backgroundColor: colorPalette.dominant,
                                 boxShadow: `0 10px 15px -3px ${colorPalette.dominant}40`,
@@ -99,14 +101,14 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                             {event.eventType}
                         </Badge>
                         {event.typicalAgeRange && (
-                            <Badge variant="outline" className="text-white border-white/30 bg-white/10 hover:bg-white/20 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md">
+                            <Badge variant="outline" className="text-white border-white/30 bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md">
                                 {event.typicalAgeRange}
                             </Badge>
                         )}
                         {event.allowInstallmentPayments && !isSoldOut && (
                             <Badge
                                 variant="secondary"
-                                className="text-white border-none px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg animate-pulse"
+                                className="text-white border-none px-2 py-0.5 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg animate-pulse"
                                 style={{
                                     backgroundColor: '#10b981', // Keep emerald for payments
                                     boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.2)'
@@ -119,51 +121,54 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                     </div>
 
                     {/* Title - Optimized Size */}
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-4 sm:mb-6 drop-shadow-2xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-none tracking-tight mb-4 sm:mb-6 drop-shadow-2xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                         {event.name}
                     </h1>
 
                     {/* Meta Info Grid - Clean & Modern */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8 w-full animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        <div className="flex items-center sm:justify-start justify-center gap-3 group">
-                            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
-                                <Calendar className="w-5 h-5 text-white group-hover:text-primary transition-colors" />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-3 sm:gap-6 mb-4 sm:mb-8 w-full animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                        {/* Date - Col 1 */}
+                        <div className="flex items-center justify-start gap-2 sm:gap-3 group col-span-1">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
+                                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-primary transition-colors" />
                             </div>
                             <div className="text-left">
-                                <div className="text-xs text-gray-400 uppercase tracking-wider font-medium">Fecha</div>
-                                <div className="text-base font-bold text-white capitalize leading-none">
+                                <div className="hidden sm:block text-xs text-gray-400 uppercase tracking-wider font-medium">Fecha</div>
+                                <div className="text-sm sm:text-base font-bold text-white capitalize leading-none">
                                     {format(startDate, "d MMM yyyy", { locale: es })}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center sm:justify-start justify-center gap-3 group">
-                            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
-                                <MapPin className="w-5 h-5 text-white group-hover:text-primary transition-colors" />
+                        {/* Time - Col 2 (Moved up for mobile grid) */}
+                        <div className="flex items-center justify-start gap-2 sm:gap-3 group col-span-1">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
+                                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-primary transition-colors" />
                             </div>
                             <div className="text-left">
-                                <div className="text-xs text-gray-400 uppercase tracking-wider font-medium">Ubicación</div>
-                                <div className="text-base font-bold text-white leading-none truncate max-w-[150px]">
-                                    {event.location.venue}
+                                <div className="hidden sm:block text-xs text-gray-400 uppercase tracking-wider font-medium">Hora</div>
+                                <div className="text-sm sm:text-base font-bold text-white leading-none">
+                                    {event.startTime || format(startDate, "HH:mm")}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center sm:justify-start justify-center gap-3 group">
-                            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
-                                <Clock className="w-5 h-5 text-white group-hover:text-primary transition-colors" />
+                        {/* Location - Col Span 2 on mobile (Full width bottom row) */}
+                        <div className="flex items-center justify-start gap-2 sm:gap-3 group col-span-2 sm:col-span-1">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
+                                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-primary transition-colors" />
                             </div>
                             <div className="text-left">
-                                <div className="text-xs text-gray-400 uppercase tracking-wider font-medium">Hora</div>
-                                <div className="text-base font-bold text-white leading-none">
-                                    {event.startTime || format(startDate, "HH:mm")}
+                                <div className="hidden sm:block text-xs text-gray-400 uppercase tracking-wider font-medium">Ubicación</div>
+                                <div className="text-sm sm:text-base font-bold text-white leading-none truncate max-w-[250px] sm:max-w-[150px]">
+                                    {event.location.venue}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Description / Summary */}
-                    <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mb-6 sm:mb-8 max-w-2xl w-full animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                    {/* Description / Summary - Hidden on Mobile */}
+                    <div className="hidden sm:block p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mb-6 sm:mb-8 max-w-2xl w-full animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                         <p className="text-base text-gray-200 leading-relaxed text-center sm:text-left">
                             {event.shortDescription || `Prepárate para vivir la experiencia de ${event.name}. Una producción de primer nivel en ${event.location.venue}.`}
                         </p>
@@ -180,52 +185,74 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
 
                         {/* Countdown */}
                         {!isSoldOut && (
-                            <div className="flex gap-3 sm:gap-6 bg-black/40 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/5 w-full lg:w-auto justify-center">
+                            <div className="flex gap-2 sm:gap-6 bg-black/20 backdrop-blur-sm rounded-lg sm:rounded-2xl p-1.5 sm:p-4 border border-white/5 w-full lg:w-auto justify-around sm:justify-center">
                                 {[
                                     { label: 'DÍAS', value: timeLeft.days },
                                     { label: 'HRS', value: timeLeft.hours },
                                     { label: 'MIN', value: timeLeft.minutes },
                                     { label: 'SEG', value: timeLeft.seconds }
                                 ].map((item, idx) => (
-                                    <div key={idx} className="flex flex-col items-center min-w-[2.5rem]">
-                                        <span className="text-xl sm:text-2xl font-black text-white leading-none tabular-nums">
+                                    <div key={idx} className="flex flex-col items-center min-w-[2.5rem] sm:min-w-[3.5rem]">
+                                        <span className="text-lg sm:text-2xl font-black text-white leading-none tabular-nums">
                                             {String(item.value).padStart(2, '0')}
                                         </span>
-                                        <span className="text-[9px] text-gray-500 font-bold mt-1">{item.label}</span>
+                                        <span className="text-[8px] sm:text-[10px] text-gray-400 font-bold mt-0.5 uppercase">{item.label}</span>
                                     </div>
                                 ))}
                             </div>
                         )}
 
                         {/* Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                            {event.sellTicketsOnPlatform && !isSoldOut ? (
-                                <Link href={`/eventos/${event.slug}/comprar`} className="w-full sm:w-auto">
-                                    <Button
-                                        size="lg"
-                                        className="w-full sm:w-auto h-14 px-8 text-lg font-bold rounded-xl text-white shadow-xl hover:scale-105 hover:shadow-2xl ring-offset-2 focus:ring-2 transition-all duration-700"
-                                        style={{
-                                            background: colorPalette.gradients.primary,
-                                            boxShadow: `0 20px 25px -5px ${colorPalette.dominant}40`,
-                                            transition: 'background 0.7s ease-in-out, box-shadow 0.7s ease-in-out, transform 0.2s',
-                                        }}
-                                    >
-                                        Comprar Entradas
-                                        <ArrowRight className="w-5 h-5 ml-2" />
+                        <div className="flex flex-col gap-2 w-full lg:w-auto">
+                            <div className="flex flex-col sm:flex-row gap-3 w-full">
+                                {event.sellTicketsOnPlatform && !isSoldOut ? (
+                                    <Link href={`/eventos/${event.slug}/comprar`} className="w-full sm:w-auto">
+                                        <Button
+                                            size="lg"
+                                            className="w-full sm:w-auto h-12 sm:h-14 px-8 text-base sm:text-lg font-bold rounded-xl text-white shadow-xl hover:scale-105 hover:shadow-2xl ring-offset-2 focus:ring-2 transition-all duration-700"
+                                            style={{
+                                                background: colorPalette.gradients.primary,
+                                                boxShadow: `0 20px 25px -5px ${colorPalette.dominant}40`,
+                                                transition: 'background 0.7s ease-in-out, box-shadow 0.7s ease-in-out, transform 0.2s',
+                                            }}
+                                        >
+                                            Comprar Entradas
+                                            <ArrowRight className="w-5 h-5 ml-2" />
+                                        </Button>
+                                    </Link>
+                                ) : isSoldOut ? (
+                                    <Button size="lg" disabled className="w-full sm:w-auto h-12 sm:h-14 px-8 text-lg font-bold rounded-xl bg-zinc-800 text-zinc-500 cursor-not-allowed">
+                                        Agotado
                                     </Button>
-                                </Link>
-                            ) : isSoldOut ? (
-                                <Button size="lg" disabled className="w-full sm:w-auto h-14 px-8 text-lg font-bold rounded-xl bg-zinc-800 text-zinc-500 cursor-not-allowed">
-                                    Agotado
-                                </Button>
-                            ) : (
-                                <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
-                                    <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg font-bold rounded-xl bg-white text-black hover:bg-gray-200 transition-all hover:scale-105 shadow-xl">
-                                        Sitio Oficial
-                                        <ArrowRight className="w-5 h-5 ml-2" />
-                                    </Button>
-                                </a>
-                            )}
+                                ) : (
+                                    <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                                        <Button size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-8 text-lg font-bold rounded-xl bg-white text-black hover:bg-gray-200 transition-all hover:scale-105 shadow-xl">
+                                            Sitio Oficial
+                                            <ArrowRight className="w-5 h-5 ml-2" />
+                                        </Button>
+                                    </a>
+                                )}
+                            </div>
+                            
+                            {/* Mobile Only Micro-copy (Under Button) */}
+                            <div className="block sm:hidden text-center">
+                                <div className="text-xs text-gray-400 font-medium flex items-center justify-center gap-1">
+                                     <span>{event.salesPhases?.[0]?.name || 'Early Bird'}</span>
+                                     <span className="mx-1">•</span> 
+                                     {minPrice > 0 ? (
+                                        <div className="flex items-center gap-1">
+                                            <span>Desde</span>
+                                            <ConvertedPrice 
+                                                amount={minPrice}
+                                                currency={event.currency || 'PEN'}
+                                                showOriginal={false}
+                                            />
+                                        </div>
+                                     ) : (
+                                        'Entradas disponibles'
+                                     )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
