@@ -106,6 +106,71 @@ function CountdownTimer({ endDate }: { endDate: string }) {
   );
 }
 
+function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: string; endDate: string; dominantColor: string }) {
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const calculateProgress = () => {
+      const start = new Date(startDate).getTime();
+      const end = new Date(endDate).getTime();
+      const now = new Date().getTime();
+      
+      // Calculate percentage
+      const totalDuration = end - start;
+      const elapsed = now - start;
+      const p = totalDuration > 0 ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)) : 0;
+      
+      setProgress(p);
+
+      // Determine message based on progress
+      if (p >= 100) {
+        setMessage("Fase Finalizada");
+      } else if (p > 90) {
+        setMessage("¡Últimos momentos! Por finalizar");
+      } else if (p > 75) {
+        setMessage("Los precios subirán pronto");
+      } else if (p > 50) {
+        setMessage("La fase avanza rápido");
+      } else {
+        setMessage("Aprovecha los precios actuales");
+      }
+    };
+
+    calculateProgress();
+    const interval = setInterval(calculateProgress, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, [startDate, endDate]);
+
+  return (
+    <div className="w-full flex flex-col gap-2">
+       <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-zinc-300">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${progress >= 100 ? 'bg-red-500' : 'bg-green-500'}`} />
+              <span className="font-medium text-white">Fase Activa:</span> 
+              <span className="truncate">{message}</span>
+          </div>
+          <CountdownTimer endDate={endDate} />
+       </div>
+       
+       <div className="w-full h-1.5 bg-zinc-800/50 rounded-full overflow-hidden border border-white/5">
+          <div 
+            className="h-full transition-all duration-1000 ease-out relative"
+            style={{ 
+              width: `${progress}%`, 
+              backgroundColor: progress >= 100 ? '#ef4444' : dominantColor 
+            }}
+          >
+            {/* Shimmer effect on the bar */}
+            {progress < 100 && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full animate-[shimmer_2s_infinite]" />
+            )}
+          </div>
+       </div>
+    </div>
+  );
+}
+
 function StockProgressBar({ available, sold, capacity }: { available: number; sold: number; capacity: number }) {
   // If no capacity data, don't show
   if (!capacity || capacity === 0) return null;
@@ -299,12 +364,12 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                 
                 {/* Active Phase Banner */}
                 {isActive && (
-                  <div className="px-6 sm:px-8 py-4 bg-white/5 flex items-center justify-between gap-4 border-b border-white/5">
-                    <div className="flex items-center gap-2 text-sm text-zinc-300">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="font-medium text-white">Fase Activa:</span> Los precios subirán pronto
-                    </div>
-                    <CountdownTimer endDate={phase.endDate} />
+                  <div className="px-6 sm:px-8 py-4 bg-white/5 border-b border-white/5">
+                    <PhaseTimeProgress 
+                        startDate={phase.startDate} 
+                        endDate={phase.endDate} 
+                        dominantColor={dominantColor} 
+                    />
                   </div>
                 )}
 
