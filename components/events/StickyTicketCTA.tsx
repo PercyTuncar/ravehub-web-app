@@ -127,7 +127,12 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                   <div className="relative px-5 py-2.5 flex items-center gap-3.5">
                     {/* Icon */}
                     <div 
-                      className="flex-shrink-0 p-2 rounded-lg bg-zinc-800/50 border border-zinc-700/50"
+                      className="flex-shrink-0 p-2 rounded-lg"
+                      style={{
+                        background: `${accentColor}15`,
+                        border: `1px solid ${accentColor}20`,
+                        transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                      }}
                     >
                       <Ticket 
                         className="h-4 w-4 text-zinc-500" 
@@ -241,7 +246,12 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                 <div className="px-3.5 py-2.5 flex items-center justify-between gap-2.5">
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
                     <div 
-                      className="p-1 rounded-md flex-shrink-0 bg-zinc-800/50 border border-zinc-700/50"
+                      className="p-1 rounded-md flex-shrink-0"
+                      style={{
+                        backgroundColor: `${accentColor}12`,
+                        border: `1px solid ${accentColor}25`,
+                        transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                      }}
                     >
                       <Ticket 
                         className="h-3.5 w-3.5 text-zinc-500" 
