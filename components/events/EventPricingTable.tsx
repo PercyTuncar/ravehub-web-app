@@ -399,14 +399,15 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
             {/* Scroll Shadow Indicator (Right) */}
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/40 to-transparent z-20 pointer-events-none sm:hidden" />
 
-            <TabsList className="bg-transparent h-auto p-0 w-full flex overflow-x-auto no-scrollbar justify-start pb-0 scroll-smooth">
+            {/* Desktop TabsList */}
+            <TabsList className="hidden sm:flex bg-transparent h-auto p-0 w-full overflow-x-auto no-scrollbar justify-start pb-0 scroll-smooth">
               {pricingData.map(({ phase, status, isActive }, index) => (
                 <TabsTrigger
-                  key={phase.id}
+                  key={`desktop-${phase.id}`}
                   value={`phase-${index}`}
                   className={`
                     group relative bg-transparent border-0 rounded-none pb-3 pt-2 text-sm font-medium transition-colors flex-shrink-0
-                    first:ml-0 sm:first:ml-6 md:first:ml-8 last:mr-0 sm:last:mr-6 md:last:mr-8 px-4 sm:px-4
+                    first:pl-6 md:first:pl-8 last:pr-6 md:last:pr-8 px-4
                     text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none
                   `}
                 >
@@ -414,7 +415,33 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                     <span className="whitespace-nowrap">{phase.name}</span>
                     {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
                     
-                    {/* Active Indicator Line - Scoped to content width */}
+                    {/* Active Indicator Line */}
+                    <span
+                      className="absolute -bottom-4 left-0 right-0 h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
+                      style={{ backgroundColor: activeTab === `phase-${index}` ? dominantColor : 'transparent' }}
+                    />
+                  </div>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {/* Mobile TabsList - Optimized for small screens */}
+            <TabsList className="flex sm:hidden bg-transparent h-auto p-0 w-full overflow-x-auto no-scrollbar justify-start pb-0 scroll-smooth">
+              {pricingData.map(({ phase, status, isActive }, index) => (
+                <TabsTrigger
+                  key={`mobile-${phase.id}`}
+                  value={`phase-${index}`}
+                  className={`
+                    group relative bg-transparent border-0 rounded-none pb-3 pt-2 text-sm font-medium transition-colors flex-shrink-0
+                    first:ml-4 last:mr-4 px-3
+                    text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none
+                  `}
+                >
+                  <div className="relative flex items-center gap-2 py-1">
+                    <span className="whitespace-nowrap text-sm">{phase.name}</span>
+                    {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
+                    
+                    {/* Active Indicator Line */}
                     <span
                       className="absolute -bottom-4 left-0 right-0 h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
                       style={{ backgroundColor: activeTab === `phase-${index}` ? dominantColor : 'transparent' }}
