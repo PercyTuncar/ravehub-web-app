@@ -108,55 +108,75 @@ function CountdownTimer({ endDate }: { endDate: string }) {
 
 function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: string; endDate: string; dominantColor: string }) {
   const [progress, setProgress] = useState(0);
+  const [displayedProgress, setDisplayedProgress] = useState(0);
   const [message, setMessage] = useState('');
 
+  // Calculate actual progress
   useEffect(() => {
-    // Initial delay to ensure the animation starts from 0
-    const timer = setTimeout(() => {
-      const calculateProgress = () => {
-        const start = new Date(startDate).getTime();
-        const end = new Date(endDate).getTime();
-        const now = new Date().getTime();
-        
-        // Calculate percentage
-        const totalDuration = end - start;
-        const elapsed = now - start;
-        const p = totalDuration > 0 ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)) : 0;
-        
-        setProgress(p);
+    const calculateProgress = () => {
+      const start = new Date(startDate).getTime();
+      const end = new Date(endDate).getTime();
+      const now = new Date().getTime();
+      
+      const totalDuration = end - start;
+      const elapsed = now - start;
+      return totalDuration > 0 ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)) : 0;
+    };
 
-        // Determine message based on progress
-        if (p >= 100) {
-          setMessage("Fase Finalizada");
-        } else if (p > 90) {
-          setMessage("¡Últimos momentos! Por finalizar");
-        } else if (p > 75) {
-          setMessage("Los precios subirán pronto");
-        } else if (p > 50) {
-          setMessage("La fase avanza rápido");
-        } else {
-          setMessage("Aprovecha los precios actuales");
-        }
-      };
+    // Set initial target progress
+    const target = calculateProgress();
+    setProgress(target);
 
-      calculateProgress();
-    }, 100);
+    // Update messages based on target (actual) progress
+    if (target >= 100) {
+      setMessage("Fase Finalizada");
+    } else if (target > 90) {
+      setMessage("¡Últimos momentos! Por finalizar");
+    } else if (target > 75) {
+      setMessage("Los precios subirán pronto");
+    } else if (target > 50) {
+      setMessage("La fase avanza rápido");
+    } else {
+      setMessage("Aprovecha los precios actuales");
+    }
 
+    // Interval to keep checking progress
     const interval = setInterval(() => {
-       const start = new Date(startDate).getTime();
-       const end = new Date(endDate).getTime();
-       const now = new Date().getTime();
-       const totalDuration = end - start;
-       const elapsed = now - start;
-       const p = totalDuration > 0 ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)) : 0;
-       setProgress(p);
+       const newTarget = calculateProgress();
+       setProgress(newTarget);
     }, 60000); 
 
-    return () => {
-        clearTimeout(timer);
-        clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [startDate, endDate]);
+
+  // Animate displayed progress from 0 to target
+  useEffect(() => {
+    // Duration of animation in ms
+    const duration = 2000;
+    const startTime = performance.now();
+    const startValue = 0; // Always animate from 0 on mount
+    
+    let animationFrameId: number;
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progressRatio = Math.min(elapsed / duration, 1);
+      
+      // Ease out cubic
+      const easeOut = 1 - Math.pow(1 - progressRatio, 3);
+      
+      const currentDisplayed = startValue + (progress - startValue) * easeOut;
+      setDisplayedProgress(currentDisplayed);
+
+      if (progressRatio < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [progress]); // Re-run if target progress changes significantly, though mainly for initial load
 
   return (
     <div className="w-full flex flex-col gap-2">
@@ -168,7 +188,7 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
           </div>
           <div className="flex items-center gap-3">
               <span className="text-xs font-bold tabular-nums text-zinc-400">
-                {Math.round(progress)}%
+                {Math.round(displayedProgress)}%
               </span>
               <CountdownTimer endDate={endDate} />
           </div>
@@ -176,10 +196,11 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
        
        <div className="w-full h-1.5 bg-zinc-800/50 rounded-full overflow-hidden border border-white/5">
           <div 
-            className="h-full transition-all duration-[2000ms] ease-out relative"
+            className="h-full relative"
             style={{ 
-              width: `${progress}%`, 
-              backgroundColor: progress >= 100 ? '#ef4444' : dominantColor 
+              width: `${displayedProgress}%`, 
+              backgroundColor: progress >= 100 ? '#ef4444' : dominantColor,
+              transition: 'none' // Disable CSS transition to let JS handle the smooth frame-by-frame update
             }}
           >
             {/* Shimmer effect on the bar */}
