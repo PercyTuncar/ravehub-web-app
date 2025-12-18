@@ -131,18 +131,32 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
     const target = calculateProgress();
     setProgress(target);
 
-    // Update messages based on target (actual) progress
-    if (target >= 100) {
-      setMessage("Fase Finalizada");
-    } else if (target > 90) {
-      setMessage("¡Últimos momentos! Por finalizar");
-    } else if (target > 75) {
-      setMessage("Los precios subirán pronto");
-    } else if (target > 50) {
-      setMessage("La fase avanza rápido");
-    } else {
-      setMessage("Aprovecha los precios actuales");
-    }
+  // Update messages based on target (actual) progress with dynamic rotation
+  useEffect(() => {
+      if (progress >= 100) {
+          setMessage("Fase Finalizada");
+          return;
+      }
+
+      const getMessagesForProgress = (p: number) => {
+          if (p > 90) return ["¡Últimos momentos! Por finalizar", "¡Crítico! Últimos tickets de esta fase", "Se cierran ventas en breve"];
+          if (p > 75) return ["Los precios subirán pronto", "Precios suben en breve. ¡Compra ya!", "Evita pagar más después"];
+          if (p > 50) return ["La fase avanza rápido", "¡Ventas aceleradas! No te quedes fuera", "¡Alta demanda! Tickets volando"];
+          return ["Aprovecha los precios actuales", "¡El tiempo corre! Asegura tu ingreso", "Ahorra comprando anticipado"];
+      };
+
+      const messages = getMessagesForProgress(progress);
+      let index = 0;
+
+      setMessage(messages[0]); // Set initial message immediately
+
+      const interval = setInterval(() => {
+          index = (index + 1) % messages.length;
+          setMessage(messages[index]);
+      }, 4000); // Rotate message every 4 seconds
+
+      return () => clearInterval(interval);
+  }, [progress]);
 
     // Interval to keep checking progress
     const interval = setInterval(() => {
