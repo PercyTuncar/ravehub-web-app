@@ -77,6 +77,7 @@ export function EventGallery({
                             alt={imageAltTexts?.[imageUrl] || `Imagen ${index + 1}`}
                             fill
                             className="object-cover"
+                            unoptimized={true}
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -95,6 +96,7 @@ export function EventGallery({
                             alt={imageAltTexts?.[imageUrl] || `Imagen ${index + 1}`}
                             fill
                             className="object-contain"
+                            unoptimized={true}
                           />
                         </div>
                       </DialogContent>
