@@ -51,6 +51,27 @@ export interface User {
   updatedAt: Date;
 }
 
+export interface SalesPhase {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status?: 'upcoming' | 'active' | 'sold_out' | 'expired'; // Estado de la fase
+  manualStatus?: 'active' | 'sold_out' | null; // Estado manual (null = automático)
+  prices?: Array<{
+    zoneId: string;
+    zoneName: string;
+    price: number;
+  }>;
+  zonesPricing?: Array<{
+    zoneId: string;
+    price: number;
+    available: number;
+    sold: number;
+    phaseId: string;
+  }>;
+}
+
 // Event types
 export interface Event {
   id: string;
@@ -147,26 +168,7 @@ export interface Event {
     stage?: string;
   }>;
 
-  salesPhases: Array<{
-    id: string;
-    name: string;
-    startDate: string;
-    endDate: string;
-    status?: 'upcoming' | 'active' | 'sold_out' | 'expired'; // Estado de la fase
-    manualStatus?: 'active' | 'sold_out' | null; // Estado manual (null = automático)
-    prices?: Array<{
-      zoneId: string;
-      zoneName: string;
-      price: number;
-    }>;
-    zonesPricing?: Array<{
-      zoneId: string;
-      price: number;
-      available: number;
-      sold: number;
-      phaseId: string;
-    }>;
-  }>;
+  salesPhases: SalesPhase[];
 
   zones: Array<{
     id: string;
@@ -541,6 +543,8 @@ export interface TicketTransaction {
   currency: string;
   paymentMethod: 'online' | 'offline';
   paymentType: 'full' | 'installment';
+  installments?: number;
+  reservationAmount?: number;
   paymentStatus: 'pending' | 'approved' | 'rejected';
   offlinePaymentMethod?: string;
   paymentProofUrl?: string;

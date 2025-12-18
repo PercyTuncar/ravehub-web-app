@@ -165,10 +165,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             {/* Background Gradients - Dynamic based on image colors */}
             <DynamicBackgroundGradients />
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-              <div className="grid gap-12 lg:grid-cols-3">
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24 pb-24 sm:pb-28 lg:pb-24">
+              <div className="grid gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-3">
                 {/* Main Content */}
-                <div className="lg:col-span-2 space-y-12">
+                <div className="lg:col-span-2 space-y-8 sm:space-y-10 lg:space-y-12">
                   {/* Lineup */}
                   <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
 
@@ -203,7 +203,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 </div>
 
                 {/* Sidebar */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Event Info Card */}
                   <EventInfoSidebar event={event} />
 

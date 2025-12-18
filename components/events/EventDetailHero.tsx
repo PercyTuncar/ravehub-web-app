@@ -63,7 +63,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
     if (!mounted) return null;
 
     return (
-        <div className="relative w-full min-h-[75vh] md:min-h-[90vh] flex items-end sm:items-center bg-[#0a0a0a] overflow-hidden">
+        <div className="relative w-full min-h-[70vh] md:min-h-[90vh] flex items-end sm:items-center bg-[#0a0a0a] overflow-hidden">
 
             {/* Background Image with Gradient Overlay */}
             <div className="absolute inset-0 z-0">
@@ -83,11 +83,11 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#141618_100%)] opacity-40" />
             </div>
 
-            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 md:pt-32 md:pb-32 animate-in fade-in duration-1000 slide-in-from-bottom-8">
-                <div className="max-w-4xl flex flex-col items-start text-left">
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 md:pt-32 md:pb-32 animate-in fade-in duration-1000 slide-in-from-bottom-8">
+                <div className="max-w-4xl flex flex-col items-start text-left w-full">
 
                     {/* Top Badges - Animated */}
-                    <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 mb-4 sm:mb-6 animate-fade-in-up">
+                    <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-3 mb-3 sm:mb-6 animate-fade-in-up">
                         <Badge
                             className="text-white border-none px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] md:text-xs uppercase tracking-widest font-bold backdrop-blur-md shadow-lg transition-all duration-700 ease-in-out"
                             style={{
@@ -119,12 +119,12 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                     </div>
 
                     {/* Title - Optimized Size */}
-                    <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-4 sm:mb-6 drop-shadow-2xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-4 sm:mb-6 drop-shadow-2xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                         {event.name}
                     </h1>
 
                     {/* Meta Info Grid - Clean & Modern */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 w-full animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8 w-full animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                         <div className="flex items-center sm:justify-start justify-center gap-3 group">
                             <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
                                 <Calendar className="w-5 h-5 text-white group-hover:text-primary transition-colors" />
@@ -163,7 +163,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                     </div>
 
                     {/* Description / Summary */}
-                    <div className="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mb-8 max-w-2xl w-full animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                    <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mb-6 sm:mb-8 max-w-2xl w-full animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                         <p className="text-base text-gray-200 leading-relaxed text-center sm:text-left">
                             {event.shortDescription || `Prepárate para vivir la experiencia de ${event.name}. Una producción de primer nivel en ${event.location.venue}.`}
                         </p>
@@ -176,11 +176,11 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                     </div>
 
                     {/* Countdown & Actions */}
-                    <div className="flex flex-col lg:flex-row items-center gap-6 w-full animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-6 w-full animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
 
                         {/* Countdown */}
                         {!isSoldOut && (
-                            <div className="flex gap-4 sm:gap-6 bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/5 w-full sm:w-auto justify-center">
+                            <div className="flex gap-3 sm:gap-6 bg-black/40 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/5 w-full lg:w-auto justify-center">
                                 {[
                                     { label: 'DÍAS', value: timeLeft.days },
                                     { label: 'HRS', value: timeLeft.hours },
@@ -198,7 +198,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                         )}
 
                         {/* Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                             {event.sellTicketsOnPlatform && !isSoldOut ? (
                                 <Link href={`/eventos/${event.slug}/comprar`} className="w-full sm:w-auto">
                                     <Button

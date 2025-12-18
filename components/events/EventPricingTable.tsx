@@ -111,7 +111,7 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
   const [progress, setProgress] = useState(0);
   const [displayedProgress, setDisplayedProgress] = useState(0);
   const [message, setMessage] = useState('');
-  
+
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true, amount: 0.5 });
 
@@ -121,7 +121,7 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
       const start = new Date(startDate).getTime();
       const end = new Date(endDate).getTime();
       const now = new Date().getTime();
-      
+
       const totalDuration = end - start;
       const elapsed = now - start;
       return totalDuration > 0 ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)) : 0;
@@ -133,38 +133,38 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
 
     // Interval to keep checking progress
     const interval = setInterval(() => {
-       const newTarget = calculateProgress();
-       setProgress(newTarget);
-    }, 60000); 
+      const newTarget = calculateProgress();
+      setProgress(newTarget);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [startDate, endDate]);
 
   // Update messages based on target (actual) progress with dynamic rotation
   useEffect(() => {
-      if (progress >= 100) {
-          setMessage("Fase Finalizada");
-          return;
-      }
+    if (progress >= 100) {
+      setMessage("Fase Finalizada");
+      return;
+    }
 
-      const getMessagesForProgress = (p: number) => {
-          if (p > 90) return ["¡Últimos momentos! Por finalizar", "¡Crítico! Últimos tickets de esta fase", "Se cierran ventas en breve"];
-          if (p > 75) return ["Los precios subirán pronto", "Precios suben en breve. ¡Compra ya!", "Evita pagar más después"];
-          if (p > 50) return ["La fase avanza rápido", "¡Ventas aceleradas! No te quedes fuera", "¡Alta demanda! Tickets volando"];
-          return ["Aprovecha los precios actuales", "¡El tiempo corre! Asegura tu ingreso", "Ahorra comprando anticipado"];
-      };
+    const getMessagesForProgress = (p: number) => {
+      if (p > 90) return ["¡Últimos momentos! Por finalizar", "¡Crítico! Últimos tickets de esta fase", "Se cierran ventas en breve"];
+      if (p > 75) return ["Los precios subirán pronto", "Precios suben en breve. ¡Compra ya!", "Evita pagar más después"];
+      if (p > 50) return ["La fase avanza rápido", "¡Ventas aceleradas! No te quedes fuera", "¡Alta demanda! Tickets volando"];
+      return ["Aprovecha los precios actuales", "¡El tiempo corre! Asegura tu ingreso", "Ahorra comprando anticipado"];
+    };
 
-      const messages = getMessagesForProgress(progress);
-      let index = 0;
+    const messages = getMessagesForProgress(progress);
+    let index = 0;
 
-      setMessage(messages[0]); // Set initial message immediately
+    setMessage(messages[0]); // Set initial message immediately
 
-      const interval = setInterval(() => {
-          index = (index + 1) % messages.length;
-          setMessage(messages[index]);
-      }, 4000); // Rotate message every 4 seconds
+    const interval = setInterval(() => {
+      index = (index + 1) % messages.length;
+      setMessage(messages[index]);
+    }, 4000); // Rotate message every 4 seconds
 
-      return () => clearInterval(interval);
+    return () => clearInterval(interval);
   }, [progress]);
 
   // Animate displayed progress from 0 to target
@@ -175,16 +175,16 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
     const duration = 3500;
     const startTime = performance.now();
     const startValue = 0; // Always animate from 0
-    
+
     let animationFrameId: number;
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progressRatio = Math.min(elapsed / duration, 1);
-      
+
       // Ease out cubic
       const easeOut = 1 - Math.pow(1 - progressRatio, 3);
-      
+
       const currentDisplayed = startValue + (progress - startValue) * easeOut;
       setDisplayedProgress(currentDisplayed);
 
@@ -196,39 +196,39 @@ function PhaseTimeProgress({ startDate, endDate, dominantColor }: { startDate: s
     animationFrameId = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [progress, isInView]); 
+  }, [progress, isInView]);
 
   return (
     <div ref={containerRef} className="w-full flex flex-col gap-2">
-       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 text-sm text-zinc-300 overflow-hidden">
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 animate-pulse ${progress >= 100 ? 'bg-red-500' : 'bg-green-500'}`} />
-              <span className="font-medium text-white whitespace-nowrap">Fase Activa:</span> 
-              <span className="truncate">{message}</span>
-          </div>
-          <div className="flex items-center justify-end gap-3 self-end sm:self-auto">
-              <span className="text-xs font-bold tabular-nums text-zinc-400">
-                {Math.round(displayedProgress)}%
-              </span>
-              <CountdownTimer endDate={endDate} />
-          </div>
-       </div>
-       
-       <div className="w-full h-1.5 bg-zinc-800/50 rounded-full overflow-hidden border border-white/5">
-          <div 
-            className="h-full relative"
-            style={{ 
-              width: `${displayedProgress}%`, 
-              backgroundColor: progress >= 100 ? '#ef4444' : dominantColor,
-              transition: 'none' // Disable CSS transition to let JS handle the smooth frame-by-frame update
-            }}
-          >
-            {/* Shimmer effect on the bar */}
-            {progress < 100 && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full animate-[shimmer_2s_infinite]" />
-            )}
-          </div>
-       </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 text-sm text-zinc-300 overflow-hidden">
+          <div className={`w-2 h-2 rounded-full flex-shrink-0 animate-pulse ${progress >= 100 ? 'bg-red-500' : 'bg-green-500'}`} />
+          <span className="font-medium text-white whitespace-nowrap">Fase Activa:</span>
+          <span className="truncate">{message}</span>
+        </div>
+        <div className="flex items-center justify-end gap-3 self-end sm:self-auto">
+          <span className="text-xs font-bold tabular-nums text-zinc-400">
+            {Math.round(displayedProgress)}%
+          </span>
+          <CountdownTimer endDate={endDate} />
+        </div>
+      </div>
+
+      <div className="w-full h-1.5 bg-zinc-800/50 rounded-full overflow-hidden border border-white/5">
+        <div
+          className="h-full relative"
+          style={{
+            width: `${displayedProgress}%`,
+            backgroundColor: progress >= 100 ? '#ef4444' : dominantColor,
+            transition: 'none' // Disable CSS transition to let JS handle the smooth frame-by-frame update
+          }}
+        >
+          {/* Shimmer effect on the bar */}
+          {progress < 100 && (
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full animate-[shimmer_2s_infinite]" />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -242,7 +242,7 @@ function StockProgressBar({ available, sold, capacity }: { available: number; so
   // We'll trust 'sold' / 'capacity' or 'sold' / ('sold' + 'available')
   const total = sold + available;
   const percentageSold = Math.min((sold / total) * 100, 100);
-  
+
   // Determine status
   const isLowStock = available < 50 || percentageSold > 90;
   const isSellingFast = percentageSold > 60;
@@ -266,7 +266,7 @@ function StockProgressBar({ available, sold, capacity }: { available: number; so
         <span className="text-[10px] text-zinc-500 font-medium">{Math.round(percentageSold)}% vendido</span>
       </div>
       <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-        <div 
+        <div
           className={`h-full rounded-full transition-all duration-1000 ease-out ${isLowStock ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gradient-to-r from-amber-500 to-yellow-400'}`}
           style={{ width: `${percentageSold}%` }}
         />
@@ -286,7 +286,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
     if (!event.salesPhases || event.salesPhases.length === 0) return [];
 
     // Sort phases by date to determine order
-    const sortedPhases = [...event.salesPhases].sort((a, b) => 
+    const sortedPhases = [...event.salesPhases].sort((a, b) =>
       new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     );
 
@@ -294,23 +294,23 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
       const finalStatus = phase.manualStatus || phase.status;
       const zones = phase.zonesPricing?.map(zp => {
         const zone = event.zones?.find(z => z.id === zp.zoneId);
-        
+
         // Calculate savings compared to next phase if available
         let nextPhasePrice = null;
         let savingsPercent = 0;
-        
+
         // Find next active or upcoming phase
         const nextPhase = sortedPhases.slice(index + 1).find(p => {
-            const s = p.manualStatus || p.status;
-            return s === 'active' || s === 'upcoming';
+          const s = p.manualStatus || p.status;
+          return s === 'active' || s === 'upcoming';
         });
 
         if (nextPhase && nextPhase.zonesPricing) {
-            const nextZonePrice = nextPhase.zonesPricing.find(nzp => nzp.zoneId === zp.zoneId);
-            if (nextZonePrice && nextZonePrice.price > zp.price) {
-                nextPhasePrice = nextZonePrice.price;
-                savingsPercent = Math.round(((nextPhasePrice - zp.price) / nextPhasePrice) * 100);
-            }
+          const nextZonePrice = nextPhase.zonesPricing.find(nzp => nzp.zoneId === zp.zoneId);
+          if (nextZonePrice && nextZonePrice.price > zp.price) {
+            nextPhasePrice = nextZonePrice.price;
+            savingsPercent = Math.round(((nextPhasePrice - zp.price) / nextPhasePrice) * 100);
+          }
         }
 
         return {
@@ -364,27 +364,27 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
   return (
     <Card className="border-0 bg-zinc-900/40 backdrop-blur-xl overflow-hidden shadow-2xl ring-1 ring-white/10 rounded-3xl">
       {/* Header Section */}
-      <div className="relative p-6 sm:p-8 overflow-hidden">
+      <div className="relative p-4 sm:p-6 md:p-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
           <div>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white mb-2 flex items-center gap-3">
-              <Ticket className="w-6 h-6 text-primary" style={{ color: dominantColor }} />
+              <Ticket className="w-6 h-6 text-primary flex-shrink-0" style={{ color: dominantColor }} />
               Entradas
             </h2>
             <p className="text-zinc-400 text-sm sm:text-base max-w-md">
               Selecciona tu zona preferida. Los precios pueden aumentar conforme se agoten las fases.
             </p>
           </div>
-          
+
           {/* Global Installment Badge - The RaveHub Differentiator */}
           {event.allowInstallmentPayments && (
-            <div className="inline-flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3 sm:px-5 sm:py-3 backdrop-blur-md">
-              <div className="bg-blue-500 rounded-full p-2 text-white shadow-lg shadow-blue-500/20">
+            <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3 sm:px-5 sm:py-3 backdrop-blur-md w-full sm:w-auto">
+              <div className="bg-blue-500 rounded-full p-2 text-white shadow-lg shadow-blue-500/20 flex-shrink-0">
                 <CreditCard className="w-5 h-5" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-blue-300 font-bold uppercase tracking-wider">Facilidad de pago</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs text-blue-300 font-bold uppercase tracking-wider truncate">Facilidad de pago</span>
                 <span className="text-sm font-semibold text-white">Reserva hoy y paga en cuotas</span>
               </div>
             </div>
@@ -395,20 +395,20 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Phase Tabs Navigation */}
-          <div className="px-6 sm:px-8 border-b border-white/5">
-            <TabsList className="bg-transparent h-auto p-0 gap-6 w-full flex overflow-x-auto no-scrollbar justify-start sm:justify-start">
+          <div className="px-4 sm:px-6 md:px-8 border-b border-white/5">
+            <TabsList className="bg-transparent h-auto p-0 gap-3 sm:gap-6 w-full flex overflow-x-auto no-scrollbar justify-start sm:justify-start pb-1">
               {pricingData.map(({ phase, status, isActive }, index) => (
                 <TabsTrigger
                   key={phase.id}
                   value={`phase-${index}`}
-                  className="group relative bg-transparent border-0 rounded-none pb-4 pt-2 px-1 text-sm font-medium text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none transition-colors"
+                  className="group relative bg-transparent border-0 rounded-none pb-3 pt-2 px-1 text-sm font-medium text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none transition-colors flex-shrink-0"
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     {phase.name}
                     {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
                   </span>
                   {/* Active Indicator Line */}
-                  <span 
+                  <span
                     className="absolute bottom-0 left-0 w-full h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
                     style={{ backgroundColor: activeTab === `phase-${index}` ? dominantColor : 'transparent' }}
                   />
@@ -420,58 +420,57 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
           {/* Phase Content */}
           {pricingData.map(({ phase, zones, isActive, isUpcoming, isExpired, isSoldOut }, index) => {
             const buyUrl = `/eventos/${event.slug}/comprar`;
-            
+
             return (
               <TabsContent key={phase.id} value={`phase-${index}`} className="focus:outline-none animate-in fade-in slide-in-from-bottom-2 duration-300">
-                
+
                 {/* Active Phase Banner */}
                 {isActive && (
-                  <div className="px-6 sm:px-8 py-4 bg-white/5 border-b border-white/5">
-                    <PhaseTimeProgress 
-                        startDate={phase.startDate} 
-                        endDate={phase.endDate} 
-                        dominantColor={dominantColor} 
+                  <div className="px-4 sm:px-6 md:px-8 py-4 bg-white/5 border-b border-white/5">
+                    <PhaseTimeProgress
+                      startDate={phase.startDate}
+                      endDate={phase.endDate}
+                      dominantColor={dominantColor}
                     />
                   </div>
                 )}
 
                 {/* Zones Grid */}
-                <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="p-4 sm:p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   {zones.map((zone) => {
                     const isZoneSoldOut = zone.available === 0;
                     const isLowStock = zone.available < 20 && zone.available > 0;
 
                     return (
-                      <Link 
+                      <Link
                         key={zone.zoneId}
                         href={isActive && !isZoneSoldOut ? buyUrl : '#'}
-                        className={`block relative group flex flex-col p-5 sm:p-6 rounded-2xl border transition-all duration-300 ${
-                          isZoneSoldOut 
-                            ? 'bg-zinc-900/20 border-white/5 opacity-60 grayscale cursor-not-allowed' 
-                            : isActive 
-                                ? 'bg-zinc-900/40 border-white/10 hover:border-white/20 hover:bg-white/5 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 cursor-pointer'
-                                : 'bg-zinc-900/40 border-white/10 cursor-default'
-                        }`}
+                        className={`block relative group flex flex-col p-4 sm:p-5 md:p-6 rounded-2xl border transition-all duration-300 ${isZoneSoldOut
+                            ? 'bg-zinc-900/20 border-white/5 opacity-60 grayscale cursor-not-allowed'
+                            : isActive
+                              ? 'bg-zinc-900/40 border-white/10 hover:border-white/20 hover:bg-white/5 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 cursor-pointer'
+                              : 'bg-zinc-900/40 border-white/10 cursor-default'
+                          }`}
                         onClick={(e) => {
-                            if (isZoneSoldOut || !isActive) {
-                                e.preventDefault();
-                            }
+                          if (isZoneSoldOut || !isActive) {
+                            e.preventDefault();
+                          }
                         }}
                       >
                         {/* Zone Header */}
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-white mb-1 group-hover:text-primary transition-colors" style={{ color: !isZoneSoldOut ? undefined : undefined }}>
+                        <div className="flex justify-between items-start gap-3 mb-4">
+                          <div className="min-w-0">
+                            <h3 className="text-lg sm:text-xl font-bold text-white mb-1 group-hover:text-primary transition-colors truncate" style={{ color: !isZoneSoldOut ? undefined : undefined }}>
                               {zone.zoneName}
                             </h3>
                             <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2">
                               {zone.zoneDescription}
                             </p>
                           </div>
-                          
+
                           {/* Savings Badge */}
                           {zone.savingsPercent > 0 && !isZoneSoldOut && (
-                            <Badge className="bg-emerald-500 text-white border-0 font-bold shadow-lg shadow-emerald-500/20 px-2 py-1 text-xs whitespace-nowrap">
+                            <Badge className="bg-emerald-500 text-white border-0 font-bold shadow-lg shadow-emerald-500/20 px-2 py-1 text-xs whitespace-nowrap flex-shrink-0">
                               Ahorra {zone.savingsPercent}%
                             </Badge>
                           )}
@@ -479,33 +478,32 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
 
                         {/* Stock Progress */}
                         {!isZoneSoldOut && !isUpcoming && !isExpired && (
-                            <StockProgressBar available={zone.available} sold={zone.sold} capacity={zone.capacity} />
+                          <StockProgressBar available={zone.available} sold={zone.sold} capacity={zone.capacity} />
                         )}
 
                         <div className="mt-auto pt-6 flex items-end justify-between gap-4">
                           <div className="flex flex-col">
                             <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-1">Precio</span>
                             <div className="flex items-baseline gap-1">
-                                <ZonePrice price={zone.price} currency={currency} dominantColor={dominantColor} />
+                              <ZonePrice price={zone.price} currency={currency} dominantColor={dominantColor} />
                             </div>
-                            
+
                             {/* Installment micro-copy */}
                             {event.allowInstallmentPayments && !isZoneSoldOut && (
-                                <span className="text-[10px] text-blue-400 font-medium mt-1 flex items-center gap-1">
-                                    <CheckCircle2 className="w-3 h-3" /> Opción a cuotas
-                                </span>
+                              <span className="text-[10px] text-blue-400 font-medium mt-1 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> Opción a cuotas
+                              </span>
                             )}
                           </div>
 
                           {/* Zone Selection Indicator (Visual only, actual selection is on next page) */}
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${
-                              isZoneSoldOut 
-                                ? 'border-zinc-700 bg-zinc-800 text-zinc-500' 
-                                : 'border-white/20 bg-white/5 text-white group-hover:bg-primary group-hover:border-primary'
-                          }`}
-                          style={{ backgroundColor: !isZoneSoldOut ? undefined : undefined }} // Let hover handle dynamic color via CSS if possible, but hard with inline dominantColor. Using default styles.
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${isZoneSoldOut
+                              ? 'border-zinc-700 bg-zinc-800 text-zinc-500'
+                              : 'border-white/20 bg-white/5 text-white group-hover:bg-primary group-hover:border-primary'
+                            }`}
+                            style={{ backgroundColor: !isZoneSoldOut ? undefined : undefined }} // Let hover handle dynamic color via CSS if possible, but hard with inline dominantColor. Using default styles.
                           >
-                             {isZoneSoldOut ? <XCircle className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                            {isZoneSoldOut ? <XCircle className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                           </div>
                         </div>
                       </Link>
@@ -514,36 +512,36 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                 </div>
 
                 {/* Footer CTA */}
-                <div className="p-6 sm:p-8 pt-0 mt-2">
-                    {isActive ? (
-                        <Link href={buyUrl} className="block">
-                            <Button 
-                                size="lg" 
-                                className="w-full h-14 sm:h-16 text-lg font-bold rounded-2xl shadow-xl hover:scale-[1.01] transition-all duration-300 relative overflow-hidden group"
-                                style={{
-                                    backgroundColor: dominantColor,
-                                    boxShadow: `0 10px 30px -10px ${dominantColor}66`
-                                }}
-                            >
-                                <span className="relative z-10 flex items-center gap-3">
-                                    <ShoppingCart className="w-6 h-6" />
-                                    Comprar Entradas
-                                </span>
-                                {/* Shine Effect */}
-                                <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                            </Button>
-                        </Link>
-                    ) : (
-                        <Button disabled className="w-full h-14 rounded-2xl bg-zinc-800 text-zinc-500 font-medium">
-                            {isUpcoming ? 'Fase Próximamente' : 'Venta Finalizada'}
-                        </Button>
-                    )}
-                    
-                    {isActive && (
-                        <p className="text-center text-xs text-zinc-500 mt-4 flex items-center justify-center gap-2">
-                            <CheckCircle2 className="w-3 h-3" /> Compra segura y garantizada por RaveHub
-                        </p>
-                    )}
+                <div className="p-4 sm:p-6 md:p-8 pt-0 mt-2">
+                  {isActive ? (
+                    <Link href={buyUrl} className="block">
+                      <Button
+                        size="lg"
+                        className="w-full h-14 sm:h-16 text-lg font-bold rounded-2xl shadow-xl hover:scale-[1.01] transition-all duration-300 relative overflow-hidden group"
+                        style={{
+                          backgroundColor: dominantColor,
+                          boxShadow: `0 10px 30px -10px ${dominantColor}66`
+                        }}
+                      >
+                        <span className="relative z-10 flex items-center gap-3">
+                          <ShoppingCart className="w-6 h-6" />
+                          Comprar Entradas
+                        </span>
+                        {/* Shine Effect */}
+                        <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button disabled className="w-full h-14 rounded-2xl bg-zinc-800 text-zinc-500 font-medium">
+                      {isUpcoming ? 'Fase Próximamente' : 'Venta Finalizada'}
+                    </Button>
+                  )}
+
+                  {isActive && (
+                    <p className="text-center text-xs text-zinc-500 mt-4 flex items-center justify-center gap-2">
+                      <CheckCircle2 className="w-3 h-3" /> Compra segura y garantizada por RaveHub
+                    </p>
+                  )}
                 </div>
 
               </TabsContent>

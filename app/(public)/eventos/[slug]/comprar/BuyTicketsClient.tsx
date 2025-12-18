@@ -399,6 +399,15 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
   const totalRemaining = Math.max(0, totalAmount - totalReservation);
   const monthlyInstallment = installments > 0 ? totalRemaining / installments : 0;
 
+  const getEventDate = (dateString: string) => {
+    // Helper to parse date string and prevent timezone shifts
+    // Appends T00:00:00 if it's a date-only string to ensure local time parsing
+    // or adjusts the date if it's already an ISO string that's being shifted.
+    const date = new Date(dateString);
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() + userTimezoneOffset);
+  };
+
   const handlePurchase = async () => {
     if (!event || !acceptTerms || totalTickets === 0) return;
 
@@ -451,7 +460,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
           }
 
           const message = `🎟️ *NUEVA RESERVA - ${event.name}* 🎟️\n\n` +
-            `📅 *Fecha:* ${format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
+            `📅 *Fecha:* ${format(getEventDate(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
             `📍 *Lugar:* ${event.location.venue}\n\n` +
             `🎫 *Tickets:*\n${ticketsList}\n\n` +
             `💰 *TOTAL PEDIDO:* ${symbol} ${totalAmount}\n` +
@@ -485,7 +494,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
         <div className="absolute top-[20%] left-[-100px] w-[300px] h-[300px] bg-orange-500/10 rounded-full blur-[80px]" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-24">
         {/* Navigation */}
         <Link href={`/eventos/${event.slug}`} className="inline-flex items-center text-zinc-400 hover:text-white transition-colors mb-8 group">
           <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center mr-3 group-hover:bg-white/10 transition-colors">
@@ -502,7 +511,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
             <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
                     <Calendar className="w-4 h-4 text-orange-400" />
-                    <span>{format(new Date(event.startDate), 'EEEE d MMMM, yyyy', { locale: es })}</span>
+                    <span>{format(getEventDate(event.startDate), 'EEEE d MMMM, yyyy', { locale: es })}</span>
                 </div>
                 {event.startTime && (
                     <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
@@ -689,7 +698,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
           </div>
 
           {/* Right Column: Sticky Summary (Desktop) */}
-          <div className="hidden lg:block sticky top-8">
+          <div className="hidden lg:block sticky top-24">
             <div className="bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative">
                 {/* Background Image Blur */}
                 {event.bannerImageUrl && (

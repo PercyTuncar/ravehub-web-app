@@ -86,22 +86,22 @@ export function EventDetails({
       {specifications && specifications.length > 0 && (
         <section className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <h2 className="text-2xl font-bold mb-6 text-[#FAFDFF]">Especificaciones</h2>
-          <div className="grid sm:grid-cols-2 gap-6">
+          <div className="grid sm:grid-cols-2 gap-6 w-full overflow-hidden">
               {specifications
                 .filter((spec: any) => {
                   return spec.title && spec.items && Array.isArray(spec.items);
                 })
                 .map((spec: any, index: number) => (
-                  <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm hover:border-white/20 transition-colors">
-                    <h4 className="font-bold text-lg mb-4 text-[#FAFDFF] flex items-center gap-2">
-                        <span className="w-1.5 h-6 rounded-full bg-primary" style={{ backgroundColor: dominantColor }} />
-                        {spec.title}
+                  <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm hover:border-white/20 transition-colors w-full min-w-0">
+                    <h4 className="font-bold text-lg mb-4 text-[#FAFDFF] flex items-center gap-2 truncate">
+                        <span className="w-1.5 h-6 rounded-full bg-primary flex-shrink-0" style={{ backgroundColor: dominantColor }} />
+                        <span className="truncate">{spec.title}</span>
                     </h4>
                     <ul className="space-y-3">
                       {spec.items.map((item: string, itemIndex: number) => (
                         <li key={itemIndex} className="flex items-start gap-2.5 text-gray-300">
                            <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
-                           <span className="leading-relaxed">{item}</span>
+                           <span className="leading-relaxed break-words min-w-0">{item}</span>
                         </li>
                       ))}
                     </ul>
