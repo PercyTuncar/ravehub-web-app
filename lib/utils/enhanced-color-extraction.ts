@@ -26,7 +26,7 @@ export interface ColorPalette {
  * Enhanced color extraction with Color Thief integration and fallbacks
  */
 export async function extractColorsFromImageEnhanced(
-  imageUrl: string, 
+  imageUrl: string,
   options: {
     quality?: 'fast' | 'balanced' | 'detailed';
     targetContrast?: 'AA' | 'AAA';
@@ -35,23 +35,23 @@ export async function extractColorsFromImageEnhanced(
   const { quality = 'balanced', targetContrast = 'AA' } = options;
 
   try {
-    // Try Color Thief first (most accurate)
-    const colorThiefPalette = await extractColorsWithColorThief(imageUrl, quality);
-    if (colorThiefPalette) {
-      return createAccessiblePalette(colorThiefPalette, targetContrast);
-    }
-  } catch (error) {
-    console.warn('Color Thief extraction failed, trying canvas method:', error);
-  }
-
-  try {
-    // Fallback to canvas-based extraction
+    // Try Canvas-based extraction first (custom logic allows better filtering of dark/light/desaturated pixels)
     const canvasPalette = await extractColorsWithCanvas(imageUrl, quality);
     if (canvasPalette) {
       return createAccessiblePalette(canvasPalette, targetContrast);
     }
   } catch (error) {
-    console.warn('Canvas extraction failed, trying Cloudinary fallback:', error);
+    console.warn('Canvas extraction failed, trying Color Thief:', error);
+  }
+
+  try {
+    // Fallback to Color Thief
+    const colorThiefPalette = await extractColorsWithColorThief(imageUrl, quality);
+    if (colorThiefPalette) {
+      return createAccessiblePalette(colorThiefPalette, targetContrast);
+    }
+  } catch (error) {
+    console.warn('Color Thief extraction failed, trying Cloudinary fallback:', error);
   }
 
   try {
@@ -72,7 +72,7 @@ export async function extractColorsFromImageEnhanced(
  * Extract colors using Color Thief library
  */
 async function extractColorsWithColorThief(
-  imageUrl: string, 
+  imageUrl: string,
   quality: 'fast' | 'balanced' | 'detailed'
 ): Promise<{ dominant: [number, number, number]; accent: [number, number, number] } | null> {
   if (typeof window === 'undefined') {
@@ -93,37 +93,37 @@ async function extractColorsWithColorThief(
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    
+
     const timeout = setTimeout(() => {
       reject(new Error('Color Thief timeout'));
     }, 8000);
 
     img.onload = () => {
       clearTimeout(timeout);
-      
+
       try {
         const ColorThiefClass = window.ColorThief;
         const colorThief = new ColorThiefClass();
-        
+
         // Get dominant color
         const dominant = colorThief.getColor(img);
-        
+
         // Get palette based on quality setting
         const colorCount = quality === 'fast' ? 3 : quality === 'balanced' ? 5 : 8;
         const palette = colorThief.getPalette(img, colorCount);
-        
+
         // Choose accent color (second most prominent, avoiding similar colors)
         let accent = dominant;
         if (palette && palette.length > 1) {
           accent = palette[1];
-          
+
           // Ensure accent is different enough from dominant
           const colorDistance = calculateColorDistance(dominant, accent);
           if (colorDistance < 50 && palette.length > 2) {
             accent = palette[2];
           }
         }
-        
+
         resolve({ dominant, accent });
       } catch (error) {
         reject(error);
@@ -143,7 +143,7 @@ async function extractColorsWithColorThief(
  * Enhanced canvas-based color extraction
  */
 async function extractColorsWithCanvas(
-  imageUrl: string, 
+  imageUrl: string,
   quality: 'fast' | 'balanced' | 'detailed'
 ): Promise<{ dominant: [number, number, number]; accent: [number, number, number] } | null> {
   if (typeof window === 'undefined') {
@@ -153,18 +153,18 @@ async function extractColorsWithCanvas(
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    
+
     const timeout = setTimeout(() => {
       reject(new Error('Canvas extraction timeout'));
     }, 8000);
 
     img.onload = () => {
       clearTimeout(timeout);
-      
+
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
+
         if (!ctx) {
           throw new Error('Canvas context not available');
         }
@@ -172,40 +172,45 @@ async function extractColorsWithCanvas(
         // Set quality-based sample size
         const maxSize = quality === 'fast' ? 100 : quality === 'balanced' ? 200 : 300;
         const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
-        
+
         canvas.width = img.width * scale;
         canvas.height = img.height * scale;
-        
+
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
+
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
-        
+
         // Advanced color quantization
         const colorMap = new Map<string, { count: number; totalR: number; totalG: number; totalB: number }>();
-        
+
         // Sampling strategy based on quality
         const sampleRate = quality === 'fast' ? 8 : quality === 'balanced' ? 4 : 2;
-        
+
         for (let i = 0; i < data.length; i += 4 * sampleRate) {
           const r = data[i];
           const g = data[i + 1];
           const b = data[i + 2];
           const a = data[i + 3];
-          
+
           // Skip transparent pixels
           if (a < 128) continue;
-          
+
           // Skip very dark or very light pixels to avoid background bias
           const brightness = (r + g + b) / 3;
-          if (brightness < 20 || brightness > 235) continue;
-          
+          if (brightness < 15 || brightness > 250) continue;
+
+          // Skip pixels with low saturation (grays/blacks/whites)
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          if (max - min < 20) continue; // Skip if color range is narrow (grayscale)
+
           // Advanced quantization - reduce color space more intelligently
           const qr = Math.floor(r / 16) * 16;
           const qg = Math.floor(g / 16) * 16;
           const qb = Math.floor(b / 16) * 16;
           const key = `${qr},${qg},${qb}`;
-          
+
           const existing = colorMap.get(key) || { count: 0, totalR: 0, totalG: 0, totalB: 0 };
           colorMap.set(key, {
             count: existing.count + 1,
@@ -214,32 +219,43 @@ async function extractColorsWithCanvas(
             totalB: existing.totalB + b,
           });
         }
-        
+
         // Get most prominent colors
         const sortedColors = Array.from(colorMap.entries())
-          .sort((a, b) => b[1].count - a[1].count)
-          .slice(0, 8)
           .map(([key, data]) => {
             const [r, g, b] = key.split(',').map(Number);
+
+            // Calculate saturation for weighting
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const saturation = max === 0 ? 0 : (max - min) / max;
+
+            // Weight count by saturation to favor vibrant colors
+            // Base weight 0.5 + up to 2.5 bias for saturated colors
+            const weight = data.count * (0.5 + 2.5 * saturation);
+
             return {
               color: [r, g, b] as [number, number, number],
               count: data.count,
+              weight: weight,
               avg: [
                 Math.round(data.totalR / data.count),
                 Math.round(data.totalG / data.count),
                 Math.round(data.totalB / data.count)
               ] as [number, number, number]
             };
-          });
-        
+          })
+          .sort((a, b) => b.weight - a.weight)
+          .slice(0, 8);
+
         if (sortedColors.length === 0) {
           throw new Error('No valid colors found');
         }
-        
+
         // Get dominant and accent colors
         const dominant = sortedColors[0].avg;
         let accent = sortedColors[0].avg;
-        
+
         if (sortedColors.length > 1) {
           // Choose accent color that's sufficiently different from dominant
           for (let i = 1; i < sortedColors.length; i++) {
@@ -251,7 +267,7 @@ async function extractColorsWithCanvas(
             }
           }
         }
-        
+
         resolve({ dominant, accent });
       } catch (error) {
         reject(error);
@@ -276,7 +292,7 @@ async function extractColorsWithCloudinary(
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
-  
+
   if (!cloudName || !apiKey || !apiSecret) {
     console.warn('Cloudinary credentials not available');
     return null;
@@ -330,29 +346,30 @@ function createAccessiblePalette(
   }
 
   const { dominant, accent } = baseColors;
-  
+
   try {
     // Convert RGB to Color objects for easier manipulation
     const dominantRgb = `rgb(${dominant[0]}, ${dominant[1]}, ${dominant[2]})`;
     const accentRgb = `rgb(${accent[0]}, ${accent[1]}, ${accent[2]})`;
-    
-    // Create Color objects and increase saturation significantly
-    const dominantColorObj = Color(dominantRgb).saturate(0.5); // Increase saturation by 50%
-    const accentColorObj = Color(accentRgb).saturate(0.5); // Increase saturation by 50%
-    
+
+    // Create Color objects and increase saturation slightly as requested
+    const dominantColorObj = Color(dominantRgb).saturate(0.3);
+    const accentColorObj = Color(accentRgb).saturate(0.3);
+
     // Get HSL values after saturation increase
     const dominantHsl = dominantColorObj.hsl().object();
     const accentHsl = accentColorObj.hsl().object();
-    
+
     // Adjust lightness for better visibility and contrast
     // Dominant color should be bright enough to stand out but not too bright
-    const dominantLightness = Math.max(Math.min(dominantHsl.l || 50, 65), 40);
+    // Widened range: 30-75 (was 40-65) to allow more natural colors
+    const dominantLightness = Math.max(Math.min(dominantHsl.l || 50, 75), 30);
     // Accent color should complement dominant, slightly brighter
-    const accentLightness = Math.max(Math.min((accentHsl.l || 50) + 5, 75), 45);
-    
+    const accentLightness = Math.max(Math.min((accentHsl.l || 50) + 5, 80), 40);
+
     // Ensure sufficient contrast for text
-    const textColor = dominantLightness > 50 ? '#ffffff' : '#f5f5f5';
-    
+    const textColor = dominantLightness > 50 ? '#000000' : '#ffffff';
+
     // Background should be dark but maintain hue relationship
     const backgroundLightness = Math.max((dominantHsl.l || 50) - 45, 8);
     const backgroundSaturation = Math.max((dominantHsl.s || 50) - 25, 10);
@@ -361,24 +378,31 @@ function createAccessiblePalette(
       .darken(0.7)
       .hsl()
       .string();
-    
+
     // Muted color for subtle elements
     const mutedLightness = Math.max((dominantHsl.l || 50) - 15, 30);
     const mutedSaturation = Math.max((dominantHsl.s || 50) - 15, 20);
-    
-    // Create final colors with enhanced saturation
+
+    // Create final colors - with requested saturation boost
     const dominantColor = Color(dominantRgb)
-      .saturate(0.5)
+      .saturate(0.3)
       .lightness(dominantLightness)
       .hsl()
       .string();
-    
+
+    // Create a secondary shade of dominant for gradient to ensure harmony
+    const dominantSecondary = Color(dominantRgb)
+      .lightness(Math.max(dominantLightness - 15, 20)) // Darker version
+      .saturate(0.4) // Richer for gradient depth
+      .hsl()
+      .string();
+
     const accentColor = Color(accentRgb)
-      .saturate(0.5)
+      .saturate(0.3)
       .lightness(accentLightness)
       .hsl()
       .string();
-    
+
     // For muted color, create directly with HSL values
     const mutedColor = Color({
       h: dominantHsl.h || 0,
@@ -387,7 +411,7 @@ function createAccessiblePalette(
     })
       .hsl()
       .string();
-    
+
     // Validate and adjust contrast if needed
     const adjustedColors = ensureContrast(
       {
@@ -399,7 +423,7 @@ function createAccessiblePalette(
       },
       targetContrast
     );
-    
+
     return {
       ...adjustedColors,
       brand: adjustedColors.dominant,
@@ -412,8 +436,9 @@ function createAccessiblePalette(
           .string(),
       },
       gradients: {
-        primary: `linear-gradient(135deg, ${adjustedColors.dominant}, ${adjustedColors.accent})`,
-        secondary: `linear-gradient(90deg, ${adjustedColors.accent}, ${adjustedColors.dominant})`,
+        // Use monochromatic/analogous gradient for safety and premium feel
+        primary: `linear-gradient(135deg, ${adjustedColors.dominant}, ${dominantSecondary})`,
+        secondary: `linear-gradient(90deg, ${dominantSecondary}, ${adjustedColors.dominant})`,
         radial: `radial-gradient(circle, ${adjustedColors.dominant}15 0%, ${adjustedColors.background} 70%)`,
       },
       success: '#10b981',
@@ -463,10 +488,10 @@ function hexToRgb(hex: string): [number, number, number] {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16),
-      ]
+      parseInt(result[1], 16),
+      parseInt(result[2], 16),
+      parseInt(result[3], 16),
+    ]
     : [0, 0, 0];
 }
 
@@ -503,7 +528,7 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
 function calculateColorDistance(color1: [number, number, number], color2: [number, number, number]): number {
   const r1 = color1[0], g1 = color1[1], b1 = color1[2];
   const r2 = color2[0], g2 = color2[1], b2 = color2[2];
-  
+
   return Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
 }
 
@@ -603,32 +628,32 @@ declare global {
 export function hslToRgb(hslString: string): { r: number; g: number; b: number } | null {
   const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
   if (!match) return null;
-  
+
   const h = parseInt(match[1]) / 360;
   const s = parseInt(match[2]) / 100;
   const l = parseInt(match[3]) / 100;
-  
+
   let r, g, b;
-  
+
   if (s === 0) {
     r = g = b = l;
   } else {
     const hue2rgb = (p: number, q: number, t: number) => {
       if (t < 0) t += 1;
       if (t > 1) t -= 1;
-      if (t < 1/6) return p + (q - p) * 6 * t;
-      if (t < 1/2) return q;
-      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
       return p;
     };
-    
+
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1/3);
+    r = hue2rgb(p, q, h + 1 / 3);
     g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1/3);
+    b = hue2rgb(p, q, h - 1 / 3);
   }
-  
+
   return {
     r: Math.round(r * 255),
     g: Math.round(g * 255),
