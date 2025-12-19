@@ -54,7 +54,7 @@ function VideoBackground({
     setUseVideo(!lowBandwidth && !prefersReducedMotion);
   }, []);
 
-  const posterSrc = poster || fallbackImage || '/icons/logo-full.png';
+  const posterSrc = poster || fallbackImage || '/icons/logo-full-navidad.png';
   const showFallbackLayer = fallbackImage && fallbackImage !== posterSrc;
 
   const handleVideoLoad = () => {

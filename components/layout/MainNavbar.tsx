@@ -64,8 +64,8 @@ export function MainNavbar() {
             className="flex items-center space-x-2 group transition-transform duration-200 hover:scale-105"
           >
             <Image
-              src="/icons/logo-full.png"
-              alt="Ravehub Logo"
+              src="/icons/logo-full-navidad.png"
+              alt="Ravehub Logo - Edición Navideña"
               width={140}
               height={36}
               className="h-9 w-auto object-contain transition-opacity duration-200"
