@@ -152,7 +152,7 @@ export default function FavoritesPage() {
                           Ver Evento
                         </Button>
                       </Link>
-                      <Link href={`/eventos/${event.id}/comprar`} className="flex-1">
+                      <Link href={`/eventos/${event.id}/entradas`} className="flex-1">
                         <Button className="w-full">
                           Comprar Tickets
                         </Button>

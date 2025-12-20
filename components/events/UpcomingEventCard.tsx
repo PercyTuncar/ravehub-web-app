@@ -222,7 +222,7 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
 
                         {/* Action Button */}
                         {event.sellTicketsOnPlatform && !isSoldOut ? (
-                            <Link href={`/eventos/${event.slug}/comprar`}>
+                            <Link href={`/eventos/${event.slug}/entradas`}>
                                 <Button
                                     className="rounded-2xl bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white font-bold text-sm px-6 shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background group/btn"
                                     size="sm"

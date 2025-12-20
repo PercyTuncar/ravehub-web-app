@@ -191,7 +191,7 @@ export default function EventHero({ event }: EventHeroProps) {
                 className="flex flex-col sm:flex-row gap-3 mb-4"
               >
                 {event.sellTicketsOnPlatform ? (
-                  <Link href={`/eventos/${event.slug}/comprar`} className="flex-1 sm:flex-none">
+                  <Link href={`/eventos/${event.slug}/entradas`} className="flex-1 sm:flex-none">
                     <Button
                       size="lg"
                       className="w-full sm:w-auto h-10 px-6 text-sm font-bold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.5)] transition-all duration-300 hover:scale-[1.02] border-none"

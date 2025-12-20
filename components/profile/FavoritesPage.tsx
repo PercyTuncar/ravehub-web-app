@@ -218,7 +218,7 @@ export function FavoritesPage() {
                     </Link>
                   </Button>
                   <Button variant="outline" className="flex-1" asChild>
-                    <Link href={`/eventos/${event.slug}/comprar`}>
+                    <Link href={`/eventos/${event.slug}/entradas`}>
                       Comprar Tickets
                     </Link>
                   </Button>

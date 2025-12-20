@@ -34,7 +34,7 @@ export function generateEventSchema(event: Event) {
         })) || [],
         offers: {
             '@type': 'Offer',
-            url: `https://www.ravehublatam.com/eventos/${event.slug}/comprar`,
+            url: `https://www.ravehublatam.com/eventos/${event.slug}/entradas`,
             priceCurrency: event.currency || 'PEN', // Ensure currency is available
             availability: event.eventStatus === 'soldout' ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
             validFrom: event.createdAt ? new Date(event.createdAt).toISOString() : undefined

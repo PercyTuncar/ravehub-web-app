@@ -414,7 +414,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                   <div className="relative flex items-center gap-2 py-1">
                     <span className="whitespace-nowrap">{phase.name}</span>
                     {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
-                    
+
                     {/* Active Indicator Line */}
                     <span
                       className="absolute -bottom-4 left-0 right-0 h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
@@ -440,9 +440,9 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                   <div className="relative flex flex-col items-start gap-1 py-1">
                     <span className="whitespace-nowrap text-sm font-bold">{phase.name}</span>
                     <div className="scale-90 origin-left">
-                        {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
+                      {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
                     </div>
-                    
+
                     {/* Active Indicator Line */}
                     <span
                       className="absolute -bottom-4 left-0 right-0 h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
@@ -456,7 +456,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
 
           {/* Phase Content */}
           {pricingData.map(({ phase, zones, isActive, isUpcoming, isExpired, isSoldOut }, index) => {
-            const buyUrl = `/eventos/${event.slug}/comprar`;
+            const buyUrl = `/eventos/${event.slug}/entradas`;
 
             return (
               <TabsContent key={phase.id} value={`phase-${index}`} className="focus:outline-none animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -483,10 +483,10 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                         key={zone.zoneId}
                         href={isActive && !isZoneSoldOut ? buyUrl : '#'}
                         className={`block relative group flex flex-col p-4 sm:p-5 md:p-6 rounded-2xl border transition-all duration-300 ${isZoneSoldOut
-                            ? 'bg-zinc-900/20 border-white/5 opacity-60 grayscale cursor-not-allowed'
-                            : isActive
-                              ? 'bg-zinc-900/40 border-white/10 hover:border-white/20 hover:bg-white/5 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 cursor-pointer'
-                              : 'bg-zinc-900/40 border-white/10 cursor-default'
+                          ? 'bg-zinc-900/20 border-white/5 opacity-60 grayscale cursor-not-allowed'
+                          : isActive
+                            ? 'bg-zinc-900/40 border-white/10 hover:border-white/20 hover:bg-white/5 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 cursor-pointer'
+                            : 'bg-zinc-900/40 border-white/10 cursor-default'
                           }`}
                         onClick={(e) => {
                           if (isZoneSoldOut || !isActive) {
@@ -535,8 +535,8 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
 
                           {/* Zone Selection Indicator (Visual only, actual selection is on next page) */}
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${isZoneSoldOut
-                              ? 'border-zinc-700 bg-zinc-800 text-zinc-500'
-                              : 'border-white/20 bg-white/5 text-white group-hover:bg-primary group-hover:border-primary'
+                            ? 'border-zinc-700 bg-zinc-800 text-zinc-500'
+                            : 'border-white/20 bg-white/5 text-white group-hover:bg-primary group-hover:border-primary'
                             }`}
                             style={{ backgroundColor: !isZoneSoldOut ? undefined : undefined }} // Let hover handle dynamic color via CSS if possible, but hard with inline dominantColor. Using default styles.
                           >

@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  ShoppingCart, 
-  CreditCard, 
-  Loader2, 
-  Zap, 
-  Clock, 
-  Users, 
+import {
+  ShoppingCart,
+  CreditCard,
+  Loader2,
+  Zap,
+  Clock,
+  Users,
   TrendingUp,
   CheckCircle,
   AlertCircle,
@@ -54,10 +54,10 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       setScrollY(currentScrollY);
-      
+
       // Show CTA after scrolling past hero section
       setShowCTA(currentScrollY > 400);
-      
+
       // Hide/show based on scroll direction
       if (currentScrollY > lastScrollY && currentScrollY > 600) {
         // Scrolling down
@@ -66,7 +66,7 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
         // Scrolling up
         setIsVisible(true);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
@@ -93,11 +93,11 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
     const zonePricing = zonesPricing.find((zp) => zp.zoneId === zoneId);
     const zone = event.zones?.find((z) => z.id === zoneId);
     if (!zonePricing || !zone) return { available: 0, capacity: 0, percentage: 0 };
-    
-    const percentage = zone.capacity > 0 
+
+    const percentage = zone.capacity > 0
       ? Math.round((zonePricing.available / zone.capacity) * 100)
       : 0;
-    
+
     return {
       available: zonePricing.available,
       capacity: zone.capacity,
@@ -109,7 +109,7 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
     const totalAvailable = zonesPricing.reduce((sum, zp) => sum + zp.available, 0);
     const totalCapacity = event.zones?.reduce((sum, zone) => sum + zone.capacity, 0) || 1;
     const overallPercentage = Math.round((totalAvailable / totalCapacity) * 100);
-    
+
     if (overallPercentage <= 10) return 'critical';
     if (overallPercentage <= 25) return 'high';
     if (overallPercentage <= 50) return 'medium';
@@ -117,7 +117,7 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
   };
 
   const urgencyLevel = getUrgencyLevel();
-  const cheapestZone = zonesPricing.reduce((prev, curr) => 
+  const cheapestZone = zonesPricing.reduce((prev, curr) =>
     (prev.price < curr.price ? prev : curr)
   );
 
@@ -167,17 +167,17 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
         <motion.div
           ref={containerRef}
           initial={{ y: 100, opacity: 0 }}
-          animate={{ 
-            y: 0, 
+          animate={{
+            y: 0,
             opacity: 1,
-            transition: { 
-              type: 'spring', 
-              damping: 25, 
-              stiffness: 300 
+            transition: {
+              type: 'spring',
+              damping: 25,
+              stiffness: 300
             }
           }}
-          exit={{ 
-            y: 100, 
+          exit={{
+            y: 100,
             opacity: 0,
             transition: { duration: 0.2 }
           }}
@@ -203,7 +203,7 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
                       {event.location.venue}, {event.location.city}
                     </p>
                   </div>
-                  
+
                   {/* Expand/Collapse Button */}
                   <Button
                     variant="ghost"
@@ -225,8 +225,8 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
                     <span className="text-2xl font-bold">
                       {event.currencySymbol || event.currency} {cheapestZone.price.toFixed(2)}
                     </span>
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className={cn(
                         'text-xs',
                         currentUrgency.color,
@@ -238,7 +238,7 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
                       {currentUrgency.text}
                     </Badge>
                   </div>
-                  
+
                   <div className="text-right text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
@@ -252,19 +252,19 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                     <span>Disponibilidad</span>
                     <span>{urgencyLevel === 'critical' ? '10%' :
-                           urgencyLevel === 'high' ? '25%' :
-                           urgencyLevel === 'medium' ? '50%' : '75%'} restante</span>
+                      urgencyLevel === 'high' ? '25%' :
+                        urgencyLevel === 'medium' ? '50%' : '75%'} restante</span>
                   </div>
                   <Progress
                     value={urgencyLevel === 'critical' ? 90 :
-                           urgencyLevel === 'high' ? 75 :
-                           urgencyLevel === 'medium' ? 50 : 25}
+                      urgencyLevel === 'high' ? 75 :
+                        urgencyLevel === 'medium' ? 50 : 25}
                     className="h-2"
                   />
                 </div>
 
                 {/* Main CTA Button */}
-                <Link href={`/eventos/${event.slug}/comprar${selectedZone ? `?zone=${selectedZone}` : ''}`} className="block">
+                <Link href={`/eventos/${event.slug}/entradas${selectedZone ? `?zone=${selectedZone}` : ''}`} className="block">
                   <Button
                     size="lg"
                     className="w-full relative overflow-hidden group"
@@ -354,7 +354,7 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
                                   {event.currencySymbol || event.currency} {zp.price.toFixed(2)}
                                 </span>
                               </div>
-                              
+
                               {!isSoldOut && (
                                 <div className="space-y-1">
                                   <Progress value={availability.percentage} className="h-1" />
@@ -363,7 +363,7 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
                                   </p>
                                 </div>
                               )}
-                              
+
                               {isSoldOut && (
                                 <Badge variant="destructive" className="text-xs">
                                   Agotado

@@ -204,7 +204,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                         <div className="flex flex-col gap-2 w-full lg:w-auto">
                             <div className="flex flex-col sm:flex-row gap-3 w-full">
                                 {event.sellTicketsOnPlatform && !isSoldOut ? (
-                                    <Link href={`/eventos/${event.slug}/comprar`} className="w-full sm:w-auto">
+                                    <Link href={`/eventos/${event.slug}/entradas`} className="w-full sm:w-auto">
                                         <Button
                                             size="lg"
                                             className="w-full sm:w-auto h-12 sm:h-14 px-8 text-base sm:text-lg font-bold rounded-xl text-white shadow-xl hover:scale-105 hover:shadow-2xl ring-offset-2 focus:ring-2 transition-all duration-700"

@@ -16,6 +16,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl, { status: 301 });
   }
 
+  // Handle /eventos/[slug]/comprar → /eventos/[slug]/entradas redirect (SEO migration)
+  const comprarMatch = url.pathname.match(/^\/eventos\/([^\/]+)\/comprar$/);
+  if (comprarMatch) {
+    const slug = comprarMatch[1];
+    const newUrl = new URL(`/eventos/${slug}/entradas`, request.url);
+    // Preserve query params (e.g., ?zone=vip)
+    newUrl.search = url.search;
+    return NextResponse.redirect(newUrl, { status: 301 });
+  }
+
   // Handle blog category redirects from query params to path-based routes
   if (url.pathname === '/blog' && url.searchParams.has('category')) {
     const category = url.searchParams.get('category');

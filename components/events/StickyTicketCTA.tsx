@@ -28,17 +28,17 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
 
   // Find cheapest price (calculate before hooks to avoid conditional hook calls)
   const cheapestPrice = zonesPricing.length > 0
-    ? zonesPricing.reduce((min, zp) => 
-        zp.price < min ? zp.price : min, 
-        zonesPricing[0]?.price || 0
-      )
+    ? zonesPricing.reduce((min, zp) =>
+      zp.price < min ? zp.price : min,
+      zonesPricing[0]?.price || 0
+    )
     : 0;
 
   const eventCurrency = event.currency || 'USD';
-  
+
   // Convert price to user's selected currency - MUST be called before any conditional returns
   const { convertedPrice, isLoading: isConvertingPrice } = useConvertedPrice(
-    cheapestPrice > 0 ? cheapestPrice : 0, 
+    cheapestPrice > 0 ? cheapestPrice : 0,
     eventCurrency
   );
 
@@ -76,7 +76,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
       {/* Desktop version - dock style, bottom centered */}
       <AnimatePresence>
         {isVisible && (
-          <div 
+          <div
             className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden lg:block pointer-events-none"
             style={{ maxWidth: '500px', width: 'auto' }}
           >
@@ -84,7 +84,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
               initial={{ y: 100, opacity: 0, scale: 0.95 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 100, opacity: 0, scale: 0.95 }}
-              transition={{ 
+              transition={{
                 type: 'spring',
                 damping: 28,
                 stiffness: 300,
@@ -101,7 +101,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                 <X className="h-3 w-3 text-white/90 hover:text-white" />
               </button>
 
-              <Link href={`/eventos/${event.slug}/comprar`}>
+              <Link href={`/eventos/${event.slug}/entradas`}>
                 <motion.div
                   whileHover={{ y: -2, scale: 1.01 }}
                   className={cn(
@@ -126,7 +126,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                   {/* Content - Horizontal layout */}
                   <div className="relative px-5 py-2.5 flex items-center gap-3.5">
                     {/* Icon */}
-                    <div 
+                    <div
                       className="flex-shrink-0 p-2 rounded-lg"
                       style={{
                         background: `${accentColor}15`,
@@ -134,22 +134,22 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                         transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
-                      <Ticket 
-                        className="h-4 w-4 text-zinc-500" 
+                      <Ticket
+                        className="h-4 w-4 text-zinc-500"
                       />
                     </div>
 
                     {/* Info Section */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span 
+                        <span
                           className="text-[9px] font-semibold uppercase tracking-wider opacity-75 text-zinc-400"
                         >
                           Desde
                         </span>
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <div 
+                        <div
                           className="text-xl font-bold leading-tight text-zinc-100"
                         >
                           {isConvertingPrice ? (
@@ -183,14 +183,14 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                     >
                       {/* Shine effect */}
                       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                      
+
                       <span className="relative z-10 font-bold text-white">Comprar</span>
                       <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform relative z-10 text-white" />
                     </div>
                   </div>
 
                   {/* Subtle glow effect */}
-                  <div 
+                  <div
                     className="absolute -inset-0.5 -z-10 blur-xl opacity-10 rounded-2xl"
                     style={{
                       background: `radial-gradient(circle, ${accentColor} 0%, transparent 70%)`,
@@ -211,7 +211,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
             initial={{ y: 20, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 20, opacity: 0, scale: 0.95 }}
-            transition={{ 
+            transition={{
               type: 'spring',
               damping: 30,
               stiffness: 300,
@@ -222,8 +222,8 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
               bottom: 'calc(4.5rem + 25px + env(safe-area-inset-bottom, 0px))', // Moved up by 50px as requested
             }}
           >
-            <Link 
-              href={`/eventos/${event.slug}/comprar`}
+            <Link
+              href={`/eventos/${event.slug}/entradas`}
               className="pointer-events-auto block"
             >
               <motion.div
@@ -245,7 +245,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
               >
                 <div className="px-3.5 py-2.5 flex items-center justify-between gap-2.5">
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                    <div 
+                    <div
                       className="p-1 rounded-md flex-shrink-0"
                       style={{
                         backgroundColor: `${accentColor}12`,
@@ -253,17 +253,17 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                         transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
-                      <Ticket 
-                        className="h-3.5 w-3.5 text-zinc-500" 
+                      <Ticket
+                        className="h-3.5 w-3.5 text-zinc-500"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div 
+                      <div
                         className="text-[9px] font-semibold uppercase tracking-wider mb-0.5 opacity-90 text-zinc-400"
                       >
                         Desde
                       </div>
-                      <div 
+                      <div
                         className="text-lg font-bold leading-tight text-zinc-100"
                       >
                         {isConvertingPrice ? (
@@ -292,9 +292,9 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                 </div>
               </motion.div>
             </Link>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

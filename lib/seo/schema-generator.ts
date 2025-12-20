@@ -372,7 +372,7 @@ export class SchemaGenerator {
 
     const ticketUrl = eventData.externalTicketUrl && eventData.externalTicketUrl.startsWith('http')
       ? eventData.externalTicketUrl
-      : `${eventUrl}/comprar`;
+      : `${eventUrl}/entradas`;
 
     const offers: any[] = Array.isArray(eventData.salesPhases)
       ? eventData.salesPhases.flatMap((phase: any, phaseIndex: number) => {
@@ -794,7 +794,7 @@ export class SchemaGenerator {
       : undefined;
     const ticketUrl = eventData.externalTicketUrl && eventData.externalTicketUrl.startsWith('http')
       ? eventData.externalTicketUrl
-      : `${eventUrl}/comprar`;
+      : `${eventUrl}/entradas`;
     const offers: any[] = Array.isArray(eventData.salesPhases)
       ? eventData.salesPhases.flatMap((phase: any, phaseIndex: number) => {
         if (!Array.isArray(phase.zonesPricing)) return [];
@@ -1078,7 +1078,7 @@ export class SchemaGenerator {
   }
   generateEventPurchaseSchema(eventData: any) {
     const eventUrl = `${SchemaGenerator.BASE_URL}/eventos/${eventData.slug}`;
-    const purchaseUrl = `${eventUrl}/comprar`;
+    const purchaseUrl = `${eventUrl}/entradas`;
     // Helper function to format dates with timezone
     const formatDateWithTimezone = (dateString: string, timeString?: string, timezone?: string) => {
       if (!dateString) return dateString;
@@ -1576,7 +1576,7 @@ export class SchemaGenerator {
               '@type': 'QuantitativeValue',
               value: zone.capacity,
             },
-            url: `${this.BASE_URL}/eventos/${event.slug}/comprar`,
+            url: `${this.BASE_URL}/eventos/${event.slug}/entradas`,
           });
         }
       });

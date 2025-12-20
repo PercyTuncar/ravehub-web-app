@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com';
-    const url = `${baseUrl}/eventos/${slug}/comprar`;
+    const url = `${baseUrl}/eventos/${slug}/entradas`;
     const eventUrl = `${baseUrl}/eventos/${slug}`;
 
     // Get main performer for SEO

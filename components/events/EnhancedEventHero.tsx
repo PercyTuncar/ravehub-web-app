@@ -108,13 +108,13 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
   // Get zone pricing info
   const getZoneInfo = () => {
     if (!activePhase?.zonesPricing) return null;
-    
-    const cheapestZone = activePhase.zonesPricing.reduce((prev, curr) => 
+
+    const cheapestZone = activePhase.zonesPricing.reduce((prev, curr) =>
       (prev.price < curr.price ? prev : curr)
     );
-    
+
     const availableZones = activePhase.zonesPricing.filter(zone => zone.available > 0);
-    
+
     return {
       cheapest: cheapestZone,
       availableCount: availableZones.length,
@@ -183,16 +183,16 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <Link href="/eventos">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm"
                 >
                   <ChevronLeft className="h-4 w-4 mr-2" />
                   Volver a eventos
                 </Button>
               </Link>
-              
+
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -245,7 +245,7 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                     {cat}
                   </Badge>
                 ))}
-                
+
                 {event.audienceType && (
                   <Badge
                     className="backdrop-blur-md bg-white/10 text-white border-white/20 px-3 py-1"
@@ -359,7 +359,7 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                 variants={fadeInUp}
               >
                 {event.sellTicketsOnPlatform && activePhase && (
-                  <Link href={`/eventos/${event.slug}/comprar`}>
+                  <Link href={`/eventos/${event.slug}/entradas`}>
                     <Button
                       size="lg"
                       className="w-full sm:w-auto text-lg px-8 py-6 relative overflow-hidden group"
@@ -427,7 +427,7 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                     <Calendar className="h-24 w-24 text-white/50" />
                   </div>
                 )}
-                
+
                 {/* Play Button Overlay for Videos */}
                 {event.videoUrl && (
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -461,7 +461,7 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           >
             <div className="backdrop-blur-xl bg-background/90 border-t border-white/20 p-4">
-              <Link href={`/eventos/${event.slug}/comprar`} className="block">
+              <Link href={`/eventos/${event.slug}/entradas`} className="block">
                 <Button
                   size="lg"
                   className="w-full text-lg"
