@@ -437,9 +437,11 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                     text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none
                   `}
                 >
-                  <div className="relative flex items-center gap-2 py-1">
-                    <span className="whitespace-nowrap text-sm">{phase.name}</span>
-                    {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
+                  <div className="relative flex flex-col items-start gap-1 py-1">
+                    <span className="whitespace-nowrap text-sm font-bold">{phase.name}</span>
+                    <div className="scale-90 origin-left">
+                        {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
+                    </div>
                     
                     {/* Active Indicator Line */}
                     <span

@@ -282,7 +282,7 @@ export function StickyTicketCTA({ event }: StickyTicketCTAProps) {
                     )}
                     style={{
                       backgroundColor: accentColor,
-                      color: '#141618',
+                      color: '#FFFFFF',
                       transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
