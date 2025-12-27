@@ -9,9 +9,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface TermsModalProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    onAccept: () => void;
 }
 
-export function TermsModal({ isOpen, onOpenChange }: TermsModalProps) {
+export function TermsModal({ isOpen, onOpenChange, onAccept }: TermsModalProps) {
+    const handleAccept = () => {
+        onAccept();
+        onOpenChange(false);
+    };
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl h-[80vh] bg-[#0A0A0A] border-zinc-800/50 text-zinc-300 p-0 overflow-hidden flex flex-col shadow-2xl">
@@ -144,6 +149,18 @@ export function TermsModal({ isOpen, onOpenChange }: TermsModalProps) {
                         </section>
                     </div>
                 </ScrollArea>
+
+                <div className="p-6 pt-4 border-t border-zinc-900/50 bg-[#0A0A0A] shrink-0 sticky bottom-0 z-20">
+                    <button
+                        onClick={handleAccept}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_30px_rgba(249,115,22,0.5)] transform hover:scale-[1.01] active:scale-[0.99] tracking-wide"
+                    >
+                        ACEPTAR TÉRMINOS Y CONDICIONES
+                    </button>
+                    <p className="text-center text-[10px] text-zinc-600 mt-2 uppercase tracking-wide">
+                        Al hacer clic en aceptar, confirmas haber leído y entendido las condiciones.
+                    </p>
+                </div>
             </DialogContent>
         </Dialog>
     );

@@ -731,7 +731,11 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
                   </div>
 
                   {/* Terms Modal */}
-                  <TermsModal isOpen={showTermsModal} onOpenChange={setShowTermsModal} />
+                  <TermsModal
+                    isOpen={showTermsModal}
+                    onOpenChange={setShowTermsModal}
+                    onAccept={() => setAcceptTerms(true)}
+                  />
                 </CardContent>
               </Card>
             )}
