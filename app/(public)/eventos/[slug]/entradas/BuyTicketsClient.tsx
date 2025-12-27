@@ -336,6 +336,8 @@ function TicketCard({
 // --- Context & Wrapper ---
 import { EventColorProvider, useEnhancedColorExtraction, useEventColors } from '@/components/events/EventColorContext';
 import { TermsModal } from '@/components/events/TermsModal';
+import { PrivacyModal } from '@/components/events/PrivacyModal';
+
 
 // Internal Wrapper component to use the context
 function BuyTicketsContent({ event }: BuyTicketsClientProps) {
@@ -354,7 +356,9 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
   const [installments, setInstallments] = useState<number>(1); // Default to 1 additional installment (Total 2)
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [processing, setProcessing] = useState(false);
+
   const [activePhaseData, setActivePhaseData] = useState<SalesPhase | null>(null);
 
   // Initialize Data
@@ -725,7 +729,7 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
                     />
                     <Label htmlFor="terms" className="text-sm text-zinc-400 leading-relaxed cursor-pointer select-none">
                       Acepto los <span className="text-white hover:underline hover:text-orange-400 transition-colors bg-white/5 px-1 rounded mx-0.5" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>términos y condiciones</span>,
-                      la <span className="text-white hover:underline cursor-not-allowed opacity-70">política de privacidad</span> y
+                      la <span className="text-white hover:underline hover:text-orange-400 transition-colors bg-white/5 px-1 rounded mx-0.5" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>política de privacidad</span> y
                       las normas del evento.
                     </Label>
                   </div>
@@ -734,6 +738,13 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
                   <TermsModal
                     isOpen={showTermsModal}
                     onOpenChange={setShowTermsModal}
+                    onAccept={() => setAcceptTerms(true)}
+                  />
+
+                  {/* Privacy Modal */}
+                  <PrivacyModal
+                    isOpen={showPrivacyModal}
+                    onOpenChange={setShowPrivacyModal}
                     onAccept={() => setAcceptTerms(true)}
                   />
                 </CardContent>
