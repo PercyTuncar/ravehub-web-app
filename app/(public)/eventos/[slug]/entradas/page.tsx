@@ -43,24 +43,54 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     // const currencySymbol = event.currencySymbol || getCurrencySymbol(event.currency || 'PEN');
 
     // Calculate lowest price for "Desde..."
+    // Calculate lowest price for "Desde..."
     let lowestPrice = 0;
+
     if (event.salesPhases && event.salesPhases.length > 0) {
-      const activePhase = event.salesPhases.find(phase => {
-        const now = new Date();
+      const now = new Date();
+
+      // Sort phases by startDate to ensure correct order
+      const sortedPhases = [...event.salesPhases].sort((a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      );
+
+      // 1. Try to find currently active phase
+      let targetPhase = sortedPhases.find(phase => {
         const startDate = new Date(phase.startDate);
         const endDate = new Date(phase.endDate);
         return now >= startDate && now <= endDate;
-      }) || event.salesPhases[0];
+      });
 
-      if (activePhase?.zonesPricing) {
-        lowestPrice = Math.min(...activePhase.zonesPricing.map(z => z.price));
+      // 2. If no active phase, find the next upcoming phase
+      if (!targetPhase) {
+        targetPhase = sortedPhases.find(phase => new Date(phase.startDate) > now);
+      }
+
+      // 3. Fallback to the last phase (often likely to be the valid one if dates are messy) or just the first
+      if (!targetPhase) {
+        targetPhase = sortedPhases[sortedPhases.length - 1];
+      }
+
+      if (targetPhase?.zonesPricing && targetPhase.zonesPricing.length > 0) {
+        // Filter out zero or invalid prices
+        const validPrices = targetPhase.zonesPricing
+          .map(z => Number(z.price))
+          .filter(p => !isNaN(p) && p > 0);
+
+        if (validPrices.length > 0) {
+          lowestPrice = Math.min(...validPrices);
+        }
       }
     }
 
     // Generate transactional title: "Entradas {NombreEvento} | Venta Oficial - Desde {Currency} {Price}"
     const currency = event.currency || 'PEN';
-    const currencySymbol = event.currencySymbol || getCurrencySymbol(currency);
-    const seoTitle = `Entradas ${event.name} | Venta Oficial - Desde ${currencySymbol} ${lowestPrice}`;
+    // Force specific symbols if not found in map, or default to currency code
+    const currencySymbol = event.currencySymbol || (currency === 'PEN' ? 'S/' : getCurrencySymbol(currency));
+
+    // Only include price in title if we actually found a valid price > 0
+    const priceText = lowestPrice > 0 ? ` - Desde ${currencySymbol} ${lowestPrice}` : '';
+    const seoTitle = `Entradas ${event.name} | Venta Oficial${priceText}`;
 
     // Generate description using the event description
     const seoDescription = event.seoDescription || `Compra tus entradas para ${event.name} en ${event.location.venue}. ${event.shortDescription}`;
