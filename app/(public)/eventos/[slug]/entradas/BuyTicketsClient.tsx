@@ -335,6 +335,7 @@ function TicketCard({
 
 // --- Context & Wrapper ---
 import { EventColorProvider, useEnhancedColorExtraction, useEventColors } from '@/components/events/EventColorContext';
+import { TermsModal } from '@/components/events/TermsModal';
 
 // Internal Wrapper component to use the context
 function BuyTicketsContent({ event }: BuyTicketsClientProps) {
@@ -352,6 +353,7 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline'>('offline');
   const [installments, setInstallments] = useState<number>(1); // Default to 1 additional installment (Total 2)
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [activePhaseData, setActivePhaseData] = useState<SalesPhase | null>(null);
 
@@ -721,12 +723,15 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
                         borderColor: acceptTerms ? colorPalette.primary : undefined
                       }}
                     />
-                    <Label htmlFor="terms" className="text-sm text-zinc-400 leading-relaxed cursor-pointer">
-                      Acepto los <span className="text-white hover:underline">términos y condiciones</span>,
-                      la <span className="text-white hover:underline">política de privacidad</span> y
+                    <Label htmlFor="terms" className="text-sm text-zinc-400 leading-relaxed cursor-pointer select-none">
+                      Acepto los <span className="text-white hover:underline hover:text-orange-400 transition-colors bg-white/5 px-1 rounded mx-0.5" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>términos y condiciones</span>,
+                      la <span className="text-white hover:underline cursor-not-allowed opacity-70">política de privacidad</span> y
                       las normas del evento.
                     </Label>
                   </div>
+
+                  {/* Terms Modal */}
+                  <TermsModal isOpen={showTermsModal} onOpenChange={setShowTermsModal} />
                 </CardContent>
               </Card>
             )}
