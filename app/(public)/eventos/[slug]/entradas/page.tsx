@@ -86,7 +86,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     // Generate transactional title: "Entradas {NombreEvento} | Venta Oficial - Desde {Currency} {Price}"
     const currency = event.currency || 'PEN';
     // Force specific symbols if not found in map, or default to currency code
-    const currencySymbol = event.currencySymbol || (currency === 'PEN' ? 'S/' : getCurrencySymbol(currency));
+    const currencySymbol = event.currencySymbol || getCurrencySymbol(currency);
 
     // Only include price in title if we actually found a valid price > 0
     const priceText = lowestPrice > 0 ? ` - Desde ${currencySymbol} ${lowestPrice}` : '';
@@ -129,12 +129,29 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 // Helper function to get currency symbol (kept for other uses if needed, though not used in metadata now)
 function getCurrencySymbol(currency: string): string {
   const symbols: Record<string, string> = {
-    'PEN': 'S/',
-    'USD': '$',
-    'CLP': '$',
-    'ARS': '$',
-    'MXN': '$',
-    'COP': '$',
+    // North & Central America
+    'USD': '$',   // US Dollar (Ecuador, El Salvador, Panama)
+    'MXN': '$',   // Mexican Peso
+    'CRC': '₡',   // Costa Rican Colón
+    'GTQ': 'Q',   // Guatemalan Quetzal
+    'HNL': 'L',   // Honduran Lempira
+    'NIO': 'C$',  // Nicaraguan Córdoba
+    'PAB': 'B/.', // Panamanian Balboa
+    'DOP': 'RD$', // Dominican Peso
+
+    // South America
+    'PEN': 'S/',  // Peruvian Sol
+    'ARS': '$',   // Argentine Peso
+    'CLP': '$',   // Chilean Peso
+    'COP': '$',   // Colombian Peso
+    'BRL': 'R$',  // Brazilian Real
+    'BOB': 'Bs.', // Bolivian Boliviano
+    'UYU': '$U',  // Uruguayan Peso
+    'PYG': '₲',   // Paraguayan Guaraní
+    'VES': 'Bs',  // Venezuelan Bolívar
+    'CLF': 'UF',  // Unidad de Fomento (Chile)
+
+    // Europe
     'EUR': '€',
     'GBP': '£',
   };
