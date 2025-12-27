@@ -4,7 +4,7 @@
 
 'use server';
 
-import { blogCollection, eventsCollection, productsCollection, blogCommentsCollection } from '@/lib/firebase/collections';
+import { blogCollection, eventsCollection, productsCollection, blogCommentsCollection, ticketTransactionsCollection, paymentInstallmentsCollection } from '@/lib/firebase/collections';
 import { revalidateBlogPost, revalidateBlogListing, revalidateEvent, revalidateEventsListing, revalidateProduct, revalidateShopListing, revalidateCommentApproval, revalidateProductStock, revalidateEventCapacity } from '@/lib/revalidate';
 import { BlogPost, Event, Product, BlogComment } from '@/lib/types';
 
@@ -200,5 +200,190 @@ export async function createProduct(productData: Omit<Product, 'id' | 'createdAt
   } catch (error) {
     console.error('Error creating product:', error);
     return { success: false, error: 'Failed to create product' };
+  }
+}
+
+/**
+ * Server action to upload ticket payment proof
+ */
+export async function uploadTicketProof(ticketId: string, proofUrl: string) {
+  try {
+    await ticketTransactionsCollection.update(ticketId, {
+      paymentProofUrl: proofUrl,
+      paymentStatus: 'pending', // Reset to pending for review
+      updatedAt: new Date().toISOString()
+    });
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: 'Failed to upload ticket proof' };
+  }
+}
+
+/**
+ * Server action to update ticket payment status (Admin)
+ */
+export async function updateTicketPaymentStatus(ticketId: string, status: 'approved' | 'rejected' | 'pending', rejectionReason?: string) {
+  try {
+    const updateData: any = {
+      paymentStatus: status,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (rejectionReason) {
+      updateData.rejectionReason = rejectionReason;
+    }
+
+    await ticketTransactionsCollection.update(ticketId, updateData);
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: 'Failed to update ticket status' };
+  }
+}
+
+/**
+ * Server action to create a manual ticket transaction (Admin)
+ */
+export async function createManualTicketTransaction(data: {
+  userId: string;
+  eventId: string;
+  phaseId: string;
+  phaseName: string;
+  zoneId: string;
+  zoneName: string;
+  quantity: number;
+  totalAmount: number;
+  unitPrice: number;
+  paymentType: 'full' | 'installment';
+  paymentMethod: string;
+  reservationAmount?: number;
+  installmentsCount?: number;
+  firstInstallmentDate?: string; // ISO String
+  paymentStatus: 'pending' | 'approved';
+  paidInstallmentsIndices?: number[]; // indices of installments that are already paid
+}) {
+  try {
+    // 1. Create Ticket Transaction
+    const ticketData: any = {
+      userId: data.userId,
+      eventId: data.eventId,
+      ticketItems: [
+        {
+          zoneId: data.zoneId,
+          zoneName: data.zoneName,
+          phaseId: data.phaseId,
+          phaseName: data.phaseName,
+          quantity: data.quantity,
+          pricePerTicket: data.unitPrice,
+          totalAmount: data.unitPrice * data.quantity
+        }
+      ],
+      totalAmount: data.totalAmount,
+      currency: 'PEN', // Todo: Get from Event or dynamic
+      paymentMethod: data.paymentMethod,
+      paymentType: data.paymentType,
+      paymentStatus: data.paymentStatus,
+      ticketDeliveryMode: 'manualUpload', // Default for now
+      ticketDeliveryStatus: data.paymentStatus === 'approved' && data.paymentMethod === 'courtesy' ? 'available' : 'pending',
+      isCourtesy: data.paymentMethod === 'courtesy',
+      createdAt: new Date().toISOString()
+    };
+
+    if (data.paymentType === 'installment') {
+      ticketData.installments = data.installmentsCount;
+      ticketData.reservationAmount = data.reservationAmount;
+    }
+
+    const ticketId = await ticketTransactionsCollection.create(ticketData);
+
+    // 2. Create Payment Installments (if applicable)
+    if (data.paymentType === 'installment' && data.installmentsCount && data.firstInstallmentDate) {
+      const { calculateInstallmentPlan } = await import('@/lib/utils/admin-ticket-calculator');
+
+      const plan = calculateInstallmentPlan(
+        data.unitPrice * data.quantity, // Use base amount for calculation, not the (potentially 0) totalAmount
+        data.reservationAmount || 0,
+        data.installmentsCount,
+        new Date(data.firstInstallmentDate)
+      );
+
+      if (plan.success && plan.installments) {
+        // Create a document for each installment
+        const batchPromises: Promise<any>[] = [];
+
+        // 1. Create Reservation Installment (Installment 0)
+        // We create this even if amount is 0? Generally reservation > 0 for installments.
+        if (data.reservationAmount && data.reservationAmount > 0) {
+          const isReservationPaid = data.paidInstallmentsIndices?.includes(-1);
+          batchPromises.push(
+            paymentInstallmentsCollection.create({
+              transactionId: ticketId,
+              installmentNumber: 0, // 0 for Reservation
+              amount: data.reservationAmount,
+              currency: 'PEN',
+              dueDate: new Date().toISOString(), // Due immediately
+              status: isReservationPaid ? 'paid' : 'pending',
+              adminApproved: isReservationPaid ? true : false,
+              ...(isReservationPaid && { paidAt: new Date().toISOString() })
+            })
+          );
+        }
+
+        // 2. Create Future Installments
+        const futureInstallments = plan.installments.map((inst, index) => {
+          // Check if this installment was marked as paid
+          // Note: index matches the order in plan.installments array (0, 1, 2...)
+          const isPaid = data.paidInstallmentsIndices?.includes(index);
+
+          return paymentInstallmentsCollection.create({
+            transactionId: ticketId,
+            installmentNumber: inst.installmentNumber,
+            amount: inst.amount,
+            currency: 'PEN',
+            dueDate: inst.dueDate.toISOString(),
+            status: isPaid ? 'paid' : 'pending',
+            adminApproved: isPaid ? true : false,
+            ...(isPaid && { paidAt: new Date().toISOString() })
+          });
+        });
+
+        batchPromises.push(...futureInstallments);
+
+        await Promise.all(batchPromises);
+      }
+    }
+
+    return { success: true, ticketId };
+  } catch (error: any) {
+    console.error('Error creating manual ticket:', error);
+    return { success: false, error: error.message || 'Error al crear el ticket' };
+  }
+}
+
+/**
+ * Delete a ticket transaction and all associated payment installments
+ */
+export async function deleteTicketTransaction(ticketId: string): Promise<{ success: boolean; error?: string }> {
+  'use server';
+
+  try {
+    // Delete all payment installments associated with this ticket
+    const installments = await paymentInstallmentsCollection.query([
+      { field: 'ticketTransactionId', operator: '==', value: ticketId }
+    ]);
+
+    // Delete installments in parallel
+    await Promise.all(
+      installments.map(installment => paymentInstallmentsCollection.delete(installment.id))
+    );
+
+    // Delete the ticket transaction itself
+    await ticketTransactionsCollection.delete(ticketId);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting ticket:', error);
+    return { success: false, error: error.message || 'Error al eliminar el ticket' };
   }
 }

@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation';
 export default function PageWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
-    // Check if the current path is an event detail page or buy page
-    // We want to avoid removing padding for deeper routes like /eventos/[slug]/entradas
-    // The pattern matches /eventos/slug and /eventos/slug/entradas (also /comprar for legacy)
-    const shouldRemovePadding = /^\/eventos\/[^/]+(\/(?:entradas|comprar))?$/.test(pathname);
+    // Check if the current path is an event detail page, buy page, or profile page
+    // We want to avoid removing padding for deeper routes that handle their own padding
+    const shouldRemovePadding =
+        /^\/eventos\/[^/]+(\/(?:entradas|comprar))?$/.test(pathname) ||
+        pathname.startsWith('/profile');
 
     return (
         <div

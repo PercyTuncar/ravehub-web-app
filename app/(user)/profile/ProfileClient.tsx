@@ -122,18 +122,18 @@ export default function ProfileClient() {
           <Button
             variant="outline"
             onClick={handleSignOut}
-            className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-red-400 transition-colors gap-2"
+            className="w-full md:w-auto border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-red-400 transition-colors gap-2"
           >
             <LogOut className="w-4 h-4" />
             Cerrar Sesión
           </Button>
         </motion.div>
 
-        <div className="grid lg:grid-cols-12 gap-8">
+        <div className="grid lg:grid-cols-12 gap-8 w-full max-w-full">
 
           {/* Sidebar / User Info */}
-          <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+          <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6 w-full">
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-orange-600" />
 
               <div className="flex flex-col items-center text-center">
@@ -181,22 +181,22 @@ export default function ProfileClient() {
             </div>
 
             {/* Stats Card */}
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-6">
               <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
                 <div className="w-1 h-4 bg-primary rounded-full" />
                 Estadísticas
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-black/20 rounded-xl p-3 text-center border border-white/5">
-                  <div className="text-2xl font-bold text-white mb-1">{userStats.totalTickets}</div>
+                  <div className="text-xl md:text-2xl font-bold text-white mb-1">{userStats.totalTickets}</div>
                   <div className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Tickets</div>
                 </div>
                 <div className="bg-black/20 rounded-xl p-3 text-center border border-white/5">
-                  <div className="text-2xl font-bold text-white mb-1">{userStats.totalOrders}</div>
+                  <div className="text-xl md:text-2xl font-bold text-white mb-1">{userStats.totalOrders}</div>
                   <div className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Órdenes</div>
                 </div>
                 <div className="bg-black/20 rounded-xl p-3 text-center border border-white/5">
-                  <div className="text-2xl font-bold text-white mb-1">{userStats.favoriteEvents}</div>
+                  <div className="text-xl md:text-2xl font-bold text-white mb-1">{userStats.favoriteEvents}</div>
                   <div className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Favoritos</div>
                 </div>
               </div>
@@ -204,9 +204,9 @@ export default function ProfileClient() {
           </motion.div>
 
           {/* Main Content Area */}
-          <motion.div variants={itemVariants} className="lg:col-span-8">
+          <motion.div variants={itemVariants} className="lg:col-span-8 w-full min-w-0">
             {/* Custom Tabs Navigation */}
-            <div className="flex overflow-x-auto pb-4 gap-2 mb-6 scrollbar-none">
+            <div className="flex overflow-x-auto pb-4 gap-2 mb-6 scrollbar-none max-w-full">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 const Icon = tab.icon;
@@ -252,9 +252,9 @@ export default function ProfileClient() {
                     <h3 className="text-lg font-bold text-white mb-6">Actividad Reciente</h3>
                     <div className="space-y-3">
                       {recentTickets.length > 0 ? recentTickets.map((ticket) => (
-                        <div key={ticket.id} className="group bg-black/20 hover:bg-black/30 border border-white/5 rounded-xl p-4 transition-all flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <div key={ticket.id} className="group bg-black/20 hover:bg-black/30 border border-white/5 rounded-xl p-4 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shrink-0">
                               <Ticket className="w-6 h-6" />
                             </div>
                             <div>
@@ -262,7 +262,7 @@ export default function ProfileClient() {
                               <p className="text-white/40 text-sm">{new Date(ticket.eventDate).toLocaleDateString('es-CL')} • {ticket.ticketsCount} tickets</p>
                             </div>
                           </div>
-                          <Badge className="bg-green-500/20 text-green-400 border-green-500/20">Aprobado</Badge>
+                          <Badge className="bg-green-500/20 text-green-400 border-green-500/20 self-start sm:self-center">Aprobado</Badge>
                         </div>
                       )) : <p className="text-white/40">Sin actividad reciente</p>}
                     </div>
@@ -278,7 +278,7 @@ export default function ProfileClient() {
                       <div key={ticket.id} className="group bg-black/20 border border-white/5 rounded-xl p-5 transition-all">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white shadow-lg shadow-primary/20 shrink-0">
                               <Ticket className="w-6 h-6" />
                             </div>
                             <div>
@@ -290,8 +290,8 @@ export default function ProfileClient() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <div className="text-right mr-4 hidden md:block">
+                          <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
+                            <div className="text-left md:text-right md:mr-4">
                               <p className="text-white/40 text-xs uppercase tracking-wider">Total</p>
                               <p className="text-white font-bold">${ticket.totalAmount.toLocaleString()} {ticket.currency}</p>
                             </div>
@@ -314,7 +314,7 @@ export default function ProfileClient() {
                       <div key={order.id} className="bg-black/20 border border-white/5 rounded-xl p-5 hover:border-primary/20 transition-all">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                           <div className="flex items-start gap-4">
-                            <div className="mt-1 bg-white/5 p-2 rounded-lg">
+                            <div className="mt-1 bg-white/5 p-2 rounded-lg shrink-0">
                               <ShoppingBag className="w-5 h-5 text-white/60" />
                             </div>
                             <div>
