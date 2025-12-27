@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  ArrowLeft, Minus, Plus, CreditCard, Banknote, Calendar, 
-  MapPin, Clock, Ticket, Zap, Lock, CheckCircle2, AlertCircle,
-  ChevronRight, ShieldCheck, Flame, Divide, TrendingUp
+import {
+  ArrowLeft, Minus, Plus, CreditCard, Calendar,
+  MapPin, Clock, Ticket, Lock, CheckCircle2,
+  Flame, TrendingUp, ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -95,12 +95,12 @@ function PhaseTimeline({ phases, activePhaseId }: { phases: SalesPhase[], active
           const isFuture = !isActive && !isPast;
 
           return (
-            <div 
+            <div
               key={phase.id}
               className={`
                 relative flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300
-                ${isActive 
-                  ? 'bg-orange-500/10 border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.2)]' 
+                ${isActive
+                  ? 'bg-orange-500/10 border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.2)]'
                   : 'bg-zinc-900/40 border-white/5 opacity-60'
                 }
               `}
@@ -111,7 +111,7 @@ function PhaseTimeline({ phases, activePhaseId }: { phases: SalesPhase[], active
               `}>
                 {isPast ? <CheckCircle2 className="w-4 h-4" /> : (isFuture ? <Lock className="w-3 h-3" /> : (index + 1))}
               </div>
-              
+
               <div className="flex flex-col">
                 <span className={`text-xs uppercase tracking-wider font-bold ${isActive ? 'text-orange-400' : 'text-zinc-500'}`}>
                   {isActive ? 'Fase Activa' : (isPast ? 'Finalizada' : 'Próximamente')}
@@ -120,9 +120,9 @@ function PhaseTimeline({ phases, activePhaseId }: { phases: SalesPhase[], active
                   {phase.name}
                 </span>
                 {isActive && (
-                    <div className="mt-1">
-                        <Countdown targetDate={new Date(phase.endDate)} />
-                    </div>
+                  <div className="mt-1">
+                    <Countdown targetDate={new Date(phase.endDate)} />
+                  </div>
                 )}
               </div>
 
@@ -147,18 +147,18 @@ function PhaseTimeProgress({ startDate, endDate }: { startDate: string; endDate:
       const start = new Date(startDate).getTime();
       const end = new Date(endDate).getTime();
       const now = new Date().getTime();
-      
+
       const totalDuration = end - start;
       const elapsed = now - start;
-      
+
       if (totalDuration <= 0) return 100;
       return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
     };
 
     setProgress(calculateProgress());
-    
+
     const interval = setInterval(() => {
-        setProgress(calculateProgress());
+      setProgress(calculateProgress());
     }, 60000); // Update every minute
 
     return () => clearInterval(interval);
@@ -169,55 +169,54 @@ function PhaseTimeProgress({ startDate, endDate }: { startDate: string; endDate:
 
   return (
     <div ref={containerRef} className="w-full max-w-xs space-y-1.5">
-       <div className="flex justify-between text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-          <span className="flex items-center gap-1">
-             {isCritical ? (
-                 <span className="text-red-400 flex items-center gap-1 animate-pulse font-bold">
-                    <Flame className="w-3 h-3" /> Fase por finalizar
-                 </span>
-             ) : (
-                 <span className="text-zinc-400 flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" /> Progreso de fase
-                 </span>
-             )}
-          </span>
-          <span className="tabular-nums font-bold text-zinc-300">
-             {Math.round(progress)}%
-          </span>
-       </div>
-       
-       <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden border border-white/5">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={isInView ? { width: `${progress}%` } : { width: 0 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-            className={`h-full rounded-full relative overflow-hidden ${
-                isCritical ? 'bg-gradient-to-r from-red-600 to-red-500' : 
-                isWarning ? 'bg-gradient-to-r from-orange-500 to-amber-500' :
-                'bg-gradient-to-r from-emerald-500 to-teal-500'
+      <div className="flex justify-between text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+        <span className="flex items-center gap-1">
+          {isCritical ? (
+            <span className="text-red-400 flex items-center gap-1 animate-pulse font-bold">
+              <Flame className="w-3 h-3" /> Fase por finalizar
+            </span>
+          ) : (
+            <span className="text-zinc-400 flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" /> Progreso de fase
+            </span>
+          )}
+        </span>
+        <span className="tabular-nums font-bold text-zinc-300">
+          {Math.round(progress)}%
+        </span>
+      </div>
+
+      <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden border border-white/5">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={isInView ? { width: `${progress}%` } : { width: 0 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className={`h-full rounded-full relative overflow-hidden ${isCritical ? 'bg-gradient-to-r from-red-600 to-red-500' :
+            isWarning ? 'bg-gradient-to-r from-orange-500 to-amber-500' :
+              'bg-gradient-to-r from-emerald-500 to-teal-500'
             }`}
-          >
-             {/* Shimmer effect */}
-             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full animate-[shimmer_2s_infinite]" />
-          </motion.div>
-       </div>
+        >
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full animate-[shimmer_2s_infinite]" />
+        </motion.div>
+      </div>
     </div>
   );
 }
 
 
-function TicketCard({ 
-  selection, 
-  onUpdateQuantity, 
-  isInstallmentMode, 
+function TicketCard({
+  selection,
+  onUpdateQuantity,
+  isInstallmentMode,
   installments,
   currency,
   totalTickets,
   phaseStartDate,
   phaseEndDate
-}: { 
-  selection: TicketSelection; 
-  onUpdateQuantity: (q: number) => void; 
+}: {
+  selection: TicketSelection;
+  onUpdateQuantity: (q: number) => void;
   isInstallmentMode: boolean;
   installments: number;
   currency: string;
@@ -227,20 +226,20 @@ function TicketCard({
 }) {
   const stockPercent = Math.max(0, Math.min(100, (selection.sold / (selection.sold + selection.available)) * 100));
   const isLowStock = selection.available < 20 || stockPercent > 90;
-  
+
   // Installment Price Calculation
   const reservationPrice = RESERVATION_FEE;
   const remainingPrice = Math.max(0, selection.price - reservationPrice);
   const installmentPrice = remainingPrice / installments;
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
         group relative overflow-hidden rounded-2xl border bg-zinc-900/40 backdrop-blur-md transition-all duration-300
-        ${selection.quantity > 0 
-          ? 'border-orange-500/50 bg-orange-500/5 shadow-[0_0_20px_rgba(249,115,22,0.1)]' 
+        ${selection.quantity > 0
+          ? 'border-orange-500/50 bg-orange-500/5 shadow-[0_0_20px_rgba(249,115,22,0.1)]'
           : 'border-white/10 hover:border-white/20'
         }
       `}
@@ -258,7 +257,7 @@ function TicketCard({
               </Badge>
             )}
           </div>
-          
+
           <p className="text-sm text-zinc-400 leading-relaxed max-w-md">
             {selection.zoneDescription || 'Acceso exclusivo al evento.'}
           </p>
@@ -271,42 +270,42 @@ function TicketCard({
         {/* Pricing & Actions */}
         <div className="flex flex-col items-end justify-between gap-4 min-w-[140px]">
           <div className="text-right">
-             <AnimatePresence mode="wait">
-                {isInstallmentMode ? (
-                  <motion.div
-                    key="installment"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="flex flex-col items-end"
-                  >
-                    <div className="flex flex-col items-end mb-1">
-                        <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Reserva</span>
-                        <span className="text-sm font-bold text-white bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
-                            <ConvertedPrice amount={reservationPrice} currency={currency} showOriginal={false} />
-                        </span>
-                    </div>
-                    <div className="flex items-baseline gap-1 text-xl font-black text-orange-400">
-                      <span className="text-xs font-bold text-zinc-500 mr-0.5">+ {installments} x</span>
-                      <ConvertedPrice amount={installmentPrice} currency={currency} showOriginal={false} />
-                    </div>
-                    <span className="text-[10px] text-zinc-500 mt-0.5">Total: <ConvertedPrice amount={selection.price} currency={currency} showOriginal={false} className="inline" /></span>
-                  </motion.div>
-                ) : (
-                   <motion.div
-                    key="full"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    className="flex flex-col items-end"
-                  >
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Precio</span>
-                    <div className="text-2xl font-black text-white">
-                      <ConvertedPrice amount={selection.price} currency={currency} showOriginal={false} />
-                    </div>
-                  </motion.div>
-                )}
-             </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {isInstallmentMode ? (
+                <motion.div
+                  key="installment"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="flex flex-col items-end"
+                >
+                  <div className="flex flex-col items-end mb-1">
+                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Reserva</span>
+                    <span className="text-sm font-bold text-white bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
+                      <ConvertedPrice amount={reservationPrice} currency={currency} showOriginal={false} />
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1 text-xl font-black text-orange-400">
+                    <span className="text-xs font-bold text-zinc-500 mr-0.5">+ {installments} x</span>
+                    <ConvertedPrice amount={installmentPrice} currency={currency} showOriginal={false} />
+                  </div>
+                  <span className="text-[10px] text-zinc-500 mt-0.5">Total: <ConvertedPrice amount={selection.price} currency={currency} showOriginal={false} className="inline" /></span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="full"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="flex flex-col items-end"
+                >
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Precio</span>
+                  <div className="text-2xl font-black text-white">
+                    <ConvertedPrice amount={selection.price} currency={currency} showOriginal={false} />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="flex items-center gap-3 bg-zinc-950/50 p-1.5 rounded-xl border border-white/10">
@@ -334,12 +333,18 @@ function TicketCard({
   );
 }
 
-// --- Main Client Component ---
+// --- Context & Wrapper ---
+import { EventColorProvider, useEnhancedColorExtraction, useEventColors } from '@/components/events/EventColorContext';
 
-export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
+// Internal Wrapper component to use the context
+function BuyTicketsContent({ event }: BuyTicketsClientProps) {
   const router = useRouter();
   const { currency: selectedCurrency } = useCurrency();
-  
+  const { colorPalette } = useEventColors();
+
+  // Enable dynamic color extraction
+  useEnhancedColorExtraction(event.bannerImageUrl || event.mainImageUrl || '');
+
   // State
   const [selectedPhase, setSelectedPhase] = useState<string>('');
   const [ticketSelections, setTicketSelections] = useState<TicketSelection[]>([]);
@@ -393,7 +398,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
   const getTotalAmount = () => ticketSelections.reduce((acc, s) => acc + (s.quantity * s.price), 0);
   const totalTickets = getTotalTickets();
   const totalAmount = getTotalAmount();
-  
+
   // Calculate totals for installment mode
   const totalReservation = totalTickets * RESERVATION_FEE;
   const totalRemaining = Math.max(0, totalAmount - totalReservation);
@@ -442,7 +447,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
         } else {
           // WhatsApp formatting
           const symbol = event.currency === 'USD' ? '$' : 'S/';
-          
+
           const ticketsList = ticketSelections
             .filter(s => s.quantity > 0)
             .map(s => `• ${s.quantity}x ${s.zoneName} (${symbol} ${s.price})`)
@@ -471,7 +476,7 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
           // Encode the entire message properly
           const encodedMessage = encodeURIComponent(message);
           window.open(`https://wa.me/51944784488?text=${encodedMessage}`, '_blank');
-          
+
           router.push('/profile/tickets');
         }
       } else {
@@ -487,11 +492,33 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-orange-500/30 pb-32 lg:pb-12">
-      {/* Background Ambience */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-blue-900/20 to-transparent opacity-40" />
-        <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px]" />
-        <div className="absolute top-[20%] left-[-100px] w-[300px] h-[300px] bg-orange-500/10 rounded-full blur-[80px]" />
+      {/* Background Ambience - Dynamic Colors */}
+      <div className="fixed inset-0 pointer-events-none transition-colors duration-1000">
+        {event.bannerImageUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-[0.05] blur-[2px] grayscale-[50%]"
+            style={{ backgroundImage: `url(${event.bannerImageUrl})` }}
+            role="img"
+            aria-label={event.imageAltTexts?.banner || `Banner decorativo de ${event.name}`}
+          />
+        )}
+        {/* Dynamic Gradient based on extracted color */}
+        <div
+          className="absolute top-0 left-0 w-full h-[500px] opacity-40 transition-all duration-1000"
+          style={{
+            background: `linear-gradient(to bottom, ${colorPalette.dominant}40, transparent)`
+          }}
+        />
+
+        {/* Dynamic Orbs */}
+        <div
+          className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full blur-[100px] opacity-20 transition-all duration-1000"
+          style={{ backgroundColor: colorPalette.secondary }}
+        />
+        <div
+          className="absolute top-[20%] left-[-100px] w-[300px] h-[300px] rounded-full blur-[80px] opacity-20 transition-all duration-1000"
+          style={{ backgroundColor: colorPalette.accent }}
+        />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-24">
@@ -505,39 +532,39 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
 
         {/* Header */}
         <div className="mb-12">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-4">
-                {event.name}
-            </h1>
-            <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
-                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                    <Calendar className="w-4 h-4 text-orange-400" />
-                    <span>{format(getEventDate(event.startDate), 'EEEE d MMMM, yyyy', { locale: es })}</span>
-                </div>
-                {event.startTime && (
-                    <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                        <Clock className="w-4 h-4 text-orange-400" />
-                        <span>{event.startTime}</span>
-                    </div>
-                )}
-                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                    <MapPin className="w-4 h-4 text-orange-400" />
-                    <span>{event.location.venue}</span>
-                </div>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-4">
+            Entradas Oficiales para {event.name}
+          </h1>
+          <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
+            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+              <Calendar className="w-4 h-4" style={{ color: colorPalette.accent }} />
+              <span>{format(getEventDate(event.startDate), 'EEEE d MMMM, yyyy', { locale: es })}</span>
             </div>
+            {event.startTime && (
+              <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                <Clock className="w-4 h-4" style={{ color: colorPalette.accent }} />
+                <span>{event.startTime}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+              <MapPin className="w-4 h-4" style={{ color: colorPalette.accent }} />
+              <span>{event.location.venue}</span>
+            </div>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-[1fr_380px] gap-8 relative items-start">
           {/* Left Column: Selection */}
           <div className="space-y-8">
-            
+
             {/* Phase Timeline */}
             {event.salesPhases && (
               <div className="space-y-4">
-                 <h2 className="text-lg font-bold flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-orange-500" />
-                    Fases de Venta
-                 </h2>
-                 <PhaseTimeline phases={event.salesPhases} activePhaseId={selectedPhase} />
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                  <Clock className="w-5 h-5" style={{ color: colorPalette.primary }} />
+                  Fases de Venta
+                </h2>
+                <PhaseTimeline phases={event.salesPhases} activePhaseId={selectedPhase} />
               </div>
             )}
 
@@ -545,26 +572,26 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
             {event.allowInstallmentPayments && (
               <div className={`
                 transition-all duration-300 border rounded-2xl p-5 relative overflow-hidden
-                ${isInstallmentMode 
-                    ? 'bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-500/40 shadow-[0_0_20px_rgba(59,130,246,0.1)]' 
-                    : 'bg-zinc-900/40 border-white/5'
+                ${isInstallmentMode
+                  ? 'bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-500/40 shadow-[0_0_20px_rgba(59,130,246,0.1)]'
+                  : 'bg-zinc-900/40 border-white/5'
                 }
               `}>
                 <div className="relative z-10">
                   <div className="flex items-center justify-between gap-4 mb-4">
                     <div className="flex items-center gap-4">
-                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isInstallmentMode ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-zinc-800'}`}>
-                          <CreditCard className={`w-6 h-6 ${isInstallmentMode ? 'text-white' : 'text-zinc-500'}`} />
-                       </div>
-                       <div>
-                          <h3 className={`text-lg font-bold flex items-center gap-2 ${isInstallmentMode ? 'text-white' : 'text-zinc-400'}`}>
-                             Comprar en cuotas
-                             {isInstallmentMode && <Badge className="bg-blue-500 text-white border-0 text-[10px] px-1.5 py-0">ACTIVADO</Badge>}
-                          </h3>
-                          <p className="text-sm text-zinc-500">Paga en partes sin tarjeta de crédito</p>
-                       </div>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isInstallmentMode ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-zinc-800'}`}>
+                        <CreditCard className={`w-6 h-6 ${isInstallmentMode ? 'text-white' : 'text-zinc-500'}`} />
+                      </div>
+                      <div>
+                        <h3 className={`text-lg font-bold flex items-center gap-2 ${isInstallmentMode ? 'text-white' : 'text-zinc-400'}`}>
+                          Comprar en cuotas
+                          {isInstallmentMode && <Badge className="bg-blue-500 text-white border-0 text-[10px] px-1.5 py-0">ACTIVADO</Badge>}
+                        </h3>
+                        <p className="text-sm text-zinc-500">Paga en partes sin tarjeta de crédito</p>
+                      </div>
                     </div>
-                    <Switch 
+                    <Switch
                       checked={isInstallmentMode}
                       onCheckedChange={setIsInstallmentMode}
                       className="data-[state=checked]:bg-blue-500 scale-125"
@@ -574,38 +601,38 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
                   {/* Dynamic Installment Selector */}
                   <AnimatePresence>
                     {isInstallmentMode && (
-                        <motion.div 
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                        >
-                            <div className="pt-4 border-t border-blue-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-blue-200">Selecciona tu plan:</span>
-                                    <span className="text-[10px] text-blue-400/70">
-                                        (Reserva + Cuotas Restantes)
-                                    </span>
-                                </div>
-                                <div className="flex gap-2">
-                                    {[1, 2, 3].map((num) => (
-                                        <button
-                                            key={num}
-                                            onClick={() => setInstallments(num)}
-                                            className={`
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-4 border-t border-blue-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-blue-200">Selecciona tu plan:</span>
+                            <span className="text-[10px] text-blue-400/70">
+                              (Reserva + Cuotas Restantes)
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            {[1, 2, 3].map((num) => (
+                              <button
+                                key={num}
+                                onClick={() => setInstallments(num)}
+                                className={`
                                                 px-4 py-2 rounded-lg text-sm font-bold transition-all
-                                                ${installments === num 
-                                                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25 scale-105' 
-                                                    : 'bg-blue-950/40 text-blue-400 hover:bg-blue-900/60'
-                                                }
+                                                ${installments === num
+                                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25 scale-105'
+                                    : 'bg-blue-950/40 text-blue-400 hover:bg-blue-900/60'
+                                  }
                                             `}
-                                        >
-                                            {num} Cuotas
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </motion.div>
+                              >
+                                {num} Cuotas
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
@@ -614,188 +641,199 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
 
             {/* Tickets Grid */}
             <div className="space-y-6">
-                <h2 className="text-lg font-bold flex items-center gap-2">
-                    <Ticket className="w-5 h-5 text-orange-500" />
-                    Selecciona tus entradas
-                </h2>
-                <div className="space-y-4">
-                    {ticketSelections.map(selection => (
-                        <TicketCard 
-                            key={selection.zoneId}
-                            selection={selection}
-                            onUpdateQuantity={(q) => updateTicketQuantity(selection.zoneId, q)}
-                            isInstallmentMode={isInstallmentMode}
-                            installments={installments}
-                            currency={event.currency}
-                            totalTickets={totalTickets}
-                            phaseStartDate={activePhaseData?.startDate || ''}
-                            phaseEndDate={activePhaseData?.endDate || ''}
-                        />
-                    ))}
-                </div>
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Ticket className="w-5 h-5" style={{ color: colorPalette.primary }} />
+                Selecciona tus entradas
+              </h2>
+              <div className="space-y-4">
+                {ticketSelections.map(selection => (
+                  <TicketCard
+                    key={selection.zoneId}
+                    selection={selection}
+                    onUpdateQuantity={(q) => updateTicketQuantity(selection.zoneId, q)}
+                    isInstallmentMode={isInstallmentMode}
+                    installments={installments}
+                    currency={event.currency}
+                    totalTickets={totalTickets}
+                    phaseStartDate={activePhaseData?.startDate || ''}
+                    phaseEndDate={activePhaseData?.endDate || ''}
+                  />
+                ))}
+              </div>
             </div>
 
             {/* Payment Method (Inline for Desktop context) */}
             {totalTickets > 0 && (
-                <Card className="bg-zinc-900/40 border-white/10 backdrop-blur-md overflow-hidden">
-                    <CardContent className="p-6 space-y-4">
-                        <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                            <CreditCard className="w-5 h-5 text-orange-500" />
-                            Método de Pago
-                        </h3>
-                        
-                        <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'online' | 'offline')}>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {event.allowOfflinePayments && (
-                                    <Label 
-                                        htmlFor="offline" 
-                                        className={`
+              <Card className="bg-zinc-900/40 border-white/10 backdrop-blur-md overflow-hidden">
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" style={{ color: colorPalette.primary }} />
+                    Método de Pago
+                  </h3>
+
+                  <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'online' | 'offline')}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {event.allowOfflinePayments && (
+                        <Label
+                          htmlFor="offline"
+                          className={`
                                             flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all
-                                            ${paymentMethod === 'offline' 
-                                                ? 'bg-orange-500/10 border-orange-500/50' 
-                                                : 'bg-white/5 border-white/5 hover:bg-white/10'
-                                            }
+                                            ${paymentMethod === 'offline'
+                              ? 'bg-orange-500/10 border-orange-500/50'
+                              : 'bg-white/5 border-white/5 hover:bg-white/10'
+                            }
                                         `}
-                                    >
-                                        <RadioGroupItem value="offline" id="offline" className="mt-1" />
-                                        <div>
-                                            <div className="font-bold text-white mb-1">Pago Offline</div>
-                                            <div className="text-xs text-zinc-400">Transferencia o depósito bancario. Confirmación vía WhatsApp.</div>
-                                        </div>
-                                    </Label>
-                                )}
+                          style={paymentMethod === 'offline' ? {
+                            backgroundColor: `${colorPalette.dominant}10`,
+                            borderColor: `${colorPalette.dominant}50`
+                          } : undefined}
+                        >
+                          <RadioGroupItem value="offline" id="offline" className="mt-1" />
+                          <div>
+                            <div className="font-bold text-white mb-1">Pago Offline</div>
+                            <div className="text-xs text-zinc-400">Transferencia o depósito bancario. Confirmación vía WhatsApp.</div>
+                          </div>
+                        </Label>
+                      )}
 
-                                <div className="relative opacity-60">
-                                    <div className="absolute inset-0 z-10 cursor-not-allowed" />
-                                    <Label className="flex items-start gap-3 p-4 rounded-xl border border-white/5 bg-white/5">
-                                        <RadioGroupItem value="online" id="online" disabled className="mt-1" />
-                                        <div>
-                                            <div className="font-bold text-zinc-400 mb-1">Pago Online</div>
-                                            <div className="text-xs text-zinc-500">Tarjeta de crédito/débito. (Próximamente)</div>
-                                        </div>
-                                    </Label>
-                                </div>
-                            </div>
-                        </RadioGroup>
+                      <div className="relative opacity-60">
+                        <div className="absolute inset-0 z-10 cursor-not-allowed" />
+                        <Label className="flex items-start gap-3 p-4 rounded-xl border border-white/5 bg-white/5">
+                          <RadioGroupItem value="online" id="online" disabled className="mt-1" />
+                          <div>
+                            <div className="font-bold text-zinc-400 mb-1">Pago Online</div>
+                            <div className="text-xs text-zinc-500">Tarjeta de crédito/débito. (Próximamente)</div>
+                          </div>
+                        </Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
 
-                        {/* Terms */}
-                        <div className="flex items-start gap-3 mt-6 pt-6 border-t border-white/5">
-                            <Checkbox 
-                                id="terms" 
-                                checked={acceptTerms} 
-                                onCheckedChange={(c) => setAcceptTerms(c === true)}
-                                className="mt-1 data-[state=checked]:bg-orange-500 border-white/20"
-                            />
-                            <Label htmlFor="terms" className="text-sm text-zinc-400 leading-relaxed cursor-pointer">
-                                Acepto los <span className="text-white hover:underline">términos y condiciones</span>, 
-                                la <span className="text-white hover:underline">política de privacidad</span> y 
-                                las normas del evento.
-                            </Label>
-                        </div>
-                    </CardContent>
-                </Card>
+                  {/* Terms */}
+                  <div className="flex items-start gap-3 mt-6 pt-6 border-t border-white/5">
+                    <Checkbox
+                      id="terms"
+                      checked={acceptTerms}
+                      onCheckedChange={(c) => setAcceptTerms(c === true)}
+                      className="mt-1 data-[state=checked]:bg-orange-500 border-white/20"
+                      style={{
+                        backgroundColor: acceptTerms ? colorPalette.primary : undefined,
+                        borderColor: acceptTerms ? colorPalette.primary : undefined
+                      }}
+                    />
+                    <Label htmlFor="terms" className="text-sm text-zinc-400 leading-relaxed cursor-pointer">
+                      Acepto los <span className="text-white hover:underline">términos y condiciones</span>,
+                      la <span className="text-white hover:underline">política de privacidad</span> y
+                      las normas del evento.
+                    </Label>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
 
           {/* Right Column: Sticky Summary (Desktop) */}
           <div className="hidden lg:block sticky top-24">
             <div className="bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative">
-                {/* Background Image Blur */}
-                {event.bannerImageUrl && (
-                    <div className="absolute inset-0 z-0">
-                        <img src={event.bannerImageUrl} alt="" className="w-full h-full object-cover opacity-20 blur-xl" />
-                        <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/80 to-zinc-900" />
-                    </div>
-                )}
-
-                <div className="relative z-10 p-6 space-y-6">
-                    <h3 className="text-xl font-black text-white">Resumen de Compra</h3>
-                    
-                    {/* Items */}
-                    <div className="space-y-3 min-h-[100px]">
-                        {ticketSelections.filter(s => s.quantity > 0).length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-32 text-zinc-500 text-sm border-2 border-dashed border-white/5 rounded-xl">
-                                <Ticket className="w-6 h-6 mb-2 opacity-50" />
-                                No has seleccionado entradas
-                            </div>
-                        ) : (
-                            ticketSelections.filter(s => s.quantity > 0).map(s => (
-                                <div key={s.zoneId} className="flex justify-between items-center text-sm">
-                                    <span className="text-zinc-300">
-                                        <span className="text-white font-bold">{s.quantity}x</span> {s.zoneName}
-                                    </span>
-                                    <span className="font-medium text-white">
-                                        <ConvertedPrice amount={s.price * s.quantity} currency={event.currency} showOriginal={false} />
-                                    </span>
-                                </div>
-                            ))
-                        )}
-                    </div>
-
-                    <Separator className="bg-white/10" />
-
-                    {/* Total */}
-                    <div className="space-y-2">
-                        {isInstallmentMode && totalTickets > 0 ? (
-                            <>
-                                <div className="flex justify-between items-end">
-                                    <span className="text-zinc-400">Total Pedido</span>
-                                    <div className="text-lg font-bold text-zinc-300">
-                                        <ConvertedPrice amount={totalAmount} currency={event.currency} showOriginal={false} />
-                                    </div>
-                                </div>
-                                <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 space-y-2">
-                                    <div className="flex justify-between items-center text-blue-200 text-sm">
-                                        <span className="font-bold flex items-center gap-1.5">
-                                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" /> Reserva (Pago Hoy)
-                                        </span>
-                                        <span className="font-bold text-white text-lg">
-                                            <ConvertedPrice amount={totalReservation} currency={event.currency} showOriginal={false} />
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-zinc-400 text-xs pt-2 border-t border-blue-500/20">
-                                        <span>Restante ({installments} cuotas)</span>
-                                        <span className="font-mono">
-                                            {installments} x <ConvertedPrice amount={monthlyInstallment} currency={event.currency} showOriginal={false} className="inline" />
-                                        </span>
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex justify-between items-end">
-                                <span className="text-zinc-400">Total a pagar</span>
-                                <div className="text-2xl font-black text-white">
-                                    <ConvertedPrice amount={totalAmount} currency={event.currency} showOriginal={false} />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Action Button */}
-                    <Button 
-                        size="lg" 
-                        className="w-full h-14 text-lg font-bold rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_30px_rgba(249,115,22,0.5)] transition-all"
-                        disabled={totalTickets === 0 || !acceptTerms || processing}
-                        onClick={handlePurchase}
-                        style={{ backgroundColor: totalTickets > 0 ? '#F97316' : undefined }}
-                    >
-                        {processing ? (
-                            <span className="flex items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Procesando...
-                            </span>
-                        ) : (
-                            <span className="flex items-center gap-2">
-                                <ShieldCheck className="w-5 h-5" />
-                                {isInstallmentMode ? 'Pagar Reserva' : 'Pagar Ahora'}
-                            </span>
-                        )}
-                    </Button>
-                    
-                    <p className="text-xs text-center text-zinc-500">
-                        Pagos procesados de forma segura.
-                    </p>
+              {/* Background Image Blur */}
+              {event.bannerImageUrl && (
+                <div className="absolute inset-0 z-0">
+                  <img src={event.bannerImageUrl} alt="" className="w-full h-full object-cover opacity-20 blur-xl" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/80 to-zinc-900" />
                 </div>
+              )}
+
+              <div className="relative z-10 p-6 space-y-6">
+                <h3 className="text-xl font-black text-white">Resumen de Compra</h3>
+
+                {/* Items */}
+                <div className="space-y-3 min-h-[100px]">
+                  {ticketSelections.filter(s => s.quantity > 0).length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-32 text-zinc-500 text-sm border-2 border-dashed border-white/5 rounded-xl">
+                      <Ticket className="w-6 h-6 mb-2 opacity-50" />
+                      No has seleccionado entradas
+                    </div>
+                  ) : (
+                    ticketSelections.filter(s => s.quantity > 0).map(s => (
+                      <div key={s.zoneId} className="flex justify-between items-center text-sm">
+                        <span className="text-zinc-300">
+                          <span className="text-white font-bold">{s.quantity}x</span> {s.zoneName}
+                        </span>
+                        <span className="font-medium text-white">
+                          <ConvertedPrice amount={s.price * s.quantity} currency={event.currency} showOriginal={false} />
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <Separator className="bg-white/10" />
+
+                {/* Total */}
+                <div className="space-y-2">
+                  {isInstallmentMode && totalTickets > 0 ? (
+                    <>
+                      <div className="flex justify-between items-end">
+                        <span className="text-zinc-400">Total Pedido</span>
+                        <div className="text-lg font-bold text-zinc-300">
+                          <ConvertedPrice amount={totalAmount} currency={event.currency} showOriginal={false} />
+                        </div>
+                      </div>
+                      <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 space-y-2">
+                        <div className="flex justify-between items-center text-blue-200 text-sm">
+                          <span className="font-bold flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" /> Reserva (Pago Hoy)
+                          </span>
+                          <span className="font-bold text-white text-lg">
+                            <ConvertedPrice amount={totalReservation} currency={event.currency} showOriginal={false} />
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-zinc-400 text-xs pt-2 border-t border-blue-500/20">
+                          <span>Restante ({installments} cuotas)</span>
+                          <span className="font-mono">
+                            {installments} x <ConvertedPrice amount={monthlyInstallment} currency={event.currency} showOriginal={false} className="inline" />
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between items-end">
+                      <span className="text-zinc-400">Total a pagar</span>
+                      <div className="text-2xl font-black text-white">
+                        <ConvertedPrice amount={totalAmount} currency={event.currency} showOriginal={false} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Button */}
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-lg font-bold rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+                  disabled={totalTickets === 0 || !acceptTerms || processing}
+                  onClick={handlePurchase}
+                  style={{
+                    backgroundColor: totalTickets > 0 ? colorPalette.primary : undefined,
+                    boxShadow: totalTickets > 0 ? `0 0 20px ${colorPalette.primary}50` : undefined,
+                  }}
+                >
+                  {processing ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Procesando...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5" />
+                      {isInstallmentMode ? 'Pagar Reserva' : 'Pagar Ahora'}
+                    </span>
+                  )}
+                </Button>
+
+                <p className="text-xs text-center text-zinc-500">
+                  Pagos procesados de forma segura.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -804,34 +842,42 @@ export default function BuyTicketsClient({ event }: BuyTicketsClientProps) {
       {/* Mobile Sticky Footer */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full z-50 p-4">
         <div className="bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 flex items-center justify-between gap-4">
-             <div className="flex flex-col">
-                <span className="text-xs text-zinc-400">
-                    {isInstallmentMode ? 'A Pagar Hoy' : 'Total'}
-                </span>
-                <div className="text-xl font-black text-white">
-                     <ConvertedPrice 
-                        amount={isInstallmentMode ? totalReservation : totalAmount} 
-                        currency={event.currency} 
-                        showOriginal={false} 
-                     />
-                </div>
-                {isInstallmentMode && totalTickets > 0 && (
-                    <span className="text-[10px] text-blue-400 font-bold">
-                        Restan: {installments} x <ConvertedPrice amount={monthlyInstallment} currency={event.currency} showOriginal={false} className="inline" />
-                    </span>
-                )}
-             </div>
-             <Button 
-                size="lg"
-                className="rounded-xl px-8 font-bold bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20"
-                disabled={totalTickets === 0 || !acceptTerms || processing}
-                onClick={handlePurchase}
-            >
-                {processing ? '...' : (isInstallmentMode ? 'Reservar' : 'Pagar')}
-            </Button>
+          <div className="flex flex-col">
+            <span className="text-xs text-zinc-400">
+              {isInstallmentMode ? 'A Pagar Hoy' : 'Total'}
+            </span>
+            <div className="text-xl font-black text-white">
+              <ConvertedPrice
+                amount={isInstallmentMode ? totalReservation : totalAmount}
+                currency={event.currency}
+                showOriginal={false}
+              />
+            </div>
+            {isInstallmentMode && totalTickets > 0 && (
+              <span className="text-[10px] text-blue-400 font-bold">
+                Restan: {installments} x <ConvertedPrice amount={monthlyInstallment} currency={event.currency} showOriginal={false} className="inline" />
+              </span>
+            )}
+          </div>
+          <Button
+            size="lg"
+            className="rounded-xl px-8 font-bold bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20"
+            disabled={totalTickets === 0 || !acceptTerms || processing}
+            onClick={handlePurchase}
+          >
+            {processing ? '...' : (isInstallmentMode ? 'Reservar' : 'Pagar')}
+          </Button>
         </div>
       </div>
 
     </div>
+  );
+}
+
+export default function BuyTicketsClient(props: BuyTicketsClientProps) {
+  return (
+    <EventColorProvider>
+      <BuyTicketsContent {...props} />
+    </EventColorProvider>
   );
 }

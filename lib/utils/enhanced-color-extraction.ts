@@ -7,6 +7,8 @@ export interface ColorPalette {
   text: string;
   muted: string;
   brand: string; // Primary brand color
+  primary: string; // Alias for brand
+  secondary: string; // Secondary brand color
   contrast: {
     primary: string;
     secondary: string;
@@ -427,6 +429,8 @@ function createAccessiblePalette(
     return {
       ...adjustedColors,
       brand: adjustedColors.dominant,
+      primary: adjustedColors.dominant,
+      secondary: dominantSecondary,
       contrast: {
         primary: adjustedColors.text,
         secondary: Color(dominantRgb)
@@ -601,6 +605,8 @@ export function getDefaultPalette(): ColorPalette {
     text: '#ffffff',
     muted: 'hsl(0, 0%, 30%)',
     brand: 'hsl(24, 95%, 53%)',
+    primary: 'hsl(24, 95%, 53%)',
+    secondary: 'hsl(24, 95%, 45%)',
     contrast: {
       primary: '#ffffff',
       secondary: '#f5f5f5',

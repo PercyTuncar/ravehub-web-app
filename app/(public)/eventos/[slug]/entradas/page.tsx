@@ -1,8 +1,7 @@
 import { Metadata } from 'next';
 import { eventsCollection } from '@/lib/firebase/collections';
 import { Event } from '@/lib/types';
-import { SchemaGenerator } from '@/lib/seo/schema-generator';
-import JsonLd from '@/components/seo/JsonLd';
+import StructuredData from '@/components/seo/StructuredData';
 import BuyTicketsClient from './BuyTicketsClient';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -39,29 +38,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com';
     const url = `${baseUrl}/eventos/${slug}/entradas`;
-    const eventUrl = `${baseUrl}/eventos/${slug}`;
-
-    // Get main performer for SEO
-    const mainPerformer = event.artistLineup?.find((artist) => artist.isHeadliner)
-      || event.artistLineup?.[0];
-
-    // Extract city and year from event data
-    const city = event.location?.city || 'Lima';
-    const eventYear = new Date(event.startDate).getFullYear();
-    const performerName = mainPerformer?.name || event.name.split(' ')[0]; // Fallback to first word of event name
-
-    // Format date: "12 de diciembre 2025"
-    const formattedDate = format(new Date(event.startDate), "d 'de' MMMM yyyy", { locale: es });
 
     // Get currency symbol
-    const currencySymbol = event.currencySymbol || getCurrencySymbol(event.currency || 'PEN');
+    // const currencySymbol = event.currencySymbol || getCurrencySymbol(event.currency || 'PEN');
 
-    // Collect all unique zone prices from all active phases
-    const zonePrices: Array<{ name: string; price: number }> = [];
-    const processedZones = new Set<string>();
-
+    // Calculate lowest price for "Desde..."
+    let lowestPrice = 0;
     if (event.salesPhases && event.salesPhases.length > 0) {
-      // Get the first active phase or the first phase
       const activePhase = event.salesPhases.find(phase => {
         const now = new Date();
         const startDate = new Date(phase.startDate);
@@ -69,67 +52,40 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         return now >= startDate && now <= endDate;
       }) || event.salesPhases[0];
 
-      if (activePhase?.zonesPricing && event.zones) {
-        activePhase.zonesPricing.forEach((zonePricing) => {
-          const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
-          if (zone && !processedZones.has(zone.id)) {
-            processedZones.add(zone.id);
-            zonePrices.push({
-              name: zone.name || 'General',
-              price: zonePricing.price,
-            });
-          }
-        });
+      if (activePhase?.zonesPricing) {
+        lowestPrice = Math.min(...activePhase.zonesPricing.map(z => z.price));
       }
     }
 
-    // Sort by price (ascending)
-    zonePrices.sort((a, b) => a.price - b.price);
-
-    // Generate title: "{NombreEvento} - Comprar Entradas Oficiales"
-    const seoTitle = `${event.name} - Comprar Entradas Oficiales`;
+    // Generate transactional title: "Entradas {NombreEvento} | Venta Oficial - Desde {Currency} {Price}"
+    const currency = event.currency || 'PEN';
+    const currencySymbol = event.currencySymbol || getCurrencySymbol(currency);
+    const seoTitle = `Entradas ${event.name} | Venta Oficial - Desde ${currencySymbol} ${lowestPrice}`;
 
     // Generate description using the event description
-    const seoDescription = event.description || `Compra entradas oficiales para ${event.name}.`;
-
-    const isDraft = event.eventStatus !== 'published';
+    const seoDescription = event.seoDescription || `Compra tus entradas para ${event.name} en ${event.location.venue}. ${event.shortDescription}`;
 
     return {
       title: seoTitle,
       description: seoDescription,
-      keywords: [
-        `comprar entradas ${event.name}`,
-        `entradas ${event.name}`,
-        `tickets ${event.name}`,
-        mainPerformer?.name,
-        event.location?.venue,
-        event.location?.city,
-        'comprar entradas online',
-        'entradas conciertos',
-        ...(event.tags || []),
-      ].filter(Boolean) as string[],
-      robots: {
-        index: event.eventStatus !== 'draft' && event.eventStatus !== 'cancelled',
-        follow: true,
-        googleBot: {
-          index: event.eventStatus !== 'draft' && event.eventStatus !== 'cancelled',
-          follow: true,
-        }
-      },
       alternates: { canonical: url },
       openGraph: {
         title: seoTitle,
         description: seoDescription,
-        images: event.mainImageUrl ? [event.mainImageUrl] : [],
-        type: 'website',
         url,
+        images: event.mainImageUrl ? [{ url: event.mainImageUrl, alt: event.imageAltTexts?.main || event.name }] : [],
+        type: 'website', // Better for purchase page
       },
-      twitter: {
-        card: 'summary_large_image',
-        title: seoTitle,
-        description: seoDescription,
-        images: event.mainImageUrl ? [event.mainImageUrl] : [],
+      other: {
+        'og:price:currency': currency,
+        'og:price:amount': lowestPrice.toString(),
+        'product:price:currency': currency,
+        'product:price:amount': lowestPrice.toString(),
       },
+      robots: {
+        index: event.eventStatus !== 'draft' && event.eventStatus !== 'cancelled',
+        follow: true,
+      }
     };
   } catch (error) {
     console.error('Error generating metadata:', error);
@@ -140,7 +96,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-// Helper function to get currency symbol
+// Helper function to get currency symbol (kept for other uses if needed, though not used in metadata now)
 function getCurrencySymbol(currency: string): string {
   const symbols: Record<string, string> = {
     'PEN': 'S/',
@@ -172,14 +128,10 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
     );
   }
 
-  // Generate JSON-LD schema for ticket purchase
-  const schemaGenerator = new SchemaGenerator();
-  const jsonLd = schemaGenerator.generateEventPurchaseSchema(event);
-
   return (
     <>
-      {/* JSON-LD Schema for Event with Offers */}
-      <JsonLd data={jsonLd} id="event-purchase-jsonld" />
+      {/* JSON-LD Schema including Event, Offers, FAQ, Breadcrumb */}
+      <StructuredData event={event} />
 
       {/* Client Component for Interactive UI */}
       <BuyTicketsClient event={event} />
