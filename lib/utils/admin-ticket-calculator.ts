@@ -71,13 +71,19 @@ export function calculateInstallmentPlan(
             currentSum += amount;
         }
 
+        // Robust date calculation
         const dueDate = new Date(startDate);
-        // Add (i-1) months to start date. 
-        // If startDate is 1st payment date, then:
-        // Inst 1: startDate
-        // Inst 2: startDate + 1 month
-        // etc.
+        const originalDay = startDate.getDate();
+
+        // Add (i-1) months
         dueDate.setMonth(startDate.getMonth() + (i - 1));
+
+        // Check for month overflow (e.g. Jan 31 + 1 month -> Feb 28/29, not March)
+        // If the day changed, it means we overflowed into the next month
+        if (dueDate.getDate() !== originalDay) {
+            // Set to last day of previous month (which is the correct month)
+            dueDate.setDate(0);
+        }
 
         installments.push({
             installmentNumber: i,

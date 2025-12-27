@@ -87,6 +87,34 @@ export const OrderNotifications = {
 };
 
 /**
+ * Notificaciones para cuotas de tickets
+ */
+export const InstallmentNotifications = {
+  proofUploaded: (ticketId: string, installmentNumber: number): Omit<CreateNotificationParams, 'userId'> => ({
+    title: '📸 Nuevo Comprobante',
+    body: `Se ha subido un comprobante para la cuota #${installmentNumber} del ticket #${ticketId.slice(0, 8).toUpperCase()}`,
+    type: 'payment',
+    orderId: ticketId,
+  }),
+
+  paymentApproved: (ticketId: string, installmentNumber: number): Omit<CreateNotificationParams, 'userId'> => ({
+    title: '✅ Pago de Cuota Aprobado',
+    body: `El pago de la cuota #${installmentNumber} para tu ticket #${ticketId.slice(0, 8).toUpperCase()} ha sido verificado.`,
+    type: 'payment',
+    orderId: ticketId,
+  }),
+
+  paymentRejected: (ticketId: string, installmentNumber: number, reason?: string): Omit<CreateNotificationParams, 'userId'> => ({
+    title: '⚠️ Pago de Cuota Rechazado',
+    body: reason
+      ? `El comprobante de la cuota #${installmentNumber} fue rechazado: ${reason}`
+      : `El comprobante de la cuota #${installmentNumber} no pudo ser verificado.`,
+    type: 'payment',
+    orderId: ticketId,
+  }),
+};
+
+/**
  * Enviar notificación según el estado del pedido
  */
 export async function notifyOrderStatusChange(

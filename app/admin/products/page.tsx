@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Package, 
   Plus, 
@@ -14,7 +15,11 @@ import {
   Truck,
   Store,
   Globe,
-  MapPin
+  MapPin,
+  RefreshCw,
+  MoreHorizontal,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +38,23 @@ import { Product, ProductCategory, ShippingZone } from '@/lib/types';
 import { SUPPORTED_CURRENCIES } from '@/lib/utils/currency-converter';
 import { getCountries, getStatesByCountry, CountryData, StateData } from '@/lib/utils/location-apis';
 import { generateSlug } from '@/lib/utils/slug-generator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+
+// Helper function to revalidate sitemap
+async function revalidateSitemap() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+    await fetch(`${baseUrl}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, path: '/sitemap.xml' }),
+    });
+  } catch (error) {
+    console.error('Error revalidating sitemap:', error);
+  }
+}
 
 const STEPS = [
   { id: 'basic', title: 'Información Básica' },
@@ -43,14 +65,6 @@ const STEPS = [
 ];
 
 export default function ProductsAdminPage() {
-  return (
-    <AuthGuard>
-      <ProductsAdminContent />
-    </AuthGuard>
-  );
-}
-
-function ProductsAdminContent() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
@@ -94,10 +108,12 @@ function ProductsAdminContent() {
 
   const loadProducts = async () => {
     try {
+      setLoading(true);
       const allProducts = await productsCollection.getAll();
       setProducts(allProducts as Product[]);
     } catch (error) {
       console.error('Error loading products:', error);
+      toast.error('Error al cargar productos');
     } finally {
       setLoading(false);
     }
@@ -170,9 +186,11 @@ function ProductsAdminContent() {
     try {
       await productsCollection.delete(productId);
       await loadProducts();
+      await revalidateSitemap();
+      toast.success('Producto eliminado');
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Error al eliminar el producto');
+      toast.error('Error al eliminar el producto');
     }
   };
 
@@ -193,12 +211,40 @@ function ProductsAdminContent() {
       }
 
       await loadProducts();
+      await revalidateSitemap();
+      
+      // Revalidate store pages if published
+      if (publishNow) {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+          const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
+          
+          // Revalidate store listing
+          await fetch(`${baseUrl}/api/revalidate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, path: '/tienda' })
+          });
+
+          // Revalidate product detail
+          if (dataToSave.slug) {
+            await fetch(`${baseUrl}/api/revalidate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token, path: `/tienda/${dataToSave.slug}` })
+            });
+          }
+        } catch (e) {
+          console.error('Error revalidating pages:', e);
+        }
+      }
+
       setIsCreateDialogOpen(false);
       setIsEditDialogOpen(false);
-      alert(publishNow ? 'Producto publicado exitosamente' : 'Producto guardado como borrador');
+      toast.success(publishNow ? 'Producto publicado exitosamente' : 'Producto guardado como borrador');
     } catch (error) {
       console.error('Error saving product:', error);
-      alert('Error al guardar el producto');
+      toast.error('Error al guardar el producto');
     } finally {
       setSaving(false);
     }
@@ -221,222 +267,327 @@ function ProductsAdminContent() {
     product.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Stats
+  const stats = {
+    total: products.length,
+    active: products.filter(p => p.isActive).length,
+    draft: products.filter(p => !p.isActive).length,
+    lowStock: products.filter(p => (p.stock || 0) < 10).length
+  };
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Gestión de Productos</h1>
-          <p className="text-muted-foreground">Administra el catálogo de la tienda</p>
-        </div>
-        <Button onClick={handleCreateProduct} size="lg">
-          <Plus className="mr-2 h-5 w-5" />
-          Crear Producto
-        </Button>
-      </div>
+    <AuthGuard>
+      <div className="min-h-screen relative bg-[#141618] overflow-hidden">
+        {/* Dynamic Background */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#141618]" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 50% 0%, rgba(251,169,5,0.08), transparent 40%), radial-gradient(circle at 100% 100%, rgba(0,203,255,0.06), transparent 40%)'
+          }}
+        />
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Buscar productos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      {/* Products Grid */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      ) : filteredProducts.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-2xl font-semibold mb-2">No hay productos</h2>
-            <p className="text-muted-foreground mb-6">
-              {searchTerm ? 'No se encontraron productos con ese término' : 'Comienza creando tu primer producto'}
-            </p>
-            {!searchTerm && (
-              <Button onClick={handleCreateProduct}>
-                <Plus className="mr-2 h-4 w-4" />
-                Crear Primer Producto
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              {/* Product Image */}
-              <div className="aspect-square bg-muted relative">
-                {product.images && product.images.length > 0 ? (
-                  <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="h-16 w-16 text-muted-foreground" />
-                  </div>
-                )}
-                {!product.isActive && (
-                  <div className="absolute top-2 right-2">
-                    <Badge variant="secondary">Borrador</Badge>
-                  </div>
-                )}
-                {product.discountPercentage && product.discountPercentage > 0 && (
-                  <div className="absolute top-2 left-2">
-                    <Badge variant="destructive">-{product.discountPercentage}%</Badge>
-                  </div>
-                )}
-              </div>
-
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-lg mb-1 line-clamp-2">{product.name}</h3>
-                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                  {product.shortDescription}
-                </p>
-                
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-lg font-bold">
-                      {Object.values(SUPPORTED_CURRENCIES).find(c => Object.keys(SUPPORTED_CURRENCIES).find(k => k === product.currency))?.symbol || product.currency}
-                      {product.price.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Stock: {product.stock}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {product.isActive ? (
-                      <Eye className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
+        <div className="relative z-10 p-6 lg:p-8">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center shadow-lg shadow-primary/20">
+                  <span className="font-bold text-white text-xl">R</span>
                 </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white">Ravehub Admin</h1>
+                  <p className="text-xs text-white/40">Gestión de Productos</p>
+                </div>
+              </Link>
+            </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleEditProduct(product)}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteProduct(product.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={handleCreateProduct} className="bg-gradient-to-r from-primary to-orange-600 hover:from-primary/90 hover:to-orange-700 text-white shadow-[0_0_20px_-5px_var(--primary)]">
+                <Plus className="mr-2 h-4 w-4" />
+                Crear Producto
+              </Button>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-white/60">Total Productos</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                    <Package className="w-6 h-6 text-white" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
 
-      {/* Create/Edit Dialog */}
-      <Dialog 
-        open={isCreateDialogOpen || isEditDialogOpen} 
-        onOpenChange={(open) => {
-          setIsCreateDialogOpen(open);
-          setIsEditDialogOpen(open);
-        }}
-      >
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0">
-          <div className="flex flex-col h-full max-h-[90vh]">
-            {/* Header */}
-            <DialogHeader className="px-8 py-6 border-b flex-shrink-0">
-              <DialogTitle className="text-2xl font-bold">
-                {isCreateDialogOpen ? 'Crear Nuevo Producto' : 'Editar Producto'}
-              </DialogTitle>
-              
-              {/* Steps */}
-              <div className="flex items-center gap-4 mt-4">
-                {STEPS.map((step, index) => (
-                  <div key={step.id} className="flex items-center">
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                        index === currentStep
-                          ? 'bg-primary text-primary-foreground'
-                          : index < currentStep
-                          ? 'bg-green-500 text-white'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {index + 1}
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-white/60">Activos</p>
+                    <p className="text-3xl font-bold text-green-400 mt-1">{stats.active}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-green-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-white/60">Borradores</p>
+                    <p className="text-3xl font-bold text-yellow-400 mt-1">{stats.draft}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                    <Edit className="w-6 h-6 text-yellow-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-white/60">Stock Bajo</p>
+                    <p className="text-3xl font-bold text-red-400 mt-1">{stats.lowStock}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-red-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filters Bar */}
+          <Card className="bg-white/5 backdrop-blur-xl border-white/10 mb-6">
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                  <Input
+                    placeholder="Buscar productos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50"
+                  />
+                </div>
+                <Button
+                  onClick={loadProducts}
+                  variant="outline"
+                  className="border-white/10 text-white hover:bg-white/5"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Products Grid */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-white/60">Cargando productos...</p>
+              </div>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
+              <div className="text-muted-foreground mb-4">
+                {searchTerm ? 'No se encontraron productos.' : 'No hay productos creados aún.'}
+              </div>
+              {!searchTerm && (
+                <Button onClick={handleCreateProduct}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Crear Primer Producto
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <Card key={product.id} className="bg-white/5 backdrop-blur-xl border-white/10 hover:border-white/20 transition-all duration-300 group overflow-hidden">
+                  <div className="aspect-square bg-black/40 relative">
+                    {product.images && product.images.length > 0 ? (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="h-12 w-12 text-white/20" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <Badge className={product.isActive ? "bg-green-500/80" : "bg-yellow-500/80"}>
+                        {product.isActive ? 'Activo' : 'Borrador'}
+                      </Badge>
                     </div>
-                    <span className="ml-2 text-sm font-medium hidden md:inline">
-                      {step.title}
-                    </span>
-                    {index < STEPS.length - 1 && (
-                      <div className="w-8 h-0.5 bg-muted mx-2" />
+                    {(product.discountPercentage || 0) > 0 && (
+                      <div className="absolute top-2 left-2">
+                        <Badge variant="destructive">-{product.discountPercentage}%</Badge>
+                      </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </DialogHeader>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-8 py-6">
-              <ProductFormSteps
-                currentStep={currentStep}
-                productData={productData}
-                updateProductData={updateProductData}
-                categories={categories}
-              />
+                  <CardContent className="p-4">
+                    <h3 className="font-bold text-white mb-1 line-clamp-1">{product.name}</h3>
+                    <p className="text-xs text-white/60 mb-3 line-clamp-2 min-h-[2.5em]">
+                      {product.shortDescription}
+                    </p>
+                    
+                    <div className="flex items-end justify-between mb-4">
+                      <div>
+                        <p className="text-lg font-bold text-primary">
+                          {Object.values(SUPPORTED_CURRENCIES).find(c => Object.keys(SUPPORTED_CURRENCIES).find(k => k === product.currency))?.symbol || product.currency}
+                          {product.price.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-white/40">
+                          Stock: {product.stock}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 border-white/10 text-white hover:bg-white/5"
+                        onClick={() => handleEditProduct(product)}
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Editar
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/10">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-[#1A1D21] border-white/10 text-white">
+                          <DropdownMenuItem onClick={() => handleDeleteProduct(product.id)} className="text-red-500 focus:text-red-500">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
+          )}
 
-            {/* Footer */}
-            <div className="px-8 py-4 border-t flex justify-between items-center flex-shrink-0">
-              <Button
-                variant="outline"
-                onClick={prevStep}
-                disabled={currentStep === 0}
-              >
-                Anterior
-              </Button>
+          {/* Create/Edit Dialog */}
+          <Dialog 
+            open={isCreateDialogOpen || isEditDialogOpen} 
+            onOpenChange={(open) => {
+              setIsCreateDialogOpen(open);
+              setIsEditDialogOpen(open);
+            }}
+          >
+            <DialogContent className="bg-[#1A1D21] border-white/10 text-white max-w-6xl max-h-[90vh] overflow-hidden p-0">
+              <div className="flex flex-col h-full max-h-[90vh]">
+                {/* Header */}
+                <DialogHeader className="px-8 py-6 border-b border-white/10 flex-shrink-0">
+                  <DialogTitle className="text-2xl font-bold">
+                    {isCreateDialogOpen ? 'Crear Nuevo Producto' : 'Editar Producto'}
+                  </DialogTitle>
+                  
+                  {/* Steps */}
+                  <div className="flex items-center gap-4 mt-4 overflow-x-auto pb-2 scrollbar-hide">
+                    {STEPS.map((step, index) => (
+                      <div key={step.id} className="flex items-center flex-shrink-0">
+                        <div
+                          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
+                            index === currentStep
+                              ? 'bg-primary text-white'
+                              : index < currentStep
+                              ? 'bg-green-500 text-white'
+                              : 'bg-white/10 text-white/40'
+                          }`}
+                        >
+                          {index < currentStep ? <CheckCircle className="w-5 h-5" /> : index + 1}
+                        </div>
+                        <span className={`ml-2 text-sm font-medium hidden md:inline ${
+                            index === currentStep ? 'text-white' : 'text-white/40'
+                        }`}>
+                          {step.title}
+                        </span>
+                        {index < STEPS.length - 1 && (
+                          <div className="w-8 h-0.5 bg-white/10 mx-2" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </DialogHeader>
 
-              <div className="flex gap-2">
-                {currentStep === STEPS.length - 1 ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleSaveProduct(false)}
-                      disabled={saving}
-                    >
-                      Guardar como Borrador
-                    </Button>
-                    <Button
-                      onClick={() => handleSaveProduct(true)}
-                      disabled={saving}
-                    >
-                      {saving ? 'Publicando...' : 'Publicar Producto'}
-                    </Button>
-                  </>
-                ) : (
-                  <Button onClick={nextStep}>
-                    Siguiente
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto px-8 py-6">
+                  <ProductFormSteps
+                    currentStep={currentStep}
+                    productData={productData}
+                    updateProductData={updateProductData}
+                    categories={categories}
+                  />
+                </div>
+
+                {/* Footer */}
+                <div className="px-8 py-4 border-t border-white/10 flex justify-between items-center flex-shrink-0 bg-black/20">
+                  <Button
+                    variant="outline"
+                    onClick={prevStep}
+                    disabled={currentStep === 0}
+                    className="border-white/10 text-white hover:bg-white/5"
+                  >
+                    Anterior
                   </Button>
-                )}
+
+                  <div className="flex gap-2">
+                    {currentStep === STEPS.length - 1 ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleSaveProduct(false)}
+                          disabled={saving}
+                          className="border-white/10 text-white hover:bg-white/5"
+                        >
+                          Guardar como Borrador
+                        </Button>
+                        <Button
+                          onClick={() => handleSaveProduct(true)}
+                          disabled={saving}
+                          className="bg-primary text-white hover:bg-primary/90"
+                        >
+                          {saving ? 'Publicando...' : 'Publicar Producto'}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button onClick={nextStep} className="bg-primary text-white hover:bg-primary/90">
+                        Siguiente
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    </AuthGuard>
   );
 }
 
@@ -474,72 +625,80 @@ function ProductFormSteps({
     setLoadingLocations(false);
   };
 
+  const inputClass = "bg-black/20 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50";
+  const labelClass = "text-white/80";
+
   switch (currentStep) {
     case 0: // Información Básica
       return (
         <div className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <Label>Nombre del Producto *</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Nombre del Producto *</Label>
               <Input
                 value={productData.name || ''}
                 onChange={(e) => updateProductData('name', e.target.value)}
                 placeholder="Ej: Polo Ultra Peru 2025"
+                className={inputClass}
               />
             </div>
 
-            <div>
-              <Label>Slug</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Slug</Label>
               <Input
                 value={productData.slug || ''}
                 onChange={(e) => updateProductData('slug', e.target.value)}
                 placeholder="Auto-generado"
                 disabled
+                className={`${inputClass} opacity-50`}
               />
             </div>
           </div>
 
-          <div>
-            <Label>Descripción Corta *</Label>
+          <div className="space-y-2">
+            <Label className={labelClass}>Descripción Corta *</Label>
             <Textarea
               value={productData.shortDescription || ''}
               onChange={(e) => updateProductData('shortDescription', e.target.value)}
               placeholder="Breve descripción del producto (1-2 líneas)"
               rows={2}
+              className={inputClass}
             />
           </div>
 
-          <div>
-            <Label>Descripción Completa *</Label>
+          <div className="space-y-2">
+            <Label className={labelClass}>Descripción Completa *</Label>
             <Textarea
               value={productData.description || ''}
               onChange={(e) => updateProductData('description', e.target.value)}
               placeholder="Descripción detallada del producto"
               rows={6}
+              className={inputClass}
             />
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <Label>Precio *</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Precio *</Label>
               <Input
                 type="number"
                 value={productData.price || 0}
                 onChange={(e) => updateProductData('price', parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
+                className={inputClass}
               />
             </div>
 
-            <div>
-              <Label>Divisa *</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Divisa *</Label>
               <Select
                 value={productData.currency || 'PEN'}
                 onValueChange={(value) => updateProductData('currency', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={inputClass}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#1A1D21] border-white/10 text-white">
                   {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
                     <SelectItem key={code} value={code}>
                       {info.symbol} {info.name} ({code})
@@ -549,8 +708,8 @@ function ProductFormSteps({
               </Select>
             </div>
 
-            <div>
-              <Label>Descuento (%)</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Descuento (%)</Label>
               <Input
                 type="number"
                 value={productData.discountPercentage || 0}
@@ -558,31 +717,33 @@ function ProductFormSteps({
                 placeholder="0"
                 min="0"
                 max="100"
+                className={inputClass}
               />
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <Label>Stock *</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Stock *</Label>
               <Input
                 type="number"
                 value={productData.stock || 0}
                 onChange={(e) => updateProductData('stock', parseInt(e.target.value) || 0)}
                 placeholder="0"
+                className={inputClass}
               />
             </div>
 
-            <div>
-              <Label>Categoría *</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Categoría *</Label>
               <Select
                 value={productData.categoryId || ''}
                 onValueChange={(value) => updateProductData('categoryId', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={inputClass}>
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#1A1D21] border-white/10 text-white">
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -594,34 +755,36 @@ function ProductFormSteps({
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <Label>Marca</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Marca</Label>
               <Input
                 value={productData.brand || ''}
                 onChange={(e) => updateProductData('brand', e.target.value)}
                 placeholder="Ej: Nike"
+                className={inputClass}
               />
             </div>
 
-            <div>
-              <Label>Artista</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Artista</Label>
               <Input
                 value={productData.artist || ''}
                 onChange={(e) => updateProductData('artist', e.target.value)}
                 placeholder="Ej: Boris Brejcha"
+                className={inputClass}
               />
             </div>
 
-            <div>
-              <Label>Género</Label>
+            <div className="space-y-2">
+              <Label className={labelClass}>Género</Label>
               <Select
                 value={productData.gender || ''}
                 onValueChange={(value) => updateProductData('gender', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={inputClass}>
                   <SelectValue placeholder="Selecciona" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#1A1D21] border-white/10 text-white">
                   <SelectItem value="unisex">Unisex</SelectItem>
                   <SelectItem value="male">Hombre</SelectItem>
                   <SelectItem value="female">Mujer</SelectItem>
@@ -637,6 +800,8 @@ function ProductFormSteps({
         <MultimediaStep
           productData={productData}
           updateProductData={updateProductData}
+          inputClass={inputClass}
+          labelClass={labelClass}
         />
       );
 
@@ -649,6 +814,8 @@ function ProductFormSteps({
           states={states}
           loadStates={loadStates}
           loadingLocations={loadingLocations}
+          inputClass={inputClass}
+          labelClass={labelClass}
         />
       );
 
@@ -657,6 +824,8 @@ function ProductFormSteps({
         <SEOStep
           productData={productData}
           updateProductData={updateProductData}
+          inputClass={inputClass}
+          labelClass={labelClass}
         />
       );
 
@@ -673,13 +842,16 @@ function ProductFormSteps({
   }
 }
 
-// Paso de Multimedia
 function MultimediaStep({
   productData,
   updateProductData,
+  inputClass,
+  labelClass
 }: {
   productData: Partial<Product>;
   updateProductData: (field: string, value: any) => void;
+  inputClass: string;
+  labelClass: string;
 }) {
   const handleImageUpload = (url: string) => {
     const newImages = [...(productData.images || []), url];
@@ -693,27 +865,28 @@ function MultimediaStep({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Label>Imágenes del Producto</Label>
-        <p className="text-sm text-muted-foreground mb-4">
+      <div className="space-y-4">
+        <Label className={labelClass}>Imágenes del Producto</Label>
+        <p className="text-sm text-white/60 mb-4">
           Sube hasta 5 imágenes del producto. La primera será la imagen principal.
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
           {(productData.images || []).map((image, index) => (
-            <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
+            <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group">
               <img src={image} alt={`Producto ${index + 1}`} className="w-full h-full object-cover" />
               {index === 0 && (
-                <Badge className="absolute top-2 left-2">Principal</Badge>
+                <Badge className="absolute top-2 left-2 bg-primary">Principal</Badge>
               )}
-              <Button
-                variant="destructive"
-                size="sm"
-                className="absolute top-2 right-2"
-                onClick={() => handleImageRemove(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleImageRemove(index)}
+                >
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
@@ -725,25 +898,26 @@ function MultimediaStep({
             maxSize={5}
             folder="products/images"
             variant="default"
+            className="bg-black/20 border-white/10"
           />
         )}
       </div>
 
-      <Separator />
+      <Separator className="bg-white/10" />
 
-      <div>
-        <Label>URL del Video (Opcional)</Label>
+      <div className="space-y-2">
+        <Label className={labelClass}>URL del Video (Opcional)</Label>
         <Input
           value={productData.videoUrl || ''}
           onChange={(e) => updateProductData('videoUrl', e.target.value)}
           placeholder="https://youtube.com/watch?v=..."
+          className={inputClass}
         />
       </div>
     </div>
   );
 }
 
-// Paso de Configuración de Envíos
 function ShippingStep({
   productData,
   updateProductData,
@@ -751,6 +925,8 @@ function ShippingStep({
   states,
   loadStates,
   loadingLocations,
+  inputClass,
+  labelClass
 }: {
   productData: Partial<Product>;
   updateProductData: (field: string, value: any) => void;
@@ -758,6 +934,8 @@ function ShippingStep({
   states: StateData[];
   loadStates: (code: string) => void;
   loadingLocations: boolean;
+  inputClass: string;
+  labelClass: string;
 }) {
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedState, setSelectedState] = useState('');
@@ -799,31 +977,27 @@ function ShippingStep({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Label>¿Habilitar envíos?</Label>
-        <div className="flex items-center space-x-2 mt-2">
-          <Checkbox
-            checked={productData.shippingEnabled}
-            onCheckedChange={(checked) => updateProductData('shippingEnabled', checked)}
-          />
-          <span className="text-sm">Sí, este producto se puede enviar</span>
-        </div>
+      <div className="flex items-center space-x-2 p-4 border border-white/10 rounded-lg bg-black/20">
+        <Checkbox
+          checked={productData.shippingEnabled}
+          onCheckedChange={(checked) => updateProductData('shippingEnabled', checked)}
+          className="border-white/20"
+        />
+        <Label className={labelClass}>Habilitar envíos para este producto</Label>
       </div>
 
       {productData.shippingEnabled && (
         <>
-          <Separator />
-
-          <div>
-            <Label>Tipo de Envío *</Label>
+          <div className="space-y-2">
+            <Label className={labelClass}>Tipo de Envío *</Label>
             <Select
               value={productData.shippingType || 'nationwide'}
               onValueChange={(value) => updateProductData('shippingType', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className={inputClass}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#1A1D21] border-white/10 text-white">
                 <SelectItem value="by_zone">
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 mr-2" />
@@ -848,16 +1022,16 @@ function ShippingStep({
 
           {/* Por Zonas */}
           {productData.shippingType === 'by_zone' && (
-            <Card>
+            <Card className="bg-white/5 border-white/10">
               <CardHeader>
-                <CardTitle className="text-lg">Zonas de Envío</CardTitle>
+                <CardTitle className="text-lg text-white">Zonas de Envío</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Agregar nueva zona */}
-                <div className="space-y-4 p-4 border rounded-lg">
+                <div className="space-y-4 p-4 border border-white/10 rounded-lg bg-black/20">
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>País</Label>
+                    <div className="space-y-2">
+                      <Label className={labelClass}>País</Label>
                       <Select
                         value={selectedCountry}
                         onValueChange={(value) => {
@@ -865,10 +1039,10 @@ function ShippingStep({
                           loadStates(value);
                         }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className={inputClass}>
                           <SelectValue placeholder="Selecciona país" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-[#1A1D21] border-white/10 text-white">
                           {countries.map((country) => (
                             <SelectItem key={country.code} value={country.code}>
                               {country.name}
@@ -878,17 +1052,17 @@ function ShippingStep({
                       </Select>
                     </div>
 
-                    <div>
-                      <Label>Estado/Región</Label>
+                    <div className="space-y-2">
+                      <Label className={labelClass}>Estado/Región</Label>
                       <Select
                         value={selectedState}
                         onValueChange={setSelectedState}
                         disabled={!selectedCountry || loadingLocations}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className={inputClass}>
                           <SelectValue placeholder="Selecciona región" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-[#1A1D21] border-white/10 text-white">
                           {states.map((state) => (
                             <SelectItem key={state.code} value={state.code}>
                               {state.name}
@@ -900,23 +1074,25 @@ function ShippingStep({
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Costo de Envío</Label>
+                    <div className="space-y-2">
+                      <Label className={labelClass}>Costo de Envío</Label>
                       <Input
                         type="number"
                         value={zoneCost}
                         onChange={(e) => setZoneCost(parseFloat(e.target.value) || 0)}
                         placeholder={`Por defecto: ${(productData.price || 0) * 0.1}`}
+                        className={inputClass}
                       />
                     </div>
 
-                    <div>
-                      <Label>Días Estimados</Label>
+                    <div className="space-y-2">
+                      <Label className={labelClass}>Días Estimados</Label>
                       <Input
                         type="number"
                         value={zoneDays}
                         onChange={(e) => setZoneDays(parseInt(e.target.value) || 5)}
                         placeholder="5"
+                        className={inputClass}
                       />
                     </div>
                   </div>
@@ -925,11 +1101,12 @@ function ShippingStep({
                     <Checkbox
                       checked={zoneFreeShipping}
                       onCheckedChange={(checked) => setZoneFreeShipping(checked as boolean)}
+                      className="border-white/20"
                     />
-                    <Label>Envío gratuito para esta zona</Label>
+                    <Label className={labelClass}>Envío gratuito para esta zona</Label>
                   </div>
 
-                  <Button onClick={addShippingZone} disabled={!selectedCountry}>
+                  <Button onClick={addShippingZone} disabled={!selectedCountry} className="w-full border-white/10" variant="outline">
                     <Plus className="h-4 w-4 mr-2" />
                     Agregar Zona
                   </Button>
@@ -939,14 +1116,14 @@ function ShippingStep({
                 {productData.shippingZones && productData.shippingZones.length > 0 && (
                   <div className="space-y-2">
                     {productData.shippingZones.map((zone) => (
-                      <div key={zone.id} className="flex items-center justify-between p-3 border rounded">
+                      <div key={zone.id} className="flex items-center justify-between p-3 border border-white/10 rounded bg-black/20">
                         <div>
-                          <p className="font-medium">{zone.country} {zone.state ? `- ${zone.state}` : ''}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="font-medium text-white">{zone.country} {zone.state ? `- ${zone.state}` : ''}</p>
+                          <p className="text-sm text-white/60">
                             {zone.isFreeShipping ? 'Envío gratuito' : `Costo: ${zone.shippingCost}`} • {zone.estimatedDays} días
                           </p>
                         </div>
-                        <Button variant="ghost" size="sm" onClick={() => removeShippingZone(zone.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => removeShippingZone(zone.id)} className="text-white hover:bg-white/10">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -959,13 +1136,13 @@ function ShippingStep({
 
           {/* A Todo el País */}
           {productData.shippingType === 'nationwide' && (
-            <Card>
+            <Card className="bg-white/5 border-white/10">
               <CardHeader>
-                <CardTitle className="text-lg">Envío Nacional</CardTitle>
+                <CardTitle className="text-lg text-white">Envío Nacional</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label>País</Label>
+                <div className="space-y-2">
+                  <Label className={labelClass}>País</Label>
                   <Select
                     value={productData.nationwideShipping?.countryCode || ''}
                     onValueChange={(value) => {
@@ -981,10 +1158,10 @@ function ShippingStep({
                       }
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={inputClass}>
                       <SelectValue placeholder="Selecciona país" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#1A1D21] border-white/10 text-white">
                       {countries.map((country) => (
                         <SelectItem key={country.code} value={country.code}>
                           {country.name}
@@ -995,8 +1172,8 @@ function ShippingStep({
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Costo de Envío</Label>
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Costo de Envío</Label>
                     <Input
                       type="number"
                       value={productData.nationwideShipping?.shippingCost || 0}
@@ -1007,11 +1184,12 @@ function ShippingStep({
                         });
                       }}
                       placeholder={`Por defecto: ${(productData.price || 0) * 0.1}`}
+                      className={inputClass}
                     />
                   </div>
 
-                  <div>
-                    <Label>Días Estimados</Label>
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Días Estimados</Label>
                     <Input
                       type="number"
                       value={productData.nationwideShipping?.estimatedDays || 5}
@@ -1022,6 +1200,7 @@ function ShippingStep({
                         });
                       }}
                       placeholder="5"
+                      className={inputClass}
                     />
                   </div>
                 </div>
@@ -1035,8 +1214,9 @@ function ShippingStep({
                         isFreeShipping: checked as boolean,
                       });
                     }}
+                    className="border-white/20"
                   />
-                  <Label>Envío gratuito</Label>
+                  <Label className={labelClass}>Envío gratuito</Label>
                 </div>
               </CardContent>
             </Card>
@@ -1044,20 +1224,21 @@ function ShippingStep({
 
           {/* Solo Recojo en Tienda */}
           {productData.shippingType === 'store_pickup_only' && (
-            <Card>
+            <Card className="bg-white/5 border-white/10">
               <CardHeader>
-                <CardTitle className="text-lg">Recojo en Tienda</CardTitle>
+                <CardTitle className="text-lg text-white">Recojo en Tienda</CardTitle>
               </CardHeader>
               <CardContent>
-                <div>
-                  <Label>Dirección de la Tienda</Label>
+                <div className="space-y-2">
+                  <Label className={labelClass}>Dirección de la Tienda</Label>
                   <Textarea
                     value={productData.storePickupAddress || ''}
                     onChange={(e) => updateProductData('storePickupAddress', e.target.value)}
                     placeholder="Ingresa la dirección completa donde el cliente puede recoger el producto"
                     rows={3}
+                    className={inputClass}
                   />
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-sm text-white/60 mt-2">
                     El cliente podrá recoger el producto sin costo de envío
                   </p>
                 </div>
@@ -1070,43 +1251,48 @@ function ShippingStep({
   );
 }
 
-// Paso de SEO
 function SEOStep({
   productData,
   updateProductData,
+  inputClass,
+  labelClass
 }: {
   productData: Partial<Product>;
   updateProductData: (field: string, value: any) => void;
+  inputClass: string;
+  labelClass: string;
 }) {
   return (
     <div className="space-y-6">
-      <div>
-        <Label>Título SEO</Label>
+      <div className="space-y-2">
+        <Label className={labelClass}>Título SEO</Label>
         <Input
           value={productData.seoTitle || ''}
           onChange={(e) => updateProductData('seoTitle', e.target.value)}
           placeholder={productData.name || 'Título del producto'}
+          className={inputClass}
         />
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-white/40 mt-1">
           {(productData.seoTitle || '').length} / 60 caracteres recomendados
         </p>
       </div>
 
-      <div>
-        <Label>Descripción SEO</Label>
+      <div className="space-y-2">
+        <Label className={labelClass}>Descripción SEO</Label>
         <Textarea
           value={productData.seoDescription || ''}
           onChange={(e) => updateProductData('seoDescription', e.target.value)}
           placeholder={productData.shortDescription || 'Descripción del producto'}
           rows={3}
+          className={inputClass}
         />
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-white/40 mt-1">
           {(productData.seoDescription || '').length} / 160 caracteres recomendados
         </p>
       </div>
 
-      <div>
-        <Label>Palabras Clave SEO</Label>
+      <div className="space-y-2">
+        <Label className={labelClass}>Palabras Clave SEO</Label>
         <Input
           value={(productData.seoKeywords || []).join(', ')}
           onChange={(e) => {
@@ -1114,8 +1300,9 @@ function SEOStep({
             updateProductData('seoKeywords', keywords);
           }}
           placeholder="polo, festival, música, electrónica"
+          className={inputClass}
         />
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-white/40 mt-1">
           Separa las palabras clave con comas
         </p>
       </div>
@@ -1123,7 +1310,6 @@ function SEOStep({
   );
 }
 
-// Paso de Revisión
 function ReviewStep({
   productData,
   categories,
@@ -1136,15 +1322,15 @@ function ReviewStep({
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-white/5 border-white/10">
         <CardHeader>
-          <CardTitle>Revisión Final</CardTitle>
+          <CardTitle className="text-white">Revisión Final</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Información Básica */}
           <div>
-            <h3 className="font-semibold mb-2">Información Básica</h3>
-            <div className="space-y-1 text-sm">
+            <h3 className="font-semibold mb-2 text-white">Información Básica</h3>
+            <div className="space-y-1 text-sm text-white/80">
               <p><strong>Nombre:</strong> {productData.name}</p>
               <p><strong>Categoría:</strong> {category?.name}</p>
               <p><strong>Precio:</strong> {currencyInfo?.[1].symbol}{productData.price} {productData.currency}</p>
@@ -1155,33 +1341,33 @@ function ReviewStep({
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-white/10" />
 
           {/* Imágenes */}
           {productData.images && productData.images.length > 0 && (
             <>
               <div>
-                <h3 className="font-semibold mb-2">Imágenes ({productData.images.length})</h3>
+                <h3 className="font-semibold mb-2 text-white">Imágenes ({productData.images.length})</h3>
                 <div className="grid grid-cols-4 gap-2">
                   {productData.images.slice(0, 4).map((image, index) => (
                     <img
                       key={index}
                       src={image}
                       alt={`Producto ${index + 1}`}
-                      className="w-full aspect-square object-cover rounded"
+                      className="w-full aspect-square object-cover rounded bg-black/20"
                     />
                   ))}
                 </div>
               </div>
-              <Separator />
+              <Separator className="bg-white/10" />
             </>
           )}
 
           {/* Envíos */}
           <div>
-            <h3 className="font-semibold mb-2">Configuración de Envíos</h3>
+            <h3 className="font-semibold mb-2 text-white">Configuración de Envíos</h3>
             {productData.shippingEnabled ? (
-              <div className="space-y-1 text-sm">
+              <div className="space-y-1 text-sm text-white/80">
                 <p><strong>Tipo:</strong> {
                   productData.shippingType === 'by_zone' ? 'Por zonas específicas' :
                   productData.shippingType === 'nationwide' ? 'A todo el país' :
@@ -1195,16 +1381,16 @@ function ReviewStep({
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Envíos deshabilitados</p>
+              <p className="text-sm text-white/60">Envíos deshabilitados</p>
             )}
           </div>
 
-          <Separator />
+          <Separator className="bg-white/10" />
 
           {/* SEO */}
           <div>
-            <h3 className="font-semibold mb-2">SEO</h3>
-            <div className="space-y-1 text-sm">
+            <h3 className="font-semibold mb-2 text-white">SEO</h3>
+            <div className="space-y-1 text-sm text-white/80">
               <p><strong>Título:</strong> {productData.seoTitle || productData.name}</p>
               <p><strong>Descripción:</strong> {productData.seoDescription || productData.shortDescription}</p>
               <p><strong>Keywords:</strong> {(productData.seoKeywords || []).join(', ') || 'Ninguna'}</p>
@@ -1215,13 +1401,3 @@ function ReviewStep({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-

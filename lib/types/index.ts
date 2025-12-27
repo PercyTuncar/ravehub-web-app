@@ -47,8 +47,15 @@ export interface User {
   lastLoginAt?: Date;
   lastLoginDevice?: string;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  
+  // Device/Browser info
+  language?: string;
+  platform?: string;
+  screenSize?: string;
+  userAgent?: string;
+
+  createdAt: Date | { seconds: number; nanoseconds: number };
+  updatedAt: Date | { seconds: number; nanoseconds: number };
 }
 
 export interface SalesPhase {
@@ -569,12 +576,16 @@ export interface PaymentInstallment {
   currency: string;
   installmentNumber: number;
   status: 'pending' | 'paid' | 'rejected' | 'overdue';
-  paymentProofUrl?: string;
+  paymentProofUrl?: string; // Admin-uploaded proof
+  userUploadedProofUrl?: string; // User-uploaded proof (pending admin approval)
+  userUploadedAt?: string; // ISO string - when user uploaded proof
   paymentDate?: Date;
+  paidAt?: string; // ISO string - when marked as paid
   adminApproved: boolean;
   approvedBy?: string;
   approvedAt?: Date;
   dueDate: Date | string;
+  proofUrl?: string; // Legacy/additional proof field
 }
 
 // Order types (for e-commerce)

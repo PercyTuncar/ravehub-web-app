@@ -23,7 +23,7 @@ function parseNotificationDate(createdAt: string | Date | any): Date {
   if (createdAt instanceof Date) {
     return createdAt;
   }
-  
+
   // If it's a string (ISO format)
   if (typeof createdAt === 'string') {
     const date = new Date(createdAt);
@@ -31,17 +31,17 @@ function parseNotificationDate(createdAt: string | Date | any): Date {
       return date;
     }
   }
-  
+
   // If it's a Firestore Timestamp object
   if (createdAt && typeof createdAt === 'object' && 'toDate' in createdAt) {
     return createdAt.toDate();
   }
-  
+
   // If it's a Firestore Timestamp with seconds/nanoseconds
   if (createdAt && typeof createdAt === 'object' && 'seconds' in createdAt) {
     return new Date(createdAt.seconds * 1000);
   }
-  
+
   // Fallback to current date if invalid
   console.warn('Invalid createdAt value:', createdAt);
   return new Date();
@@ -105,7 +105,7 @@ export function NotificationBell() {
           )}
         </div>
         <Separator className="bg-[#DFE0E0]/20" />
-        
+
         {notifications.length === 0 ? (
           <div className="p-8 text-center">
             <Bell className="h-12 w-12 mx-auto mb-2 text-[#53575A] opacity-50" />
@@ -117,9 +117,8 @@ export function NotificationBell() {
               {notifications.slice(0, 10).map((notification) => (
                 <div
                   key={notification.id}
-                  className={`relative p-3 hover:bg-[#282D31] cursor-pointer transition-colors ${
-                    !notification.read ? 'bg-[#282D31]' : 'bg-[#141618]'
-                  }`}
+                  className={`relative p-3 hover:bg-[#282D31] cursor-pointer transition-colors ${!notification.read ? 'bg-[#282D31]' : 'bg-[#141618]'
+                    }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex gap-3">
@@ -147,11 +146,14 @@ export function NotificationBell() {
                         </p>
                         {notification.orderId && (
                           <Link
-                            href={`/profile/orders`}
+                            href={notification.type === 'payment'
+                              ? `/profile/tickets/${notification.orderId}`
+                              : `/profile/orders`
+                            }
                             className="text-xs text-[#FBA905] hover:text-[#F1A000] hover:underline"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            Ver pedido
+                            {notification.type === 'payment' ? 'Ver ticket' : 'Ver pedido'}
                           </Link>
                         )}
                       </div>
@@ -173,7 +175,7 @@ export function NotificationBell() {
             </div>
           </ScrollArea>
         )}
-        
+
         {notifications.length > 10 && (
           <>
             <Separator className="bg-[#DFE0E0]/20" />

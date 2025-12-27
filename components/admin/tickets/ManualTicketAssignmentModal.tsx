@@ -14,7 +14,10 @@ import {
     MapPin,
     Ticket,
     Gift,
-    DollarSign
+    DollarSign,
+    Paperclip,
+    Eye,
+    Upload as UploadIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Combobox } from '@/components/ui/combobox';
+import { FileUpload } from '@/components/common/FileUpload';
 import { toast } from 'sonner';
 
 import { eventsCollection, usersCollection } from '@/lib/firebase/collections';
@@ -63,6 +67,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
     // Status Flags
     const [isPaid, setIsPaid] = useState(false); // For Full Payment
     const [paidInstallments, setPaidInstallments] = useState<number[]>([]); // Indices of paid installments
+    const [installmentProofs, setInstallmentProofs] = useState<Record<number, string>>({}); // { -1: "url", 0: "url", ... }
 
     // Installments Config
     const [reservationAmount, setReservationAmount] = useState(50);
@@ -72,6 +77,10 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
 
     // Status
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Proof Upload Modal
+    const [uploadModalOpen, setUploadModalOpen] = useState(false);
+    const [uploadingForInstallment, setUploadingForInstallment] = useState<number | null>(null);
 
     // Computed / Derived
     const selectedUser = users.find(u => u.id === selectedUserId);
@@ -149,10 +158,25 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
 
     const handleToggleInstallmentPaid = (index: number) => {
         if (paidInstallments.includes(index)) {
+            // Unchecking - remove from paid list AND remove proof
             setPaidInstallments(paidInstallments.filter(i => i !== index));
+            setInstallmentProofs(prev => {
+                const newProofs = { ...prev };
+                delete newProofs[index];
+                return newProofs;
+            });
         } else {
+            // Checking - add to paid list
             setPaidInstallments([...paidInstallments, index]);
         }
+    };
+
+    const handleProofUpload = (installmentIndex: number, url: string) => {
+        setInstallmentProofs(prev => ({
+            ...prev,
+            [installmentIndex]: url
+        }));
+        toast.success('Comprobante subido correctamente');
     };
 
     const handleSubmit = async () => {
@@ -199,7 +223,8 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 paymentStatus: finalStatus,
 
                 // Pass new flags
-                paidInstallmentsIndices: (assignmentType === 'sale' && paymentType === 'installment') ? paidInstallments : undefined
+                paidInstallmentsIndices: (assignmentType === 'sale' && paymentType === 'installment') ? paidInstallments : undefined,
+                installmentProofs: (assignmentType === 'sale' && paymentType === 'installment') ? installmentProofs : undefined
             });
 
             if (result.success) {
@@ -532,6 +557,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                                     <TableHead className="py-2 h-8 text-xs">Vencimiento</TableHead>
                                                                     <TableHead className="py-2 h-8 text-xs text-right">Monto</TableHead>
                                                                     <TableHead className="py-2 h-8 text-xs text-center">¿Pagado?</TableHead>
+                                                                    <TableHead className="py-2 h-8 text-xs">Comprobante</TableHead>
                                                                 </TableRow>
                                                             </TableHeader>
                                                             <TableBody>
@@ -547,11 +573,56 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                                             onCheckedChange={() => handleToggleInstallmentPaid(-1)}
                                                                         />
                                                                     </TableCell>
+                                                                    <TableCell className="py-2 text-center">
+                                                                        {paidInstallments.includes(-1) && (
+                                                                            <div className="flex items-center justify-center gap-2">
+                                                                                {installmentProofs[-1] ? (
+                                                                                    <>
+                                                                                        <Button
+                                                                                            type="button"
+                                                                                            variant="ghost"
+                                                                                            size="sm"
+                                                                                            className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                                            onClick={() => window.open(installmentProofs[-1], '_blank')}
+                                                                                        >
+                                                                                            <Eye className="h-3.5 w-3.5" />
+                                                                                        </Button>
+                                                                                        <Button
+                                                                                            type="button"
+                                                                                            variant="ghost"
+                                                                                            size="sm"
+                                                                                            className="h-7 px-2"
+                                                                                            onClick={() => {
+                                                                                                setUploadingForInstallment(-1);
+                                                                                                setUploadModalOpen(true);
+                                                                                            }}
+                                                                                        >
+                                                                                            <UploadIcon className="h-3.5 w-3.5" />
+                                                                                        </Button>
+                                                                                    </>
+                                                                                ) : (
+                                                                                    <Button
+                                                                                        type="button"
+                                                                                        variant="outline"
+                                                                                        size="sm"
+                                                                                        className="h-7 px-3 text-xs"
+                                                                                        onClick={() => {
+                                                                                            setUploadingForInstallment(-1);
+                                                                                            setUploadModalOpen(true);
+                                                                                        }}
+                                                                                    >
+                                                                                        <Paperclip className="h-3 w-3 mr-1" />
+                                                                                        Subir
+                                                                                    </Button>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                    </TableCell>
                                                                 </TableRow>
                                                                 {installmentPlan.installments?.map((inst, idx) => (
                                                                     <TableRow key={inst.installmentNumber}>
                                                                         <TableCell className="py-2 text-xs">#{inst.installmentNumber}</TableCell>
-                                                                        <TableCell className="py-2 text-xs">{inst.dueDate.toLocaleDateString()}</TableCell>
+                                                                        <TableCell className="py-2 text-xs">{inst.dueDate.toLocaleDateString('es-CL')}</TableCell>
                                                                         <TableCell className="py-2 text-xs text-right">
                                                                             {selectedEvent.currency} {inst.amount.toFixed(2)}
                                                                         </TableCell>
@@ -560,6 +631,51 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                                                 checked={paidInstallments.includes(idx)}
                                                                                 onCheckedChange={() => handleToggleInstallmentPaid(idx)}
                                                                             />
+                                                                        </TableCell>
+                                                                        <TableCell className="py-2 text-center">
+                                                                            {paidInstallments.includes(idx) && (
+                                                                                <div className="flex items-center justify-center gap-2">
+                                                                                    {installmentProofs[idx] ? (
+                                                                                        <>
+                                                                                            <Button
+                                                                                                type="button"
+                                                                                                variant="ghost"
+                                                                                                size="sm"
+                                                                                                className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                                                onClick={() => window.open(installmentProofs[idx], '_blank')}
+                                                                                            >
+                                                                                                <Eye className="h-3.5 w-3.5" />
+                                                                                            </Button>
+                                                                                            <Button
+                                                                                                type="button"
+                                                                                                variant="ghost"
+                                                                                                size="sm"
+                                                                                                className="h-7 px-2"
+                                                                                                onClick={() => {
+                                                                                                    setUploadingForInstallment(idx);
+                                                                                                    setUploadModalOpen(true);
+                                                                                                }}
+                                                                                            >
+                                                                                                <UploadIcon className="h-3.5 w-3.5" />
+                                                                                            </Button>
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        <Button
+                                                                                            type="button"
+                                                                                            variant="outline"
+                                                                                            size="sm"
+                                                                                            className="h-7 px-3 text-xs"
+                                                                                            onClick={() => {
+                                                                                                setUploadingForInstallment(idx);
+                                                                                                setUploadModalOpen(true);
+                                                                                            }}
+                                                                                        >
+                                                                                            <Paperclip className="h-3 w-3 mr-1" />
+                                                                                            Subir
+                                                                                        </Button>
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
                                                                         </TableCell>
                                                                     </TableRow>
                                                                 ))}
@@ -631,6 +747,47 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                     </div>
                 </div>
             </DialogContent>
+
+            {/* Proof Upload Modal */}
+            <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Subir Comprobante de Pago</DialogTitle>
+                        <DialogDescription>
+                            {uploadingForInstallment === -1
+                                ? 'Comprobante para la Reserva'
+                                : `Comprobante para la Cuota #${uploadingForInstallment !== null ? uploadingForInstallment + 1 : ''}`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <FileUpload
+                            onUploadComplete={(url) => {
+                                if (uploadingForInstallment !== null) {
+                                    handleProofUpload(uploadingForInstallment, url);
+                                    setUploadModalOpen(false);
+                                    setUploadingForInstallment(null);
+                                }
+                            }}
+                            folder="payment-proofs"
+                            accept="image/*,application/pdf"
+                            maxSize={5}
+                            variant="default"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                setUploadModalOpen(false);
+                                setUploadingForInstallment(null);
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Dialog>
     );
 }

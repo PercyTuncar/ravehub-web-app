@@ -68,12 +68,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = async (email: string, password: string) => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Capture device info
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      const language = navigator.language;
+      const screenSize = typeof window !== 'undefined' ? `${window.screen.width}x${window.screen.height}` : '';
+      
+      // Simple device detection for friendly name
+      let deviceName = 'Unknown Device';
+      if (/mobile/i.test(userAgent)) deviceName = 'Mobile';
+      else if (/tablet/i.test(userAgent)) deviceName = 'Tablet';
+      else deviceName = 'Desktop';
+      
+      // Browser detection
+      let browserName = 'Unknown Browser';
+      if (userAgent.indexOf("Chrome") > -1) browserName = "Chrome";
+      else if (userAgent.indexOf("Safari") > -1) browserName = "Safari";
+      else if (userAgent.indexOf("Firefox") > -1) browserName = "Firefox";
+      
+      const lastLoginDevice = `${deviceName} - ${browserName}`;
+
       await updateDoc(doc(db, 'users', result.user.uid), {
         lastLoginAt: serverTimestamp(),
         lastLoginInfo: {
-          device: navigator.userAgent,
-          browser: navigator.userAgent,
+          device: userAgent,
+          browser: browserName,
+          ip: '', // IP capture usually requires server-side
         },
+        userAgent,
+        platform,
+        language,
+        screenSize,
+        lastLoginDevice,
         failedLoginAttempts: 0,
         updatedAt: serverTimestamp(),
       });
@@ -86,6 +113,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUpWithEmail = async (email: string, password: string, userData: Partial<User>) => {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Capture device info
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      const language = navigator.language;
+      const screenSize = typeof window !== 'undefined' ? `${window.screen.width}x${window.screen.height}` : '';
+      
+      // Simple device detection
+      let deviceName = 'Desktop';
+      if (/mobile/i.test(userAgent)) deviceName = 'Mobile';
+      
+      let browserName = 'Browser';
+      if (userAgent.indexOf("Chrome") > -1) browserName = "Chrome";
+      else if (userAgent.indexOf("Safari") > -1) browserName = "Safari";
+
+      const lastLoginDevice = `${deviceName} - ${browserName}`;
+
       const userDoc = {
         ...userData,
         id: result.user.uid,
@@ -94,6 +138,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emailVerified: false,
         failedLoginAttempts: 0,
         isActive: true,
+        
+        // Device info
+        userAgent,
+        platform,
+        language,
+        screenSize,
+        lastLoginDevice,
+        lastLoginInfo: {
+            device: userAgent,
+            browser: browserName
+        },
+        lastLoginAt: serverTimestamp(), // Set initial login time
+
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -110,6 +167,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
+      
+      // Capture device info
+      const userAgent = navigator.userAgent;
+      const platform = navigator.platform;
+      const language = navigator.language;
+      const screenSize = typeof window !== 'undefined' ? `${window.screen.width}x${window.screen.height}` : '';
+      
+      let deviceName = 'Desktop';
+      if (/mobile/i.test(userAgent)) deviceName = 'Mobile';
+      let browserName = 'Browser';
+      if (userAgent.indexOf("Chrome") > -1) browserName = "Chrome";
+      else if (userAgent.indexOf("Safari") > -1) browserName = "Safari";
+      
+      const lastLoginDevice = `${deviceName} - ${browserName}`;
 
       // Check if user already exists
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
@@ -126,6 +197,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           photoURL: result.user.photoURL || '',
           failedLoginAttempts: 0,
           isActive: true,
+          
+          // Device info
+          userAgent,
+          platform,
+          language,
+          screenSize,
+          lastLoginDevice,
+          lastLoginInfo: {
+            device: userAgent,
+            browser: browserName
+          },
+          lastLoginAt: serverTimestamp(),
+
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         };
@@ -134,6 +218,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Existing user - update login info
         await updateDoc(doc(db, 'users', result.user.uid), {
           lastLoginAt: serverTimestamp(),
+          lastLoginInfo: {
+            device: userAgent,
+            browser: browserName,
+          },
+          userAgent,
+          platform,
+          language,
+          screenSize,
+          lastLoginDevice,
           updatedAt: serverTimestamp(),
         });
       }
