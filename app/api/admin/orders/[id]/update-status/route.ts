@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ordersCollection } from '@/lib/firebase/collections';
+import { ordersCollection } from '@/lib/firebase/admin-collections';
 import { notifyOrderStatusChange } from '@/lib/utils/notifications';
+import { requireAdmin } from '@/lib/auth-admin';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAdmin();
     const { id: orderId } = await params;
     const body = await request.json();
-    const { 
-      status, 
+    const {
+      status,
       paymentStatus,
-      adminNotes, 
+      adminNotes,
       reviewedBy,
-      trackingNumber 
+      trackingNumber
     } = body;
 
     // Validar estados
@@ -116,7 +118,7 @@ function getNotificationBody(status: string, trackingNumber?: string): string {
   const messages: Record<string, string> = {
     payment_approved: 'Tu pago ha sido verificado. Estamos preparando tu pedido.',
     preparing: 'Tu pedido está siendo alistado para envío.',
-    shipped: trackingNumber 
+    shipped: trackingNumber
       ? `Tu pedido ha sido enviado. Código de seguimiento: ${trackingNumber}`
       : 'Tu pedido ha sido enviado.',
     delivered: '¡Tu pedido ha sido entregado! Esperamos que lo disfrutes.',

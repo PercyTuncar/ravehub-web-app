@@ -65,7 +65,7 @@ export function MobileNavbar() {
   ];
 
   // Don't render on admin pages or login/register pages
-  if (pathname.startsWith('/admin') || pathname.startsWith('/login') || pathname.startsWith('/register')) {
+  if (pathname.startsWith('/admin') || pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/go')) {
     return null;
   }
 
@@ -81,11 +81,10 @@ export function MobileNavbar() {
 
       {/* More Menu Popup */}
       <div
-        className={`fixed bottom-20 left-0 right-0 z-50 md:hidden transition-all duration-300 ease-out ${
-          isMoreMenuOpen
+        className={`fixed bottom-20 left-0 right-0 z-50 md:hidden transition-all duration-300 ease-out ${isMoreMenuOpen
             ? 'opacity-100 translate-y-0'
             : 'opacity-0 translate-y-full pointer-events-none'
-        }`}
+          }`}
       >
         <div className="mx-4 mb-4 bg-[#282D31] border border-[#DFE0E0]/20 rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
@@ -109,11 +108,10 @@ export function MobileNavbar() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsMoreMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-                    isActive(item.href)
+                  className={`flex items-center gap-3 px-4 py-3 transition-colors ${isActive(item.href)
                       ? 'bg-[#141618] text-[#FBA905]'
                       : 'text-[#FAFDFF] hover:bg-[#141618] hover:text-[#FBA905]'
-                  }`}
+                    }`}
                 >
                   <Icon className="h-5 w-5" />
                   <span className="text-sm font-medium">{item.label}</span>
@@ -165,11 +163,10 @@ export function MobileNavbar() {
                 {user ? (
                   <Link
                     href="/profile"
-                    className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${
-                      isActive('/profile')
+                    className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${isActive('/profile')
                         ? 'bg-[#FBA905] scale-110 shadow-[#FBA905]/50 ring-2 ring-[#FBA905]/30'
                         : 'bg-[#FBA905] hover:bg-[#F1A000] hover:scale-105 shadow-[#FBA905]/30'
-                    }`}
+                      }`}
                   >
                     {mounted && user?.photoURL ? (
                       <Avatar className="w-14 h-14 border-2 border-[#282D31]">
@@ -185,11 +182,10 @@ export function MobileNavbar() {
                 ) : (
                   <button
                     onClick={handleProfileClick}
-                    className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${
-                      isActive('/profile')
+                    className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${isActive('/profile')
                         ? 'bg-[#FBA905] scale-110 shadow-[#FBA905]/50 ring-2 ring-[#FBA905]/30'
                         : 'bg-[#FBA905] hover:bg-[#F1A000] hover:scale-105 shadow-[#FBA905]/30'
-                    }`}
+                      }`}
                   >
                     <User className="h-7 w-7 text-[#282D31]" />
                   </button>
@@ -200,11 +196,10 @@ export function MobileNavbar() {
               {user ? (
                 <Link
                   href="/profile/tickets"
-                  className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${
-                    isActive('/profile/tickets')
+                  className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isActive('/profile/tickets')
                       ? 'text-[#FBA905]'
                       : 'text-[#53575A] active:text-[#FBA905]'
-                  }`}
+                    }`}
                 >
                   <Ticket className="h-6 w-6" />
                   <span className="text-[10px] font-medium">Tickets</span>
@@ -212,11 +207,10 @@ export function MobileNavbar() {
               ) : (
                 <button
                   onClick={handleTicketsClick}
-                  className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${
-                    isActive('/profile/tickets')
+                  className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isActive('/profile/tickets')
                       ? 'text-[#FBA905]'
                       : 'text-[#53575A] active:text-[#FBA905]'
-                  }`}
+                    }`}
                 >
                   <Ticket className="h-6 w-6" />
                   <span className="text-[10px] font-medium">Tickets</span>
@@ -226,11 +220,10 @@ export function MobileNavbar() {
               {/* More Options */}
               <button
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${
-                  isMoreMenuOpen
+                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isMoreMenuOpen
                     ? 'text-[#FBA905]'
                     : 'text-[#53575A] active:text-[#FBA905]'
-                }`}
+                  }`}
               >
                 <div className={`transition-transform duration-300 ${isMoreMenuOpen ? 'rotate-45' : ''}`}>
                   <Plus className="h-6 w-6" />
@@ -256,11 +249,10 @@ function NavItem({ icon: Icon, label, href, isActive }: NavItemProps) {
   return (
     <Link
       href={href}
-      className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${
-        isActive
+      className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isActive
           ? 'text-[#FBA905]'
           : 'text-[#53575A] active:text-[#FBA905]'
-      }`}
+        }`}
     >
       <Icon className="h-6 w-6" />
       <span className="text-[10px] font-medium">{label}</span>

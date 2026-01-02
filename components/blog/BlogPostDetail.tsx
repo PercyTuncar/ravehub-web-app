@@ -16,12 +16,10 @@ import {
   Eye
 } from 'lucide-react';
 import { BlogPost } from '@/lib/types';
-import { useBlogComments, useBlogReactions } from '@/lib/hooks/useBlog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { BlogComments } from './BlogComments';
-import { BlogReactions } from './BlogReactions';
+// Card, CardContent removed as Sidebar was removed/simplified
+
 
 interface BlogPostDetailProps {
   post: BlogPost;
@@ -29,8 +27,6 @@ interface BlogPostDetailProps {
 
 export function BlogPostDetail({ post }: BlogPostDetailProps) {
   const estimatedReadTime = post.readTime || Math.ceil(post.content.replace(/<[^>]*>/g, '').split(/\s+/).length / 200);
-  const { comments } = useBlogComments(post.id);
-  const { reactions } = useBlogReactions(post.id);
 
   const handleShare = (platform: string) => {
     const url = window.location.href;
@@ -50,159 +46,89 @@ export function BlogPostDetail({ post }: BlogPostDetailProps) {
   };
 
   return (
-    <article className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            {/* Breadcrumb */}
-            <nav className="mb-4">
-              <Link href="/blog" className="text-muted-foreground hover:text-primary">
-                Blog
-              </Link>
-              <span className="mx-2 text-muted-foreground">/</span>
-              <span className="text-foreground">Artículo</span>
-            </nav>
+    <article className="bg-background">
+      {/* Content */}
+      <div className="container mx-auto px-0 sm:px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Breadcrumb - Optional, maybe better in Hero or just here as nav aid */}
+          <nav className="mb-8 flex items-center text-sm text-muted-foreground">
+            <Link href="/blog" className="hover:text-primary transition-colors">
+              Blog
+            </Link>
+            <span className="mx-2">/</span>
+            <span className="text-foreground truncate max-w-[200px] sm:max-w-md">{post.title}</span>
+          </nav>
 
-            {/* Categories */}
-            {post.categories.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {post.categories.map((category) => (
-                  <Link key={category} href={`/blog/categoria/${category}`}>
-                    <Badge variant="secondary" className="hover:bg-primary hover:text-primary-foreground">
-                      {category}
+          {/* Excerpt as Lead Paragraph */}
+          {post.excerpt && (
+            <div className="mb-10 text-xl md:text-2xl font-medium text-gray-200 leading-relaxed border-l-4 border-primary/50 pl-6 italic">
+              {post.excerpt}
+            </div>
+          )}
+
+          {/* Main content */}
+          <div className="space-y-8">
+            <div
+              className="prose prose-lg prose-invert max-w-none 
+                prose-headings:text-white prose-headings:font-bold prose-headings:tracking-tight
+                prose-p:text-gray-300 prose-p:leading-8
+                prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                prose-strong:text-white
+                prose-ul:text-gray-300 prose-ol:text-gray-300
+                prose-blockquote:border-l-primary prose-blockquote:text-gray-400 prose-blockquote:italic
+                prose-img:rounded-xl prose-img:shadow-lg"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+
+            {/* Tags */}
+            {post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-8 border-t border-white/10">
+                {post.tags.map((tag) => (
+                  <Link key={tag} href={`/blog?tag=${tag}`}>
+                    <Badge variant="outline" className="border-white/10 hover:bg-white/5 hover:text-white text-gray-400 transition-colors">
+                      #{tag}
                     </Badge>
                   </Link>
                 ))}
               </div>
             )}
 
-            {/* Title */}
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-              {post.title}
-            </h1>
-
-            {/* Excerpt */}
-            {post.excerpt && (
-              <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
-                {post.excerpt}
-              </p>
-            )}
-
-            {/* Meta information */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-6">
-              <div className="flex items-center gap-1">
-                <User className="h-4 w-4" />
-                <span>{post.author}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>{estimatedReadTime} min de lectura</span>
-              </div>
-              <time dateTime={post.publishDate || post.createdAt}>
-                {format(new Date(post.publishDate || post.createdAt), 'dd MMMM yyyy', { locale: es })}
-              </time>
-            </div>
-
-            {/* Featured Image */}
-            {post.featuredImageUrl && (
-              <div className="relative aspect-video rounded-lg overflow-hidden mb-8">
-                <Image
-                  src={post.featuredImageUrl}
-                  alt={post.imageAltTexts?.[post.featuredImageUrl] || post.title}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Main content */}
-            <div className="lg:col-span-3">
-              <div
-                className="prose prose-lg max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
-
-              {/* Tags */}
-              {post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-8 pt-8 border-t">
-                  {post.tags.map((tag) => (
-                    <Link key={tag} href={`/blog?tag=${tag}`}>
-                      <Badge variant="outline" className="hover:bg-primary hover:text-primary-foreground">
-                        #{tag}
-                      </Badge>
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              {/* Share buttons */}
-              <div className="mt-8 pt-8 border-t">
-                <h3 className="text-lg font-semibold mb-4">Compartir artículo</h3>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleShare('twitter')}
-                    className="flex items-center gap-2"
-                  >
-                    <Twitter className="h-4 w-4" />
-                    Twitter
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleShare('facebook')}
-                    className="flex items-center gap-2"
-                  >
-                    <Facebook className="h-4 w-4" />
-                    Facebook
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleShare('whatsapp')}
-                    className="flex items-center gap-2"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    WhatsApp
-                  </Button>
-                </div>
-              </div>
-
-              {/* Reactions and Comments */}
-              <div className="mt-8 space-y-8">
-                <BlogReactions postId={post.id} reactions={reactions} />
-                <BlogComments postId={post.id} comments={comments} />
+            {/* Share buttons */}
+            <div className="pt-8 border-t border-white/10">
+              <h3 className="text-sm uppercase tracking-wider font-semibold text-gray-500 mb-4">Compartir artículo</h3>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleShare('twitter')}
+                  className="flex items-center gap-2 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white text-gray-400 transition-colors"
+                >
+                  <Twitter className="h-4 w-4" />
+                  Twitter
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleShare('facebook')}
+                  className="flex items-center gap-2 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white text-gray-400 transition-colors"
+                >
+                  <Facebook className="h-4 w-4" />
+                  Facebook
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleShare('whatsapp')}
+                  className="flex items-center gap-2 border-white/10 bg-white/5 hover:bg-white/10 hover:text-white text-gray-400 transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </Button>
               </div>
             </div>
 
-            {/* Sidebar */}
-            <aside className="lg:col-span-1">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <User className="h-8 w-8 text-primary" />
-                    </div>
-                    <h3 className="font-semibold mb-2">{post.author}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Autor del artículo
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Removed Legacy Reactions/Comments */}
 
-              {/* Related posts could go here */}
-            </aside>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections';
 import { Event, EventDj } from '@/lib/types';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
+import { requireAdmin } from '@/lib/auth-admin';
 
 /**
  * Endpoint para sincronizar eventos con DJs
@@ -9,18 +10,19 @@ import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
  * Body: { eventId: string }
  */
 export async function POST(request: NextRequest) {
+  await requireAdmin();
   try {
     const { eventId } = await request.json();
-    
+
     if (!eventId) {
       return NextResponse.json(
         { error: 'eventId is required' },
         { status: 400 }
       );
     }
-    
+
     console.log(`🔄 Sincronizando evento ${eventId} con DJs...`);
-    
+
     // Obtener el evento
     const event = await eventsCollection.get(eventId) as Event | null;
     if (!event) {
@@ -29,19 +31,19 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-    
+
     console.log(`✅ Evento encontrado: ${event.name}`);
     console.log(`📸 mainImageUrl: ${event.mainImageUrl}`);
     console.log(`🔗 slug: ${event.slug}`);
-    
+
     // Sincronizar con DJs
     await syncEventWithDjs(eventId);
-    
+
     // Verificar que se actualizó correctamente
     const lineupDjIds = event.artistLineup
       .map(artist => artist.eventDjId)
       .filter(id => id) as string[];
-    
+
     const updatedDjs = [];
     for (const djId of lineupDjIds) {
       const dj = await eventDjsCollection.get(djId) as EventDj | null;
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-    
+
     return NextResponse.json({
       success: true,
       message: `Evento ${event.name} sincronizado exitosamente`,
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
       },
       updatedDjs
     });
-    
+
   } catch (error) {
     console.error('❌ Error sincronizando evento:', error);
     return NextResponse.json(

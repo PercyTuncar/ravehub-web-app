@@ -47,7 +47,7 @@ export interface User {
   lastLoginAt?: Date;
   lastLoginDevice?: string;
   isActive: boolean;
-  
+
   // Device/Browser info
   language?: string;
   platform?: string;
@@ -249,7 +249,7 @@ export interface BlogPost {
   views?: number;
   publishDate?: string;
   updatedDate?: string;
-  createdAt: string;
+  createdAt: string | Date | { seconds: number; nanoseconds: number };
 }
 
 export interface BlogCategory {
@@ -302,7 +302,12 @@ export interface BlogComment {
   userName: string;
   email?: string;
   userImageUrl?: string;
-  createdAt: Date;
+  createdAt: Date | { seconds: number; nanoseconds: number };
+  // New fields for nested comments and moderation
+  parentId?: string | null; // For nested comments
+  replyCount?: number;
+  isPinned?: boolean;
+  authorRole?: 'admin' | 'moderator' | 'user'; // To display badges
 }
 
 export interface BlogRating {
@@ -793,13 +798,25 @@ export interface Notification {
   message?: string;
   imageUrl?: string;
   redirectUrl?: string;
-  status: 'draft' | 'scheduled' | 'sent';
-  scheduledFor?: Date | null;
-  sentAt?: Date;
-  sentToCount?: number;
+  type: 'info' | 'success' | 'warning' | 'error';
+  isRead: boolean;
   createdAt: Date;
-  createdBy: string;
+  userId: string;
 }
+
+// Bio Link Analytics
+export interface BioLinkEvent {
+  id: string;
+  type: 'page_view' | 'event_click' | 'news_click' | 'drawer_open' | 'whatsapp_click' | 'social_click';
+  targetId?: string; // eventId, postId, groupId, or social platform name
+  targetName?: string; // Human readable name for easy aggregation
+  timestamp: Date | { seconds: number; nanoseconds: number };
+  userAgent: string;
+  ip?: string;
+  country?: string;
+}
+
+
 
 // Newsletter Subscriber types
 export interface NewsletterSubscriber {

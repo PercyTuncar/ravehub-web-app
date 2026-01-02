@@ -88,7 +88,7 @@ export default function NewBlogPostPage() {
       const postId = await blogCollection.create({
         ...postData,
         status: 'draft',
-      });
+      } as any);
       router.push(`/admin/blog/${postId}`);
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -104,11 +104,11 @@ export default function NewBlogPostPage() {
         ...postData,
         status: 'published',
         publishDate: new Date().toISOString(),
-      });
-      
+      } as any);
+
       // Revalidate sitemap when post is published
       await revalidateSitemap();
-      
+
       router.push(`/admin/blog/${postId}`);
     } catch (error) {
       console.error('Error publishing post:', error);
@@ -356,17 +356,15 @@ export default function NewBlogPostPage() {
           <div className="flex items-center justify-between">
             {STEPS.map((step, index) => (
               <div key={step.id} className="flex items-center">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                  index <= currentStep
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                }`}>
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${index <= currentStep
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+                  }`}>
                   {index + 1}
                 </div>
                 {index < STEPS.length - 1 && (
-                  <div className={`w-12 h-0.5 mx-2 ${
-                    index < currentStep ? 'bg-primary' : 'bg-muted'
-                  }`} />
+                  <div className={`w-12 h-0.5 mx-2 ${index < currentStep ? 'bg-primary' : 'bg-muted'
+                    }`} />
                 )}
               </div>
             ))}

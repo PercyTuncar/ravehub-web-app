@@ -1,23 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { eventDjsCollection } from '@/lib/firebase/collections';
+import { requireAdmin } from '@/lib/auth-admin';
 
 /**
  * Endpoint temporal para sincronizar eventsSummary de DJs
  * POST /api/admin/update-dj-events
  */
 export async function POST(request: NextRequest) {
+  await requireAdmin();
   try {
     const { djId, eventSummary } = await request.json();
-    
+
     if (!djId || !eventSummary) {
       return NextResponse.json(
         { error: 'djId and eventSummary are required' },
         { status: 400 }
       );
     }
-    
+
     console.log(`🔄 Updating DJ ${djId} with event: ${eventSummary.eventName}`);
-    
+
     // Obtener DJ actual
     const dj = await eventDjsCollection.get(djId);
     if (!dj) {
@@ -26,14 +28,14 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-    
+
     console.log(`✅ Found DJ: ${dj.name}`);
     console.log(`📊 Current eventsSummary length: ${(dj.eventsSummary || []).length}`);
-    
+
     // Actualizar eventsSummary
     const currentEventsSummary = dj.eventsSummary || [];
     const existingIndex = currentEventsSummary.findIndex((summary: any) => summary.eventId === eventSummary.eventId);
-    
+
     let updatedEventsSummary;
     if (existingIndex >= 0) {
       // Actualizar existente
@@ -45,21 +47,21 @@ export async function POST(request: NextRequest) {
       updatedEventsSummary = [...currentEventsSummary, eventSummary];
       console.log('➕ Adding new event to summary');
     }
-    
+
     // Ordenar por fecha
     updatedEventsSummary.sort((a, b) => {
       return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
     });
-    
+
     // Actualizar documento del DJ
     await eventDjsCollection.update(djId, {
       eventsSummary: updatedEventsSummary,
       updatedAt: new Date(),
     });
-    
+
     console.log('🎉 Sync completed successfully!');
     console.log(`📊 Total events in summary: ${updatedEventsSummary.length}`);
-    
+
     // Mostrar summary actualizado
     console.log('📋 Updated eventsSummary:');
     updatedEventsSummary.forEach((event, index) => {
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
       const dateStr = new Date(event.startDate).toLocaleDateString('es-CL');
       console.log(`   ${index + 1}. ${event.eventName} (${status}) - ${dateStr}`);
     });
-    
+
     return NextResponse.json({
       success: true,
       message: 'DJ eventsSummary updated successfully',
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
       eventsSummary: updatedEventsSummary,
       totalEvents: updatedEventsSummary.length
     });
-    
+
   } catch (error) {
     console.error('❌ Error updating DJ eventsSummary:', error);
     return NextResponse.json(
@@ -89,6 +91,7 @@ export async function POST(request: NextRequest) {
  * GET - Para verificar el estado del endpoint
  */
 export async function GET() {
+  await requireAdmin();
   return NextResponse.json({
     message: 'DJ Events Sync Endpoint',
     method: 'POST',

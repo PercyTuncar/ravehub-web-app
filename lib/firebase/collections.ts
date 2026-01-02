@@ -19,7 +19,7 @@ import {
 
 // Generic collection operations
 export class FirestoreCollection<T extends DocumentData> {
-  constructor(private collectionName: string) {}
+  constructor(private collectionName: string) { }
 
   private serializeTimestamps(data: DocumentData): DocumentData {
     const serialized: DocumentData = {};
@@ -40,8 +40,8 @@ export class FirestoreCollection<T extends DocumentData> {
           item && typeof item === 'object' && 'toDate' in item
             ? { seconds: item.seconds, nanoseconds: item.nanoseconds }
             : item && typeof item === 'object' && !Array.isArray(item)
-            ? this.serializeTimestamps(item)
-            : item
+              ? this.serializeTimestamps(item)
+              : item
         );
       } else {
         serialized[key] = value;
@@ -183,12 +183,12 @@ export class FirestoreCollection<T extends DocumentData> {
 }
 
 // Blog collections
-export const blogCollection = new FirestoreCollection('blog');
-export const blogCategoriesCollection = new FirestoreCollection('blogCategories');
-export const blogTagsCollection = new FirestoreCollection('blogTags');
-export const blogCommentsCollection = new FirestoreCollection('blogComments');
-export const blogRatingsCollection = new FirestoreCollection('blogRatings');
-export const blogReactionsCollection = new FirestoreCollection('blogReactions');
+export const blogCollection = new FirestoreCollection<import('@/lib/types').BlogPost>('blog');
+export const blogCategoriesCollection = new FirestoreCollection<import('@/lib/types').BlogCategory>('blogCategories');
+export const blogTagsCollection = new FirestoreCollection<import('@/lib/types').BlogTag>('blogTags');
+export const blogCommentsCollection = new FirestoreCollection<import('@/lib/types').BlogComment>('blogComments');
+export const blogRatingsCollection = new FirestoreCollection<import('@/lib/types').BlogRating>('blogRatings');
+export const blogReactionsCollection = new FirestoreCollection<import('@/lib/types').BlogReaction>('blogReactions');
 export const commentReactionsCollection = new FirestoreCollection('commentReactions');
 
 // Other collections
@@ -213,3 +213,4 @@ export const slugRedirectsCollection = new FirestoreCollection('slugRedirects');
 export const visitorProfilesCollection = new FirestoreCollection('visitorProfiles');
 export const djSuggestionsCollection = new FirestoreCollection('djSuggestions');
 export const djsCollection = new FirestoreCollection('djs');
+export const bioLinkEventsCollection = new FirestoreCollection('bio_link_events');

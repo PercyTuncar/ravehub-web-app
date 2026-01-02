@@ -38,62 +38,74 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
         )}
 
         <div className="p-6">
-        {/* Categories */}
-        {post.categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {post.categories.slice(0, 2).map((category, index) => {
-              const categoryName = typeof category === 'string' ? category : (category as any).name;
-              const categoryKey = typeof category === 'string' ? category : (category as any).id;
-              return (
-                <Badge key={categoryKey || index} variant="secondary" className="text-xs">
-                  {categoryName}
-                </Badge>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Title */}
-        <h2 className="text-xl font-bold mb-3 line-clamp-2 hover:text-primary transition-colors">
-          {post.title}
-        </h2>
-
-        {/* Excerpt */}
-        <p className="text-muted-foreground mb-4 line-clamp-3">
-          {post.excerpt}
-        </p>
-
-        {/* Meta information */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <User className="h-4 w-4" />
-              <span>{post.author}</span>
+          {/* Categories */}
+          {post.categories.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {post.categories.slice(0, 2).map((category, index) => {
+                const categoryName = typeof category === 'string' ? category : (category as any).name;
+                const categoryKey = typeof category === 'string' ? category : (category as any).id;
+                return (
+                  <Badge key={categoryKey || index} variant="secondary" className="text-xs">
+                    {categoryName}
+                  </Badge>
+                );
+              })}
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>{estimatedReadTime} min</span>
-            </div>
-          </div>
-          <time dateTime={post.publishDate || post.createdAt}>
-            {format(new Date(post.publishDate || post.createdAt), 'dd MMM yyyy', { locale: es })}
-          </time>
-        </div>
+          )}
 
-        {/* Tags */}
-        {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-4">
-            {post.tags.slice(0, 3).map((tag, index) => {
-              const tagName = typeof tag === 'string' ? tag : (tag as any).name;
-              const tagKey = typeof tag === 'string' ? tag : (tag as any).id;
-              return (
-                <Badge key={tagKey || index} variant="outline" className="text-xs">
-                  #{tagName}
-                </Badge>
-              );
-            })}
+          {/* Title */}
+          <h2 className="text-xl font-bold mb-3 line-clamp-2 hover:text-primary transition-colors">
+            {post.title}
+          </h2>
+
+          {/* Excerpt */}
+          <p className="text-muted-foreground mb-4 line-clamp-3">
+            {post.excerpt}
+          </p>
+
+          {/* Meta information */}
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <User className="h-4 w-4" />
+                <span>{post.author}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>{estimatedReadTime} min</span>
+              </div>
+            </div>
+            <time dateTime={(() => {
+              const date = post.publishDate || post.createdAt;
+              const validDate = date && typeof date === 'object' && 'seconds' in date
+                ? new Date((date as any).seconds * 1000)
+                : new Date(date as any);
+              return validDate.toISOString();
+            })()}>
+              {(() => {
+                const date = post.publishDate || post.createdAt;
+                const validDate = date && typeof date === 'object' && 'seconds' in date
+                  ? new Date((date as any).seconds * 1000)
+                  : new Date(date as any);
+                return format(validDate, 'dd MMM yyyy', { locale: es });
+              })()}
+            </time>
           </div>
-        )}
+
+          {/* Tags */}
+          {post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-4">
+              {post.tags.slice(0, 3).map((tag, index) => {
+                const tagName = typeof tag === 'string' ? tag : (tag as any).name;
+                const tagKey = typeof tag === 'string' ? tag : (tag as any).id;
+                return (
+                  <Badge key={tagKey || index} variant="outline" className="text-xs">
+                    #{tagName}
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
         </div>
       </article>
     </Link>

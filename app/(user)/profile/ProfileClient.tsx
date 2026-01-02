@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getUserProfileData } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,40 +14,60 @@ import { useRouter } from 'next/navigation';
 export default function ProfileClient() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<{
+    tickets: any[];
+    orders: any[];
+    stats: {
+      totalTickets: number;
+      totalOrders: number;
+      favoriteEvents: number;
+    };
+  }>({
+    tickets: [],
+    orders: [],
+    stats: {
+      totalTickets: 0,
+      totalOrders: 0,
+      favoriteEvents: 0,
+    }
+  });
+
   const router = useRouter();
 
-  // Mock data - unchanged logic
+  useEffect(() => {
+    async function fetchData() {
+      if (user?.id) {
+        try {
+          const result = await getUserProfileData(user.id);
+          if (result.success && result.data) {
+            setData(result.data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch profile data', error);
+        } finally {
+          setLoading(false);
+        }
+      } else if (!user) {
+        setLoading(false); // Should redirect anyway
+      }
+    }
+    fetchData();
+  }, [user]);
+
   const userStats = {
-    totalTickets: 5,
-    totalOrders: 2,
-    favoriteEvents: 8,
-    joinedDate: '2024-01-15',
+    totalTickets: data.stats.totalTickets,
+    totalOrders: data.stats.totalOrders,
+    favoriteEvents: data.stats.favoriteEvents,
+    joinedDate: user && 'createdAt' in user ?
+      (typeof user.createdAt === 'object' && 'seconds' in (user.createdAt as any)
+        ? new Date((user.createdAt as any).seconds * 1000).toISOString()
+        : String(user.createdAt))
+      : new Date().toISOString(),
   };
 
-  const recentTickets = [
-    {
-      id: '1',
-      eventName: 'Ultra Chile 2026',
-      eventDate: '2026-03-14',
-      status: 'approved',
-      ticketsCount: 2,
-      totalAmount: 110000,
-      currency: 'CLP',
-      image: '/images/events/ultra.jpg' // Placeholder
-    },
-  ];
-
-  const recentOrders = [
-    {
-      id: '1',
-      orderNumber: 'ORD-001',
-      status: 'delivered',
-      totalAmount: 45000,
-      currency: 'CLP',
-      itemsCount: 2,
-      orderDate: '2024-12-01',
-    },
-  ];
+  const recentTickets = data.tickets;
+  const recentOrders = data.orders;
 
   const handleSignOut = async () => {
     try {
@@ -259,7 +280,7 @@ export default function ProfileClient() {
                             </div>
                             <div>
                               <h4 className="text-white font-medium group-hover:text-primary transition-colors">{ticket.eventName}</h4>
-                              <p className="text-white/40 text-sm">{new Date(ticket.eventDate).toLocaleDateString('es-CL')} • {ticket.ticketsCount} tickets</p>
+                              <p className="text-white/40 text-sm">{new Date(ticket.eventDate).toLocaleDateString('es-CL')} • {ticket.ticketItems ? ticket.ticketItems.reduce((acc: any, item: any) => acc + item.quantity, 0) : 0} tickets</p>
                             </div>
                           </div>
                           <Badge className="bg-green-500/20 text-green-400 border-green-500/20 self-start sm:self-center">Aprobado</Badge>
@@ -286,7 +307,7 @@ export default function ProfileClient() {
                               <div className="flex items-center gap-3 text-sm text-white/60 mt-1">
                                 <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {new Date(ticket.eventDate).toLocaleDateString('es-CL')}</span>
                                 <span className="w-1 h-1 bg-white/20 rounded-full" />
-                                <span>{ticket.ticketsCount} tickets</span>
+                                <span>{ticket.ticketItems ? ticket.ticketItems.reduce((acc: any, item: any) => acc + item.quantity, 0) : 0} tickets</span>
                               </div>
                             </div>
                           </div>
@@ -295,9 +316,11 @@ export default function ProfileClient() {
                               <p className="text-white/40 text-xs uppercase tracking-wider">Total</p>
                               <p className="text-white font-bold">${ticket.totalAmount.toLocaleString()} {ticket.currency}</p>
                             </div>
-                            <Button className="bg-white/5 hover:bg-white/10 text-white border border-white/10">
-                              Ver detalles
-                            </Button>
+                            <Link href={`/profile/tickets/${ticket.id}`} className="w-full">
+                              <Button className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10">
+                                Ver detalles
+                              </Button>
+                            </Link>
                           </div>
                         </div>
                       </div>
@@ -319,11 +342,11 @@ export default function ProfileClient() {
                             </div>
                             <div>
                               <div className="flex items-center gap-2 mb-1">
-                                <h4 className="text-white font-semibold">Orden #{order.orderNumber}</h4>
-                                <Badge variant="outline" className="border-green-500/30 text-green-400 text-[10px] h-5">Entregado</Badge>
+                                <h4 className="text-white font-semibold">Orden #{order.id.slice(0, 8).toUpperCase()}</h4>
+                                <Badge variant="outline" className="border-green-500/30 text-green-400 text-[10px] h-5">{order.status}</Badge>
                               </div>
                               <p className="text-white/40 text-sm">
-                                {new Date(order.orderDate).toLocaleDateString('es-CL')} • {order.itemsCount} productos
+                                {order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-CL') : 'Fecha desconocida'} • {order.orderItems ? order.orderItems.length : 0} productos
                               </p>
                             </div>
                           </div>

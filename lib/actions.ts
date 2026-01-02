@@ -4,16 +4,19 @@
 
 'use server';
 
-import { blogCollection, eventsCollection, productsCollection, blogCommentsCollection, ticketTransactionsCollection, paymentInstallmentsCollection, usersCollection } from '@/lib/firebase/collections';
+import { blogCollection, eventsCollection, productsCollection, blogCommentsCollection, ticketTransactionsCollection, paymentInstallmentsCollection, usersCollection, ordersCollection } from '@/lib/firebase/admin-collections';
 import { createNotification, InstallmentNotifications } from '@/lib/utils/notifications';
 import { revalidateBlogPost, revalidateBlogListing, revalidateEvent, revalidateEventsListing, revalidateProduct, revalidateShopListing, revalidateCommentApproval, revalidateProductStock, revalidateEventCapacity } from '@/lib/revalidate';
 import { BlogPost, Event, Product, BlogComment } from '@/lib/types';
+import { requireAdmin, requireAuth } from '@/lib/auth-admin';
+
 
 /**
  * Server action to update blog post status with revalidation
  */
 export async function updateBlogPostStatus(postId: string, status: 'draft' | 'published') {
   try {
+    await requireAdmin();
     await blogCollection.update(postId, {
       status,
       updatedAt: new Date().toISOString(),
@@ -36,6 +39,7 @@ export async function updateBlogPostStatus(postId: string, status: 'draft' | 'pu
  */
 export async function updateEventStatus(eventId: string, status: 'draft' | 'published') {
   try {
+    await requireAdmin();
     await eventsCollection.update(eventId, {
       eventStatus: status,
       updatedAt: new Date().toISOString(),
@@ -58,6 +62,7 @@ export async function updateEventStatus(eventId: string, status: 'draft' | 'publ
  */
 export async function updateProductStatus(productId: string, isActive: boolean) {
   try {
+    await requireAdmin();
     await productsCollection.update(productId, {
       isActive,
       updatedAt: new Date().toISOString()
@@ -82,6 +87,7 @@ export async function updateProductStatus(productId: string, isActive: boolean) 
  */
 export async function updateProductStock(productId: string, stock: number, price?: number) {
   try {
+    await requireAdmin();
     const updateData: any = {
       stock,
       updatedAt: new Date().toISOString()
@@ -111,6 +117,7 @@ export async function updateProductStock(productId: string, stock: number, price
  */
 export async function updateEventCapacity(eventId: string, capacity: number) {
   try {
+    await requireAdmin();
     await eventsCollection.update(eventId, {
       capacity,
       updatedAt: new Date().toISOString()
@@ -134,6 +141,7 @@ export async function updateEventCapacity(eventId: string, capacity: number) {
  */
 export async function updateCommentStatus(commentId: string, status: 'approved' | 'rejected' | 'pending') {
   try {
+    await requireAdmin();
     await blogCommentsCollection.update(commentId, {
       status,
       updatedAt: new Date().toISOString(),
@@ -158,6 +166,7 @@ export async function updateCommentStatus(commentId: string, status: 'approved' 
  */
 export async function createBlogPost(postData: Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
+    await requireAdmin();
     const postId = await blogCollection.create(postData);
 
     // Revalidate listing page
@@ -175,6 +184,7 @@ export async function createBlogPost(postData: Omit<BlogPost, 'id' | 'createdAt'
  */
 export async function createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
+    await requireAdmin();
     const eventId = await eventsCollection.create(eventData);
 
     // Revalidate listing page
@@ -192,6 +202,7 @@ export async function createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'u
  */
 export async function createProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
+    await requireAdmin();
     const productId = await productsCollection.create(productData);
 
     // Revalidate listing page
@@ -209,6 +220,7 @@ export async function createProduct(productData: Omit<Product, 'id' | 'createdAt
  */
 export async function uploadTicketProof(ticketId: string, proofUrl: string) {
   try {
+    await requireAuth();
     await ticketTransactionsCollection.update(ticketId, {
       paymentProofUrl: proofUrl,
       paymentStatus: 'pending', // Reset to pending for review
@@ -226,6 +238,7 @@ export async function uploadTicketProof(ticketId: string, proofUrl: string) {
  */
 export async function updateTicketPaymentStatus(ticketId: string, status: 'approved' | 'rejected' | 'pending', rejectionReason?: string) {
   try {
+    await requireAdmin();
     const updateData: any = {
       paymentStatus: status,
       updatedAt: new Date().toISOString()
@@ -266,6 +279,7 @@ export async function createManualTicketTransaction(data: {
   installmentProofs?: Record<number, string>; // { -1: "url1", 0: "url2", ... }
 }): Promise<{ success: boolean; error?: string; ticketId?: string }> {
   try {
+    await requireAdmin();
     // 1. Create Ticket Transaction
     const ticketData: any = {
       userId: data.userId,
@@ -372,6 +386,7 @@ export async function createManualTicketTransaction(data: {
  */
 export async function deleteTicketTransaction(ticketId: string): Promise<{ success: boolean; error?: string }> {
   'use server';
+  await requireAdmin();
 
   try {
     // Delete all payment installments associated with this ticket
@@ -403,6 +418,7 @@ export async function getTicketInstallments(transactionId: string): Promise<{
   error?: string;
 }> {
   'use server';
+  await requireAuth();
 
   try {
     const installments = await paymentInstallmentsCollection.query([
@@ -423,6 +439,7 @@ export async function getTicketInstallments(transactionId: string): Promise<{
 
 export async function getPendingInstallments() {
   'use server';
+  await requireAdmin();
   try {
     // Fetch installments that are explicitly 'pending-approval' or have a userUploadedProofUrl but are not paid
     // Ideally, we search by 'status' if we used a dedicated status. 
@@ -474,6 +491,7 @@ export async function uploadUserInstallmentProof(
   downloadURL: string
 ): Promise<{ success: boolean; error?: string }> {
   'use server';
+  await requireAuth();
 
   try {
     const installment = await paymentInstallmentsCollection.get(installmentId);
@@ -504,6 +522,7 @@ export async function approveInstallmentProof(
   installmentId: string
 ): Promise<{ success: boolean; error?: string }> {
   'use server';
+  await requireAdmin();
 
   try {
     const installment = await paymentInstallmentsCollection.get(installmentId);
@@ -567,6 +586,7 @@ export async function rejectInstallmentProof(
   reason: string = 'Comprobante inválido'
 ): Promise<{ success: boolean; error?: string }> {
   'use server';
+  await requireAdmin();
 
   try {
     const installment = await paymentInstallmentsCollection.get(installmentId);
@@ -594,7 +614,90 @@ export async function rejectInstallmentProof(
 
     return { success: true };
   } catch (error: any) {
-    console.error('Error rejecting installment:', error);
     return { success: false, error: error.message || 'Error al rechazar la cuota' };
+  }
+}
+
+// --- User Profile Data ---
+
+export async function getUserProfileData(userId: string) {
+  'use server';
+
+  // Verify auth
+  const currentUser = await requireAuth();
+  // Ensure user is requesting their own data or is admin
+  if (currentUser.id !== userId && currentUser.role !== 'admin') {
+    throw new Error('Unauthorized');
+  }
+
+  try {
+    const [tickets, orders] = await Promise.all([
+      ticketTransactionsCollection.query([
+        { field: 'userId', operator: '==', value: userId }
+      ], 'createdAt', 'desc'),
+      ordersCollection.query([
+        { field: 'userId', operator: '==', value: userId }
+      ], 'createdAt', 'desc')
+    ]);
+
+    // Enrich tickets with event data (Name, Date, Image)
+    const enrichedTickets = await Promise.all(tickets.map(async (ticket: any) => {
+      let eventName = 'Evento desconocido';
+      let eventDate = '';
+      let eventImage = '/images/placeholder-event.jpg';
+      let currency = ticket.currency || 'CLP';
+
+      try {
+        if (ticket.eventId) {
+          const event = await eventsCollection.get(ticket.eventId);
+          if (event) {
+            eventName = event.name;
+            eventDate = event.startDate;
+            eventImage = event.mainImageUrl || eventImage;
+            // Prefer event currency if ticket doesn't specify (though ticket usually should)
+            if (!ticket.currency && event.currency) {
+              currency = event.currency;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`Error fetching event ${ticket.eventId} for ticket ${ticket.id}`, err);
+      }
+
+      return {
+        ...ticket,
+        eventName,
+        eventDate,
+        eventImage,
+        currency
+        // ticketsCount: ticket.ticketItems.reduce((acc: number, item: any) => acc + item.quantity, 0) // Already have this logic in frontend or can do here
+      };
+    }));
+
+    // Calculate Stats
+    const totalTickets = enrichedTickets.length; // Or sum of quantities? UI suggests "Total Tickets" count usually means transactions or individual tix. 
+    // Let's count actual tickets:
+    const totalTicketsCount = enrichedTickets.reduce((acc, t) => acc + (t.ticketItems?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0), 0);
+
+    const totalOrders = orders.length;
+    // Favorites - placeholder logic as we don't have a favorites collection yet or fields on user
+    const favoriteEvents = 0;
+
+    return {
+      success: true,
+      data: {
+        tickets: enrichedTickets,
+        orders,
+        stats: {
+          totalTickets: totalTicketsCount,
+          totalOrders,
+          favoriteEvents
+        }
+      }
+    };
+
+  } catch (error: any) {
+    console.error('Error fetching user profile data:', error);
+    return { success: false, error: 'Error al cargar datos del perfil' };
   }
 }

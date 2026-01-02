@@ -9,7 +9,8 @@ export default function PageWrapper({ children }: { children: React.ReactNode })
     // We want to avoid removing padding for deeper routes that handle their own padding
     const shouldRemovePadding =
         /^\/eventos\/[^/]+(\/(?:entradas|comprar))?$/.test(pathname) ||
-        pathname.startsWith('/profile');
+        pathname.startsWith('/profile') ||
+        pathname.startsWith('/go');
 
     return (
         <div

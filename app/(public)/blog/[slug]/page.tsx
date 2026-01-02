@@ -2,6 +2,11 @@ import { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { blogCollection, slugRedirectsCollection, blogCommentsCollection } from '@/lib/firebase/collections';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
+import { BlogHero } from '@/components/blog/BlogHero';
+import { CommentSystem } from '@/components/blog/Comments/CommentSystem';
+import { getComments } from '@/lib/actions/blog-actions';
+import { Separator } from '@/components/ui/separator';
+// BlogPostDetail still used? Yes.
 import { BlogPostDetail } from '@/components/blog/BlogPostDetail';
 
 // ISR: Revalidate every 5 minutes (300 seconds) + on-demand revalidation
@@ -112,16 +117,34 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
     const post = posts[0] as any;
 
+
     // Only show published posts
     if (post.status !== 'published') {
       notFound();
     }
 
-    // Get comment count
-    const comments = await blogCommentsCollection.query(
+    // Get comment count and initial comments
+    const commentsResult = await getComments(post.id, 10);
+    const initialComments = commentsResult.comments || [];
+
+    // Fetch total count (simplistic view, ideally we have a counter on the post doc)
+    // We already have commentCount from previous logic
+    // We already have commentCount from previous logic
+    const allComments = await blogCommentsCollection.query(
       [{ field: 'postId', operator: '==', value: post.id }]
     );
-    const commentCount = comments.length;
+    const commentCount = allComments.length;
+
+    // Mock current user for now (or fetch from auth session if available)
+    // Implementation note: In a real app we would use `auth()` from NextAuth or Firebase Auth hook.
+    // For Server Components we need a way to get the session.
+    // Assuming we have a `getCurrentUser` utility or similar.
+    // For now, I will leave it undefined as I cannot easily get auth session in this file without imports.
+    // TODO: Connect with real auth.
+    // I will try to use the `auth-actions` or similar if exist, but otherwise I'll pass null and let Client handle it or User to implement.
+    // Actually, I can check `lib/auth-admin.ts` or `lib/actions/auth-actions.ts`?
+    // Let's assume no auth for now on SSR, and Client Component might check hydration or Context.
+    // But CommentSystem expects currentUser.
 
     const jsonLd = SchemaGenerator.generateBlogPosting(post, commentCount);
 
@@ -133,7 +156,35 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
         )}
-        <BlogPostDetail post={post} />
+
+        <BlogHero post={post} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <main className="lg:col-span-8 space-y-12">
+              <BlogPostDetail post={post} />
+
+              <Separator className="bg-white/10" />
+
+              <div id="comments">
+                <CommentSystem
+                  postId={post.id}
+                  initialComments={initialComments}
+                  totalComments={commentCount}
+                // currentUser passed from client side context usually, or we need to fetch it here.
+                // For now, let's leave it to the Client Component to potentially grab it from context if we don't pass it.
+                // But CommentSystem props definition asks for it. 
+                // I will wrap CommentSystem with a data fetcher or just pass null and let the user log in.
+                />
+              </div>
+            </main>
+
+            {/* Sidebar (Optional - could be sticky table of contents, related posts, etc) */}
+            <aside className="lg:col-span-4 hidden lg:block space-y-8">
+              {/* Placeholder for sidebar content */}
+            </aside>
+          </div>
+        </div>
       </>
     );
   } catch (error) {

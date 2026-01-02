@@ -21,6 +21,7 @@ export function MainNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
@@ -47,14 +48,16 @@ export function MainNavbar() {
     }
   };
 
+  // Hide on /go page (Bio Link)
+  if (pathname.startsWith('/go')) return null;
+
   // Don't show on mobile (only desktop)
   return (
     <nav
-      className={`hidden md:flex fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-[#282D31]/98 backdrop-blur-xl border-b border-[#DFE0E0]/30 shadow-lg shadow-[#141618]/20'
-          : 'bg-[rgb(40_45_49/0.6)] backdrop-blur-lg border-b border-[#DFE0E0]/20'
-      }`}
+      className={`hidden md:flex fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+        ? 'bg-[#282D31]/98 backdrop-blur-xl border-b border-[#DFE0E0]/30 shadow-lg shadow-[#141618]/20'
+        : 'bg-[rgb(40_45_49/0.6)] backdrop-blur-lg border-b border-[#DFE0E0]/20'
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex h-20 items-center justify-between">
@@ -89,9 +92,8 @@ export function MainNavbar() {
           <div className="flex items-center space-x-8">
             <Link
               href="/"
-              className={`relative text-sm font-medium transition-all duration-300 group ${
-                isActive('/') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
-              }`}
+              className={`relative text-sm font-medium transition-all duration-300 group ${isActive('/') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
+                }`}
             >
               Inicio
               {isActive('/') && (
@@ -102,9 +104,8 @@ export function MainNavbar() {
 
             <Link
               href="/eventos"
-              className={`relative text-sm font-medium transition-all duration-300 group ${
-                pathname.startsWith('/eventos') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
-              }`}
+              className={`relative text-sm font-medium transition-all duration-300 group ${pathname.startsWith('/eventos') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
+                }`}
             >
               Eventos
               {pathname.startsWith('/eventos') && (
@@ -115,15 +116,13 @@ export function MainNavbar() {
 
             <div className="relative group">
               <button
-                className={`relative text-sm font-medium transition-all duration-300 flex items-center group ${
-                  pathname.startsWith('/blog') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
-                }`}
+                className={`relative text-sm font-medium transition-all duration-300 flex items-center group ${pathname.startsWith('/blog') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
+                  }`}
               >
                 Blog
                 <svg
-                  className={`ml-1 h-4 w-4 transition-transform duration-300 ${
-                    pathname.startsWith('/blog') ? 'rotate-180' : 'group-hover:translate-y-0.5'
-                  }`}
+                  className={`ml-1 h-4 w-4 transition-transform duration-300 ${pathname.startsWith('/blog') ? 'rotate-180' : 'group-hover:translate-y-0.5'
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -166,9 +165,8 @@ export function MainNavbar() {
 
             <Link
               href="/djs"
-              className={`relative text-sm font-medium transition-all duration-300 group ${
-                pathname.startsWith('/djs') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
-              }`}
+              className={`relative text-sm font-medium transition-all duration-300 group ${pathname.startsWith('/djs') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
+                }`}
             >
               DJs
               {pathname.startsWith('/djs') && (
@@ -179,9 +177,8 @@ export function MainNavbar() {
 
             <Link
               href="/tienda"
-              className={`relative text-sm font-medium transition-all duration-300 group flex items-center gap-2 ${
-                pathname.startsWith('/tienda') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
-              }`}
+              className={`relative text-sm font-medium transition-all duration-300 group flex items-center gap-2 ${pathname.startsWith('/tienda') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
+                }`}
             >
               Tienda
               {pathname.startsWith('/tienda') && (
@@ -195,15 +192,15 @@ export function MainNavbar() {
           <div className="flex items-center space-x-3">
             {/* Currency Selector */}
             <div className="hidden lg:block">
-            <CurrencySelector />
+              <CurrencySelector />
             </div>
-            
+
             {/* Cart Dropdown */}
             <CartDropdown />
-            
+
             {/* Notification Bell - Only for authenticated users (client-only) */}
             {mounted && user && <NotificationBell />}
-            
+
             {/* Auth buttons - Always render links for SEO, but show user info only after mount */}
             {!mounted ? (
               // SSR: Always show login/register links for SEO
@@ -281,12 +278,12 @@ export function MainNavbar() {
                     {(user.role === 'admin' || user.role === 'moderator') && (
                       <>
                         <div className="border-t border-[#DFE0E0]/20 my-1" />
-                      <Link
-                        href="/admin"
+                        <Link
+                          href="/admin"
                           className="block px-4 py-2.5 text-sm text-[#007BDF] hover:bg-[#282D31]/50 hover:text-[#006DC6] transition-all duration-200"
-                      >
-                        Panel Admin
-                      </Link>
+                        >
+                          Panel Admin
+                        </Link>
                       </>
                     )}
                     <div className="border-t border-[#DFE0E0]/20 my-1" />

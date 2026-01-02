@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import AdminDashboardClient from '../AdminDashboardClient';
+import AnalyticsClient from './AnalyticsClient';
 
 export const metadata: Metadata = {
   title: 'Analíticas | Ravehub Admin',
@@ -7,7 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AnalyticsPage() {
-  // For now, we reuse the dashboard client as it contains the main analytics.
-  // In the future, this can be expanded with more specific reports (sales by event, user growth, etc.)
-  return <AdminDashboardClient />;
+  return <AnalyticsClient />;
 }

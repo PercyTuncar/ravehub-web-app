@@ -16,7 +16,8 @@ import {
     Menu,
     LogOut,
     DollarSign,
-    ShoppingBag
+    ShoppingBag,
+    Link2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -25,6 +26,7 @@ import { cn } from '@/lib/utils';
 const mainMenuItems = [
     { title: 'Overview', href: '/admin', icon: LayoutDashboard },
     { title: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+    { title: 'Bio Link Stats', href: '/admin/bio-link', icon: Link2 },
 ];
 
 const managementItems = [
@@ -115,8 +117,8 @@ export function AdminSidebar() {
         <>
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex fixed left-0 top-20 bottom-0 z-40 bg-[#0a0a0a] border-r border-white/5 w-64 flex-col">
-                 {/* Reusing the content logic, but we need to strip the outer div if we want exact same styling or just use the component */}
-                 {/* The original desktop sidebar had the same structure as SidebarContent, so we can just use SidebarContent but we need to remove the fixed positioning from SidebarContent if it's there. 
+                {/* Reusing the content logic, but we need to strip the outer div if we want exact same styling or just use the component */}
+                {/* The original desktop sidebar had the same structure as SidebarContent, so we can just use SidebarContent but we need to remove the fixed positioning from SidebarContent if it's there. 
                     Wait, SidebarContent has w-64 and flex-col h-full. 
                     The desktop aside has fixed positioning. 
                     So we can put SidebarContent INSIDE the aside? 
@@ -126,7 +128,7 @@ export function AdminSidebar() {
                     Double border/bg? 
                     Let's adjust SidebarContent to fill parent.
                  */}
-                 <SidebarContent pathname={pathname} />
+                <SidebarContent pathname={pathname} />
             </aside>
 
             {/* Mobile Sidebar (Sheet) */}

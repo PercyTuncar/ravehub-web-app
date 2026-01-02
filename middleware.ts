@@ -72,6 +72,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Protect Admin Routes
+  if (url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')) {
+    const session = request.cookies.get('session');
+    if (!session) {
+      const loginUrl = new URL('/admin/login', request.url);
+      // Optional: Add redirect param
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   return NextResponse.next();
 }
 
