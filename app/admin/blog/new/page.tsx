@@ -16,6 +16,8 @@ import { blogCollection } from '@/lib/firebase/collections';
 import { BlogPost } from '@/lib/types';
 import { EventSelector } from '@/components/admin/EventSelector';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { useEffect } from 'react';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -41,6 +43,7 @@ const STEPS = [
 
 export default function NewBlogPostPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [postData, setPostData] = useState<Partial<BlogPost>>({
     status: 'draft',
@@ -54,8 +57,8 @@ export default function NewBlogPostPage() {
     seoDescription: '',
     seoKeywords: [],
     schemaType: 'BlogPosting',
-    authorId: 'admin',
-    author: 'Admin',
+    authorId: '',
+    author: '',
     tags: [],
     categories: [],
     isAccessibleForFree: true,
@@ -64,6 +67,19 @@ export default function NewBlogPostPage() {
     viewCount: 0,
     createdAt: new Date().toISOString(),
   });
+
+  // Set author data when user is loaded
+  useEffect(() => {
+    if (user && !postData.authorId) {
+      setPostData(prev => ({
+        ...prev,
+        authorId: user.id || 'admin',
+        author: user.firstName ? `${user.firstName} ${user.lastName}`.trim() : 'Admin',
+        authorEmail: user.email,
+        authorImageUrl: user.photoURL,
+      }));
+    }
+  }, [user, postData.authorId]);
   const [saving, setSaving] = useState(false);
 
   const updatePostData = (field: string, value: any) => {

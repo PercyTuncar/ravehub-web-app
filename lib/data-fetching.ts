@@ -27,12 +27,12 @@ export async function getBlogPosts(filters?: {
     const offset = filters?.offset || 0;
 
     // Get total count first
-    const allPosts = await blogCollection.query(conditions, 'createdAt', 'desc');
+    const allPosts = await blogCollection.query(conditions, 'publishDate', 'desc');
     const total = allPosts.length;
 
     // Get paginated posts using limit and offset
     // Since Firestore doesn't support offset directly, we'll get all and slice
-    const allMatchingPosts = await blogCollection.query(conditions, 'createdAt', 'desc');
+    const allMatchingPosts = await blogCollection.query(conditions, 'publishDate', 'desc');
     const fetchedPosts = allMatchingPosts.slice(offset, offset + limit);
 
     return { posts: fetchedPosts as BlogPost[], total };

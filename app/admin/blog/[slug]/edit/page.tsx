@@ -18,6 +18,8 @@ import { BlogPost } from '@/lib/types';
 import { EventSelector } from '@/components/admin/EventSelector';
 import { revalidateBlogPost, revalidateBlogListing } from '@/lib/revalidate';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { User as UserIcon } from 'lucide-react';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -44,6 +46,7 @@ const STEPS = [
 export default function EditBlogPostPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [postData, setPostData] = useState<Partial<BlogPost>>({});
   const [originalPost, setOriginalPost] = useState<BlogPost | null>(null);
@@ -68,6 +71,17 @@ export default function EditBlogPostPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const claimAuthorship = () => {
+    if (!user) return;
+    setPostData(prev => ({
+      ...prev,
+      authorId: user.id,
+      author: user.firstName ? `${user.firstName} ${user.lastName}`.trim() : 'Admin',
+      authorEmail: user.email,
+      authorImageUrl: user.photoURL,
+    }));
   };
 
   const updatePostData = (field: string, value: any) => {
@@ -164,6 +178,31 @@ export default function EditBlogPostPage() {
                 onChange={(e) => updatePostData('title', e.target.value)}
                 placeholder="Ej: Los mejores festivales de música electrónica en Chile"
               />
+            </div>
+
+            {/* Author Control */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Autor</label>
+              <div className="flex items-center justify-between p-3 border rounded-md bg-slate-50 dark:bg-slate-900">
+                <div className="flex items-center gap-3">
+                  {postData.authorImageUrl ? (
+                    <img src={postData.authorImageUrl} alt={postData.author} className="w-8 h-8 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                      <UserIcon className="w-4 h-4 text-slate-500" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">{postData.author || 'Sin autor'}</p>
+                    <p className="text-xs text-muted-foreground">{postData.authorEmail || 'Sin email'}</p>
+                  </div>
+                </div>
+                {user && (postData.authorId !== user.id || postData.author === 'Admin') && (
+                  <Button variant="outline" size="sm" onClick={claimAuthorship} type="button">
+                    Asignar a mí
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div>
