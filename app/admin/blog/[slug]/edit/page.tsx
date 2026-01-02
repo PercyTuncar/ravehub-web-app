@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Wand2, X } from 'lucide-react';
+import { FileUpload } from '@/components/common/FileUpload';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,14 +15,16 @@ import { Badge } from '@/components/ui/badge';
 import { AuthGuard } from '@/components/admin/AuthGuard';
 import { blogCollection } from '@/lib/firebase/collections';
 import { BlogPost } from '@/lib/types';
+import { EventSelector } from '@/components/admin/EventSelector';
 import { revalidateBlogPost, revalidateBlogListing } from '@/lib/revalidate';
+import { SchemaGenerator } from '@/lib/seo/schema-generator';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
     const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
-    await fetch(`${baseUrl}/api/revalidate`, {
+    // Use relative path for client-side fetch to avoid origin issues
+    await fetch('/api/revalidate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, path: '/sitemap.xml' }),
@@ -97,7 +100,7 @@ export default function EditBlogPostPage() {
       // Revalidate blog post and listing pages
       await revalidateBlogPost(params.slug as string);
       await revalidateBlogListing();
-      
+
       // Revalidate sitemap when post is updated
       await revalidateSitemap();
 
@@ -122,7 +125,7 @@ export default function EditBlogPostPage() {
       // Revalidate blog post and listing pages when publishing
       await revalidateBlogPost(params.slug as string);
       await revalidateBlogListing();
-      
+
       // Revalidate sitemap when post is published
       await revalidateSitemap();
 
@@ -132,6 +135,21 @@ export default function EditBlogPostPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const generateSlug = () => {
+    if (!postData.title) return;
+
+    // Simple slug generator: lowercase, replace spaces with hyphens, remove special chars
+    const slug = postData.title
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .replace(/[^a-z0-9\s-]/g, "") // Remove special chars
+      .replace(/[\s+]+/g, "-"); // Replace spaces with hyphens
+
+    updatePostData('slug', slug);
   };
 
   const renderStepContent = () => {
@@ -175,22 +193,47 @@ export default function EditBlogPostPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Contenido *</label>
+              <label className="block text-sm font-medium mb-2">Contenido (HTML/CSS soportado) *</label>
               <Textarea
                 value={postData.content || ''}
                 onChange={(e) => updatePostData('content', e.target.value)}
-                placeholder="Contenido completo del post"
+                placeholder="Escribe el contenido aquí. Puedes usar etiquetas HTML y <style> para CSS personalizado."
                 rows={10}
+                className="font-mono text-sm"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Soporta HTML5 completo y estilos CSS mediante la etiqueta &lt;style&gt;.
+              </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Slug (URL) *</label>
-              <Input
-                value={postData.slug || ''}
-                onChange={(e) => updatePostData('slug', e.target.value)}
-                placeholder="los-mejores-festivales-musica-electronica-chile"
+              <div className="flex gap-2">
+                <Input
+                  value={postData.slug || ''}
+                  onChange={(e) => updatePostData('slug', e.target.value)}
+                  placeholder="los-mejores-festivales-musica-electronica-chile"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={generateSlug}
+                  title="Generar slug desde el título"
+                >
+                  <Wand2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Evento Relacionado</label>
+              <EventSelector
+                value={postData.relatedEventId}
+                onChange={(value) => updatePostData('relatedEventId', value)}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Selecciona un evento para mostrar su información destacada en el post.
+              </p>
             </div>
           </div>
         );
@@ -206,33 +249,83 @@ export default function EditBlogPostPage() {
             </div>
 
             <div>
-              <Label className="block text-sm font-medium mb-2">Imagen Destacada (URL)</Label>
-              <Input
-                type="url"
-                value={postData.featuredImageUrl || ''}
-                onChange={(e) => updatePostData('featuredImageUrl', e.target.value)}
-                placeholder="https://example.com/image.jpg"
-              />
+              <Label className="block text-sm font-medium mb-2">Imagen Destacada</Label>
+              <div className="space-y-4">
+                <FileUpload
+                  folder="blog/featured"
+                  currentUrl={postData.featuredImageUrl}
+                  onUploadComplete={(url) => updatePostData('featuredImageUrl', url)}
+                  onClear={() => updatePostData('featuredImageUrl', '')}
+                />
+                <Input
+                  type="url"
+                  value={postData.featuredImageUrl || ''}
+                  onChange={(e) => updatePostData('featuredImageUrl', e.target.value)}
+                  placeholder="O ingresa una URL externa (https://...)"
+                  className="text-sm"
+                />
+              </div>
             </div>
 
             <div>
-              <Label className="block text-sm font-medium mb-2">Imagen Social (URL)</Label>
-              <Input
-                type="url"
-                value={postData.socialImageUrl || ''}
-                onChange={(e) => updatePostData('socialImageUrl', e.target.value)}
-                placeholder="https://example.com/social.jpg"
-              />
+              <Label className="block text-sm font-medium mb-2">Imagen Social</Label>
+              <div className="space-y-4">
+                <FileUpload
+                  folder="blog/social"
+                  currentUrl={postData.socialImageUrl}
+                  onUploadComplete={(url) => updatePostData('socialImageUrl', url)}
+                  onClear={() => updatePostData('socialImageUrl', '')}
+                />
+                <Input
+                  type="url"
+                  value={postData.socialImageUrl || ''}
+                  onChange={(e) => updatePostData('socialImageUrl', e.target.value)}
+                  placeholder="O ingresa una URL externa (https://...)"
+                  className="text-sm"
+                />
+              </div>
             </div>
 
             <div>
-              <Label className="block text-sm font-medium mb-2">Galería de Imágenes (URLs separadas por coma)</Label>
-              <Textarea
-                value={postData.imageGalleryPost?.join(', ') || ''}
-                onChange={(e) => updatePostData('imageGalleryPost', e.target.value.split(',').map(url => url.trim()))}
-                placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
-                rows={3}
-              />
+              <Label className="block text-sm font-medium mb-2">Galería de Imágenes</Label>
+              <div className="space-y-4">
+                <FileUpload
+                  folder="blog/gallery"
+                  onUploadComplete={(url) => {
+                    const currentGallery = postData.imageGalleryPost || [];
+                    updatePostData('imageGalleryPost', [...currentGallery, url]);
+                  }}
+                  variant="default"
+                  className="mb-4"
+                />
+                <Textarea
+                  value={postData.imageGalleryPost?.join(', ') || ''}
+                  onChange={(e) => updatePostData('imageGalleryPost', e.target.value.split(',').map(url => url.trim()).filter(Boolean))}
+                  placeholder="URLs aparecerán aquí (separadas por coma)"
+                  rows={3}
+                  className="font-mono text-xs"
+                />
+                {postData.imageGalleryPost && postData.imageGalleryPost.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {postData.imageGalleryPost.map((url, idx) => (
+                      <div key={idx} className="relative group w-20 h-20 rounded-md overflow-hidden border border-border">
+                        <img src={url} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => {
+                            const newGallery = [...(postData.imageGalleryPost || [])];
+                            newGallery.splice(idx, 1);
+                            updatePostData('imageGalleryPost', newGallery);
+                          }}
+                          className="absolute top-0 right-0 bg-red-500/80 hover:bg-red-600 text-white p-1 opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-md"
+                          type="button"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );
@@ -331,19 +424,64 @@ export default function EditBlogPostPage() {
             </div>
 
             {/* Validation Messages */}
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardHeader>
-                <CardTitle className="text-lg text-yellow-800">Validaciones</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  {!postData.title && <div className="text-red-600">❌ Título requerido</div>}
-                  {!postData.slug && <div className="text-red-600">❌ Slug requerido</div>}
-                  {!postData.excerpt && <div className="text-red-600">❌ Extracto requerido</div>}
-                  {!postData.content && <div className="text-red-600">❌ Contenido requerido</div>}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="md:col-span-1 space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Vista Previa SEO (Google)</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="text-blue-600 text-lg hover:underline cursor-pointer truncate">
+                      {postData.seoTitle || postData.title || 'Título del Post'}
+                    </h3>
+                    <div className="text-green-700 text-xs">
+                      https://ravehub.com/blog/{postData.slug || 'slug-del-post'}
+                    </div>
+                    <p className="text-gray-600 text-sm line-clamp-2">
+                      {postData.seoDescription || postData.excerpt || 'Descripción del post...'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Schema.org (JSON-LD)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-slate-950 text-slate-50 p-4 rounded-lg text-xs font-mono overflow-auto max-h-[300px]">
+                    <pre>
+                      {JSON.stringify(SchemaGenerator.generateBlogPosting({
+                        ...postData,
+                        id: params.slug as string || 'preview-id', // Use actual slug for ID if available
+                        authorId: postData.authorId || 'preview-author',
+                        author: postData.author || 'Ravehub',
+                        createdAt: postData.createdAt || new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        publishDate: postData.publishDate || new Date().toISOString(),
+                      } as any), null, 2)}
+                    </pre>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Esta es la estructura de datos que Google leerá para indexar tu contenido.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-yellow-200 bg-yellow-50">
+                <CardHeader>
+                  <CardTitle className="text-lg text-yellow-800">Validaciones</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    {!postData.title && <div className="text-red-600">❌ Título requerido</div>}
+                    {!postData.slug && <div className="text-red-600">❌ Slug requerido</div>}
+                    {!postData.excerpt && <div className="text-red-600">❌ Extracto requerido</div>}
+                    {!postData.content && <div className="text-red-600">❌ Contenido requerido</div>}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         );
 
@@ -383,17 +521,15 @@ export default function EditBlogPostPage() {
           <div className="flex items-center justify-between">
             {STEPS.map((step, index) => (
               <div key={step.id} className="flex items-center">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                  index <= currentStep
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                }`}>
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${index <= currentStep
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+                  }`}>
                   {index + 1}
                 </div>
                 {index < STEPS.length - 1 && (
-                  <div className={`w-12 h-0.5 mx-2 ${
-                    index < currentStep ? 'bg-primary' : 'bg-muted'
-                  }`} />
+                  <div className={`w-12 h-0.5 mx-2 ${index < currentStep ? 'bg-primary' : 'bg-muted'
+                    }`} />
                 )}
               </div>
             ))}

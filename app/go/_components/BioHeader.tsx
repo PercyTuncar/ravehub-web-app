@@ -56,7 +56,7 @@ export function BioHeader({ onOpenDrawer }: BioHeaderProps) {
                         alt="WhatsApp"
                         className="w-5 h-5"
                     />
-                    <span>Únete a los Grupos de WhatsApp Aquí 💬</span>
+                    <span>Únete al Grupo de WhatsApp Aquí</span>
                 </div>
             </Button>
         </header>

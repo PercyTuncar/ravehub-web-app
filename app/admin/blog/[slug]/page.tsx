@@ -45,12 +45,11 @@ export default function BlogPostDetailPage() {
 
     try {
       await blogCollection.delete(post.id);
-      
+
       // Revalidate sitemap when post is deleted
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
         const token = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'your-secret-token';
-        await fetch(`${baseUrl}/api/revalidate`, {
+        await fetch('/api/revalidate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, path: '/sitemap.xml' }),
@@ -58,7 +57,7 @@ export default function BlogPostDetailPage() {
       } catch (error) {
         console.error('Error revalidating sitemap:', error);
       }
-      
+
       router.push('/admin/blog');
     } catch (error) {
       console.error('Error deleting post:', error);

@@ -184,7 +184,22 @@ export function CommentCard({ comment, postId, currentUser, children, onReply, o
                         </div>
                     ) : (
                         <div className="text-gray-300 text-sm sm:text-[15px] leading-relaxed break-words whitespace-pre-wrap">
-                            {editingContent}
+                            {editingContent.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
+                                if (part.match(/https?:\/\/[^\s]+/)) {
+                                    return (
+                                        <a
+                                            key={i}
+                                            href={part}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-primary hover:underline hover:text-primary/80 transition-colors"
+                                        >
+                                            {part}
+                                        </a>
+                                    );
+                                }
+                                return part;
+                            })}
                         </div>
                     )}
 

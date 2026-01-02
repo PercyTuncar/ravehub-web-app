@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { blogCollection, slugRedirectsCollection, blogCommentsCollection } from '@/lib/firebase/collections';
+import { blogCollection, slugRedirectsCollection, blogCommentsCollection, eventsCollection } from '@/lib/firebase/collections';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import { BlogHero } from '@/components/blog/BlogHero';
 import { CommentSystem } from '@/components/blog/Comments/CommentSystem';
@@ -8,6 +8,7 @@ import { getComments } from '@/lib/actions/blog-actions';
 import { Separator } from '@/components/ui/separator';
 // BlogPostDetail still used? Yes.
 import { BlogPostDetail } from '@/components/blog/BlogPostDetail';
+import { StickyEventCard } from '@/components/blog/StickyEventCard';
 
 // ISR: Revalidate every 5 minutes (300 seconds) + on-demand revalidation
 export const revalidate = 300;
@@ -159,30 +160,37 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         <BlogHero post={post} />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            <main className="lg:col-span-8 space-y-12">
-              <BlogPostDetail post={post} />
+        <div className="bg-[#0a0a0a] min-h-screen w-full">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+              <main className="lg:col-span-8 space-y-12">
+                <BlogPostDetail post={post} />
 
-              <Separator className="bg-white/10" />
+                <Separator className="bg-white/10" />
 
-              <div id="comments">
-                <CommentSystem
-                  postId={post.id}
-                  initialComments={initialComments}
-                  totalComments={commentCount}
-                // currentUser passed from client side context usually, or we need to fetch it here.
-                // For now, let's leave it to the Client Component to potentially grab it from context if we don't pass it.
-                // But CommentSystem props definition asks for it. 
-                // I will wrap CommentSystem with a data fetcher or just pass null and let the user log in.
-                />
-              </div>
-            </main>
+                <div id="comments">
+                  <CommentSystem
+                    postId={post.id}
+                    initialComments={initialComments}
+                    totalComments={commentCount}
+                  // currentUser passed from client side context usually, or we need to fetch it here.
+                  // For now, let's leave it to the Client Component to potentially grab it from context if we don't pass it.
+                  // But CommentSystem props definition asks for it. 
+                  // I will wrap CommentSystem with a data fetcher or just pass null and let the user log in.
+                  />
+                </div>
+              </main>
 
-            {/* Sidebar (Optional - could be sticky table of contents, related posts, etc) */}
-            <aside className="lg:col-span-4 hidden lg:block space-y-8">
-              {/* Placeholder for sidebar content */}
-            </aside>
+              {/* Sidebar (Optional - could be sticky table of contents, related posts, etc) */}
+              <aside className="lg:col-span-4 hidden lg:block space-y-8">
+                {post.relatedEventId && (
+                  <StickyEventCard
+                    event={await eventsCollection.get(post.relatedEventId)}
+                  />
+                )}
+                {/* Placeholder for sidebar content */}
+              </aside>
+            </div>
           </div>
         </div>
       </>

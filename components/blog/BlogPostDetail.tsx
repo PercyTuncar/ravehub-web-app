@@ -46,7 +46,7 @@ export function BlogPostDetail({ post }: BlogPostDetailProps) {
   };
 
   return (
-    <article className="bg-background">
+    <article className="bg-[#0a0a0a] min-h-screen text-gray-100">
       {/* Content */}
       <div className="container mx-auto px-0 sm:px-4 py-8">
         <div className="max-w-4xl mx-auto">

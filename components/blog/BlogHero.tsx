@@ -91,7 +91,7 @@ export function BlogHero({ post, readingTime = '3 min de lectura' }: BlogHeroPro
             </div>
 
             {/* Decorative bottom fade to content */}
-            <div className="absolute -bottom-1 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10" />
+            <div className="absolute -bottom-1 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent z-10" />
         </div>
     );
 }
