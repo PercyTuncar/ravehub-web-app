@@ -41,6 +41,7 @@ interface TicketSelection {
 
 interface BuyTicketsClientProps {
   event: Event;
+  children?: React.ReactNode;
 }
 
 // --- Components ---
@@ -340,7 +341,7 @@ import { PrivacyModal } from '@/components/events/PrivacyModal';
 
 
 // Internal Wrapper component to use the context
-function BuyTicketsContent({ event }: BuyTicketsClientProps) {
+function BuyTicketsContent({ event, children }: BuyTicketsClientProps) {
   const router = useRouter();
   const { currency: selectedCurrency } = useCurrency();
   const { colorPalette } = useEventColors();
@@ -348,32 +349,25 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
   // Enable dynamic color extraction
   useEnhancedColorExtraction(event.bannerImageUrl || event.mainImageUrl || '');
 
-  // State
-  const [selectedPhase, setSelectedPhase] = useState<string>('');
-  const [ticketSelections, setTicketSelections] = useState<TicketSelection[]>([]);
-  const [isInstallmentMode, setIsInstallmentMode] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline'>('offline');
-  const [installments, setInstallments] = useState<number>(1); // Default to 1 additional installment (Total 2)
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [processing, setProcessing] = useState(false);
-
-  const [activePhaseData, setActivePhaseData] = useState<SalesPhase | null>(null);
-
-  // Initialize Data
-  useEffect(() => {
-    const activePhase = event.salesPhases?.find(phase => {
+  // Initialization Logic for SEO/SSR
+  const getActivePhase = () => {
+    return event.salesPhases?.find(phase => {
       const now = new Date();
       const startDate = new Date(phase.startDate);
       const endDate = new Date(phase.endDate);
       return now >= startDate && now <= endDate;
-    });
+    }) || null;
+  };
 
-    if (activePhase) {
-      setSelectedPhase(activePhase.id);
-      setActivePhaseData(activePhase); // Store full phase data
-      const initialSelections = activePhase.zonesPricing?.map(zonePricing => {
+  const initialActivePhase = getActivePhase();
+
+  // State
+  const [selectedPhase, setSelectedPhase] = useState<string>(initialActivePhase?.id || '');
+  const [activePhaseData, setActivePhaseData] = useState<SalesPhase | null>(initialActivePhase);
+
+  const [ticketSelections, setTicketSelections] = useState<TicketSelection[]>(() => {
+    if (initialActivePhase) {
+      return initialActivePhase.zonesPricing?.map(zonePricing => {
         const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
         return {
           zoneId: zonePricing.zoneId,
@@ -386,9 +380,17 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
           sold: zonePricing.sold || 0,
         };
       }) || [];
-      setTicketSelections(initialSelections);
     }
-  }, [event]);
+    return [];
+  });
+
+  const [isInstallmentMode, setIsInstallmentMode] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline'>('offline');
+  const [installments, setInstallments] = useState<number>(1); // Default to 1 additional installment (Total 2)
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const updateTicketQuantity = (zoneId: string, quantity: number) => {
     setTicketSelections(prev =>
@@ -527,17 +529,17 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-24">
-        {/* Navigation */}
-        <Link href={`/eventos/${event.slug}`} className="inline-flex items-center text-zinc-400 hover:text-white transition-colors mb-8 group">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-24 flex flex-col gap-8">
+        {/* Navigation - Order 1 */}
+        <Link href={`/eventos/${event.slug}`} className="order-1 inline-flex items-center text-zinc-400 hover:text-white transition-colors w-fit group">
           <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center mr-3 group-hover:bg-white/10 transition-colors">
             <ArrowLeft className="w-4 h-4" />
           </div>
           <span className="text-sm font-medium">Volver al evento</span>
         </Link>
 
-        {/* Header */}
-        <div className="mb-12">
+        {/* Header - Order 2 */}
+        <div className="order-2">
           <h1 className="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-4">
             Entradas Oficiales para {event.name}
           </h1>
@@ -559,7 +561,8 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_380px] gap-8 relative items-start">
+        {/* Main Selection Grid - Order 3 (Visually after header, before text) */}
+        <div className="order-3 grid lg:grid-cols-[1fr_380px] gap-8 relative items-start">
           {/* Left Column: Selection */}
           <div className="space-y-8">
 
@@ -857,6 +860,15 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
             </div>
           </div>
         </div>
+
+        {/* SEO / Descriptive Content - Order 4 (Visually Bottom) */}
+        <div className="order-4 mt-8 pt-8 border-t border-white/5 opacity-80 hover:opacity-100 transition-opacity">
+          <div className="bg-zinc-900/50 backdrop-blur-sm rounded-3xl p-6 sm:p-10 border border-white/5 shadow-inner">
+            <div className="text-zinc-300 max-w-4xl mx-auto">
+              {children}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Mobile Sticky Footer */}
@@ -894,10 +906,11 @@ function BuyTicketsContent({ event }: BuyTicketsClientProps) {
   );
 }
 
-export default function BuyTicketsClient(props: BuyTicketsClientProps) {
+// Main Component Export
+export default function BuyTicketsClient({ event, children }: BuyTicketsClientProps) {
   return (
     <EventColorProvider>
-      <BuyTicketsContent {...props} />
+      <BuyTicketsContent event={event}>{children}</BuyTicketsContent>
     </EventColorProvider>
   );
 }

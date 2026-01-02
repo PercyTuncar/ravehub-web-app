@@ -22,11 +22,11 @@ export default function StructuredData({ event }: StructuredDataProps) {
             "@type": "Offer",
             "name": `${zoneName} - ${activePhase.name}`,
             "price": pricing.price,
-            "priceCurrency": event.currency || 'PEN', // <--- AQUÍ CUMPLIMOS TU REGLA (PEN, USD, etc.)
-            "availability": pricing.available > 0 ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
+            "priceCurrency": event.currency || 'PEN',
+            "availability": pricing.available > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
             "url": `https://www.ravehublatam.com/eventos/${event.slug}/entradas`,
             "validFrom": activePhase.startDate,
-            "validThrough": activePhase.endDate || event.endDate
+            "priceValidUntil": activePhase.endDate || event.endDate
         };
     }) : [];
 
@@ -48,7 +48,7 @@ export default function StructuredData({ event }: StructuredDataProps) {
         "@context": "https://schema.org",
         "@type": "Event",
         "name": event.name,
-        "startDate": event.startTime ? `${event.startDate.split('T')[0]}T${event.startTime}` : event.startDate, // Ensure valid ISO
+        "startDate": event.startTime ? `${event.startDate.split('T')[0]}T${event.startTime}` : event.startDate,
         "endDate": event.endDate && event.endTime ? `${event.endDate.split('T')[0]}T${event.endTime}` : (event.endDate || event.startDate),
         "eventStatus": "https://schema.org/EventScheduled",
         "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
@@ -73,8 +73,12 @@ export default function StructuredData({ event }: StructuredDataProps) {
             ...(event.imageGallery || [])
         ].filter(Boolean),
         "description": event.description,
+        "performer": event.artistLineupIds && event.artistLineupIds.length > 0 ? event.artistLineupIds.map(artistId => ({
+            "@type": "PerformingGroup",
+            "name": artistId // TODO: Fetch Artist Name if possible, for now using ID/Name as placeholder
+        })) : undefined,
         "offers": {
-            "@type": "AggregateOffer", // Mejor que lista suelta para Google
+            "@type": "AggregateOffer",
             "priceCurrency": event.currency || 'PEN',
             "lowPrice": offers.length > 0 ? Math.min(...offers.map(o => o.price)) : 0,
             "highPrice": offers.length > 0 ? Math.max(...offers.map(o => o.price)) : 0,
