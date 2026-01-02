@@ -1,36 +1,37 @@
 'use client';
 
-import { BookOpen, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Sparkles } from 'lucide-react';
 
-export function BlogHeader() {
+interface BlogHeaderProps {
+  title?: string;
+  description?: string;
+}
+
+export function BlogHeader({ title, description }: BlogHeaderProps) {
   return (
-    <header className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <BookOpen className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold">Blog Ravehub</h1>
-          </div>
-
-          <p className="text-xl text-muted-foreground mb-8">
-            Artículos, noticias y contenido sobre la escena electrónica en Latinoamérica
-          </p>
-
-          {/* Search bar */}
-          <div className="flex gap-2 max-w-md mx-auto">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar artículos..."
-                className="pl-10"
-              />
-            </div>
-            <Button>Buscar</Button>
-          </div>
-        </div>
+    <div className="relative py-20 overflow-hidden">
+      {/* Abstract Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-1/4 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-1/4 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[120px]" />
       </div>
-    </header>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-orange-400 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-sm">
+          <Sparkles className="w-3 h-3" />
+          <span>Ravehub Insight</span>
+        </div>
+
+        <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight">
+          <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-500">
+            {title || 'Explora la Escena'}
+          </span>
+        </h1>
+
+        <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+          {description || 'Noticias, entrevistas, guías y todo lo que necesitas saber sobre el mundo de la música electrónica en Latinoamérica.'}
+        </p>
+      </div>
+    </div>
   );
 }

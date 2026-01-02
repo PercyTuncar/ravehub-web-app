@@ -26,149 +26,93 @@ function convertColorToRgba(color: string, alpha: number): string {
 export function DynamicBackgroundGradients() {
   const { colorPalette } = useEventColors();
 
-  // Brand colors for initial gradient (orange + cyan) - this is the RaveHub brand gradient
+  // Brand colors
   const BRAND_ORANGE = 'hsl(24, 95%, 53%)';
   const BRAND_CYAN = 'hsl(200, 100%, 50%)';
-  const DEFAULT_ACCENT = 'hsl(24, 95%, 60%)'; // Default palette accent (lighter orange)
+  const DEFAULT_ACCENT = 'hsl(24, 95%, 60%)';
 
-  // Calculate colors from context for current render
   const calculateColors = (domColor: string, accColor: string) => ({
     dominantRgba: convertColorToRgba(domColor, 0.08),
     accentRgba: convertColorToRgba(accColor, 0.07),
     dominantRgbaLight: convertColorToRgba(domColor, 0.05),
   });
 
-  // Initialize with brand gradient (orange + cyan) for initial state
-  const brandInitialColors = {
-    dominantRgba: convertColorToRgba(BRAND_ORANGE, 0.08),
-    accentRgba: convertColorToRgba(BRAND_CYAN, 0.07),
-    dominantRgbaLight: convertColorToRgba(BRAND_ORANGE, 0.05),
-  };
-
-  const [gradientColors, setGradientColors] = useState(brandInitialColors);
-  const [opacity, setOpacity] = useState(1); // Start with opacity 1 to show default colors
-  const [isMounted, setIsMounted] = useState(false);
-  const previousColorsRef = useRef(brandInitialColors);
-  const hasInitializedRef = useRef(false);
-
-  // Update gradient colors smoothly when palette changes
-  useEffect(() => {
-    setIsMounted(true);
+  // Calculate target colors based on current palette
+  const getTargetColors = () => {
     const dominantColor = colorPalette?.dominant || BRAND_ORANGE;
     const paletteAccent = colorPalette?.accent || DEFAULT_ACCENT;
 
-    // Check if we're using default palette (accent is the default lighter orange)
-    // If so, use brand gradient (orange + cyan) for the background
-    // Otherwise, use extracted colors
     const isUsingDefaultPalette = paletteAccent === DEFAULT_ACCENT ||
       paletteAccent === BRAND_ORANGE ||
       !colorPalette?.accent;
     const gradientAccentColor = isUsingDefaultPalette ? BRAND_CYAN : paletteAccent;
 
-    const newColors = calculateColors(dominantColor, gradientAccentColor);
+    return calculateColors(dominantColor, gradientAccentColor);
+  };
 
-    // On first render, initialize refs silently
-    if (!hasInitializedRef.current) {
-      previousColorsRef.current = brandInitialColors;
-      hasInitializedRef.current = true;
-      return; // Don't trigger any updates on first render
+  const [activeColors, setActiveColors] = useState(calculateColors(BRAND_ORANGE, BRAND_CYAN));
+  const [nextColors, setNextColors] = useState<ReturnType<typeof calculateColors> | null>(null);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const target = getTargetColors();
+
+    // Deep compare to avoid unnecessary updates if colors are effectively same
+    // We compare against `nextColors` if it exists (latest target), otherwise `activeColors`
+    const currentTarget = nextColors || activeColors;
+
+    if (JSON.stringify(target) !== JSON.stringify(currentTarget)) {
+      // New color detected!
+      setNextColors(target);
+
+      // Clear existing timer if we were already waiting to commit a color
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+
+      // Set timer to commit this new color as the "Active/Base" color after fade completes
+      transitionTimeoutRef.current = setTimeout(() => {
+        setActiveColors(target);
+        setNextColors(null);
+        transitionTimeoutRef.current = null;
+      }, 1200); // 1.2s to match CSS duration
     }
+  }, [colorPalette]);
 
-    // Check if colors have actually changed
-    const colorsChanged =
-      previousColorsRef.current.dominantRgba !== newColors.dominantRgba ||
-      previousColorsRef.current.accentRgba !== newColors.accentRgba ||
-      previousColorsRef.current.dominantRgbaLight !== newColors.dominantRgbaLight;
-
-    if (colorsChanged) {
-      // Colors changed - smooth crossfade transition
-      // Update the new layer colors first (while opacity is still 1, so old layer is visible)
-      setGradientColors(newColors);
-
-      // Use requestAnimationFrame to ensure DOM is ready
-      requestAnimationFrame(() => {
-        // Start crossfade: fade out old layer, fade in new layer
-        setOpacity(0);
-
-        // After transition starts, update previous colors reference
-        requestAnimationFrame(() => {
-          previousColorsRef.current = newColors;
-          // Fade in new layer
-          setOpacity(1);
-        });
-      });
-    }
-  }, [colorPalette?.dominant, colorPalette?.accent]);
-
-  if (!isMounted) return null;
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <div className="pointer-events-none absolute inset-0">
-      {/* Base layer with default colors - always visible */}
+    <div className="pointer-events-none absolute inset-0 bg-[#141618]">
+      {/* Active Layer (Base) - Always visible, sits behind */}
       <div className="absolute inset-0">
-        {/* First gradient - dominant color at top left */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(circle at 15% 18%, ${previousColorsRef.current.dominantRgba}, transparent 52%)`,
-            opacity: 1 - opacity,
-            transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        />
-        {/* Second gradient - accent color at top right */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(circle at 80% 25%, ${previousColorsRef.current.accentRgba}, transparent 48%)`,
-            opacity: 1 - opacity,
-            transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        />
-        {/* Third gradient - lighter dominant at bottom */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(circle at 60% 82%, ${previousColorsRef.current.dominantRgbaLight}, transparent 55%)`,
-            opacity: 1 - opacity,
-            transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        />
+        <div className="absolute inset-0 transition-colors duration-[2000ms]" style={{ background: `radial-gradient(circle at 15% 18%, ${activeColors.dominantRgba}, transparent 52%)` }} />
+        <div className="absolute inset-0 transition-colors duration-[2000ms]" style={{ background: `radial-gradient(circle at 80% 25%, ${activeColors.accentRgba}, transparent 48%)` }} />
+        <div className="absolute inset-0 transition-colors duration-[2000ms]" style={{ background: `radial-gradient(circle at 60% 82%, ${activeColors.dominantRgbaLight}, transparent 55%)` }} />
       </div>
 
-      {/* New layer with extracted colors - fades in */}
-      <div className="absolute inset-0">
-        {/* First gradient - dominant color at top left */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(circle at 15% 18%, ${gradientColors.dominantRgba}, transparent 52%)`,
-            opacity: opacity,
-            transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        />
-        {/* Second gradient - accent color at top right */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(circle at 80% 25%, ${gradientColors.accentRgba}, transparent 48%)`,
-            opacity: opacity,
-            transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        />
-        {/* Third gradient - lighter dominant at bottom */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(circle at 60% 82%, ${gradientColors.dominantRgbaLight}, transparent 55%)`,
-            opacity: opacity,
-            transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        />
+      {/* Next Layer (Overlay) - Fades In when `nextColors` is present */}
+      <div
+        className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+        style={{ opacity: nextColors ? 1 : 0 }}
+      >
+        {nextColors && (
+          <>
+            <div className="absolute inset-0" style={{ background: `radial-gradient(circle at 15% 18%, ${nextColors.dominantRgba}, transparent 52%)` }} />
+            <div className="absolute inset-0" style={{ background: `radial-gradient(circle at 80% 25%, ${nextColors.accentRgba}, transparent 48%)` }} />
+            <div className="absolute inset-0" style={{ background: `radial-gradient(circle at 60% 82%, ${nextColors.dominantRgbaLight}, transparent 55%)` }} />
+          </>
+        )}
       </div>
 
-      {/* Top fade gradient */}
+      {/* Top fade gradient for navbar blend */}
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#141618] via-[#141618]/95 to-transparent" />
     </div>
   );
 }
-

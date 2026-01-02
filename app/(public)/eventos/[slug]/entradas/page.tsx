@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import { eventsCollection } from '@/lib/firebase/collections';
-import { Event } from '@/lib/types';
+import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections';
+import { Event, EventDj } from '@/lib/types';
 import StructuredData from '@/components/seo/StructuredData';
 import BuyTicketsClient from './BuyTicketsClient';
 import { format } from 'date-fns';
@@ -9,7 +9,7 @@ import { Sparkles, Music, ShieldCheck, Info } from 'lucide-react';
 
 export const revalidate = 180;
 
-async function getEventData(slug: string): Promise<Event | null> {
+async function getEventData(slug: string): Promise<{ event: Event; eventDjs: EventDj[] } | null> {
   try {
     const conditions = [{ field: 'slug', operator: '==', value: slug }];
     const events = await eventsCollection.query(conditions);
@@ -18,7 +18,24 @@ async function getEventData(slug: string): Promise<Event | null> {
       return null;
     }
 
-    return events[0] as Event;
+    const eventData = events[0] as Event;
+    let eventDjs: EventDj[] = [];
+
+    // Load DJ profiles for lineup if they exist
+    if (eventData.artistLineup && eventData.artistLineup.length > 0) {
+      const djIds = eventData.artistLineup
+        .map(artist => artist.eventDjId)
+        .filter(id => id) as string[];
+
+      if (djIds.length > 0) {
+        // Fetch all DJs in parallel
+        const djPromises = djIds.map(id => eventDjsCollection.get(id));
+        const djResults = await Promise.all(djPromises);
+        eventDjs = djResults.filter(dj => dj !== null) as EventDj[];
+      }
+    }
+
+    return { event: eventData, eventDjs };
   } catch (error) {
     console.error('Error loading event:', error);
     return null;
@@ -28,7 +45,16 @@ async function getEventData(slug: string): Promise<Event | null> {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const event = await getEventData(slug);
+    const data = await getEventData(slug);
+
+    if (!data) {
+      return {
+        title: 'Evento no encontrado',
+        description: 'El evento que buscas no existe.',
+      };
+    }
+
+    const { event } = data; // Destructure event from new return type
 
     if (!event) {
       return {
@@ -157,9 +183,9 @@ function getCurrencySymbol(currency: string): string {
 
 export default async function BuyTicketsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const event = await getEventData(slug);
+  const data = await getEventData(slug);
 
-  if (!event) {
+  if (!data || !data.event) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
@@ -172,13 +198,15 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
     );
   }
 
+  const { event, eventDjs } = data;
+
   return (
     <>
       {/* JSON-LD Schema including Event, Offers, FAQ, Breadcrumb */}
       <StructuredData event={event} />
 
       {/* Client Component for Interactive UI */}
-      <BuyTicketsClient event={event}>
+      <BuyTicketsClient event={event} eventDjs={eventDjs}>
         {/* SEO Text Content - Server Rendered & Visible */}
         {/* SEO Text Content - Premium Design */}
         <div className="space-y-12">
@@ -189,7 +217,7 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
               Todo sobre {event.name}
             </h2>
             <p className="text-lg text-zinc-400 leading-relaxed">
-              La espera ha terminado. <strong className="text-white">{event.name}</strong> regresa a <strong className="text-white">{event.location.city}</strong> para una edición inolvidable en <strong className="text-white">{event.location.venue}</strong>.
+              La espera ha terminado. <strong className="text-white">{event.name}</strong> llega a <strong className="text-white">{event.location.city}</strong> para una edición inolvidable en <strong className="text-white">{event.location.venue}</strong>.
               Prepárate para vivir el mejor festival de <strong className="text-orange-400">{event.musicGenre || 'música electrónica'}</strong> este <strong className="text-white">{format(new Date(event.startDate), 'dd MMMM yyyy', { locale: es })}</strong>.
             </p>
           </div>
@@ -239,11 +267,19 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
               </p>
             </div>
 
-            {event.artistLineupIds && event.artistLineupIds.length > 0 ? (
+            {(eventDjs && eventDjs.length > 0) ? (
               <div className="flex flex-wrap justify-center gap-3">
-                {event.artistLineupIds.map((artist, i) => (
+                {eventDjs.map((artist, i) => (
                   <span key={i} className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-zinc-300 font-medium hover:bg-white/10 hover:text-white hover:border-orange-500/30 transition-all cursor-default">
-                    {artist}
+                    {artist.name}
+                  </span>
+                ))}
+              </div>
+            ) : (event.artistLineupIds && event.artistLineupIds.length > 0) ? (
+              <div className="flex flex-wrap justify-center gap-3">
+                {event.artistLineupIds.map((artistId, i) => (
+                  <span key={i} className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-zinc-300 font-medium hover:bg-white/10 hover:text-white hover:border-orange-500/30 transition-all cursor-default">
+                    {artistId}
                   </span>
                 ))}
               </div>

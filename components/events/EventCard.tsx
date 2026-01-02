@@ -43,7 +43,6 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
             });
         }
     });
-    // Fallback if no specific zoning price found but event has generic price (rare in this model but safe)
     if (minPrice === Infinity) minPrice = 0;
 
     // Currency Conversion Effect
@@ -54,12 +53,10 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
                 return;
             }
 
-            // Default event currency to PEN if not specified (common in this app)
             const eventCurrency = event.currency || 'PEN';
             const symbol = getCurrencySymbol(targetCurrency);
             setPriceSymbol(symbol);
 
-            // If currencies match, no need to convert
             if (eventCurrency === targetCurrency) {
                 setDisplayPrice(minPrice);
                 return;
@@ -71,7 +68,6 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
                 setDisplayPrice(result.amount);
             } catch (error) {
                 console.error('Error converting currency:', error);
-                // Fallback to original price if conversion fails
                 setDisplayPrice(minPrice);
                 setPriceSymbol(getCurrencySymbol(eventCurrency));
             } finally {
@@ -83,19 +79,6 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
     }, [minPrice, event.currency, targetCurrency]);
 
     const startDate = parseEventDate(event.startDate);
-    const formattedDate = format(startDate, "d 'de' MMM", { locale: es });
-    const dayName = format(startDate, "EEEE", { locale: es });
-
-    // Extract Headliners
-    const headliners = event.artistLineup
-        ?.filter(artist => artist.isHeadliner)
-        .slice(0, 2)
-        .map(artist => artist.name);
-
-    // Different animations for past events (less dramatic)
-    const hoverProps = isPastEvent ?
-        { whileHover: { opacity: 0.9 } } :
-        { whileHover: { y: -8 } };
 
     const handleShare = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -109,220 +92,103 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
             }).catch(console.error);
         } else {
             navigator.clipboard.writeText(url);
-            toast.success("Enlace copiado al portapapeles");
+            toast.success("Enlace copiado");
         }
     };
 
     return (
         <motion.div
-            {...hoverProps}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -5 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className={`h-full group ${isPastEvent ? 'cursor-default' : 'cursor-pointer'}`}
+            className={`h-full group ${isPastEvent ? 'opacity-70 grayscale hover:grayscale-0 transition-all duration-500' : ''}`}
         >
             <Link href={isPastEvent ? '#' : `/eventos/${event.slug}`} className="block h-full">
-                <Card className={`
-                    h-full overflow-hidden border-border/40 bg-card/40 backdrop-blur-md flex flex-col 
-                    ${isPastEvent
-                        ? 'opacity-75 grayscale border-border/20'
-                        : `hover:border-primary/50 transition-all duration-300 hover:shadow-2xl ${featured ? 'border-primary/20 shadow-lg' : ''}`
-                    } 
-                    rounded-3xl 
-                    ${isPastEvent ? '' : 'group focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-background'}
-                `}>
+                <div className="h-full bg-zinc-900/40 backdrop-blur-sm border border-white/5 rounded-3xl overflow-hidden flex flex-col group-hover:border-white/10 group-hover:bg-zinc-900/60 transition-all duration-300 relative group-hover:shadow-[0_0_30px_rgba(0,0,0,0.5)]">
 
-                    {/* Image Container - Reduced Height */}
-                    <div className={`relative ${featured ? 'aspect-[2/1]' : aspectRatio} overflow-hidden ${isPastEvent ? '' : 'group-hover:scale-105'} transition-transform duration-500`}>
-                        {/* Event Image */}
+                    {/* Image Section */}
+                    <div className={`relative ${featured ? 'aspect-[21/9]' : aspectRatio} overflow-hidden w-full`}>
                         {event.mainImageUrl ? (
                             <Image
                                 src={event.mainImageUrl}
-                                alt={`Imagen del evento ${event.name}`}
+                                alt={event.name}
                                 fill
-                                className={`object-cover transition-transform duration-500 ${isPastEvent ? 'grayscale contrast-125' : 'group-hover:scale-105'}`}
-                                loading="lazy"
+                                className="object-cover transition-transform duration-700 group-hover:scale-105"
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                             />
                         ) : (
-                            <div className="w-full h-full bg-secondary/30 flex items-center justify-center">
-                                <span className="text-muted-foreground">Sin imagen</span>
+                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                                <span className="text-zinc-600">No Image</span>
                             </div>
                         )}
 
-                        {/* Enhanced Gradient Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-90" />
 
                         {/* Top Badges */}
-                        <div className="absolute top-4 left-4 flex flex-wrap gap-2 max-w-[70%]">
-                            {isPastEvent ? (
-                                <Badge className="bg-gray-600/90 hover:bg-gray-600 border-none text-white shadow-lg uppercase tracking-wider text-[10px] font-bold px-2.5 py-1">
-                                    <Archive className="w-3 h-3 mr-1" />
-                                    PASADO
-                                </Badge>
-                            ) : (
-                                <>
-                                    <Badge
-                                        className={`${event.eventType === 'festival' ? 'bg-indigo-500/90 hover:bg-indigo-500' :
-                                            event.eventType === 'concert' ? 'bg-violet-500/90 hover:bg-violet-500' :
-                                                'bg-emerald-500/90 hover:bg-emerald-500'
-                                            } backdrop-blur-md border-none text-white shadow-lg uppercase tracking-wider text-[10px] font-bold px-2.5 py-1 transition-all duration-200 hover:scale-105`}
-                                        aria-label={`Tipo de evento: ${event.eventType}`}
-                                    >
-                                        {event.eventType}
-                                    </Badge>
-
-                                    {event.allowInstallmentPayments && !isSoldOut && (
-                                        <Badge variant="outline" className="bg-black/60 border-white/30 text-white backdrop-blur-md text-[10px] font-bold gap-1 hover:bg-black/70 transition-all duration-200 border-l-2 border-l-emerald-500 pl-2">
-                                            <CreditCard className="w-3 h-3 text-emerald-400" />
-                                            Cuotas
-                                        </Badge>
-                                    )}
-                                </>
-                            )}
-                        </div>
-
-                        {/* Status Badge & Share */}
-                        <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
-                            {/* Share Button - Always visible on desktop, shows on hover or always */}
-                            <Button
-                                size="icon"
-                                variant="secondary"
-                                className="h-8 w-8 rounded-full bg-black/40 hover:bg-white text-white hover:text-black backdrop-blur-md border border-white/10 transition-all duration-300 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    handleShare(e);
-                                }}
-                                aria-label="Compartir evento"
-                            >
-                                <Share2 className="h-4 w-4" />
-                            </Button>
-
-                            {isPastEvent ? (
-                                <Badge variant="outline" className="bg-gray-500/90 border-gray-400/50 text-white/90 backdrop-blur-md font-medium shadow-lg">
-                                    Finalizado
-                                </Badge>
-                            ) : isSoldOut ? (
-                                <Badge variant="destructive" className="font-bold shadow-lg animate-pulse" aria-label="Evento agotado">SOLD OUT</Badge>
-                            ) : isUpcoming ? (
-                                <Badge className="bg-red-500 text-white animate-pulse shadow-lg font-bold" aria-label="Evento próximo">¡Pronto!</Badge>
-                            ) : null}
-                        </div>
-
-                        {/* Enhanced Date Overlay */}
-                        <div className="absolute bottom-4 left-4 text-white z-10">
-                            {isPastEvent ? (
-                                <div>
-                                    <div className="text-xs font-medium opacity-70 uppercase tracking-widest mb-1">Fue el</div>
-                                    <div className="text-2xl font-black leading-none bg-clip-text text-transparent bg-gradient-to-r from-gray-300 to-gray-400 drop-shadow-lg">
-                                        {format(startDate, "d MMM yyyy", { locale: es })}
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="text-xs font-medium opacity-90 uppercase tracking-widest mb-1">{dayName}</div>
-                                    <div className="text-3xl font-black leading-none bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80 drop-shadow-lg">
-                                        {format(startDate, "d")}
-                                    </div>
-                                    <div className="text-lg font-bold leading-none text-white/90 drop-shadow-md">
-                                        {format(startDate, "MMM")}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col flex-1 p-6 pt-5 bg-background/20 backdrop-blur-sm border-t border-white/10">
-                        <div className="flex items-start justify-between gap-4 mb-3">
-                            {/* Title & Location Group */}
-                            <div className="flex-1 min-w-0">
-                                <div className="block mb-2 group-hover:text-primary transition-colors duration-200">
-                                    <h3 className="text-2xl font-bold text-foreground leading-tight line-clamp-2 tracking-tight">
-                                        {event.name}
-                                    </h3>
-                                </div>
-
-                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                        <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
-                                        <span className="truncate font-medium">{event.location.city}</span>
-                                    </div>
-                                    <span className="text-border/60">|</span>
-                                    <span className="truncate opacity-80">{event.location.venue}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Tags & Badges - Optimized Layout */}
-                        <div className="flex flex-wrap items-center gap-2 mb-6">
-                            {/* Music Genre */}
-                            <Badge variant="secondary" className="bg-secondary/20 text-secondary-foreground border border-secondary/30 hover:bg-secondary/30 transition-colors duration-200 text-[10px] font-medium h-6">
-                                {event.musicGenre || 'Electronica'}
+                        <div className="absolute top-4 left-4 flex gap-2">
+                            <Badge className="bg-white/10 backdrop-blur-md text-white border-white/10 hover:bg-white/20 transition-colors uppercase tracking-wider text-[10px] font-bold px-2 py-0.5">
+                                {event.eventType}
                             </Badge>
-
-                            {/* Headliner (First one) */}
-                            {headliners && headliners.length > 0 && (
-                                <Badge variant="outline" className="border-primary/30 text-primary/90 text-[10px] font-medium bg-primary/5 h-6">
-                                    <span className="opacity-70 mr-1 font-normal">Headliner:</span> {headliners[0]}
-                                </Badge>
-                            )}
-
-                            {/* Installment Badge */}
-                            {event.allowInstallmentPayments && !isSoldOut && (
-                                <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-medium px-2.5 h-6">
-                                    <CreditCard className="w-3 h-3 mr-1.5" />
-                                    Cuotas
-                                </Badge>
-                            )}
+                            {isUpcoming && <Badge className="bg-orange-500 text-white border-none animate-pulse px-2 py-0.5 text-[10px]">PRONTO</Badge>}
                         </div>
 
-                        {/* Divider */}
-                        <div className="h-px bg-gradient-to-r from-border/50 via-border/20 to-transparent w-full my-auto mb-5" />
+                        {/* Share (Hover only) */}
+                        <button
+                            onClick={handleShare}
+                            className="absolute top-4 right-4 p-2 rounded-full bg-black/40 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white hover:text-black transform translate-y-2 group-hover:translate-y-0 duration-300"
+                        >
+                            <Share2 className="w-4 h-4" />
+                        </button>
+                    </div>
 
-                        {/* Footer: Price & Action */}
-                        <div className="flex flex-col gap-3 mt-auto">
-                            <div className="flex items-center justify-between w-full">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">
-                                        {isSoldOut ? 'Estado' : 'Precio desde'}
-                                    </span>
-                                    <div className="flex items-center gap-2 h-8">
-                                        {calculatingPrice ? (
-                                            <div className="h-6 w-20 bg-muted/20 animate-pulse rounded" />
-                                        ) : (
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="text-2xl font-black text-foreground tracking-tight">
-                                                    {minPrice > 0
-                                                        ? `${priceSymbol} ${Math.floor(displayPrice).toLocaleString('es-ES')}`
-                                                        : isSoldOut ? 'SOLD OUT' : 'Gratis'}
-                                                </span>
-                                                {minPrice > 0 && !isSoldOut && (
-                                                    <span className="text-xs text-muted-foreground font-medium">
-                                                        {(displayPrice % 1).toFixed(2).substring(1)}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
+                    {/* Content Section */}
+                    <div className="flex-1 p-5 flex flex-col relative">
+                        {/* Floating Date Badge - overlaps image slightly */}
+                        <div className="absolute -top-10 right-5 bg-zinc-950 border border-white/10 rounded-xl p-2.5 flex flex-col items-center shadow-xl w-16 text-center z-10 group-hover:scale-110 transition-transform duration-300">
+                            <span className="text-xs text-orange-400 font-bold uppercase">{format(startDate, "MMM", { locale: es })}</span>
+                            <span className="text-xl font-black text-white leading-none my-0.5">{format(startDate, "d")}</span>
+                            <span className="text-[10px] text-zinc-500 capitalize">{format(startDate, "EEE", { locale: es })}</span>
+                        </div>
+
+                        {/* Title & Venue */}
+                        <div className="mb-4 pr-16"> {/* pr-16 to avoid collision with date badge if title is long */}
+                            <h3 className="text-lg font-bold text-white leading-tight mb-2 group-hover:text-orange-400 transition-colors line-clamp-2">
+                                {event.name}
+                            </h3>
+                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                                <MapPin className="w-3.5 h-3.5 text-zinc-600" />
+                                <span className="truncate">{event.location.venue}, {event.location.city}</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
+                            {/* Price */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Desde</span>
+                                <div className="text-white font-bold">
+                                    {isSoldOut ? (
+                                        <span className="text-red-500">SOLD OUT</span>
+                                    ) : (
+                                        <>
+                                            {calculatingPrice ? (
+                                                <span className="opacity-50 text-sm">...</span>
+                                            ) : (
+                                                <span>{priceSymbol} {displayPrice > 0 ? displayPrice.toLocaleString() : 'Gratis'}</span>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
-                            {!isPastEvent && !isSoldOut ? (
-                                <div className="w-full">
-                                    <Button className="w-full h-11 rounded-xl bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white font-bold text-sm shadow-lg shadow-primary/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-primary/40 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background group/btn">
-                                        <Ticket className="w-4 h-4 mr-2 group-hover/btn:animate-bounce" />
-                                        Comprar Tickets
-                                        <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-0.5 transition-transform" />
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="w-full">
-                                    <Button variant="outline" className="w-full h-11 rounded-xl border-white/20 hover:bg-white/10 text-sm font-semibold hover:border-white/40 transition-all">
-                                        Ver Información
-                                    </Button>
-                                </div>
-                            )}
+                            {/* CTA Icon */}
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 ${isSoldOut ? 'border-zinc-700 bg-transparent text-zinc-700' : 'border-white/20 bg-white/5 text-white group-hover:bg-white group-hover:text-black group-hover:border-white'
+                                }`}>
+                                <ArrowRight className="w-4 h-4" />
+                            </div>
                         </div>
                     </div>
-                </Card>
+                </div>
             </Link>
         </motion.div>
     );

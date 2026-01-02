@@ -21,7 +21,8 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
     // Enable dynamic color extraction
     useEnhancedColorExtraction(event.mainImageUrl || event.bannerImageUrl || '');
     const { colorPalette } = useEventColors();
-    // Countdown Logic
+
+    // Countdown Logic - Safe for Hydration
     const calculateTimeLeft = () => {
         const difference = +new Date(event.startDate) - +new Date();
         if (difference > 0) {
@@ -35,11 +36,13 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     };
 
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-    const [mounted, setMounted] = useState(false);
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        setIsClient(true);
+        setTimeLeft(calculateTimeLeft()); // Initial client calculation
+
         const timer = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
         }, 1000);
@@ -59,8 +62,6 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
         }
     });
     if (minPrice === Infinity) minPrice = 0;
-
-    if (!mounted) return null;
 
     return (
         <div className="relative w-full min-h-[70vh] md:min-h-[90vh] flex items-end sm:items-center bg-[#0a0a0a] overflow-hidden">
@@ -181,22 +182,39 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                     {/* Countdown & Actions */}
                     <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-6 w-full animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
 
-                        {/* Countdown */}
+                        {/* Countdown - Show simplified state or skeleton until hydration */}
                         {!isSoldOut && (
-                            <div className="flex gap-2 sm:gap-6 bg-black/20 backdrop-blur-sm rounded-lg sm:rounded-2xl p-1.5 sm:p-4 border border-white/5 w-full lg:w-auto justify-around sm:justify-center">
-                                {[
-                                    { label: 'DÍAS', value: timeLeft.days },
-                                    { label: 'HRS', value: timeLeft.hours },
-                                    { label: 'MIN', value: timeLeft.minutes },
-                                    { label: 'SEG', value: timeLeft.seconds }
-                                ].map((item, idx) => (
-                                    <div key={idx} className="flex flex-col items-center min-w-[2.5rem] sm:min-w-[3.5rem]">
-                                        <span className="text-lg sm:text-2xl font-black text-white leading-none tabular-nums">
-                                            {String(item.value).padStart(2, '0')}
-                                        </span>
-                                        <span className="text-[8px] sm:text-[10px] text-gray-400 font-bold mt-0.5 uppercase">{item.label}</span>
-                                    </div>
-                                ))}
+                            <div className="flex gap-2 sm:gap-6 bg-black/20 backdrop-blur-sm rounded-lg sm:rounded-2xl p-1.5 sm:p-4 border border-white/5 w-full lg:w-auto justify-around sm:justify-center min-h-[5rem]">
+                                {isClient ? (
+                                    [
+                                        { label: 'DÍAS', value: timeLeft.days },
+                                        { label: 'HRS', value: timeLeft.hours },
+                                        { label: 'MIN', value: timeLeft.minutes },
+                                        { label: 'SEG', value: timeLeft.seconds }
+                                    ].map((item, idx) => (
+                                        <div key={idx} className="flex flex-col items-center min-w-[2.5rem] sm:min-w-[3.5rem]">
+                                            <span className="text-lg sm:text-2xl font-black text-white leading-none tabular-nums animate-in fade-in zoom-in duration-300">
+                                                {String(item.value).padStart(2, '0')}
+                                            </span>
+                                            <span className="text-[8px] sm:text-[10px] text-gray-400 font-bold mt-0.5 uppercase">{item.label}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    // Static Placeholder for SSR (prevents layout shift)
+                                    [
+                                        { label: 'DÍAS', value: '--' },
+                                        { label: 'HRS', value: '--' },
+                                        { label: 'MIN', value: '--' },
+                                        { label: 'SEG', value: '--' }
+                                    ].map((item, idx) => (
+                                        <div key={idx} className="flex flex-col items-center min-w-[2.5rem] sm:min-w-[3.5rem] opacity-50">
+                                            <span className="text-lg sm:text-2xl font-black text-white leading-none tabular-nums">
+                                                --
+                                            </span>
+                                            <span className="text-[8px] sm:text-[10px] text-gray-400 font-bold mt-0.5 uppercase">{item.label}</span>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
 

@@ -83,13 +83,21 @@ export default function EventsClient({
     }, [initialEvents, filters]);
 
     return (
-        <div className="min-h-screen bg-background">
-            {/* Main Content - Enhanced Layout */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-                <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
-                    {/* Sidebar Filters - Enhanced Responsive */}
-                    <aside className="w-full lg:w-80 xl:w-96 shrink-0">
-                        <div className="lg:sticky lg:top-24">
+        <div className="min-h-screen bg-zinc-950 relative selection:bg-orange-500/30">
+
+            {/* Background Gradients (Orange/Warm for Logo Harmony) */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-orange-500/5 via-transparent to-transparent" />
+                <div className="absolute top-20 left-20 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow" />
+                <div className="absolute bottom-40 right-20 w-[500px] h-[500px] bg-red-600/5 rounded-full blur-[100px] mix-blend-screen" />
+            </div>
+
+            {/* Main Content */}
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 lg:pt-24">
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
+                    {/* Sidebar Filters */}
+                    <aside className="w-full lg:w-80 shrink-0">
+                        <div className="lg:sticky lg:top-24 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar rounded-3xl">
                             <FilterSidebar
                                 filters={filters}
                                 setFilters={setFilters}
@@ -98,62 +106,62 @@ export default function EventsClient({
                         </div>
                     </aside>
 
-                    {/* Main Content - Enhanced Responsive Grid */}
-                    <div className="flex-1 min-w-0">
-                        {/* Active Filters Display - Enhanced Mobile */}
+                    {/* Main Content Grid */}
+                    <div className="flex-1 min-w-0 pt-1">
+                        {/* Active Filters Display */}
                         {(filters.type !== 'all' || filters.city !== 'all' || filters.search || filters.minPrice || filters.maxPrice) && (
-                            <div className="flex flex-wrap items-center gap-2 p-4 glassmorphism rounded-2xl mb-8">
-                                <span className="text-sm font-medium text-foreground">Filtros activos:</span>
+                            <div className="flex flex-wrap items-center gap-2 p-4 bg-zinc-900/40 border border-white/5 backdrop-blur-md rounded-2xl mb-8">
+                                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mr-2">Filtros:</span>
                                 {filters.type !== 'all' && (
-                                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/20 text-primary rounded-full text-xs font-medium">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-full text-xs font-bold uppercase tracking-wide">
                                         {filters.type}
                                         <button
                                             onClick={() => setFilters({ ...filters, type: 'all' })}
-                                            className="hover:bg-primary/30 rounded-full p-0.5 transition-colors"
+                                            className="hover:text-white transition-colors"
                                         >
                                             ×
                                         </button>
                                     </span>
                                 )}
                                 {filters.city !== 'all' && (
-                                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-secondary/20 text-secondary rounded-full text-xs font-medium">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-zinc-300 border border-white/10 rounded-full text-xs font-medium">
                                         {filters.city}
                                         <button
                                             onClick={() => setFilters({ ...filters, city: 'all' })}
-                                            className="hover:bg-secondary/30 rounded-full p-0.5 transition-colors"
+                                            className="hover:text-white transition-colors"
                                         >
                                             ×
                                         </button>
                                     </span>
                                 )}
                                 {filters.date && (
-                                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-accent/20 text-accent rounded-full text-xs font-medium">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-zinc-300 border border-white/10 rounded-full text-xs font-medium">
                                         {filters.date === 'weekend' ? 'Fin de semana' : filters.date === 'month' ? 'Este mes' : 'Próximo mes'}
                                         <button
                                             onClick={() => setFilters({ ...filters, date: undefined })}
-                                            className="hover:bg-accent/30 rounded-full p-0.5 transition-colors"
+                                            className="hover:text-white transition-colors"
                                         >
                                             ×
                                         </button>
                                     </span>
                                 )}
                                 {filters.search && (
-                                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-accent/20 text-accent rounded-full text-xs font-medium">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-zinc-300 border border-white/10 rounded-full text-xs font-medium">
                                         "{filters.search}"
                                         <button
                                             onClick={() => setFilters({ ...filters, search: '' })}
-                                            className="hover:bg-accent/30 rounded-full p-0.5 transition-colors"
+                                            className="hover:text-white transition-colors"
                                         >
                                             ×
                                         </button>
                                     </span>
                                 )}
                                 {(filters.minPrice || filters.maxPrice) && (
-                                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-medium">
                                         S/ {filters.minPrice || '0'} - S/ {filters.maxPrice || '∞'}
                                         <button
                                             onClick={() => setFilters({ ...filters, minPrice: '', maxPrice: '' })}
-                                            className="hover:bg-green-500/30 rounded-full p-0.5 transition-colors"
+                                            className="hover:text-white transition-colors"
                                         >
                                             ×
                                         </button>
@@ -162,14 +170,14 @@ export default function EventsClient({
                             </div>
                         )}
 
-                        {/* Event Grid - Enhanced */}
+                        {/* Event Grid */}
                         <div className="relative">
                             {filteredEvents.length === 0 ? (
-                                <div className="text-center py-20 animate-on-scroll">
-                                    <div className="glassmorphism-dark rounded-3xl p-12 max-w-md mx-auto">
-                                        <div className="text-6xl mb-4">🔍</div>
-                                        <h3 className="text-2xl font-bold text-foreground mb-2">No se encontraron eventos</h3>
-                                        <p className="text-muted-foreground mb-6">
+                                <div className="text-center py-20">
+                                    <div className="bg-zinc-900/30 backdrop-blur-md border border-white/5 rounded-3xl p-12 max-w-md mx-auto">
+                                        <div className="text-6xl mb-6 opacity-50">🔍</div>
+                                        <h3 className="text-2xl font-bold text-white mb-2">No se encontraron eventos</h3>
+                                        <p className="text-zinc-500 mb-8">
                                             Intenta ajustar tus filtros para ver más resultados
                                         </p>
                                         <button
@@ -181,9 +189,9 @@ export default function EventsClient({
                                                 minPrice: '',
                                                 maxPrice: '',
                                             })}
-                                            className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-medium transition-all duration-200 hover-lift"
+                                            className="inline-flex items-center gap-2 px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors"
                                         >
-                                            Limpiar filtros
+                                            Limpiar todos los filtros
                                         </button>
                                     </div>
                                 </div>
@@ -193,12 +201,6 @@ export default function EventsClient({
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Background Decoration - Enhanced Responsive */}
-            <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-float" />
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-float-delay" />
             </div>
         </div>
     );

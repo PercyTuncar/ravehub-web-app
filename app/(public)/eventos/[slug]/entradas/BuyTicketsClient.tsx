@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Minus, Plus, CreditCard, Calendar,
   MapPin, Clock, Ticket, Lock, CheckCircle2,
-  Flame, TrendingUp, ShieldCheck
+  Flame, TrendingUp, ShieldCheck, Sparkles, Music, Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -41,12 +41,13 @@ interface TicketSelection {
 
 interface BuyTicketsClientProps {
   event: Event;
+  eventDjs?: any[]; // Using optional any array to avoid import issues if not strictly typed here, but passed from page
   children?: React.ReactNode;
 }
 
 // --- Components ---
 
-function Countdown({ targetDate }: { targetDate: Date }) {
+function Countdown({ targetDate }: { targetDate: Date }) { // ... existing component ...
   const [timeLeft, setTimeLeft] = useState<{ d: number; h: number; m: number; s: number } | null>(null);
 
   useEffect(() => {
@@ -341,7 +342,7 @@ import { PrivacyModal } from '@/components/events/PrivacyModal';
 
 
 // Internal Wrapper component to use the context
-function BuyTicketsContent({ event, children }: BuyTicketsClientProps) {
+function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps) {
   const router = useRouter();
   const { currency: selectedCurrency } = useCurrency();
   const { colorPalette } = useEventColors();
@@ -907,10 +908,10 @@ function BuyTicketsContent({ event, children }: BuyTicketsClientProps) {
 }
 
 // Main Component Export
-export default function BuyTicketsClient({ event, children }: BuyTicketsClientProps) {
+export default function BuyTicketsClient({ event, eventDjs, children }: BuyTicketsClientProps) {
   return (
     <EventColorProvider>
-      <BuyTicketsContent event={event}>{children}</BuyTicketsContent>
+      <BuyTicketsContent event={event} eventDjs={eventDjs}>{children}</BuyTicketsContent>
     </EventColorProvider>
   );
 }

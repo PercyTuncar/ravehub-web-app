@@ -275,62 +275,53 @@ function StockProgressBar({ available, sold, capacity }: { available: number; so
   );
 }
 
+// Helper to get automatic status
+function getPhaseStatus(phase: any) {
+  if (phase.manualStatus) return phase.manualStatus;
+
+  const now = new Date();
+  const start = new Date(phase.startDate);
+  const end = new Date(phase.endDate);
+
+  if (now < start) return 'upcoming';
+  if (now > end) return 'expired';
+  // Check if Sold Out logic is needed here or from zones, but 'active' allows checking zones
+  return 'active';
+}
+
 export function EventPricingTable({ event }: EventPricingTableProps) {
   const { colorPalette } = useEventColors();
   const dominantColor = colorPalette?.dominant || '#FBA905';
-  const accentColor = colorPalette?.accent || '#FBA905';
   const currency = event.currency || 'USD';
 
   // Organize pricing data
   const pricingData = useMemo(() => {
     if (!event.salesPhases || event.salesPhases.length === 0) return [];
 
-    // Sort phases by date to determine order
+    // Sort phases by date
     const sortedPhases = [...event.salesPhases].sort((a, b) =>
       new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     );
 
     return sortedPhases.map((phase, index) => {
-      const finalStatus = phase.manualStatus || phase.status;
+      const computedStatus = getPhaseStatus(phase);
+
       const zones = phase.zonesPricing?.map(zp => {
         const zone = event.zones?.find(z => z.id === zp.zoneId);
-
-        // Calculate savings compared to next phase if available
-        let nextPhasePrice = null;
-        let savingsPercent = 0;
-
-        // Find next active or upcoming phase
-        const nextPhase = sortedPhases.slice(index + 1).find(p => {
-          const s = p.manualStatus || p.status;
-          return s === 'active' || s === 'upcoming';
-        });
-
-        if (nextPhase && nextPhase.zonesPricing) {
-          const nextZonePrice = nextPhase.zonesPricing.find(nzp => nzp.zoneId === zp.zoneId);
-          if (nextZonePrice && nextZonePrice.price > zp.price) {
-            nextPhasePrice = nextZonePrice.price;
-            savingsPercent = Math.round(((nextPhasePrice - zp.price) / nextPhasePrice) * 100);
-          }
-        }
-
         return {
           zoneId: zp.zoneId,
           zoneName: zone?.name || 'Zona General',
-          zoneDescription: zone?.description || 'Acceso al evento',
+          description: zone?.description,
           price: zp.price,
           available: zp.available,
           sold: zp.sold,
           capacity: zone?.capacity || 0,
-          nextPhasePrice,
-          savingsPercent,
-          features: zone?.features || []
         };
       }) || [];
 
-      // Find most popular zone
-      const mostSoldZone = zones.length > 0
-        ? zones.reduce((max, zone) => zone.sold > max.sold ? zone : max, zones[0])
-        : null;
+      // Check if all zones are sold out to override status
+      const allSoldOut = zones.every(z => z.available === 0);
+      const finalStatus = allSoldOut && computedStatus === 'active' ? 'sold_out' : computedStatus;
 
       return {
         phase,
@@ -340,21 +331,26 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
         isUpcoming: finalStatus === 'upcoming',
         isExpired: finalStatus === 'expired',
         isSoldOut: finalStatus === 'sold_out',
-        totalSold: zones.reduce((sum, z) => sum + z.sold, 0),
-        totalCapacity: zones.reduce((sum, z) => sum + z.capacity, 0),
       };
     });
   }, [event.salesPhases, event.zones]);
 
-  // Determine default tab
+  // Determine active phase (first active, or upcoming if none active, or last expired if all passed)
   const activePhaseIndex = useMemo(() => {
-    const index = pricingData.findIndex(p => p.isActive);
-    return index >= 0 ? index : 0;
+    // 1. Try to find first 'active'
+    let index = pricingData.findIndex(p => p.isActive);
+    if (index >= 0) return index;
+
+    // 2. Try to find first 'upcoming'
+    index = pricingData.findIndex(p => p.isUpcoming);
+    if (index >= 0) return index;
+
+    // 3. Default to last phase (likely expired)
+    return Math.max(0, pricingData.length - 1);
   }, [pricingData]);
 
   const [activeTab, setActiveTab] = useState(`phase-${activePhaseIndex}`);
 
-  // Update active tab only on mount/data change
   useEffect(() => {
     setActiveTab(`phase-${activePhaseIndex}`);
   }, [activePhaseIndex]);
@@ -362,185 +358,109 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
   if (pricingData.length === 0) return null;
 
   return (
-    <Card className="border-0 bg-zinc-900/40 backdrop-blur-xl overflow-hidden shadow-2xl ring-1 ring-white/10 rounded-3xl">
-      {/* Header Section */}
-      <div className="relative p-4 sm:p-6 md:p-8 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white mb-2 flex items-center gap-3">
-              <Ticket className="w-6 h-6 text-primary flex-shrink-0" style={{ color: dominantColor }} />
-              Entradas
-            </h2>
-            <p className="text-zinc-400 text-sm sm:text-base max-w-md">
-              Selecciona tu zona preferida. Los precios pueden aumentar conforme se agoten las fases.
-            </p>
-          </div>
-
-          {/* Global Installment Badge - The RaveHub Differentiator */}
-          {event.allowInstallmentPayments && (
-            <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl p-3 sm:px-5 sm:py-3 backdrop-blur-md w-full sm:w-auto max-w-full">
-              <div className="bg-blue-500 rounded-full p-2 text-white shadow-lg shadow-blue-500/20 flex-shrink-0">
-                <CreditCard className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col min-w-0 overflow-hidden">
-                <span className="text-xs text-blue-300 font-bold uppercase tracking-wider truncate block">Facilidad de pago</span>
-                <span className="text-sm font-semibold text-white break-words whitespace-normal block leading-tight">Reserva hoy y paga en cuotas</span>
-              </div>
-            </div>
-          )}
-        </div>
+    <Card className="border-0 bg-zinc-900/40 backdrop-blur-xl overflow-hidden shadow-2xl ring-1 ring-white/10 rounded-3xl mt-12">
+      <div className="p-6 md:p-8 border-b border-white/5">
+        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+          <Ticket className="w-6 h-6" style={{ color: dominantColor }} />
+          Entradas
+        </h2>
       </div>
 
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* Phase Tabs Navigation */}
-          <div className="relative border-b border-white/5 w-full">
-            {/* Scroll Shadow Indicator (Right) */}
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/40 to-transparent z-20 pointer-events-none sm:hidden" />
-
-            {/* Desktop TabsList */}
-            <TabsList className="hidden sm:flex bg-transparent h-auto p-0 w-full overflow-x-auto no-scrollbar justify-start pb-0 scroll-smooth">
-              {pricingData.map(({ phase, status, isActive }, index) => (
+          {/* Tabs List */}
+          <div className="border-b border-white/5 bg-black/20">
+            <TabsList className="bg-transparent h-auto p-0 w-full overflow-x-auto no-scrollbar justify-start">
+              {pricingData.map(({ phase, status }, index) => (
                 <TabsTrigger
-                  key={`desktop-${phase.id}`}
+                  key={phase.id}
                   value={`phase-${index}`}
                   className={`
-                    group relative bg-transparent border-0 rounded-none pb-3 pt-2 text-sm font-medium transition-colors flex-shrink-0
-                    first:pl-6 md:first:pl-8 last:pr-6 md:last:pr-8 px-4
-                    text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none
-                  `}
+                                relative h-14 px-6 rounded-none border-b-2 border-transparent 
+                                data-[state=active]:border-primary data-[state=active]:bg-white/5
+                                text-zinc-400 data-[state=active]:text-white transition-all
+                                hover:text-white hover:bg-white/5
+                            `}
+                  style={{
+                    borderColor: activeTab === `phase-${index}` ? dominantColor : 'transparent'
+                  }}
                 >
-                  <div className="relative flex items-center gap-2 py-1">
-                    <span className="whitespace-nowrap">{phase.name}</span>
-                    {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
-
-                    {/* Active Indicator Line */}
-                    <span
-                      className="absolute -bottom-4 left-0 right-0 h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
-                      style={{ backgroundColor: activeTab === `phase-${index}` ? dominantColor : 'transparent' }}
-                    />
-                  </div>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {/* Mobile TabsList - Optimized for small screens */}
-            <TabsList className="flex sm:hidden bg-transparent h-auto p-0 w-full overflow-x-auto no-scrollbar justify-start pb-0 scroll-smooth">
-              {pricingData.map(({ phase, status, isActive }, index) => (
-                <TabsTrigger
-                  key={`mobile-${phase.id}`}
-                  value={`phase-${index}`}
-                  className={`
-                    group relative bg-transparent border-0 rounded-none pb-3 pt-2 text-sm font-medium transition-colors flex-shrink-0
-                    first:ml-4 last:mr-4 px-3
-                    text-zinc-500 hover:text-zinc-300 data-[state=active]:text-white data-[state=active]:shadow-none
-                  `}
-                >
-                  <div className="relative flex flex-col items-start gap-1 py-1">
-                    <span className="whitespace-nowrap text-sm font-bold">{phase.name}</span>
-                    <div className="scale-90 origin-left">
-                      {getPhaseStatusBadge(status, phase.manualStatus, 'sm')}
-                    </div>
-
-                    {/* Active Indicator Line */}
-                    <span
-                      className="absolute -bottom-4 left-0 right-0 h-0.5 rounded-t-full bg-transparent transition-all duration-300 group-data-[state=active]:bg-primary group-data-[state=active]:shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.5)]"
-                      style={{ backgroundColor: activeTab === `phase-${index}` ? dominantColor : 'transparent' }}
-                    />
-                  </div>
+                  <span className="flex items-center gap-2">
+                    {phase.name}
+                    {getPhaseStatusBadge(status, null, 'sm')}
+                  </span>
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
 
-          {/* Phase Content */}
-          {pricingData.map(({ phase, zones, isActive, isUpcoming, isExpired, isSoldOut }, index) => {
+          {/* Content */}
+          {pricingData.map(({ phase, zones, isActive, isUpcoming, isExpired }, index) => {
             const buyUrl = `/eventos/${event.slug}/entradas`;
 
             return (
-              <TabsContent key={phase.id} value={`phase-${index}`} className="focus:outline-none animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <TabsContent key={phase.id} value={`phase-${index}`} className="p-6 md:p-8 space-y-4 focus:outline-none">
 
-                {/* Active Phase Banner */}
-                {isActive && (
-                  <div className="px-4 sm:px-6 md:px-8 py-4 bg-white/5 border-b border-white/5">
-                    <PhaseTimeProgress
-                      startDate={phase.startDate}
-                      endDate={phase.endDate}
-                      dominantColor={dominantColor}
-                    />
+                {/* Status Message */}
+                {isExpired && (
+                  <div className="p-3 bg-zinc-900/80 border border-white/5 rounded-xl text-center text-zinc-500 text-sm mb-4">
+                    Esta fase de venta ha finalizado. Revisa las fases activas.
                   </div>
                 )}
 
-                {/* Zones Grid */}
-                <div className="p-4 sm:p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {isUpcoming && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center text-amber-400 text-sm mb-4">
+                    Esta fase iniciará el {format(new Date(phase.startDate), "d 'de' MMMM", { locale: es })}.
+                  </div>
+                )}
+
+                {/* Zone Rows - Simplified Design */}
+                <div className="flex flex-col gap-3">
                   {zones.map((zone) => {
                     const isZoneSoldOut = zone.available === 0;
-                    const isLowStock = zone.available < 20 && zone.available > 0;
+                    const isDisabled = !isActive || isZoneSoldOut;
 
                     return (
                       <Link
                         key={zone.zoneId}
-                        href={isActive && !isZoneSoldOut ? buyUrl : '#'}
-                        className={`block relative group flex flex-col p-4 sm:p-5 md:p-6 rounded-2xl border transition-all duration-300 ${isZoneSoldOut
-                          ? 'bg-zinc-900/20 border-white/5 opacity-60 grayscale cursor-not-allowed'
-                          : isActive
-                            ? 'bg-zinc-900/40 border-white/10 hover:border-white/20 hover:bg-white/5 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 cursor-pointer'
-                            : 'bg-zinc-900/40 border-white/10 cursor-default'
-                          }`}
-                        onClick={(e) => {
-                          if (isZoneSoldOut || !isActive) {
-                            e.preventDefault();
+                        href={!isDisabled ? buyUrl : '#'}
+                        onClick={(e) => isDisabled && e.preventDefault()}
+                        className={`
+                                            group flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 
+                                            p-4 rounded-xl border transition-all duration-200
+                                            ${isDisabled
+                            ? 'bg-zinc-900/30 border-white/5 opacity-50 grayscale cursor-not-allowed'
+                            : 'bg-zinc-900/50 border-white/10 hover:bg-white/5 hover:border-white/20 hover:shadow-lg hover:scale-[1.01] cursor-pointer'
                           }
-                        }}
+                                        `}
                       >
-                        {/* Zone Header */}
-                        <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4 w-full">
-                          <div className="min-w-0 w-full">
-                            <h3 className="text-lg sm:text-xl font-bold text-white mb-1 group-hover:text-primary transition-colors truncate w-full" style={{ color: !isZoneSoldOut ? undefined : undefined }}>
+                        {/* Left: Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors">
                               {zone.zoneName}
                             </h3>
-                            <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2 w-full">
-                              {zone.zoneDescription}
-                            </p>
+                            {isZoneSoldOut && <Badge variant="destructive" className="text-[10px] h-5">AGOTADO</Badge>}
                           </div>
-
-                          {/* Savings Badge */}
-                          {zone.savingsPercent > 0 && !isZoneSoldOut && (
-                            <Badge className="bg-emerald-500 text-white border-0 font-bold shadow-lg shadow-emerald-500/20 px-2 py-1 text-xs whitespace-nowrap flex-shrink-0 self-start sm:self-auto">
-                              Ahorra {zone.savingsPercent}%
-                            </Badge>
-                          )}
+                          <p className="text-sm text-zinc-400 line-clamp-1">
+                            {zone.description || 'Entrada general para el evento'}
+                          </p>
                         </div>
 
-                        {/* Stock Progress */}
-                        {!isZoneSoldOut && !isUpcoming && !isExpired && (
-                          <StockProgressBar available={zone.available} sold={zone.sold} capacity={zone.capacity} />
-                        )}
-
-                        <div className="mt-auto pt-6 flex items-end justify-between gap-4">
-                          <div className="flex flex-col">
-                            <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-1">Precio</span>
-                            <div className="flex items-baseline gap-1">
+                        {/* Right: Price & CTA */}
+                        <div className="flex items-center justify-between md:justify-end gap-6 text-right">
+                          <div>
+                            <div className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Precio</div>
+                            <div className="text-xl font-bold text-white">
                               <ZonePrice price={zone.price} currency={currency} dominantColor={dominantColor} />
                             </div>
-
-                            {/* Installment micro-copy */}
-                            {event.allowInstallmentPayments && !isZoneSoldOut && (
-                              <span className="text-[10px] text-blue-400 font-medium mt-1 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" /> Opción a cuotas
-                              </span>
-                            )}
                           </div>
 
-                          {/* Zone Selection Indicator (Visual only, actual selection is on next page) */}
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${isZoneSoldOut
-                            ? 'border-zinc-700 bg-zinc-800 text-zinc-500'
-                            : 'border-white/20 bg-white/5 text-white group-hover:bg-primary group-hover:border-primary'
-                            }`}
-                            style={{ backgroundColor: !isZoneSoldOut ? undefined : undefined }} // Let hover handle dynamic color via CSS if possible, but hard with inline dominantColor. Using default styles.
-                          >
-                            {isZoneSoldOut ? <XCircle className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                          <div className={`
+                                                w-10 h-10 rounded-full flex items-center justify-center border transition-all
+                                                ${isDisabled ? 'border-white/10 bg-white/5 text-zinc-500' : 'border-white/20 bg-white/10 text-white group-hover:bg-primary group-hover:border-primary'}
+                                            `} style={{ backgroundColor: !isDisabled ? undefined : undefined }}>
+                            {isDisabled ? <XCircle className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
                           </div>
                         </div>
                       </Link>
@@ -548,39 +468,28 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                   })}
                 </div>
 
-                {/* Footer CTA */}
-                <div className="p-4 sm:p-6 md:p-8 pt-0 mt-2">
-                  {isActive ? (
-                    <Link href={buyUrl} className="block">
+                {/* Footer - Buy Button */}
+                {isActive && (
+                  <div className="mt-8 pt-4 border-t border-white/5">
+                    <Link href={buyUrl}>
                       <Button
-                        size="lg"
-                        className="w-full h-14 sm:h-16 text-lg font-bold rounded-2xl shadow-xl hover:scale-[1.01] transition-all duration-300 relative overflow-hidden group"
-                        style={{
-                          backgroundColor: dominantColor,
-                          boxShadow: `0 10px 30px -10px ${dominantColor}66`
-                        }}
+                        className="w-full h-14 text-lg font-bold rounded-xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        style={{ backgroundColor: dominantColor }}
                       >
-                        <span className="relative z-10 flex items-center gap-3">
-                          <ShoppingCart className="w-6 h-6" />
-                          Comprar Entradas
-                        </span>
-                        {/* Shine Effect */}
-                        <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                        <ShoppingCart className="w-5 h-5 mr-2" />
+                        Comprar Entradas
                       </Button>
                     </Link>
-                  ) : (
-                    <Button disabled className="w-full h-14 rounded-2xl bg-zinc-800 text-zinc-500 font-medium">
-                      {isUpcoming ? 'Fase Próximamente' : 'Venta Finalizada'}
-                    </Button>
-                  )}
-
-                  {isActive && (
-                    <p className="text-center text-xs text-zinc-500 mt-4 flex items-center justify-center gap-2">
-                      <CheckCircle2 className="w-3 h-3" /> Compra segura y garantizada por RaveHub
-                    </p>
-                  )}
-                </div>
-
+                    {event.allowInstallmentPayments && (
+                      <div className="mt-3 text-center">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20">
+                          <CreditCard className="w-3 h-3" />
+                          Pagos en cuotas disponibles
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </TabsContent>
             );
           })}

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { BlogFilters } from '@/components/blog/BlogFilters';
+import { BlogControls } from '@/components/blog/BlogControls';
 import { BlogHeader } from '@/components/blog/BlogHeader';
 import { BlogContent } from '../../BlogContent';
 import { getBlogPosts } from '@/lib/data-fetching';
@@ -78,36 +78,28 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     });
 
     return (
-      <div className="min-h-screen bg-background">
-        <BlogHeader />
+      <div className="min-h-screen bg-[#050505] text-white selection:bg-orange-500/30">
+        <BlogHeader
+          title={category.name}
+          description={category.description || `Explora todos los artículos de ${category.name}.`}
+        />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Sidebar with filters */}
-            <aside className="lg:col-span-1">
-              <BlogFilters
-                selectedCategory={slug}
-              />
-            </aside>
-
-            {/* Main content */}
-            <main className="lg:col-span-3">
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-4">Categoría: {category.name}</h1>
-                {category.description && (
-                  <p className="text-lg text-muted-foreground">{category.description}</p>
-                )}
-              </div>
-
-              <BlogContent
-                initialPosts={posts.posts}
-                category={slug}
-                currentPage={1}
-                totalPages={Math.ceil(posts.total / 12)}
-                totalPosts={posts.total}
-              />
-            </main>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 -mt-10 relative z-20">
+          {/* Controls Bar */}
+          <div className="mb-12">
+            <BlogControls initialCategory={slug} />
           </div>
+
+          {/* Main Content Grid */}
+          <main>
+            <BlogContent
+              initialPosts={posts.posts}
+              category={slug}
+              currentPage={1}
+              totalPages={Math.ceil(posts.total / 12)}
+              totalPosts={posts.total}
+            />
+          </main>
         </div>
       </div>
     );
