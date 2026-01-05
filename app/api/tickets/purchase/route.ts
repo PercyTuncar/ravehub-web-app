@@ -13,17 +13,53 @@ export async function POST(request: NextRequest) {
       paymentType,
       installments = 1,
       userId,
+      guestEmail,
       totalAmount,
-      currency
+      currency,
+      reservationFee
     } = body;
 
-    // Validate required fields
-    if (!eventId || !tickets || !paymentMethod || !userId || !totalAmount) {
+    // Validate required fields (User OR GuestEmail)
+    if (!eventId || !tickets || !paymentMethod || !totalAmount || (!userId && !guestEmail)) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
+
+    // Determine Final User ID
+    let finalUserId = userId;
+
+    if (!finalUserId && guestEmail) {
+      // 1. Check if user exists by email
+      const existingUsers = await usersCollection.query([
+        { field: 'email', operator: '==', value: guestEmail }
+      ]);
+
+      if (existingUsers.length > 0) {
+        finalUserId = existingUsers[0].id;
+      } else {
+        // 2. Create Guest User
+        // We need a unique ID. Firestore auto-id is best but we are in a 'create' helper limitation using setDoc usually?
+        // Actually 'usersCollection.create' might use auto-id? The 'create' method in 'collections.ts' likely does `addDoc` or `setDoc` with auto ID.
+        // Let's assume 'create' works directly.
+
+        finalUserId = await usersCollection.create({
+          email: guestEmail,
+          firstName: 'Invitado',
+          lastName: '',
+          role: 'user',
+          authProvider: 'guest',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          isActive: true,
+          emailVerified: false,
+          isGuest: true // Flag to identify guests later
+        });
+      }
+    }
+
+    // Validate event exists and is published
 
     // Validate event exists and is published
     const event = await eventsCollection.get(eventId);
@@ -39,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Create ticket transaction
     const transactionData: Omit<TicketTransaction, 'id'> = {
-      userId,
+      userId: finalUserId,
       eventId,
       ticketItems: tickets,
       totalAmount,

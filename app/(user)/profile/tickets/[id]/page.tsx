@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, MapPin, Download, CheckCircle, Clock } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { ticketTransactionsCollection, eventsCollection } from '@/lib/firebase/collections';
+import { ticketTransactionsCollection, eventsCollection, usersCollection } from '@/lib/firebase/collections';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { convertCurrency, formatPrice } from '@/lib/utils/currency-converter';
 import { getTicketInstallments, updateTicketPaymentStatus } from '@/lib/actions';
@@ -46,6 +46,7 @@ export default function TicketDetailPage() {
     const [ticket, setTicket] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [installments, setInstallments] = useState<any[]>([]);
+    const [buyer, setBuyer] = useState<any>(null); // For admin view
 
     // Display states (converted currency)
     const [displayTotal, setDisplayTotal] = useState<string>('');
@@ -95,6 +96,11 @@ export default function TicketDetailPage() {
                 };
 
                 setTicket(fullTicket);
+
+                if (user?.role === 'admin') {
+                    const buyerDoc = await usersCollection.get(transaction.userId);
+                    if (buyerDoc) setBuyer(buyerDoc);
+                }
 
                 if (fullTicket.paymentType === 'installment') {
                     const result = await getTicketInstallments(fullTicket.id);
@@ -246,6 +252,19 @@ export default function TicketDetailPage() {
                                     <p className="text-sm text-zinc-400 mb-4">
                                         Este ticket está pendiente de pago. Verifica el comprobante (si se envió) y aprueba o rechaza la transacción.
                                     </p>
+
+                                    {buyer && (
+                                        <div className="bg-black/20 p-3 rounded-lg mb-4 flex items-center gap-3 border border-white/5">
+                                            <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 font-bold">
+                                                {buyer.firstName?.[0] || '?'}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-white">{buyer.firstName} {buyer.lastName}</div>
+                                                <div className="text-xs text-zinc-400">{buyer.email} {(buyer.isGuest || buyer.authProvider === 'guest') && '(Invitado)'}</div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="flex gap-3">
                                         <Button
                                             onClick={async () => {

@@ -25,6 +25,7 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 
 import { VerificationRequiredModal } from '@/components/auth/VerificationRequiredModal';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { toast } from 'sonner';
 
 // --- Constants ---
 const RESERVATION_FEE = 50;
@@ -395,6 +396,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [guestEmail, setGuestEmail] = useState('');
 
   const updateTicketQuantity = (zoneId: string, quantity: number) => {
     setTicketSelections(prev =>
@@ -431,13 +433,24 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const handlePurchase = async () => {
     if (!event || !acceptTerms || totalTickets === 0) return;
 
-    if (!firebaseUser) {
-      toast.error('Debes iniciar sesión para comprar');
-      router.push('/login?redirect=' + window.location.pathname);
+    // Guest Logic
+    if (!firebaseUser && !guestEmail) {
+      toast.error('Ingresa tu correo para continuar como invitado o inicia sesión');
+      // Scroll to email input?
+      document.getElementById('guest-email-input')?.focus();
       return;
     }
 
-    if (!firebaseUser.emailVerified) {
+    if (!firebaseUser && guestEmail) {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(guestEmail)) {
+        toast.error('Ingresa un correo válido');
+        return;
+      }
+    }
+
+    if (firebaseUser && !firebaseUser.emailVerified) {
       setShowVerificationModal(true);
       return;
     }
@@ -461,6 +474,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
           installments: isInstallmentMode ? installments : undefined,
           reservationFee: isInstallmentMode ? RESERVATION_FEE : undefined,
           userId: firebaseUser?.uid,
+          guestEmail: !firebaseUser ? guestEmail : undefined,
           totalAmount: totalAmount,
           currency: event.currency,
         }),
@@ -472,67 +486,75 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         if (paymentMethod === 'online' && result.paymentUrl) {
           window.location.href = result.paymentUrl;
         } else {
-          // WhatsApp formatting
-          const symbol = event.currency === 'USD' ? '$' : 'S/';
-
-          const ticketsList = ticketSelections
-            .filter(s => s.quantity > 0)
-            .map(s => `• ${s.quantity}x ${s.zoneName} (${symbol} ${s.price})`)
-            .join('\n');
-
-          let paymentDetails = `📝 *Método:* Pago Offline`;
-          let totalToPayText = `${symbol} ${totalAmount}`;
-
-          // Helper for Emojis to avoid encoding issues
-          const EMOJI = {
-            TICKETS: '\uD83C\uDF9F\uFE0F',
-            CALENDAR: '\uD83D\uDCC5',
-            PIN: '\uD83D\uDCCD',
-            TICKET: '\uD83C\uDFAB',
-            MONEY_BAG: '\uD83D\uDCB0',
-            DOLLAR: '\uD83D\uDCB5',
-            ID: '\uD83C\uDD94',
-            MEMO: '\uD83D\uDCDD',
-            CHART: '\uD83D\uDCC9',
-            DIAMOND: '\uD83D\uDD39'
-          };
-
-          const message = `${EMOJI.TICKETS} *NUEVA RESERVA - ${event.name}* ${EMOJI.TICKETS}\n\n` +
-            `${EMOJI.CALENDAR} *Fecha:* ${format(getEventDate(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
-            `${EMOJI.PIN} *Lugar:* ${event.location.venue}\n\n` +
-            `${EMOJI.TICKET} *Tickets:*\n${ticketsList}\n\n` +
-            `${EMOJI.MONEY_BAG} *TOTAL PEDIDO:* ${symbol} ${totalAmount}\n` +
-            `${EMOJI.DOLLAR} *A PAGAR HOY:* ${totalToPayText}\n` +
-            `${EMOJI.ID} *Ref:* ${result.orderId || 'N/A'}\n` +
-            paymentDetails.replace('📝', EMOJI.MEMO).replace('📉', EMOJI.CHART).replace('🔹', EMOJI.DIAMOND).replace('🔹', EMOJI.DIAMOND); // Global replace if needed or just rebuild paymentDetails logic if it was dynamic, but here it's easier to just rebuild it if possible, but paymentDetails is built above. 
-
-          // Actually, let's rebuild paymentDetails to be safe and clean
-
-          let finalPaymentDetails = `${EMOJI.MEMO} *Método:* Pago Offline`;
-          if (isInstallmentMode) {
-            const installmentValue = ((totalAmount - (RESERVATION_FEE * totalTickets)) / installments).toFixed(2);
-            finalPaymentDetails += `\n${EMOJI.CHART} *Facilidad de Pago:* Reserva + ${installments} cuotas`;
-            finalPaymentDetails += `\n${EMOJI.DIAMOND} *Pago Inicial (Reserva):* ${symbol} ${totalReservation}`;
-            finalPaymentDetails += `\n${EMOJI.DIAMOND} *Saldo Restante:* ${symbol} ${totalRemaining} en ${installments} cuotas de ${symbol} ${installmentValue}`;
+          // Redirect logic
+          if (firebaseUser) {
+            router.push('/profile/tickets');
           } else {
-            finalPaymentDetails = paymentDetails.replace('📝', EMOJI.MEMO); // partial fallback if not installment
+            // Guest Success Logic - Just alert for now or redirect to special page?
+            // User asked for "redirect to page indicating to create account"
+            // Let's redirect to a success page passing the email
+            router.push(`/purchase-success?email=${encodeURIComponent(guestEmail)}&ticketId=${result.ticketId}`);
           }
-
-          const finalMessage = `${EMOJI.TICKETS} *NUEVA RESERVA - ${event.name}* ${EMOJI.TICKETS}\n\n` +
-            `${EMOJI.CALENDAR} *Fecha:* ${format(getEventDate(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
-            `${EMOJI.PIN} *Lugar:* ${event.location.venue}\n\n` +
-            `${EMOJI.TICKET} *Tickets:*\n${ticketsList}\n\n` +
-            `${EMOJI.MONEY_BAG} *TOTAL PEDIDO:* ${symbol} ${totalAmount}\n` +
-            `${EMOJI.DOLLAR} *A PAGAR HOY:* ${totalToPayText}\n` +
-            `${EMOJI.ID} *Ref:* ${result.orderId || 'N/A'}\n` +
-            finalPaymentDetails;
-
-          // Encode the entire message properly
-          const encodedMessage = encodeURIComponent(finalMessage);
-          window.open(`https://wa.me/51944784488?text=${encodedMessage}`, '_blank');
-
-          router.push('/profile/tickets');
         }
+        // WhatsApp formatting
+        const symbol = event.currency === 'USD' ? '$' : 'S/';
+
+        const ticketsList = ticketSelections
+          .filter(s => s.quantity > 0)
+          .map(s => `• ${s.quantity}x ${s.zoneName} (${symbol} ${s.price})`)
+          .join('\n');
+
+        let paymentDetails = `📝 *Método:* Pago Offline`;
+        let totalToPayText = `${symbol} ${totalAmount}`;
+
+        // Helper for Emojis to avoid encoding issues
+        const EMOJI = {
+          TICKETS: '\uD83C\uDF9F\uFE0F',
+          CALENDAR: '\uD83D\uDCC5',
+          PIN: '\uD83D\uDCCD',
+          TICKET: '\uD83C\uDFAB',
+          MONEY_BAG: '\uD83D\uDCB0',
+          DOLLAR: '\uD83D\uDCB5',
+          ID: '\uD83C\uDD94',
+          MEMO: '\uD83D\uDCDD',
+          CHART: '\uD83D\uDCC9',
+          DIAMOND: '\uD83D\uDD39'
+        };
+
+        const message = `${EMOJI.TICKETS} *NUEVA RESERVA - ${event.name}* ${EMOJI.TICKETS}\n\n` +
+          `${EMOJI.CALENDAR} *Fecha:* ${format(getEventDate(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
+          `${EMOJI.PIN} *Lugar:* ${event.location.venue}\n\n` +
+          `${EMOJI.TICKET} *Tickets:*\n${ticketsList}\n\n` +
+          `${EMOJI.MONEY_BAG} *TOTAL PEDIDO:* ${symbol} ${totalAmount}\n` +
+          `${EMOJI.DOLLAR} *A PAGAR HOY:* ${totalToPayText}\n` +
+          `${EMOJI.ID} *Ref:* ${result.orderId || 'N/A'}\n` +
+          paymentDetails.replace('📝', EMOJI.MEMO).replace('📉', EMOJI.CHART).replace('🔹', EMOJI.DIAMOND).replace('🔹', EMOJI.DIAMOND); // Global replace if needed or just rebuild paymentDetails logic if it was dynamic, but here it's easier to just rebuild it if possible, but paymentDetails is built above. 
+
+        // Actually, let's rebuild paymentDetails to be safe and clean
+
+        let finalPaymentDetails = `${EMOJI.MEMO} *Método:* Pago Offline`;
+        if (isInstallmentMode) {
+          const installmentValue = ((totalAmount - (RESERVATION_FEE * totalTickets)) / installments).toFixed(2);
+          finalPaymentDetails += `\n${EMOJI.CHART} *Facilidad de Pago:* Reserva + ${installments} cuotas`;
+          finalPaymentDetails += `\n${EMOJI.DIAMOND} *Pago Inicial (Reserva):* ${symbol} ${totalReservation}`;
+          finalPaymentDetails += `\n${EMOJI.DIAMOND} *Saldo Restante:* ${symbol} ${totalRemaining} en ${installments} cuotas de ${symbol} ${installmentValue}`;
+        } else {
+          finalPaymentDetails = paymentDetails.replace('📝', EMOJI.MEMO); // partial fallback if not installment
+        }
+
+        const finalMessage = `${EMOJI.TICKETS} *NUEVA RESERVA - ${event.name}* ${EMOJI.TICKETS}\n\n` +
+          `${EMOJI.CALENDAR} *Fecha:* ${format(getEventDate(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
+          `${EMOJI.PIN} *Lugar:* ${event.location.venue}\n\n` +
+          `${EMOJI.TICKET} *Tickets:*\n${ticketsList}\n\n` +
+          `${EMOJI.MONEY_BAG} *TOTAL PEDIDO:* ${symbol} ${totalAmount}\n` +
+          `${EMOJI.DOLLAR} *A PAGAR HOY:* ${totalToPayText}\n` +
+          `${EMOJI.ID} *Ref:* ${result.orderId || 'N/A'}\n` +
+          finalPaymentDetails;
+
+        // Encode the entire message properly
+        const encodedMessage = encodeURIComponent(finalMessage);
+        window.open(`https://wa.me/51944784488?text=${encodedMessage}`, '_blank');
+
       } else {
         alert(`Error: ${result.error}`);
       }
