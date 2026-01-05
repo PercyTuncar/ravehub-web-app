@@ -12,6 +12,7 @@ import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { convertCurrency, formatPrice } from '@/lib/utils/currency-converter';
 import { getTicketInstallments } from '@/lib/actions';
 import { TicketCard } from '@/components/tickets/TicketCard';
+import { getValidDate } from '@/lib/utils/date';
 
 export default function TicketsPage() {
   const { user } = useAuth();
@@ -55,12 +56,26 @@ export default function TicketsPage() {
         }));
 
         // Sort by date (newest first)
+        // Sort by date (newest first)
         ticketsWithDetails.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setTickets(ticketsWithDetails);
+
+        // Filter out expired offline tickets older than 10 days
+        const validTickets = ticketsWithDetails.filter(t => {
+          const expiry = getValidDate(t.expiresAt);
+          if (t.paymentMethod === 'offline' && t.paymentStatus === 'pending' && expiry) {
+            const tenDaysAfterExpiry = new Date(expiry.getTime() + 10 * 24 * 60 * 60 * 1000); // 10 days window
+            if (new Date() > tenDaysAfterExpiry) {
+              return false;
+            }
+          }
+          return true;
+        });
+
+        setTickets(validTickets);
 
         // Load installment status for each ticket
         const statusMap: Record<string, any> = {};
-        for (const ticket of ticketsWithDetails) {
+        for (const ticket of validTickets) {
           if (ticket.paymentType === 'installment') {
             const result = await getTicketInstallments(ticket.id);
             if (result.success && result.installments) {

@@ -5,7 +5,7 @@
 'use server';
 
 import { blogCollection, eventsCollection, productsCollection, blogCommentsCollection, ticketTransactionsCollection, paymentInstallmentsCollection, usersCollection, ordersCollection } from '@/lib/firebase/admin-collections';
-import { createNotification, InstallmentNotifications } from '@/lib/utils/notifications';
+import { createNotification, InstallmentNotifications, OrderNotifications } from '@/lib/utils/notifications';
 import { revalidateBlogPost, revalidateBlogListing, revalidateEvent, revalidateEventsListing, revalidateProduct, revalidateShopListing, revalidateCommentApproval, revalidateProductStock, revalidateEventCapacity } from '@/lib/revalidate';
 import { BlogPost, Event, Product, BlogComment } from '@/lib/types';
 import { requireAdmin, requireAuth } from '@/lib/auth-admin';
@@ -239,19 +239,95 @@ export async function uploadTicketProof(ticketId: string, proofUrl: string) {
 export async function updateTicketPaymentStatus(ticketId: string, status: 'approved' | 'rejected' | 'pending', rejectionReason?: string) {
   try {
     await requireAdmin();
-    const updateData: any = {
-      paymentStatus: status,
-      updatedAt: new Date().toISOString()
-    };
 
-    if (rejectionReason) {
-      updateData.rejectionReason = rejectionReason;
+    // 1. Get the ticket to check payment type
+    const ticket = await ticketTransactionsCollection.get(ticketId);
+    if (!ticket) throw new Error('Ticket not found');
+
+    // 2. Handle Rejection (Global)
+    if (status === 'rejected') {
+      // If rejecting, we reject the transaction AND clear/reject pending installments?
+      // For simplicity, just mark transaction rejected.
+      await ticketTransactionsCollection.update(ticketId, {
+        paymentStatus: 'rejected',
+        rejectionReason: rejectionReason || 'Rechazado por administrador',
+        updatedAt: new Date().toISOString()
+      });
+      return { success: true };
     }
 
-    await ticketTransactionsCollection.update(ticketId, updateData);
+    // 3. Handle Approval
+    if (status === 'approved') {
+      if (ticket.paymentType === 'installment') {
+        // Find the first pending installment
+        const installments = await paymentInstallmentsCollection.query([
+          { field: 'transactionId', operator: '==', value: ticketId }
+        ]);
+
+        // Sort by number
+        installments.sort((a, b) => a.installmentNumber - b.installmentNumber);
+
+        const firstPending = installments.find(i => i.status !== 'paid');
+
+        if (firstPending) {
+          // Approve ONLY this installment
+          await paymentInstallmentsCollection.update(firstPending.id, {
+            status: 'paid',
+            adminApproved: true,
+            paidAt: new Date().toISOString(),
+            // secure the proof if it was on the ticket (legacy) or just verify it
+          });
+
+          // Notify user of installment approval
+          await createNotification({
+            userId: ticket.userId,
+            ...InstallmentNotifications.paymentApproved(ticket.id, firstPending.installmentNumber)
+          });
+
+          // Check if ALL are paid now
+          const allPaid = installments.every(i => i.id === firstPending.id || i.status === 'paid');
+
+          if (allPaid) {
+            await ticketTransactionsCollection.update(ticketId, {
+              paymentStatus: 'approved',
+              updatedAt: new Date().toISOString()
+            });
+            // Notify full order completion?
+          } else {
+            // If partially paid, we ensure the transaction is NOT rejected/expired, stays pending but active
+            // We don't change transaction status to approved yet
+          }
+
+          return { success: true, message: `Cuota ${firstPending.installmentNumber} aprobada` };
+        } else {
+          // All already paid
+          await ticketTransactionsCollection.update(ticketId, {
+            paymentStatus: 'approved',
+            updatedAt: new Date().toISOString()
+          });
+          return { success: true };
+        }
+
+      } else {
+        // Full Payment: Approve Transaction
+        await ticketTransactionsCollection.update(ticketId, {
+          paymentStatus: 'approved',
+          updatedAt: new Date().toISOString()
+        });
+
+        // Notify user
+        await createNotification({
+          userId: ticket.userId,
+          ...OrderNotifications.paymentApproved(ticket.id)
+        });
+
+        return { success: true };
+      }
+    }
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error updating status', error);
     return { success: false, error: 'Failed to update ticket status' };
   }
 }

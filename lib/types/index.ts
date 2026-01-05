@@ -558,6 +558,7 @@ export interface TicketTransaction {
   installments?: number;
   reservationAmount?: number;
   paymentStatus: 'pending' | 'approved' | 'rejected';
+  expiresAt?: Date | string; // For pending offline payments
   offlinePaymentMethod?: string;
   paymentProofUrl?: string;
   adminNotes?: string;

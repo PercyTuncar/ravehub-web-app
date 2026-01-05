@@ -10,10 +10,13 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { ticketTransactionsCollection, eventsCollection } from '@/lib/firebase/collections';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { convertCurrency, formatPrice } from '@/lib/utils/currency-converter';
-import { getTicketInstallments } from '@/lib/actions';
+import { getTicketInstallments, updateTicketPaymentStatus } from '@/lib/actions';
 import { InstallmentTimeline } from '@/components/tickets/InstallmentTimeline';
 import { TicketDownload } from '@/components/common/TicketDownload';
+
 import { toast } from 'sonner';
+import { getValidDate } from '@/lib/utils/date';
+import { CountdownTimer } from '@/components/ui/countdown-timer';
 
 // Helper to handle both ISO strings and Firestore Timestamp objects
 const parseDate = (date: any) => {
@@ -64,7 +67,7 @@ export default function TicketDetailPage() {
                     return;
                 }
 
-                if (transaction.userId !== user.id) {
+                if (transaction.userId !== user.id && user.role !== 'admin') {
                     console.error("Unauthorized access to ticket");
                     notFound();
                     return;
@@ -234,6 +237,59 @@ export default function TicketDetailPage() {
                                 )}
                             </div>
 
+                            {/* Admin Actions */}
+                            {user?.role === 'admin' && ticket.paymentStatus === 'pending' && (
+                                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                                    <h3 className="text-red-400 font-bold mb-2 flex items-center gap-2">
+                                        ⚠️ Panel de Administrador
+                                    </h3>
+                                    <p className="text-sm text-zinc-400 mb-4">
+                                        Este ticket está pendiente de pago. Verifica el comprobante (si se envió) y aprueba o rechaza la transacción.
+                                    </p>
+                                    <div className="flex gap-3">
+                                        <Button
+                                            onClick={async () => {
+                                                const res = await updateTicketPaymentStatus(ticket.id, 'approved');
+                                                if (res.success) {
+                                                    toast.success('Ticket aprobado correctamente');
+                                                    // Force reload or update local state
+                                                    window.location.reload();
+                                                } else {
+                                                    toast.error('Error al aprobar ticket');
+                                                }
+                                            }}
+                                            className="bg-green-600 hover:bg-green-700 text-white"
+                                        >
+                                            ✅ Aprobar Pago
+                                        </Button>
+                                        <Button
+                                            onClick={async () => {
+                                                if (confirm('¿Estás seguro de rechazar este pago?')) {
+                                                    const res = await updateTicketPaymentStatus(ticket.id, 'rejected');
+                                                    if (res.success) {
+                                                        toast.success('Ticket rechazado');
+                                                        window.location.reload();
+                                                    } else {
+                                                        toast.error('Error al rechazar');
+                                                    }
+                                                }
+                                            }}
+                                            variant="destructive"
+                                        >
+                                            ❌ Rechazar
+                                        </Button>
+                                        {ticket.paymentProofUrl && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => window.open(ticket.paymentProofUrl, '_blank')}
+                                            >
+                                                📄 Ver Comprobante
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             {ticket.paymentType === 'installment' ? (
                                 <div className="bg-white/5 rounded-xl p-4">
                                     {isConverting ? (
@@ -253,9 +309,62 @@ export default function TicketDetailPage() {
                                     )}
                                 </div>
                             ) : (
-                                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
-                                    Ticket pagado en su totalidad. No requiere gestión de cuotas.
-                                </div>
+                                <>
+                                    {ticket.paymentMethod === 'offline' && ticket.paymentStatus === 'pending' && !isFullyPaid ? (
+                                        <div className="bg-white/5 rounded-xl p-6 border border-orange-500/20">
+                                            <div className="flex items-center gap-2 mb-4 text-orange-400">
+                                                <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+                                                <h3 className="font-bold">Pago Pendiente de Verificación</h3>
+                                            </div>
+
+                                            {ticket.expiresAt && (() => {
+                                                const expiryDate = getValidDate(ticket.expiresAt);
+                                                return expiryDate && new Date() < expiryDate ? (
+                                                    <div className="flex justify-between items-center mb-6 bg-orange-500/10 p-4 rounded-lg">
+                                                        <span className="text-sm text-orange-400 font-bold uppercase tracking-wider">Tiempo Restante</span>
+                                                        <CountdownTimer targetDate={expiryDate} />
+                                                    </div>
+                                                ) : null;
+                                            })()}
+
+                                            <div className="text-sm text-zinc-300 space-y-4">
+                                                <p>
+                                                    Para confirmar tu reserva, realiza la transferencia y envía el comprobante a nuestro WhatsApp.
+                                                    Si no se confirma el pago antes de que expire el tiempo, el ticket será anulado.
+                                                </p>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="bg-black/40 p-4 rounded-lg border border-white/10">
+                                                        <div className="font-bold text-white mb-2">📱 Plin</div>
+                                                        <div className="font-mono text-xl text-orange-400">944 784 488</div>
+                                                    </div>
+                                                    <div className="bg-black/40 p-4 rounded-lg border border-white/10">
+                                                        <div className="font-bold text-white mb-2">🏦 Interbank Soles</div>
+                                                        <div className="font-mono text-zinc-400 text-lg">076 3129312815</div>
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <span className="text-xs text-zinc-500 uppercase">CCI</span>
+                                                            <span className="font-mono text-zinc-400">00307601312931281576</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <Button
+                                                    className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white border-0 py-6 text-base"
+                                                    onClick={() => window.open(`https://wa.me/51944784488?text=Hola,%20adjunto%20mi%20comprobante%20para%20la%20orden%20${ticket.id}`, '_blank')}
+                                                >
+                                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+                                                    </svg>
+                                                    Enviar Comprobante
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
+                                            Ticket pagado en su totalidad. No requiere gestión de cuotas.
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
 

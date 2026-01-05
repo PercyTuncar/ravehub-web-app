@@ -3,7 +3,9 @@ import { Ticket, Calendar, MapPin, Download, History, ChevronRight, Loader2, QrC
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { getValidDate } from '@/lib/utils/date';
 import { extractColorsFromImageEnhanced, ColorPalette, getDefaultPalette } from '@/lib/utils/enhanced-color-extraction';
+import { CountdownTimer } from '@/components/ui/countdown-timer';
 
 interface TicketCardProps {
     ticket: any;
@@ -20,6 +22,14 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
         month: 'short',
         year: 'numeric'
     });
+
+
+
+
+
+    const expiryDate = getValidDate(ticket.expiresAt);
+
+
 
     useEffect(() => {
         let isMounted = true;
@@ -68,9 +78,28 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
         '--ticket-muted': palette.muted
     } as React.CSSProperties : {};
 
+    // Expiration Logic for Offline Payments
+    // It is pending ONLY if it is pending AND (not installment OR (installment and 0 paid))
+    const hasPaidInstallments = status?.paid > 0;
+    const isOfflinePending = !isFullyPaid &&
+        ticket.paymentMethod === 'offline' &&
+        ticket.paymentStatus === 'pending' &&
+        ticket.expiresAt &&
+        !hasPaidInstallments;
+
+    const [isExpired, setIsExpired] = useState(false);
+
+    useEffect(() => {
+        if (isOfflinePending && expiryDate) {
+            if (new Date() > expiryDate) {
+                setIsExpired(true);
+            }
+        }
+    }, [expiryDate, isOfflinePending]);
+
     return (
         <div
-            className="group relative w-full rounded-3xl overflow-hidden transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl"
+            className={`group relative w-full rounded-3xl overflow-hidden transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl ${isExpired ? 'opacity-60 grayscale' : ''}`}
             style={cardStyle}
         >
             {/* Dynamic Background Mesh/Glow */}
@@ -145,8 +174,16 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                                     <QrCode className="w-3 h-3 mr-1.5" />
                                     <span>Acceso Listo</span>
                                 </Badge>
+                            ) : isExpired ? (
+                                <Badge className="bg-red-500/10 text-red-500 border-red-500/20 backdrop-blur-sm">
+                                    <span>ANULADO (EXPIRADO)</span>
+                                </Badge>
+                            ) : isOfflinePending ? (
+                                <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 backdrop-blur-sm animate-pulse">
+                                    <span>ESPERANDO PAGO</span>
+                                </Badge>
                             ) : (
-                                <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 backdrop-blur-sm animate-pulse">
+                                <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 backdrop-blur-sm">
                                     <span>Pago en Progreso</span>
                                 </Badge>
                             )}
@@ -169,8 +206,43 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                         </div>
                     </div>
 
-                    {/* Progress Bar for Installments */}
-                    {!isFullyPaid && status && (
+                    {/* Content Logic Based on Status */}
+                    {isOfflinePending && !isExpired ? (
+                        <div className="mt-6 mb-2 bg-orange-500/5 border border-orange-500/20 rounded-xl p-4">
+                            <div className="flex justify-between items-center mb-3">
+                                <span className="text-xs text-orange-400 font-bold uppercase tracking-wider">Tiempo Restante para Pagar</span>
+                                <CountdownTimer targetDate={expiryDate!} onExpire={() => setIsExpired(true)} />
+                            </div>
+
+                            <div className="space-y-3 text-sm text-zinc-300">
+                                <p className="text-xs">
+                                    Tu reserva está confirmada temporalmente. Envía el comprobante a WhatsApp antes de que expire el tiempo.
+                                </p>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                    <div className="bg-black/20 p-2 rounded border border-white/5">
+                                        <div className="font-bold text-white mb-1">📱 Plin:</div>
+                                        <div className="font-mono text-orange-400">944 784 488</div>
+                                    </div>
+                                    <div className="bg-black/20 p-2 rounded border border-white/5">
+                                        <div className="font-bold text-white mb-1">🏦 Interbank Soles:</div>
+                                        <div className="font-mono text-zinc-400">076 3129312815</div>
+                                        <div className="font-bold text-white mt-1 mb-0.5">CCI:</div>
+                                        <div className="font-mono text-zinc-400">00307601312931281576</div>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full border-green-500/30 text-green-400 hover:bg-green-500/10 bg-transparent h-8 text-xs mt-2"
+                                    onClick={() => window.open(`https://wa.me/51944784488?text=Hola,%20adjunto%20mi%20comprobante%20para%20la%20orden%20${ticket.id}`, '_blank')}
+                                >
+                                    Enviar Comprobante por WhatsApp
+                                </Button>
+                            </div>
+                        </div>
+                    ) : !isFullyPaid && status && !isExpired && (
                         <div className="mt-6 mb-2">
                             <div className="flex justify-between text-xs text-white/50 mb-2">
                                 <span>Progreso de Pagos</span>
@@ -188,8 +260,8 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                         </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="mt-8 flex flex-col sm:flex-row gap-3 items-center pt-6 border-t border-dashed border-white/10">
+                    {/* General Actions */}
+                    <div className="mt-4 flex flex-col sm:flex-row gap-3 items-center pt-4 border-t border-dashed border-white/10">
                         {isFullyPaid ? (
                             <>
                                 <Link
@@ -212,18 +284,25 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                                     </Button>
                                 </Link>
                             </>
+                        ) : isExpired ? (
+                            <Button disabled className="w-full bg-red-500/10 text-red-500 border border-red-500/20">
+                                Ticket Expirado
+                            </Button>
                         ) : (
                             <Link href={`/profile/tickets/${ticket.id}`} className="w-full">
                                 <Button
                                     className="w-full text-white border-0 transition-transform group-hover:translate-x-1"
                                     style={{ background: palette?.gradients.primary }}
                                 >
-                                    <span className="mr-auto">Gestionar Pagos</span>
+                                    <span className="mr-auto">
+                                        {isOfflinePending ? 'Ver Instrucciones' : 'Gestionar Pagos'}
+                                    </span>
                                     <ChevronRight className="w-4 h-4" />
                                 </Button>
                             </Link>
                         )}
                     </div>
+
                 </div>
             </div>
         </div>
