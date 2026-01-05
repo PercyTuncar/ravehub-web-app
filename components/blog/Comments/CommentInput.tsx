@@ -9,8 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'react-hot-toast'; // Assuming react-hot-toast is installed based on package.json
+import { toast } from 'react-hot-toast';
 import { createComment } from '@/lib/actions/blog-actions';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { VerificationRequiredModal } from '@/components/auth/VerificationRequiredModal';
 
 const commentSchema = z.object({
     content: z.string().min(1, 'El comentario no puede estar vacío').max(1000, 'El comentario es muy largo'),
@@ -48,7 +50,9 @@ export function CommentInput({
 }: CommentInputProps) {
     const [isFocused, setIsFocused] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showVerificationModal, setShowVerificationModal] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const { firebaseUser } = useAuth();
 
     const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<CommentFormData>({
         resolver: zodResolver(commentSchema),
@@ -69,6 +73,11 @@ export function CommentInput({
     const onSubmit = async (data: CommentFormData) => {
         if (!currentUser) {
             toast.error('Debes iniciar sesión para comentar');
+            return;
+        }
+
+        if (firebaseUser && !firebaseUser.emailVerified) {
+            setShowVerificationModal(true);
             return;
         }
 
@@ -122,6 +131,12 @@ export function CommentInput({
 
     return (
         <div className={cn("flex gap-4 w-full", className)}>
+            <VerificationRequiredModal
+                isOpen={showVerificationModal}
+                onClose={() => setShowVerificationModal(false)}
+                title="Verificación Requerida"
+                message="Para participar en la conversación, necesitas verificar tu correo electrónico."
+            />
             <Avatar className="w-10 h-10 border border-white/10 hidden sm:block">
                 <AvatarImage src={currentUser.imageUrl} alt={currentUser.name} />
                 <AvatarFallback className="bg-primary/20 text-primary">

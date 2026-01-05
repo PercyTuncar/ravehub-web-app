@@ -13,6 +13,10 @@ import {
   linkWithPopup,
   unlink,
   updateProfile,
+  fetchSignInMethodsForEmail,
+  linkWithCredential,
+  AuthCredential,
+  OAuthCredential,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
@@ -29,6 +33,9 @@ interface AuthContextType {
   unlinkGoogleAccount: () => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (data: Partial<User>) => Promise<void>;
+  updateProfilePicture: (file: Blob) => Promise<void>;
+  updateUserPassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  completeAccountLinking: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -253,27 +260,95 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           updatedAt: serverTimestamp(),
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing in with Google:', error);
+
+      // Handle account linking
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        const email = error.customData?.email;
+        const pendingCredential = GoogleAuthProvider.credentialFromError(error);
+
+        if (email && pendingCredential) {
+          // Store credential temporarily
+          sessionStorage.setItem('pendingLinkCredential', JSON.stringify(pendingCredential));
+          sessionStorage.setItem('pendingLinkEmail', email);
+
+          throw new Error('AUTH_LINK_REQUIRED');
+        }
+      }
+
+      throw error;
+    }
+  };
+
+  // Helper to complete linking after password login
+  const completeAccountLinking = async () => {
+    const pendingCredentialString = sessionStorage.getItem('pendingLinkCredential');
+    if (!pendingCredentialString || !auth.currentUser) return;
+
+    try {
+      const pendingCredential = GoogleAuthProvider.credential(JSON.parse(pendingCredentialString));
+      await linkWithCredential(auth.currentUser, pendingCredential);
+
+      // Clear storage
+      sessionStorage.removeItem('pendingLinkCredential');
+      sessionStorage.removeItem('pendingLinkEmail');
+
+      // Update user doc
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+        authProvider: 'email+google',
+        googleLinked: true,
+        updatedAt: serverTimestamp(),
+      });
+
+      // Refresh user data
+      await loadUserData(auth.currentUser.uid);
+
+      console.log('Account linked successfully');
+    } catch (error) {
+      console.error('Error completing account linking:', error);
       throw error;
     }
   };
 
   const linkGoogleAccount = async () => {
     if (!firebaseUser) throw new Error('No user logged in');
+    if (!firebaseUser.email) throw new Error('Current user has no email');
 
     try {
       const provider = new GoogleAuthProvider();
-      await linkWithPopup(firebaseUser, provider);
+      // Force account selection to avoid auto-linking the wrong account if multiple are logged in
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+
+      const result = await linkWithPopup(firebaseUser, provider);
+      const linkedEmail = result.user.email;
+
+      // STRICT VALIDATION: Check if the linked Google email matches the current account email
+      if (linkedEmail !== firebaseUser.email) {
+        // If they don't match, immediate security unlink
+        await unlink(firebaseUser, provider.providerId);
+        throw new Error('EMAIL_MISMATCH');
+      }
 
       await updateDoc(doc(db, 'users', firebaseUser.uid), {
         authProvider: 'email+google',
         googleLinked: true,
-        googleUID: firebaseUser.uid,
+        googleUID: result.user.uid, // This might differ from firebase uid if it came from provider data, but usually result.user IS firebaseUser. 
+        // Actually result.user is the User object which is the same as firebaseUser after linking.
+        // To get the google specific ID we might look at providerData but simply marking it linked is enough.
         updatedAt: serverTimestamp(),
       });
-    } catch (error) {
+
+      // Update local state
+      await loadUserData(firebaseUser.uid);
+
+    } catch (error: any) {
       console.error('Error linking Google account:', error);
+      if (error.message === 'EMAIL_MISMATCH') {
+        throw new Error('El correo de Google debe coincidir con tu correo actual.');
+      }
       throw error;
     }
   };
@@ -321,6 +396,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfilePicture = async (file: Blob) => {
+    if (!firebaseUser) throw new Error('No user logged in');
+
+    try {
+      const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+      const { storage } = await import('@/lib/firebase/config');
+
+      // Create a reference to 'users/{uid}/profile.jpg'
+      const storageRef = ref(storage, `users/${firebaseUser.uid}/profile.jpg`);
+
+      // Upload the file
+      await uploadBytes(storageRef, file);
+
+      // Get the URL
+      const photoURL = await getDownloadURL(storageRef);
+
+      // Update Firebase Auth profile
+      await updateProfile(firebaseUser, { photoURL });
+
+      // Update Firestore user document
+      await updateDoc(doc(db, 'users', firebaseUser.uid), {
+        photoURL,
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update local state
+      setFirebaseUser({ ...firebaseUser, photoURL });
+      setUser(prev => prev ? { ...prev, photoURL } : null);
+
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      throw error;
+    }
+  };
+
+  const updateUserPassword = async (currentPassword: string, newPassword: string) => {
+    if (!firebaseUser) throw new Error('No user logged in');
+    if (!firebaseUser.email) throw new Error('User has no email');
+
+    try {
+      const { EmailAuthProvider, reauthenticateWithCredential, updatePassword } = await import('firebase/auth');
+
+      // 1. Re-authenticate
+      const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+      await reauthenticateWithCredential(firebaseUser, credential);
+
+      // 2. Update Password
+      await updatePassword(firebaseUser, newPassword);
+
+    } catch (error: any) {
+      console.error('Error updating password:', error);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+        throw new Error('La contraseña actual es incorrecta.');
+      }
+      throw error;
+    }
+  };
+
   const value = {
     user,
     firebaseUser,
@@ -332,6 +465,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     unlinkGoogleAccount,
     logout,
     updateUserProfile,
+    updateProfilePicture,
+    updateUserPassword,
+    completeAccountLinking,
   };
 
   return (

@@ -94,7 +94,7 @@ export default function EventsClient({
 
             {/* Main Content */}
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 lg:pt-24">
-                <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
                     {/* Sidebar Filters */}
                     <aside className="w-full lg:w-80 shrink-0">
                         <div className="lg:sticky lg:top-24 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar rounded-3xl">

@@ -1,17 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, User, Mail, Phone, MapPin, Shield, Bell, Palette, ChevronDown, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, MapPin, Shield, Bell, ChevronDown, Check, Loader2, Camera } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { useTheme } from '@/lib/contexts/ThemeContext';
+import { ImageCropperModal } from '@/components/profile/ImageCropperModal';
+import { ChangePasswordModal } from '@/components/profile/ChangePasswordModal';
+import { toast } from 'sonner';
+
 import { motion } from 'framer-motion';
+import { AMERICAS_COUNTRIES } from '@/lib/constants/americas';
+import { SUPPORTED_CURRENCIES } from '@/lib/utils/currency-converter';
 
 export default function SettingsPage() {
-  const { user, updateUserProfile } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { user, updateUserProfile, updateProfilePicture, linkGoogleAccount } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -21,6 +27,11 @@ export default function SettingsPage() {
     country: user?.country || 'Chile',
     preferredCurrency: user?.preferredCurrency || 'CLP',
   });
+
+  // Image Upload State
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   const [notifications, setNotifications] = useState({
     emailEvents: true,
@@ -35,12 +46,32 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       await updateUserProfile(formData);
-      // Optional: Add toast notification here
-      console.log('Profile updated successfully');
+      toast.success('Perfil actualizado correctamente');
     } catch (error) {
       console.error('Error updating profile:', error);
+      toast.error('Error al actualizar el perfil');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const imageUrl = URL.createObjectURL(file);
+      setSelectedImage(imageUrl);
+      setIsCropperOpen(true);
+    }
+  };
+
+  const handleImageCropComplete = async (croppedBlob: Blob) => {
+    try {
+      const toastId = toast.loading('Subiendo foto de perfil...');
+      await updateProfilePicture(croppedBlob);
+      toast.success('Foto de perfil actualizada', { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error('Error al subir la imagen');
     }
   };
 
@@ -49,9 +80,22 @@ export default function SettingsPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const countryCode = e.target.value;
+    const selectedCountry = AMERICAS_COUNTRIES.find(c => c.name === countryCode);
+
+    setFormData(prev => ({
+      ...prev,
+      country: countryCode,
+      phonePrefix: selectedCountry ? selectedCountry.prefix : prev.phonePrefix,
+      preferredCurrency: (selectedCountry && SUPPORTED_CURRENCIES[selectedCountry.currency as keyof typeof SUPPORTED_CURRENCIES])
+        ? selectedCountry.currency
+        : prev.preferredCurrency
+    }));
+  };
+
   const handleSaveNotifications = () => {
-    // In a real implementation, this would save to the backend
-    console.log('Preferencias de notificaciones guardadas');
+    toast.success('Preferencias guardadas');
   };
 
   if (!user) {
@@ -68,7 +112,6 @@ export default function SettingsPage() {
     );
   }
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.1 } }
@@ -82,18 +125,22 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen relative bg-[#141618] pt-24 pb-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Dynamic Background */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[#141618]"
+      {/* Background Ambience */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 rounded-full blur-[120px]" />
+      </div>
+
+      <ImageCropperModal
+        isOpen={isCropperOpen}
+        onClose={() => setIsCropperOpen(false)}
+        imageSrc={selectedImage}
+        onCropComplete={handleImageCropComplete}
       />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 85% 15%, rgba(251,169,5,0.08), transparent 40%), radial-gradient(circle at 15% 85%, rgba(0,203,255,0.06), transparent 40%)'
-        }}
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
       />
 
       <motion.div
@@ -122,11 +169,32 @@ export default function SettingsPage() {
 
             {/* Personal Info Card */}
             <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 md:p-8">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="w-5 h-5 text-primary" />
+              <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-white/10 group-hover:border-primary transition-colors">
+                      {user.photoURL ? (
+                        <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-8 h-8 text-primary" />
+                      )}
+                    </div>
+                    <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Camera className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Información Personal</h2>
+                    <p className="text-xs text-white/50">Haz clic en la foto para cambiarla</p>
+                  </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                  />
                 </div>
-                <h2 className="text-xl font-bold text-white">Información Personal</h2>
               </div>
 
               <div className="space-y-5">
@@ -177,10 +245,9 @@ export default function SettingsPage() {
                         onChange={handleInputChange}
                         className="w-full h-11 bg-black/20 border border-white/10 rounded-xl px-3 text-sm text-white appearance-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 cursor-pointer"
                       >
-                        <option value="+56" className="bg-[#1A1D21]">+56 CL</option>
-                        <option value="+54" className="bg-[#1A1D21]">+54 AR</option>
-                        <option value="+51" className="bg-[#1A1D21]">+51 PE</option>
-                        <option value="+57" className="bg-[#1A1D21]">+57 CO</option>
+                        {Array.from(new Set(AMERICAS_COUNTRIES.map(c => c.prefix))).sort().map(prefix => (
+                          <option key={prefix} value={prefix} className="bg-[#1A1D21]">{prefix}</option>
+                        ))}
                       </select>
                       <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
                     </div>
@@ -208,13 +275,12 @@ export default function SettingsPage() {
                       <select
                         name="country"
                         value={formData.country}
-                        onChange={handleInputChange}
+                        onChange={handleCountryChange}
                         className="w-full h-11 bg-black/20 border border-white/10 rounded-xl pl-10 pr-8 text-sm text-white appearance-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 cursor-pointer"
                       >
-                        <option value="Chile" className="bg-[#1A1D21]">Chile</option>
-                        <option value="Argentina" className="bg-[#1A1D21]">Argentina</option>
-                        <option value="Perú" className="bg-[#1A1D21]">Perú</option>
-                        <option value="Colombia" className="bg-[#1A1D21]">Colombia</option>
+                        {AMERICAS_COUNTRIES.map((country) => (
+                          <option key={country.code} value={country.name} className="bg-[#1A1D21]">{country.name}</option>
+                        ))}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
                     </div>
@@ -229,9 +295,11 @@ export default function SettingsPage() {
                         onChange={handleInputChange}
                         className="w-full h-11 bg-black/20 border border-white/10 rounded-xl pl-10 pr-8 text-sm text-white appearance-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 cursor-pointer"
                       >
-                        <option value="CLP" className="bg-[#1A1D21]">CLP - Peso Chileno</option>
-                        <option value="USD" className="bg-[#1A1D21]">USD - Dólar Americano</option>
-                        <option value="EUR" className="bg-[#1A1D21]">EUR - Euro</option>
+                        {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
+                          <option key={code} value={code} className="bg-[#1A1D21]">
+                            {code} - {info.name}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
                     </div>
@@ -256,7 +324,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Notifications Card */}
+            {/* Notifications Card - Unchanged */}
             <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 md:p-8">
               <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
@@ -320,33 +388,6 @@ export default function SettingsPage() {
           {/* Right Column: Sidebar */}
           <motion.div variants={itemVariants} className="space-y-6">
 
-            {/* Theme Card */}
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <Palette className="w-4 h-4 text-purple-400" />
-                </div>
-                <h3 className="text-lg font-bold text-white">Apariencia</h3>
-              </div>
-              <div className="space-y-3">
-                <label className="text-xs text-white/60">Tema de la aplicación</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['light', 'dark', 'system'].map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTheme(t as any)}
-                      className={`h-9 rounded-lg text-xs font-medium border transition-all ${theme === t
-                          ? 'bg-primary/20 border-primary/50 text-primary'
-                          : 'bg-black/20 border-white/5 text-white/60 hover:bg-black/40'
-                        }`}
-                    >
-                      {t === 'light' ? 'Claro' : t === 'dark' ? 'Oscuro' : 'Auto'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* Security Card */}
             <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-4">
@@ -355,6 +396,8 @@ export default function SettingsPage() {
                 </div>
                 <h3 className="text-lg font-bold text-white">Seguridad</h3>
               </div>
+
+
 
               <div className="space-y-4">
                 <div className="p-3 bg-black/20 rounded-xl border border-white/5 flex items-center justify-between">
@@ -371,19 +414,35 @@ export default function SettingsPage() {
                     <span className="text-sm text-white/80">Google</span>
                   </div>
                   <span className={`text-[10px] px-2 py-0.5 rounded border ${user.googleLinked
-                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/20'
-                      : 'bg-white/5 text-white/40 border-white/5'
+                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/20'
+                    : 'bg-white/5 text-white/40 border-white/5'
                     }`}>
                     {user.googleLinked ? 'VINCULADO' : 'NO VINCULADO'}
                   </span>
                 </div>
 
-                <Button variant="outline" className="w-full border-white/10 text-white hover:bg-white/5 bg-transparent h-9 text-xs">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsChangePasswordOpen(true)}
+                  className="w-full border-white/10 text-white hover:bg-white/5 bg-transparent h-9 text-xs"
+                >
                   Cambiar Contraseña
                 </Button>
 
                 {!user.googleLinked && (
-                  <Button variant="outline" className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10 bg-transparent h-9 text-xs">
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const toastId = toast.loading('Vinculando cuenta de Google...');
+                      try {
+                        await linkGoogleAccount();
+                        toast.success('Cuenta vinculada correctamente', { id: toastId });
+                      } catch (error: any) {
+                        toast.error(error.message || 'Error al vincular cuenta', { id: toastId });
+                      }
+                    }}
+                    className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10 bg-transparent h-9 text-xs"
+                  >
                     Vincular Google
                   </Button>
                 )}

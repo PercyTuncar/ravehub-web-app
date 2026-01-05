@@ -66,25 +66,16 @@ function RegisterContent() {
     }
   };
 
-  // Redirect if already logged in
+  const [isRegistering, setIsRegistering] = useState(false);
+
+  // Redirect if already logged in - but wait if we are in the middle of registering
   useEffect(() => {
-    if (user) {
+    if (user && !isRegistering) {
       const destination = redirect || sessionStorage.getItem('redirectAfterAuth') || '/';
       sessionStorage.removeItem('redirectAfterAuth');
       router.push(destination);
     }
-  }, [user, router, redirect]);
-
-  // Real-time password validation
-  useEffect(() => {
-    const pwd = formData.password;
-    setPasswordRequirements({
-      length: pwd.length >= 8,
-      uppercase: /[A-Z]/.test(pwd),
-      lowercase: /[a-z]/.test(pwd),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(pwd) || /[^a-zA-Z0-9]/.test(pwd),
-    });
-  }, [formData.password]);
+  }, [user, router, redirect, isRegistering]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -95,10 +86,12 @@ function RegisterContent() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setIsRegistering(true); // Flag to prevent auto-redirect effect
 
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       setLoading(false);
+      setIsRegistering(false);
       return;
     }
 
@@ -106,6 +99,7 @@ function RegisterContent() {
     if (!Object.values(passwordRequirements).every(Boolean)) {
       setError('Por favor cumple con todos los requisitos de la contraseña antes de continuar.');
       setLoading(false);
+      setIsRegistering(false);
       return;
     }
 
@@ -123,6 +117,7 @@ function RegisterContent() {
       });
       router.push('/verify-email');
     } catch (error: any) {
+      setIsRegistering(false); // Reset flag on error
       // Extract Firebase error code
       const code = error.code;
       const message = error.message;

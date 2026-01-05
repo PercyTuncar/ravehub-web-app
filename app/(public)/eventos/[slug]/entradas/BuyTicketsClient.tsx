@@ -23,6 +23,9 @@ import { ConvertedPrice } from '@/components/common/ConvertedPrice';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 
+import { VerificationRequiredModal } from '@/components/auth/VerificationRequiredModal';
+import { useAuth } from '@/lib/contexts/AuthContext';
+
 // --- Constants ---
 const RESERVATION_FEE = 50;
 
@@ -422,10 +425,19 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
     return new Date(date.getTime() + userTimezoneOffset);
   };
 
+  const { firebaseUser } = useAuth();
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+
   const handlePurchase = async () => {
     if (!event || !acceptTerms || totalTickets === 0) return;
 
+    if (firebaseUser && !firebaseUser.emailVerified) {
+      setShowVerificationModal(true);
+      return;
+    }
+
     setProcessing(true);
+    // ... (rest of function)
     try {
       const response = await fetch('/api/tickets/purchase', {
         method: 'POST',
@@ -501,6 +513,12 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-orange-500/30 pb-32 lg:pb-12">
+      <VerificationRequiredModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        title="Verificación Necesaria"
+        message="Para comprar entradas, necesitamos verificar tu identidad. Por favor confirma tu correo electrónico."
+      />
       {/* Background Ambience - Dynamic Colors */}
       <div className="fixed inset-0 pointer-events-none transition-colors duration-1000">
         {event.bannerImageUrl && (
@@ -903,7 +921,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         </div>
       </div>
 
-    </div>
+    </div >
   );
 }
 

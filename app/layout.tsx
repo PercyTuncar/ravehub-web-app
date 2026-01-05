@@ -70,6 +70,10 @@ export const metadata: Metadata = {
 
 import PageWrapper from '@/components/layout/PageWrapper'
 
+import { VerificationGuard } from '@/components/auth/VerificationGuard'
+
+// ...
+
 export default function RootLayout({
   children,
 }: {
@@ -83,11 +87,13 @@ export default function RootLayout({
             <NotificationsProvider>
               <CurrencyProvider>
                 <CartProvider>
-                  <MainNavbar />
-                  <MobileNavbar />
-                  <PageWrapper>
-                    {children}
-                  </PageWrapper>
+                  <VerificationGuard>
+                    <MainNavbar />
+                    <MobileNavbar />
+                    <PageWrapper>
+                      {children}
+                    </PageWrapper>
+                  </VerificationGuard>
                 </CartProvider>
               </CurrencyProvider>
             </NotificationsProvider>
