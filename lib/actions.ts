@@ -861,3 +861,64 @@ export async function getUserProfileData(userId: string) {
     return { success: false, error: 'Error al cargar datos del perfil' };
   }
 }
+
+// Fix Legacy Data: Recalculate Installments
+export async function recalculateTicketInstallments(ticketId: string) {
+  'use server';
+  await requireAdmin();
+
+  try {
+    const ticket = await ticketTransactionsCollection.get(ticketId);
+    if (!ticket) throw new Error('Ticket not found');
+
+    if (ticket.paymentType !== 'installment') throw new Error('Not an installment ticket');
+
+    // 1. Calculate correct values
+    const RESERVATION_FEE_PER_TICKET = 50;
+    // Assuming ticketItems contains quantity info. If not, fallback to ticket.quantity
+    let quantity = ticket.quantity || 1;
+    if (ticket.ticketItems && ticket.ticketItems.length > 0) {
+      quantity = ticket.ticketItems.reduce((acc: number, item: any) => acc + item.quantity, 0);
+    }
+
+    const correctReservationTotal = RESERVATION_FEE_PER_TICKET * quantity;
+    const itemsTotal = ticket.totalAmount; // This should be correct (1490)
+    const amountToFinance = itemsTotal - correctReservationTotal;
+
+    // Get existing installments to know how many there are
+    const installments = await paymentInstallmentsCollection.query([
+      { field: 'transactionId', operator: '==', value: ticketId }
+    ]);
+
+    // Filter out reservation (installmentNumber 0) to count actual installments
+    const financeInstallments = installments.filter(i => i.installmentNumber > 0);
+    const count = financeInstallments.length;
+
+    if (count === 0) throw new Error('No finance installments found');
+
+    const amountPerInstallment = amountToFinance / count;
+
+    // 2. Update Documents
+    const batch = [];
+
+    // Update Reservation
+    const reservationInst = installments.find(i => i.installmentNumber === 0);
+    if (reservationInst) {
+      await paymentInstallmentsCollection.update(reservationInst.id, {
+        amount: correctReservationTotal
+      });
+    }
+
+    // Update Finance Installments
+    for (const inst of financeInstallments) {
+      await paymentInstallmentsCollection.update(inst.id, {
+        amount: amountPerInstallment
+      });
+    }
+
+    return { success: true, message: `Recalculado: Reserva=${correctReservationTotal}, Cuotas=${amountPerInstallment}` };
+
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
