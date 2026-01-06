@@ -14,6 +14,8 @@ interface InstallmentCardProps {
     onUploadProof?: () => void;
     onViewProof?: (url: string) => void;
     isLast?: boolean;
+    isAdmin?: boolean;
+    onRevert?: () => void;
 }
 
 export function InstallmentCard({
@@ -22,7 +24,9 @@ export function InstallmentCard({
     currency,
     onUploadProof,
     onViewProof,
-    isLast = false
+    isLast = false,
+    isAdmin = false,
+    onRevert
 }: InstallmentCardProps) {
     const getStatusConfig = () => {
         switch (status) {
@@ -159,6 +163,24 @@ export function InstallmentCard({
                     >
                         <Eye className="w-3.5 h-3.5 mr-1.5" />
                         Ver Comprobante
+                    </Button>
+                )}
+
+                {status === 'paid' && isAdmin && onRevert && (
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="w-full text-xs mt-2 shadow-lg shadow-red-500/20"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('¿Estás seguro de ANULAR este pago? El cliente tendrá que subir el comprobante nuevamente.')) {
+                                onRevert();
+                            }
+                        }}
+                    >
+                        <XCircle className="w-3.5 h-3.5 mr-1.5" />
+                        Anular Pago (Admin)
                     </Button>
                 )}
 

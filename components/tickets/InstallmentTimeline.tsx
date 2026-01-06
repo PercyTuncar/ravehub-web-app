@@ -5,7 +5,7 @@ import { InstallmentCard, InstallmentStatus } from './InstallmentCard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { FileUpload } from '@/components/common/FileUpload';
 import { Button } from '@/components/ui/button';
-import { uploadUserInstallmentProof } from '@/lib/actions';
+import { uploadUserInstallmentProof, revertInstallmentPayment } from '@/lib/actions';
 import { toast } from 'sonner';
 import { TrendingUp, CheckCircle } from 'lucide-react';
 
@@ -14,16 +14,50 @@ interface InstallmentTimelineProps {
     ticketId: string;
     eventCurrency: string;
     onProofUploaded: () => void;
+    isAdmin?: boolean;
 }
 
 export function InstallmentTimeline({
     installments,
     ticketId,
     eventCurrency,
-    onProofUploaded
+    onProofUploaded,
+    isAdmin = false
 }: InstallmentTimelineProps) {
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
     const [selectedInstallment, setSelectedInstallment] = useState<any>(null);
+
+    // ... (existing helper functions)
+
+    const handleRevertPayment = async (installmentId: string) => {
+        try {
+            const result = await revertInstallmentPayment(installmentId);
+            if (result.success) {
+                toast.success('Pago anulado correctamente');
+                onProofUploaded(); // Refresh data
+            } else {
+                toast.error(result.error || 'Error al anular el pago');
+            }
+        } catch (error) {
+            toast.error('Error inesperado');
+        }
+    };
+
+    // ...
+
+    return (
+        <InstallmentCard
+            key={installment.id}
+            installment={installment}
+            status={status}
+            currency={eventCurrency}
+            onUploadProof={() => handleUploadClick(installment)}
+            onViewProof={handleViewProof}
+            isLast={index === installments.length - 1}
+            isAdmin={isAdmin}
+            onRevert={() => handleRevertPayment(installment.id)}
+        />
+    );
 
     // Determine installment status
     const getInstallmentStatus = (installment: any, index: number): InstallmentStatus => {
@@ -33,8 +67,12 @@ export function InstallmentTimeline({
         }
 
         // User uploaded proof but not yet approved
-        if (installment.userUploadedProofUrl && !installment.adminApproved) {
+        if (installment.userUploadedProofUrl && !installment.adminApproved && installment.status !== 'rejected') {
             return 'pending-approval';
+        }
+
+        if (installment.status === 'rejected') {
+            return 'rejected';
         }
 
         // Find next due installment
@@ -160,6 +198,8 @@ export function InstallmentTimeline({
                             onUploadProof={() => handleUploadClick(installment)}
                             onViewProof={handleViewProof}
                             isLast={index === installments.length - 1}
+                            isAdmin={isAdmin}
+                            onRevert={() => handleRevertPayment(installment.id)}
                         />
                     );
                 })}

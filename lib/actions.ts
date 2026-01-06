@@ -245,9 +245,37 @@ export async function updateTicketPaymentStatus(ticketId: string, status: 'appro
     if (!ticket) throw new Error('Ticket not found');
 
     // 2. Handle Rejection (Global)
+    // 2. Handle Rejection
     if (status === 'rejected') {
-      // If rejecting, we reject the transaction AND clear/reject pending installments?
-      // For simplicity, just mark transaction rejected.
+      if (ticket.paymentType === 'installment') {
+        // Reject the SPECIFIC pending installment, not the whole ticket
+        // Find the pending installment (pending approval)
+        const installments = await paymentInstallmentsCollection.query([
+          { field: 'transactionId', operator: '==', value: ticketId }
+        ]);
+
+        // Find the one waiting for approval (or the next open one)
+        const pendingInst = installments.find(i => !i.adminApproved && i.status !== 'paid' && i.userUploadedProofUrl);
+
+        if (pendingInst) {
+          await paymentInstallmentsCollection.update(pendingInst.id, {
+            status: 'rejected',
+            adminApproved: false,
+            // Do NOT clear userUploadedProofUrl so we can see history? Or clear it? 
+            // InstallmentCard uses status='rejected' to show "Rechazado" state.
+          });
+
+          // Notify user
+          await createNotification({
+            userId: ticket.userId,
+            ...InstallmentNotifications.paymentRejected(ticket.id, pendingInst.installmentNumber, rejectionReason || 'Comprobante rechadazo')
+          });
+
+          return { success: true, message: 'Cuota rechazada. El usuario deberá subir un nuevo comprobante.' };
+        }
+      }
+
+      // Default: Reject the entire transaction (e.g. single payment or severe issue)
       await ticketTransactionsCollection.update(ticketId, {
         paymentStatus: 'rejected',
         rejectionReason: rejectionReason || 'Rechazado por administrador',
@@ -578,6 +606,7 @@ export async function uploadUserInstallmentProof(
     await paymentInstallmentsCollection.update(installmentId, {
       userUploadedProofUrl: downloadURL,
       userUploadedAt: new Date().toISOString(),
+      status: 'pending', // Reset status to pending so it goes back to review
       // status remains 'pending', but UI shows 'pending-approval'
     });
 
@@ -691,6 +720,61 @@ export async function rejectInstallmentProof(
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || 'Error al rechazar la cuota' };
+  }
+}
+
+// Admin Action: Revert/Annull Payment (Mistake Correction)
+export async function revertInstallmentPayment(
+  installmentId: string
+): Promise<{ success: boolean; error?: string }> {
+  'use server';
+  await requireAdmin();
+
+  try {
+    const installment = await paymentInstallmentsCollection.get(installmentId);
+    if (!installment) {
+      return { success: false, error: 'Cuota no encontrada' };
+    }
+
+    // Reset to rejected so user has to upload again
+    // We clear paidAt and adminApproved.
+    await paymentInstallmentsCollection.update(installmentId, {
+      status: 'rejected',
+      adminApproved: false,
+      paidAt: null,
+      // We keep the old proof url (userUploadedProofUrl) or clearing it?
+      // If we want them to upload NEW one, keeping it might be confusing if they just re-submit same one.
+      // But keeping it allows admin to see "previous" attempt if we had history. 
+      // Current logic: status 'rejected' allows upload.
+      // Important: We should probably NOT clear the proofUrl field instantly if we want to show "Old proof" but
+      // the InstallmentCard logic for 'rejected' shows "Subir Nuevo".
+    });
+
+    // Also update parent ticket if it was fully approved, now it's not.
+    const ticket = await ticketTransactionsCollection.get(installment.transactionId);
+    if (ticket && ticket.paymentStatus === 'approved') {
+      await ticketTransactionsCollection.update(installment.transactionId, {
+        paymentStatus: 'pending', // Revert to pending
+        ticketDeliveryStatus: 'pending' // Revoke delivery
+      });
+    }
+
+    // Notification?
+    if (ticket) {
+      await createNotification({
+        userId: ticket.userId,
+        // Using generic message for now or create a new notification type "payment_reverted"
+        title: '⚠️ Pago Anulado',
+        body: `El pago de la cuota #${installment.installmentNumber} ha sido anulado por un administrador. Por favor revisa y sube el comprobante nuevamente.`,
+        type: 'payment',
+        orderId: ticket.id
+      });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error reverting installment:', error);
+    return { success: false, error: error.message || 'Error al anular el pago' };
   }
 }
 

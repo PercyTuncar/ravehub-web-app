@@ -186,6 +186,31 @@ export default function TicketDetailPage() {
 
     const isFullyPaid = ticket.paymentStatus === 'approved' || (ticket.paymentType === 'installment' && installments.every(i => i.status === 'paid' && i.adminApproved));
 
+    // Determine if Admin Panel should be shown
+    const needsAdminReview = (() => {
+        if (!user || user.role !== 'admin') return false;
+
+        // If ticket is approved or fully paid, no review needed (unless we want to allow rollback, but user requested hiding)
+        if (ticket.paymentStatus === 'approved') return false;
+        // Note: isFullyPaid might be true even if ticket status isn't updated? 
+        if (isFullyPaid) return false;
+
+        // Installment Logic: Only show if there is a pending installment with proof uploaded
+        if (ticket.paymentType === 'installment') {
+            const pendingInstallment = installments.find(i => !i.adminApproved && i.status !== 'paid');
+            // If no pending (all paid?), or pending has NO proof, or is Rejected -> Hide
+            // Note: If rejected, we wait for re-upload (status resets to pending).
+            if (!pendingInstallment) return false;
+            if (!pendingInstallment.userUploadedProofUrl) return false;
+            if (pendingInstallment.status === 'rejected') return false;
+
+            return true;
+        }
+
+        // Single Payment Logic: Show if pending
+        return ticket.paymentStatus === 'pending';
+    })();
+
 
     return (
         <div className="min-h-screen bg-[#141618] text-white">
@@ -206,11 +231,20 @@ export default function TicketDetailPage() {
                         <ArrowLeft className="w-5 h-5 mr-2" />
                         Volver a mis tickets
                     </Link>
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">{ticket.eventName}</h1>
+                    <div className="flex items-center gap-3 mb-2">
+                        <h1 className="text-3xl md:text-4xl font-bold">{ticket.eventName}</h1>
+                        {user?.role === 'admin' && (
+                            <Badge variant="destructive" className="animate-pulse">ADMIN</Badge>
+                        )}
+                    </div>
                     <div className="flex flex-wrap items-center gap-4 text-white/70 text-sm">
                         <span className="flex items-center gap-1.5">
                             <Calendar className="w-4 h-4 text-primary" />
-                            {new Date(ticket.eventDate).toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            {/* Force UTC timezone to prevent date shifting */}
+                            {(() => {
+                                const validDate = getValidDate(ticket.eventDate);
+                                return validDate ? validDate.toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : 'Fecha no disponible';
+                            })()}
                         </span>
                         <span className="flex items-center gap-1.5">
                             <MapPin className="w-4 h-4 text-primary" />
@@ -243,8 +277,8 @@ export default function TicketDetailPage() {
                                 )}
                             </div>
 
-                            {/* Admin Actions */}
-                            {user?.role === 'admin' && ticket.paymentStatus === 'pending' && (
+                            {/* Admin Actions Logic */}
+                            {needsAdminReview && (
                                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
                                     <h3 className="text-red-400 font-bold mb-2 flex items-center gap-2">
                                         ⚠️ Panel de Administrador
@@ -320,6 +354,7 @@ export default function TicketDetailPage() {
                                             installments={displayInstallments}
                                             ticketId={ticket.id}
                                             eventCurrency={currency} // Pass current selected currency
+                                            isAdmin={user?.role === 'admin'}
                                             onProofUploaded={async () => {
                                                 const result = await getTicketInstallments(ticket.id);
                                                 if (result.success && result.installments) setInstallments(result.installments);

@@ -472,7 +472,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
           paymentMethod,
           paymentType: isInstallmentMode ? 'installment' : 'full',
           installments: isInstallmentMode ? installments : undefined,
-          reservationFee: isInstallmentMode ? RESERVATION_FEE : undefined,
+          reservationFee: isInstallmentMode ? (RESERVATION_FEE * ticketSelections.filter(s => s.quantity > 0).reduce((acc, s) => acc + s.quantity, 0)) : undefined,
           userId: firebaseUser?.uid,
           guestEmail: !firebaseUser ? guestEmail : undefined,
           totalAmount: totalAmount,
