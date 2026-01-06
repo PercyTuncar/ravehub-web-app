@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { ticketTransactionsCollection, eventsCollection, usersCollection } from '@/lib/firebase/collections';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { convertCurrency, formatPrice } from '@/lib/utils/currency-converter';
-import { getTicketInstallments, updateTicketPaymentStatus } from '@/lib/actions';
+import { getTicketInstallments, updateTicketPaymentStatus, recalculateTicketInstallments } from '@/lib/actions';
 import { InstallmentTimeline } from '@/components/tickets/InstallmentTimeline';
 import { TicketDownload } from '@/components/common/TicketDownload';
 
@@ -337,6 +337,25 @@ export default function TicketDetailPage() {
                                                 onClick={() => window.open(ticket.paymentProofUrl, '_blank')}
                                             >
                                                 📄 Ver Comprobante
+                                            </Button>
+                                        )}
+                                        {ticket.paymentType === 'installment' && (
+                                            <Button
+                                                variant="outline"
+                                                className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10"
+                                                onClick={async () => {
+                                                    if (confirm('¿Recalcular montos de cuotas? (Usar solo si hay error en reserva)')) {
+                                                        const res = await recalculateTicketInstallments(ticket.id);
+                                                        if (res.success) {
+                                                            toast.success('Montos actualizados: ' + res.message);
+                                                            window.location.reload();
+                                                        } else {
+                                                            toast.error(res.error);
+                                                        }
+                                                    }
+                                                }}
+                                            >
+                                                ⚠️ Recalcular (Fix)
                                             </Button>
                                         )}
                                     </div>
