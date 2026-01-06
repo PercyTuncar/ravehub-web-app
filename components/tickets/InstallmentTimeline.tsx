@@ -45,19 +45,7 @@ export function InstallmentTimeline({
 
     // ...
 
-    return (
-        <InstallmentCard
-            key={installment.id}
-            installment={installment}
-            status={status}
-            currency={eventCurrency}
-            onUploadProof={() => handleUploadClick(installment)}
-            onViewProof={handleViewProof}
-            isLast={index === installments.length - 1}
-            isAdmin={isAdmin}
-            onRevert={() => handleRevertPayment(installment.id)}
-        />
-    );
+
 
     // Determine installment status
     const getInstallmentStatus = (installment: any, index: number): InstallmentStatus => {
