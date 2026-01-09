@@ -115,7 +115,11 @@ function RegisterContent() {
         preferredCurrency: 'CLP',
         role: 'user',
       });
-      router.push('/verify-email');
+      // Preserve redirect URL for after email verification
+      if (redirect) {
+        sessionStorage.setItem('redirectAfterAuth', redirect);
+      }
+      router.push(redirect ? `/verify-email?redirect=${encodeURIComponent(redirect)}` : '/verify-email');
     } catch (error: any) {
       setIsRegistering(false); // Reset flag on error
       // Extract Firebase error code
@@ -142,15 +146,15 @@ function RegisterContent() {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-[#141618]">
+    <div className="min-h-screen relative flex items-start md:items-center justify-center p-4 pt-24 pb-8 md:pt-28 md:pb-12 overflow-y-auto bg-[#141618]">
       {/* Dynamic Background */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[#141618]"
+        className="pointer-events-none fixed inset-0 bg-[#141618]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-70"
+        className="pointer-events-none fixed inset-0 opacity-70"
         style={{
           backgroundImage:
             'radial-gradient(circle at 18% 22%, rgba(251,169,5,0.15), transparent 40%), radial-gradient(circle at 78% 12%, rgba(0,203,255,0.12), transparent 40%), radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03), transparent 50%)'
@@ -158,14 +162,14 @@ function RegisterContent() {
       />
 
       {/* Abstract Shapes */}
-      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
-      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '7s' }} />
+      <div className="fixed top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
+      <div className="fixed bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '7s' }} />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full max-w-5xl grid lg:grid-cols-2 gap-0 lg:gap-8 z-10"
+        className="w-full max-w-5xl grid lg:grid-cols-2 gap-0 lg:gap-8 z-10 my-auto"
       >
         {/* Left Side - Visual Content (Hidden on mobile) */}
         <div className="hidden lg:flex flex-col justify-between p-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-l-3xl relative overflow-hidden">
@@ -225,9 +229,28 @@ function RegisterContent() {
           <div className="text-center lg:text-left mb-8">
             <h2 className="text-3xl font-bold text-white tracking-tight">Crear cuenta</h2>
             <p className="mt-2 text-white/50 text-sm">
-              {redirect ? 'Regístrate para continuar con tu compra' : 'Completa tus datos para comenzar'}
+              {redirect 
+                ? (redirect.includes('/entradas') 
+                  ? 'Regístrate para continuar con tu compra de entradas' 
+                  : 'Regístrate para continuar con tu acción')
+                : 'Completa tus datos para comenzar'}
             </p>
           </div>
+
+          {redirect && redirect.includes('/entradas') && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl flex items-center gap-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <Check className="w-4 h-4 text-primary" />
+              </div>
+              <p className="text-sm text-primary/90 font-medium">
+                Al completar tu registro, serás redirigido automáticamente para finalizar tu compra.
+              </p>
+            </motion.div>
+          )}
 
           <div className="space-y-6">
             {/* Google Button */}

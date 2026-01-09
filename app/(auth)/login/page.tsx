@@ -84,15 +84,15 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-[#141618]">
+    <div className="min-h-screen relative flex items-center justify-center p-4 pt-24 pb-8 md:pt-28 md:pb-12 overflow-y-auto bg-[#141618]">
       {/* Dynamic Background */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[#141618]"
+        className="pointer-events-none fixed inset-0 bg-[#141618]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-70"
+        className="pointer-events-none fixed inset-0 opacity-70"
         style={{
           backgroundImage:
             'radial-gradient(circle at 82% 78%, rgba(251,169,5,0.15), transparent 40%), radial-gradient(circle at 22% 22%, rgba(0,203,255,0.12), transparent 40%), radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03), transparent 50%)'
@@ -100,14 +100,14 @@ function LoginContent() {
       />
 
       {/* Abstract Shapes */}
-      <div className="absolute top-0 left-0 -ml-20 -mt-20 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
-      <div className="absolute bottom-0 right-0 -mr-20 -mb-20 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s' }} />
+      <div className="fixed top-0 left-0 -ml-20 -mt-20 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
+      <div className="fixed bottom-0 right-0 -mr-20 -mb-20 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s' }} />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full max-w-5xl grid lg:grid-cols-2 gap-0 lg:gap-8 z-10"
+        className="w-full max-w-5xl grid lg:grid-cols-2 gap-0 lg:gap-8 z-10 my-auto"
       >
         {/* Left Side - Visual Content (Hidden on mobile) */}
         <div className="hidden lg:flex flex-col justify-between p-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-l-3xl relative overflow-hidden h-[600px] lg:h-auto">
@@ -179,7 +179,9 @@ function LoginContent() {
                 <Lock className="w-4 h-4 text-primary" />
               </div>
               <p className="text-sm text-primary/90 font-medium">
-                Necesitas iniciar sesión para completar tu acción.
+                {redirect.includes('/entradas') 
+                  ? 'Inicia sesión para continuar con tu compra de entradas.'
+                  : 'Necesitas iniciar sesión para completar tu acción.'}
               </p>
             </motion.div>
           )}

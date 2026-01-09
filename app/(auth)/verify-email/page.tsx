@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { sendEmailVerification } from 'firebase/auth'; // reload needed to update emailVerified status
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { Mail, Check, RefreshCw, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const [resendLoading, setResendLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [message, setMessage] = useState('');
@@ -17,6 +17,8 @@ export default function VerifyEmailPage() {
   // Use firebaseUser directly as 'user' might be the Firestore doc which lags slightly on auth status
   const { firebaseUser } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
 
   useEffect(() => {
     if (!firebaseUser) {
@@ -50,7 +52,10 @@ export default function VerifyEmailPage() {
     try {
       await firebaseUser.reload();
       if (firebaseUser.emailVerified) {
-        router.push('/');
+        // Redirect to the original page or home
+        const destination = redirect || sessionStorage.getItem('redirectAfterAuth') || '/';
+        sessionStorage.removeItem('redirectAfterAuth');
+        router.push(destination);
         router.refresh();
       } else {
         setMessage('Aún no se ha verificado el correo. Por favor revisa tu bandeja.');
@@ -68,7 +73,7 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-[#141618]">
+    <div className="min-h-screen relative flex items-center justify-center p-4 pt-24 pb-8 md:pt-28 md:pb-12 overflow-y-auto bg-[#141618]">
       {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
@@ -79,7 +84,7 @@ export default function VerifyEmailPage() {
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-lg bg-[#1A1D21] border border-white/5 rounded-3xl shadow-2xl p-8 sm:p-10 text-center relative z-10 mx-auto mt-20"
+        className="w-full max-w-lg bg-[#1A1D21] border border-white/5 rounded-3xl shadow-2xl p-8 sm:p-10 text-center relative z-10 mx-auto my-auto"
       >
         <div className="flex justify-center mb-8">
           <div className="relative">
@@ -93,10 +98,21 @@ export default function VerifyEmailPage() {
         </div>
 
         <h2 className="text-3xl font-bold text-white mb-3 tracking-tight">Verifica tu correo</h2>
-        <p className="text-white/60 mb-8 text-base leading-relaxed">
+        <p className="text-white/60 mb-4 text-base leading-relaxed">
           Hemos enviado un enlace de confirmación a <br />
           <span className="font-semibold text-white bg-white/5 px-3 py-1 rounded-full mt-2 inline-block border border-white/5">{firebaseUser.email}</span>
         </p>
+
+        {redirect && redirect.includes('/entradas') && (
+          <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <Check className="w-4 h-4 text-emerald-400" />
+            </div>
+            <p className="text-sm text-emerald-300/90 font-medium text-left">
+              Una vez verificado tu correo, serás redirigido automáticamente para continuar con tu compra.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-6 mb-8 text-left">
           <div className="bg-white/5 rounded-xl p-5 border border-white/5 backdrop-blur-sm">
@@ -184,5 +200,21 @@ export default function VerifyEmailPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+// Main component with Suspense boundary for useSearchParams
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#141618]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-white/50 text-sm font-medium">Cargando...</p>
+        </div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

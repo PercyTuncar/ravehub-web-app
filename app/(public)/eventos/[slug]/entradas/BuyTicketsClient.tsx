@@ -366,6 +366,9 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
   const initialActivePhase = getActivePhase();
 
+  // Helper to get cart storage key for this specific event
+  const getCartStorageKey = () => `ticketCart_${event.id}`;
+
   // State
   const [selectedPhase, setSelectedPhase] = useState<string>(initialActivePhase?.id || '');
   const [activePhaseData, setActivePhaseData] = useState<SalesPhase | null>(initialActivePhase);
@@ -396,7 +399,66 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [guestEmail, setGuestEmail] = useState('');
+
+  // Restore cart state from sessionStorage on mount (after auth redirect)
+  useEffect(() => {
+    const storageKey = getCartStorageKey();
+    const savedCart = sessionStorage.getItem(storageKey);
+    
+    if (savedCart) {
+      try {
+        const cartData = JSON.parse(savedCart);
+        
+        // Restore ticket quantities
+        if (cartData.selections && Array.isArray(cartData.selections)) {
+          setTicketSelections(prev => prev.map(selection => {
+            const saved = cartData.selections.find((s: any) => s.zoneId === selection.zoneId);
+            if (saved && typeof saved.quantity === 'number') {
+              return { ...selection, quantity: Math.min(saved.quantity, selection.maxPerTransaction) };
+            }
+            return selection;
+          }));
+        }
+        
+        // Restore other states
+        if (typeof cartData.acceptTerms === 'boolean') {
+          setAcceptTerms(cartData.acceptTerms);
+        }
+        if (typeof cartData.isInstallmentMode === 'boolean') {
+          setIsInstallmentMode(cartData.isInstallmentMode);
+        }
+        if (cartData.paymentMethod === 'online' || cartData.paymentMethod === 'offline') {
+          setPaymentMethod(cartData.paymentMethod);
+        }
+        if (typeof cartData.installments === 'number') {
+          setInstallments(cartData.installments);
+        }
+        
+        // Clear the saved cart after restoring
+        sessionStorage.removeItem(storageKey);
+        
+        // Show a toast to inform user their selection was restored
+        toast.success('Tu selección de entradas ha sido restaurada');
+      } catch (e) {
+        console.error('Error restoring cart:', e);
+        sessionStorage.removeItem(storageKey);
+      }
+    }
+  }, [event.id]);
+
+  // Function to save cart state before redirecting to login
+  const saveCartToSession = () => {
+    const storageKey = getCartStorageKey();
+    const cartData = {
+      selections: ticketSelections.map(s => ({ zoneId: s.zoneId, quantity: s.quantity })),
+      acceptTerms,
+      isInstallmentMode,
+      paymentMethod,
+      installments,
+      timestamp: Date.now(),
+    };
+    sessionStorage.setItem(storageKey, JSON.stringify(cartData));
+  };
 
   const updateTicketQuantity = (zoneId: string, quantity: number) => {
     setTicketSelections(prev =>
@@ -433,21 +495,17 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const handlePurchase = async () => {
     if (!event || !acceptTerms || totalTickets === 0) return;
 
-    // Guest Logic
-    if (!firebaseUser && !guestEmail) {
-      toast.error('Ingresa tu correo para continuar como invitado o inicia sesión');
-      // Scroll to email input?
-      document.getElementById('guest-email-input')?.focus();
+    // Redirect to login if not authenticated
+    if (!firebaseUser) {
+      // Save cart state before redirecting to preserve user's selection
+      saveCartToSession();
+      
+      // Save the current URL to redirect back after login
+      const currentPath = `/eventos/${event.slug}/entradas`;
+      sessionStorage.setItem('redirectAfterAuth', currentPath);
+      toast.info('Inicia sesión para continuar con tu compra');
+      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
       return;
-    }
-
-    if (!firebaseUser && guestEmail) {
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(guestEmail)) {
-        toast.error('Ingresa un correo válido');
-        return;
-      }
     }
 
     if (firebaseUser && !firebaseUser.emailVerified) {
@@ -474,7 +532,6 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
           installments: isInstallmentMode ? installments : undefined,
           reservationFee: isInstallmentMode ? (RESERVATION_FEE * ticketSelections.filter(s => s.quantity > 0).reduce((acc, s) => acc + s.quantity, 0)) : undefined,
           userId: firebaseUser?.uid,
-          guestEmail: !firebaseUser ? guestEmail : undefined,
           totalAmount: totalAmount,
           currency: event.currency,
         }),
@@ -486,15 +543,8 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         if (paymentMethod === 'online' && result.paymentUrl) {
           window.location.href = result.paymentUrl;
         } else {
-          // Redirect logic
-          if (firebaseUser) {
-            router.push('/profile/tickets');
-          } else {
-            // Guest Success Logic - Just alert for now or redirect to special page?
-            // User asked for "redirect to page indicating to create account"
-            // Let's redirect to a success page passing the email
-            router.push(`/purchase-success?email=${encodeURIComponent(guestEmail)}&ticketId=${result.ticketId}`);
-          }
+          // Redirect to tickets page after successful purchase
+          router.push('/profile/tickets');
         }
         // WhatsApp formatting
         const symbol = event.currency === 'USD' ? '$' : 'S/';
