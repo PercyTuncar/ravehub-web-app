@@ -389,11 +389,15 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                 <SelectValue placeholder="Seleccionar zona..." />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {selectedPhase?.zonesPricing?.map((zp: any) => {
+                                                {selectedPhase?.zonesPricing?.filter((zp: any) => {
+                                                    // Only show zones that still exist
+                                                    const zone = selectedEvent.zones?.find((z: any) => z.id === zp.zoneId);
+                                                    return zone !== undefined;
+                                                }).map((zp: any) => {
                                                     const zone = selectedEvent.zones?.find((z: any) => z.id === zp.zoneId);
                                                     return (
                                                         <SelectItem key={zp.zoneId} value={zp.zoneId}>
-                                                            {zone?.name || 'Desconocida'} - {selectedEvent.currency} {zp.price}
+                                                            {zone?.name || 'Zona General'} - {selectedEvent.currency} {zp.price}
                                                         </SelectItem>
                                                     );
                                                 })}

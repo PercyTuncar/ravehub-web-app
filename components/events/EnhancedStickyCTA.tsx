@@ -327,7 +327,13 @@ export function EnhancedStickyCTA({ event, className }: EnhancedStickyCTAProps) 
                     <div className="p-4 space-y-3">
                       <h4 className="font-medium text-sm">Selecciona tu zona:</h4>
                       <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {zonesPricing.map((zp) => {
+                        {zonesPricing
+                          .filter((zp) => {
+                            // Only show zones that still exist
+                            const zone = event.zones?.find((z) => z.id === zp.zoneId);
+                            return zone !== undefined;
+                          })
+                          .map((zp) => {
                           const zone = event.zones?.find((z) => z.id === zp.zoneId);
                           const availability = getZoneAvailability(zp.zoneId);
                           const isSoldOut = availability.available === 0;

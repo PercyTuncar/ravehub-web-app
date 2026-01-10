@@ -364,18 +364,36 @@ export default function EditEventPage() {
     });
   };
 
+  // Función para limpiar referencias huérfanas de zonas eliminadas en salesPhases
+  const cleanOrphanZoneReferences = (data: Partial<Event>): Partial<Event> => {
+    if (!data.salesPhases || !data.zones) return data;
+    
+    const validZoneIds = new Set(data.zones.map(z => z.id));
+    
+    const cleanedPhases = data.salesPhases.map(phase => ({
+      ...phase,
+      zonesPricing: (phase.zonesPricing || []).filter(zp => validZoneIds.has(zp.zoneId))
+    }));
+    
+    return {
+      ...data,
+      salesPhases: cleanedPhases
+    };
+  };
+
   const saveChanges = async () => {
     setSaving(true);
     const loadingToast = toast.loading('Guardando cambios...');
 
     try {
-      // Recalcular estados de fases antes de guardar
-      const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
+      // Limpiar referencias huérfanas y recalcular estados de fases
+      const cleanedData = cleanOrphanZoneReferences(eventData);
+      const updatedPhases = recalculatePhaseStatuses(cleanedData.salesPhases || []);
 
       const eventToUpdate = {
-        ...eventData,
+        ...cleanedData,
         salesPhases: updatedPhases,
-        artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
+        artistLineupIds: generateArtistLineupIds(cleanedData.artistLineup || []),
         updatedAt: new Date().toISOString(),
       };
 
@@ -423,14 +441,15 @@ export default function EditEventPage() {
     const loadingToast = toast.loading('Cambiando estado...');
 
     try {
-      // Recalcular estados de fases antes de guardar
-      const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
+      // Limpiar referencias huérfanas y recalcular estados de fases
+      const cleanedData = cleanOrphanZoneReferences(eventData);
+      const updatedPhases = recalculatePhaseStatuses(cleanedData.salesPhases || []);
 
       const eventToUpdate = {
-        ...eventData,
+        ...cleanedData,
         salesPhases: updatedPhases,
         eventStatus: newStatus,
-        artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
+        artistLineupIds: generateArtistLineupIds(cleanedData.artistLineup || []),
         updatedAt: new Date().toISOString(),
       };
 
@@ -1215,6 +1234,80 @@ export default function EditEventPage() {
                 </CardContent>
               </Card>
 
+              {/* Mapa del Stage */}
+              <Card className="border-2 border-purple-200/50 dark:border-purple-800/50 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-3">
+                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                      🗺️
+                    </div>
+                    Mapa del Stage
+                    {eventData.stageMapUrl && (
+                      <Badge variant="default" className="text-xs bg-green-500">Agregado</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">Subir Archivo (Recomendado)</Label>
+                      <FileUpload
+                        onUploadComplete={(url: string) => updateEventData('stageMapUrl', url)}
+                        currentUrl={eventData.stageMapUrl}
+                        onClear={() => updateEventData('stageMapUrl', '')}
+                        accept="image/jpeg,image/png,image/webp"
+                        maxSize={10}
+                        folder="events/stage-maps"
+                        variant="default"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
+                      <Input
+                        type="url"
+                        value={eventData.stageMapUrl || ''}
+                        onChange={(e) => updateEventData('stageMapUrl', e.target.value)}
+                        placeholder="https://example.com/mapa-stage.jpg"
+                        className="h-12"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Si ya tienes el mapa en un servidor externo
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800/50">
+                    <p className="text-xs text-purple-700 dark:text-purple-300">
+                      📐 Recomendado: 1200x1200px (1:1) o 1920x1080px (16:9) • Formatos: JPG, PNG, WebP • Máximo: 10MB
+                    </p>
+                  </div>
+
+                  {eventData.stageMapUrl && (
+                    <div className="border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-lg p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
+                      <div className="flex justify-between items-center mb-3">
+                        <Label className="block text-sm font-semibold text-purple-800 dark:text-purple-200">
+                          🎯 Vista Previa del Mapa del Stage
+                        </Label>
+                      </div>
+                      <div className="border-2 border-purple-200 dark:border-purple-800 rounded-lg p-2 bg-white dark:bg-gray-900">
+                        <img
+                          src={eventData.stageMapUrl}
+                          alt={`Mapa del stage - ${eventData.name || 'Evento'}`}
+                          className="w-full max-w-lg h-auto object-contain rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
+                        Este mapa mostrará la distribución de escenarios y zonas del evento
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Galería de Imágenes */}
               <Card className="border-2 border-blue-200/50 dark:border-blue-800/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
                 <CardHeader>
@@ -1752,8 +1845,20 @@ export default function EditEventPage() {
                         variant="destructive"
                         size="sm"
                         onClick={() => {
+                          const zoneToRemove = eventData.zones?.[index];
                           const newZones = (eventData.zones || []).filter((_, i) => i !== index);
                           updateEventData('zones', newZones);
+                          
+                          // También eliminar las referencias de esta zona en todas las fases de venta
+                          if (zoneToRemove && eventData.salesPhases) {
+                            const updatedPhases = eventData.salesPhases.map(phase => ({
+                              ...phase,
+                              zonesPricing: (phase.zonesPricing || []).filter(
+                                zp => zp.zoneId !== zoneToRemove.id
+                              )
+                            }));
+                            updateEventData('salesPhases', updatedPhases);
+                          }
                         }}
                       >
                         Eliminar Zona

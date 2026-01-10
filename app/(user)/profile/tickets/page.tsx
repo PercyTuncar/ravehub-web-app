@@ -56,11 +56,12 @@ export default function TicketsPage() {
         }));
 
         // Sort by date (newest first)
-        // Sort by date (newest first)
         ticketsWithDetails.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         // Filter out expired offline tickets older than 10 days
+        // Also filter out rejected tickets older than 24 hours
         const validTickets = ticketsWithDetails.filter(t => {
+          // Filter expired offline pending tickets (10 day window)
           const expiry = getValidDate(t.expiresAt);
           if (t.paymentMethod === 'offline' && t.paymentStatus === 'pending' && expiry) {
             const tenDaysAfterExpiry = new Date(expiry.getTime() + 10 * 24 * 60 * 60 * 1000); // 10 days window
@@ -68,6 +69,16 @@ export default function TicketsPage() {
               return false;
             }
           }
+          
+          // Filter rejected tickets after 24 hour window
+          if (t.paymentStatus === 'rejected' && t.rejectedAt) {
+            const rejectedDate = new Date(t.rejectedAt);
+            const twentyFourHoursLater = new Date(rejectedDate.getTime() + 24 * 60 * 60 * 1000);
+            if (new Date() > twentyFourHoursLater) {
+              return false; // Hide ticket after 24h window
+            }
+          }
+          
           return true;
         });
 

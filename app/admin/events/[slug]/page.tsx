@@ -280,12 +280,19 @@ export default function EventDetailPage() {
                                 <span>{price.zoneName}</span>
                                 <span className="font-medium">{getCurrencySymbol(event.currency || 'CLP')}{price.price.toLocaleString()} {event.currency || 'CLP'}</span>
                               </div>
-                            )) || phase.zonesPricing?.map((zonePricing) => (
-                              <div key={zonePricing.zoneId} className="flex justify-between text-sm">
-                                <span>{event.zones?.find(z => z.id === zonePricing.zoneId)?.name || 'Zona desconocida'}</span>
-                                <span className="font-medium">{getCurrencySymbol(event.currency || 'CLP')}{zonePricing.price.toLocaleString()} {event.currency || 'CLP'}</span>
-                              </div>
-                            )) || (
+                            )) || phase.zonesPricing?.filter((zonePricing) => {
+                              // Only show zones that still exist
+                              const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
+                              return zone !== undefined;
+                            }).map((zonePricing) => {
+                              const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
+                              return (
+                                <div key={zonePricing.zoneId} className="flex justify-between text-sm">
+                                  <span>{zone?.name || 'Zona General'}</span>
+                                  <span className="font-medium">{getCurrencySymbol(event.currency || 'CLP')}{zonePricing.price.toLocaleString()} {event.currency || 'CLP'}</span>
+                                </div>
+                              );
+                            }) || (
                               <p className="text-sm text-muted-foreground">No hay precios configurados</p>
                             )}
                           </div>

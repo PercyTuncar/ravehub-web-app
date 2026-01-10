@@ -174,6 +174,10 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                                     <QrCode className="w-3 h-3 mr-1.5" />
                                     <span>Acceso Listo</span>
                                 </Badge>
+                            ) : ticket.paymentStatus === 'rejected' ? (
+                                <Badge className="bg-red-500/10 text-red-500 border-red-500/20 backdrop-blur-sm">
+                                    <span>RECHAZADO</span>
+                                </Badge>
                             ) : isExpired ? (
                                 <Badge className="bg-red-500/10 text-red-500 border-red-500/20 backdrop-blur-sm">
                                     <span>ANULADO (EXPIRADO)</span>
@@ -242,6 +246,36 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                                 </Button>
                             </div>
                         </div>
+                    ) : ticket.paymentStatus === 'rejected' ? (
+                        <div className="mt-6 mb-2 bg-red-500/5 border border-red-500/20 rounded-xl p-4">
+                            <div className="flex items-center gap-2 text-red-400 font-bold mb-2 text-sm">
+                                <span>⚠️ Pago Rechazado</span>
+                            </div>
+                            <p className="text-xs text-zinc-400 mb-3">
+                                Tu comprobante fue rechazado. Sube un nuevo comprobante válido para mantener tu reserva.
+                            </p>
+                            {ticket.rejectedAt && (() => {
+                                const rejectedDate = new Date(ticket.rejectedAt);
+                                const windowEnd = new Date(rejectedDate.getTime() + 24 * 60 * 60 * 1000);
+                                const now = new Date();
+                                const hoursRemaining = Math.max(0, Math.floor((windowEnd.getTime() - now.getTime()) / (1000 * 60 * 60)));
+                                const minutesRemaining = Math.max(0, Math.floor(((windowEnd.getTime() - now.getTime()) % (1000 * 60 * 60)) / (1000 * 60)));
+                                
+                                return now < windowEnd ? (
+                                    <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2 text-center">
+                                        <span className="text-xs text-orange-400">
+                                            Tiempo restante: <span className="font-mono font-bold">{hoursRemaining}h {minutesRemaining}m</span>
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-2 text-center">
+                                        <span className="text-xs text-zinc-500">
+                                            Tiempo expirado
+                                        </span>
+                                    </div>
+                                );
+                            })()}
+                        </div>
                     ) : !isFullyPaid && status && !isExpired && (
                         <div className="mt-6 mb-2">
                             <div className="flex justify-between text-xs text-white/50 mb-2">
@@ -284,6 +318,15 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                                     </Button>
                                 </Link>
                             </>
+                        ) : ticket.paymentStatus === 'rejected' ? (
+                            <Link href={`/profile/tickets/${ticket.id}`} className="w-full">
+                                <Button
+                                    className="w-full bg-red-600 hover:bg-red-500 text-white border-0"
+                                >
+                                    <span className="mr-auto">Corregir Pago</span>
+                                    <ChevronRight className="w-4 h-4" />
+                                </Button>
+                            </Link>
                         ) : isExpired ? (
                             <Button disabled className="w-full bg-red-500/10 text-red-500 border border-red-500/20">
                                 Ticket Expirado

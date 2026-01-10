@@ -306,21 +306,26 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
     return sortedPhases.map((phase, index) => {
       const computedStatus = getPhaseStatus(phase);
 
-      const zones = phase.zonesPricing?.map(zp => {
-        const zone = event.zones?.find(z => z.id === zp.zoneId);
-        return {
-          zoneId: zp.zoneId,
-          zoneName: zone?.name || 'Zona General',
-          description: zone?.description,
-          price: zp.price,
-          available: zp.available,
-          sold: zp.sold,
-          capacity: zone?.capacity || 0,
-        };
-      }) || [];
+      // Filter out zones that no longer exist in event.zones and map to zone data
+      const zones = (phase.zonesPricing || [])
+        .map(zp => {
+          const zone = event.zones?.find(z => z.id === zp.zoneId);
+          // Only include if the zone still exists
+          if (!zone) return null;
+          return {
+            zoneId: zp.zoneId,
+            zoneName: zone.name || 'Zona General',
+            description: zone.description,
+            price: zp.price,
+            available: zp.available,
+            sold: zp.sold,
+            capacity: zone.capacity || 0,
+          };
+        })
+        .filter((z): z is NonNullable<typeof z> => z !== null);
 
       // Check if all zones are sold out to override status
-      const allSoldOut = zones.every(z => z.available === 0);
+      const allSoldOut = zones.length > 0 && zones.every(z => z.available === 0);
       const finalStatus = allSoldOut && computedStatus === 'active' ? 'sold_out' : computedStatus;
 
       return {
@@ -335,17 +340,31 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
     });
   }, [event.salesPhases, event.zones]);
 
-  // Determine active phase (first active, or upcoming if none active, or last expired if all passed)
+  // Determine active phase with smart fallback:
+  // 1. First phase that is 'active' and has available stock
+  // 2. If all active phases are sold out, find next 'upcoming'
+  // 3. If none, show the last phase
   const activePhaseIndex = useMemo(() => {
-    // 1. Try to find first 'active'
-    let index = pricingData.findIndex(p => p.isActive);
+    // 1. Try to find first 'active' phase with available stock
+    let index = pricingData.findIndex(p => p.isActive && !p.isSoldOut);
     if (index >= 0) return index;
 
-    // 2. Try to find first 'upcoming'
+    // 2. If active phases exist but are sold out, find next 'upcoming' that's not sold out
+    const hasActiveButSoldOut = pricingData.some(p => p.status === 'sold_out');
+    if (hasActiveButSoldOut) {
+      index = pricingData.findIndex(p => p.isUpcoming);
+      if (index >= 0) return index;
+    }
+
+    // 3. Try to find any 'active' phase (even if sold out)
+    index = pricingData.findIndex(p => p.isActive);
+    if (index >= 0) return index;
+
+    // 4. Try to find first 'upcoming'
     index = pricingData.findIndex(p => p.isUpcoming);
     if (index >= 0) return index;
 
-    // 3. Default to last phase (likely expired)
+    // 5. Default to last phase (likely all expired)
     return Math.max(0, pricingData.length - 1);
   }, [pricingData]);
 

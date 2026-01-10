@@ -268,7 +268,7 @@ export async function updateTicketPaymentStatus(ticketId: string, status: 'appro
           // Notify user
           await createNotification({
             userId: ticket.userId,
-            ...InstallmentNotifications.paymentRejected(ticket.id, pendingInst.installmentNumber, rejectionReason || 'Comprobante rechadazo')
+            ...InstallmentNotifications.paymentRejected(ticket.id, pendingInst.installmentNumber, rejectionReason || 'Comprobante rechazado')
           });
 
           return { success: true, message: 'Cuota rechazada. El usuario deberá subir un nuevo comprobante.' };
@@ -279,6 +279,7 @@ export async function updateTicketPaymentStatus(ticketId: string, status: 'appro
       await ticketTransactionsCollection.update(ticketId, {
         paymentStatus: 'rejected',
         rejectionReason: rejectionReason || 'Rechazado por administrador',
+        rejectedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
       return { success: true };

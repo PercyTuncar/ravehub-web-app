@@ -379,14 +379,32 @@ export default function NewEventPage() {
     });
   };
 
+  // Función para limpiar referencias huérfanas de zonas eliminadas en salesPhases
+  const cleanOrphanZoneReferences = (data: Partial<Event>): Partial<Event> => {
+    if (!data.salesPhases || !data.zones) return data;
+    
+    const validZoneIds = new Set(data.zones.map(z => z.id));
+    
+    const cleanedPhases = data.salesPhases.map(phase => ({
+      ...phase,
+      zonesPricing: (phase.zonesPricing || []).filter(zp => validZoneIds.has(zp.zoneId))
+    }));
+    
+    return {
+      ...data,
+      salesPhases: cleanedPhases
+    };
+  };
+
   // Función de auto-guardado
   const handleAutoSave = async (dataToSave: Partial<Event>) => {
     try {
-      // Recalcular estados de fases antes de guardar
-      const updatedPhases = recalculatePhaseStatuses(dataToSave.salesPhases || []);
+      // Limpiar referencias huérfanas y recalcular estados de fases
+      const cleanedData = cleanOrphanZoneReferences(dataToSave);
+      const updatedPhases = recalculatePhaseStatuses(cleanedData.salesPhases || []);
 
       const eventToSave = {
-        ...dataToSave,
+        ...cleanedData,
         salesPhases: updatedPhases,
         eventStatus: dataToSave.eventStatus || 'draft',
         artistLineupIds: generateArtistLineupIds(dataToSave.artistLineup || []),
@@ -419,14 +437,15 @@ export default function NewEventPage() {
   const saveAsDraft = async () => {
     setSaving(true);
     try {
-      // Recalcular estados de fases antes de guardar
-      const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
+      // Limpiar referencias huérfanas y recalcular estados de fases
+      const cleanedData = cleanOrphanZoneReferences(eventData);
+      const updatedPhases = recalculatePhaseStatuses(cleanedData.salesPhases || []);
 
       const eventToSave = {
-        ...eventData,
+        ...cleanedData,
         salesPhases: updatedPhases,
-        eventStatus: eventData.eventStatus || 'draft',
-        artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
+        eventStatus: cleanedData.eventStatus || 'draft',
+        artistLineupIds: generateArtistLineupIds(cleanedData.artistLineup || []),
         createdBy: 'admin', // TODO: Get from auth context
       };
 
@@ -459,14 +478,15 @@ export default function NewEventPage() {
   const handleStatusChange = async (newStatus: 'draft' | 'published' | 'cancelled' | 'finished') => {
     setSaving(true);
     try {
-      // Recalcular estados de fases antes de guardar
-      const updatedPhases = recalculatePhaseStatuses(eventData.salesPhases || []);
+      // Limpiar referencias huérfanas y recalcular estados de fases
+      const cleanedData = cleanOrphanZoneReferences(eventData);
+      const updatedPhases = recalculatePhaseStatuses(cleanedData.salesPhases || []);
 
       const eventToSave = {
-        ...eventData,
+        ...cleanedData,
         salesPhases: updatedPhases,
         eventStatus: newStatus,
-        artistLineupIds: generateArtistLineupIds(eventData.artistLineup || []),
+        artistLineupIds: generateArtistLineupIds(cleanedData.artistLineup || []),
         createdBy: 'admin', // TODO: Get from auth context
       };
 
@@ -788,32 +808,6 @@ export default function NewEventPage() {
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-foreground">Imagen Principal (16:9) *</Label>
-                  <FileUpload
-                    currentUrl={eventData.mainImageUrl}
-                    onUploadComplete={(url) => updateEventData('mainImageUrl', url)}
-                    folder={`events/${eventData.slug || 'temp'}/images`}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Recomendado: 1920x1080px. Se usará en listados y portada.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-foreground">Imagen para Google (1:1) *</Label>
-                  <FileUpload
-                    currentUrl={eventData.squareImageUrl}
-                    onUploadComplete={(url) => updateEventData('squareImageUrl', url)}
-                    folder={`events/${eventData.slug || 'temp'}/images`}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Recomendado: 1080x1080px. Se usará en resultados de búsqueda de Google (móvil).
-                  </p>
-                </div>
-              </div>
-
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                   📍 Ubicación
@@ -1098,6 +1092,80 @@ export default function NewEventPage() {
                           }}
                         />
                       </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Imagen para Google (Thumbnail 1:1) */}
+              <Card className="border-2 border-blue-200/50 dark:border-blue-800/50 bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">G</span>
+                    </div>
+                    Imagen para Google (Thumbnail 1:1) *
+                    {!eventData.squareImageUrl && (
+                      <Badge variant="destructive" className="text-xs">Requerida para SEO</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">Subir Archivo (Recomendado)</Label>
+                      <FileUpload
+                        onUploadComplete={(url: string) => updateEventData('squareImageUrl', url)}
+                        currentUrl={eventData.squareImageUrl}
+                        onClear={() => updateEventData('squareImageUrl', '')}
+                        accept="image/jpeg,image/png,image/webp"
+                        maxSize={5}
+                        folder={`events/${eventData.slug || 'temp'}/images`}
+                        variant="default"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-foreground">URL Externa</Label>
+                      <Input
+                        type="url"
+                        value={eventData.squareImageUrl || ''}
+                        onChange={(e) => updateEventData('squareImageUrl', e.target.value)}
+                        placeholder="https://example.com/evento-square.jpg"
+                        className="h-12"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Si ya tienes la imagen en un servidor externo
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50">
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      📐 Recomendado: 1080x1080px (1:1) • Formatos: JPG, PNG, WebP • Máximo: 5MB
+                    </p>
+                  </div>
+
+                  {eventData.squareImageUrl && (
+                    <div className="border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg p-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30">
+                      <div className="flex justify-between items-center mb-3">
+                        <Label className="block text-sm font-semibold text-blue-800 dark:text-blue-200">
+                          🎯 Vista Previa (1:1)
+                        </Label>
+                      </div>
+                      <div className="border-2 border-blue-200 dark:border-blue-800 rounded-lg p-2 bg-white dark:bg-gray-900 w-fit">
+                        <img
+                          src={eventData.squareImageUrl}
+                          alt={eventData.name || 'Thumbnail cuadrado'}
+                          className="w-32 h-32 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                        Esta imagen se usará en los resultados de búsqueda de Google (Rich Snippets)
+                      </p>
                     </div>
                   )}
                 </CardContent>
@@ -1766,8 +1834,20 @@ export default function NewEventPage() {
                             variant="destructive"
                             size="sm"
                             onClick={() => {
+                              const zoneToRemove = eventData.zones?.[index];
                               const newZones = (eventData.zones || []).filter((_, i) => i !== index);
                               updateEventData('zones', newZones);
+                              
+                              // También eliminar las referencias de esta zona en todas las fases de venta
+                              if (zoneToRemove && eventData.salesPhases) {
+                                const updatedPhases = eventData.salesPhases.map(phase => ({
+                                  ...phase,
+                                  zonesPricing: (phase.zonesPricing || []).filter(
+                                    zp => zp.zoneId !== zoneToRemove.id
+                                  )
+                                }));
+                                updateEventData('salesPhases', updatedPhases);
+                              }
                             }}
                           >
                             <X className="h-4 w-4 mr-2" />

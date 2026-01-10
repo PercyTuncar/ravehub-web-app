@@ -375,19 +375,25 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
   const [ticketSelections, setTicketSelections] = useState<TicketSelection[]>(() => {
     if (initialActivePhase) {
-      return initialActivePhase.zonesPricing?.map(zonePricing => {
-        const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
-        return {
-          zoneId: zonePricing.zoneId,
-          zoneName: zone?.name || 'Zona desconocida',
-          zoneDescription: zone?.description,
-          quantity: 0,
-          price: zonePricing.price,
-          maxPerTransaction: zone?.capacity || 10,
-          available: zonePricing.available || 0,
-          sold: zonePricing.sold || 0,
-        };
-      }) || [];
+      return (initialActivePhase.zonesPricing || [])
+        .filter(zonePricing => {
+          // Only include zones that still exist
+          const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
+          return zone !== undefined;
+        })
+        .map(zonePricing => {
+          const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
+          return {
+            zoneId: zonePricing.zoneId,
+            zoneName: zone?.name || 'Zona General',
+            zoneDescription: zone?.description,
+            quantity: 0,
+            price: zonePricing.price,
+            maxPerTransaction: zone?.capacity || 10,
+            available: zonePricing.available || 0,
+            sold: zonePricing.sold || 0,
+          };
+        });
     }
     return [];
   });
