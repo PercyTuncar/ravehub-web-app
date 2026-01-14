@@ -32,12 +32,19 @@ const GROUPS: WhatsAppGroup[] = [
         url: 'https://chat.whatsapp.com/HKg7kLPcGTQHWbnIMCejbh'
     },
     {
+        id: 'bts',
+        country: 'Perú',
+        flag: '💜',
+        name: 'BTS 2026 🇵🇪',
+        url: 'https://chat.whatsapp.com/LONZ581os276i97a7XjJgA'
+    },
+    {
         id: 'girls',
         country: 'Global',
         flag: '💐',
         name: 'Solo Chicas',
         url: 'https://chat.whatsapp.com/IF4mvCUaDmO786r2HaAnPF',
-        isHot: true
+        isHot: false
     },
     {
         id: 'cl',
@@ -113,12 +120,25 @@ export function WhatsAppDrawer({ isOpen, onOpenChange }: WhatsAppDrawerProps) {
             >
                 <div className="w-16 h-1.5 bg-white/20 rounded-full mx-auto mt-4 mb-2 shrink-0" />
 
-                <SheetHeader className="px-6 pb-6 pt-2 text-center shrink-0">
-                    <SheetTitle className="text-3xl font-bold text-white flex items-center justify-center gap-2">
-                        <span className="text-[#25D366]">Grupos de WhatsApp</span>
+                <SheetHeader className="px-6 pb-6 pt-4 text-center shrink-0">
+                    <SheetTitle className="flex flex-col items-center justify-center gap-2 mb-4">
+                        <motion.span 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#25D366] via-[#4ade80] to-[#25D366] drop-shadow-[0_0_25px_rgba(37,211,102,0.6)] animate-gradient-x pb-2"
+                        >
+                            GRUPOS DE WHATSAPP
+                        </motion.span>
                     </SheetTitle>
-                    <SheetDescription className="text-gray-400 text-base">
-                        Únete a los grupos oficiales y conecta con tu comunidad local.
+                    <SheetDescription className="text-white/90 text-xl font-bold max-w-sm mx-auto flex flex-col items-center gap-2">
+                        <span>Únete a tu grupo favorito</span>
+                        <motion.span 
+                            animate={{ y: [0, 5, 0] }}
+                            transition={{ repeat: Infinity, duration: 1.5 }}
+                            className="text-3xl mt-2"
+                        >
+                            👇
+                        </motion.span>
                     </SheetDescription>
                 </SheetHeader>
 

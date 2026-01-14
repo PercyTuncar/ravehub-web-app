@@ -117,7 +117,7 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
             }}
           >
             <a
-              href={whatsappGroupLink}
+              href="https://www.ravehublatam.com/go"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-3 relative z-10"
