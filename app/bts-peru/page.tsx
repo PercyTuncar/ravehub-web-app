@@ -59,7 +59,7 @@ export default function BTSLandingPage() {
           >
             <span>BTS LIMA</span>
             <span className="text-2xl md:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-extrabold flex items-center gap-2">
-              <MessageCircle className="w-6 h-6 md:w-8 md:h-8 fill-purple-600 text-purple-600" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-6 h-6 md:w-8 md:h-8" />
               GRUPO DE WHATSAPP
             </span>
           </motion.h1>

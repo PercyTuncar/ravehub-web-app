@@ -1017,7 +1017,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                         <MessageCircle className="w-5 h-5 text-white fill-white" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-xs font-bold text-[#25D366] uppercase tracking-wide mb-0.5">Comunidad Oficial</p>
+                        <p className="text-xs font-bold text-[#25D366] uppercase tracking-wide mb-0.5">Grupo Oficial</p>
                         <p className="text-sm font-medium text-white group-hover:text-[#25D366] transition-colors">Únete al grupo de WhatsApp</p>
                       </div>
                       <ExternalLink className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
