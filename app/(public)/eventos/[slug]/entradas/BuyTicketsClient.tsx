@@ -670,24 +670,40 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
         {/* Header - Order 2 */}
         <div className="order-2">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-4">
-            Entradas Oficiales para {event.name}
-          </h1>
-          <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
-            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-              <Calendar className="w-4 h-4" style={{ color: colorPalette.accent }} />
-              <span>{format(getEventDate(event.startDate), 'EEEE d MMMM, yyyy', { locale: es })}</span>
-            </div>
-            {event.startTime && (
-              <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                <Clock className="w-4 h-4" style={{ color: colorPalette.accent }} />
-                <span>{event.startTime}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-              <MapPin className="w-4 h-4" style={{ color: colorPalette.accent }} />
-              <span>{event.location.venue}</span>
-            </div>
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+             <div>
+                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-4">
+                  Entradas Oficiales para {event.name}
+                </h1>
+                <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
+                  <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                    <Calendar className="w-4 h-4" style={{ color: colorPalette.accent }} />
+                    <span>{format(getEventDate(event.startDate), 'EEEE d MMMM, yyyy', { locale: es })}</span>
+                  </div>
+                  {event.startTime && (
+                    <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                      <Clock className="w-4 h-4" style={{ color: colorPalette.accent }} />
+                      <span>{event.startTime}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                    <MapPin className="w-4 h-4" style={{ color: colorPalette.accent }} />
+                    <span>{event.location.venue}</span>
+                  </div>
+                </div>
+             </div>
+             
+             {/* Mobile/Tablet CTA for WhatsApp */}
+             <div className="lg:hidden w-full md:w-auto">
+                 <a 
+                     href="/go" 
+                     target="_blank"
+                     className="flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group"
+                   >
+                      <MessageCircle className="w-5 h-5 text-[#25D366] fill-current" />
+                      <span className="font-bold text-[#25D366]">Unirme al Grupo WhatsApp</span>
+                   </a>
+             </div>
           </div>
         </div>
 
