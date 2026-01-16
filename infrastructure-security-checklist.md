@@ -27,7 +27,7 @@
 - [ ] Enable billing and set budget alerts
 
 ### Production Environment
-- [ ] Create Firebase project: `ravehub-prod`
+- [ ] Create Firebase project: `event-ticket-website-6b541`
 - [ ] Enable Authentication (Email/Password, Google)
 - [ ] Enable Firestore Database
 - [ ] Enable Firebase Storage

@@ -8,7 +8,7 @@ We maintain separate Firebase projects for each environment:
 
 - **Development**: `ravehub-dev` - For local development and testing
 - **Staging**: `ravehub-staging` - For pre-production testing
-- **Production**: `ravehub-prod` - Live production environment
+- **Production**: `event-ticket-website-6b541` - Live production environment
 
 ## Setup Instructions
 
@@ -19,7 +19,7 @@ Create three Firebase projects in the Firebase Console:
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Create project `ravehub-dev`
 3. Create project `ravehub-staging`
-4. Create project `ravehub-prod`
+4. Create project `event-ticket-website-6b541`
 
 ### 2. Enable Required Services
 

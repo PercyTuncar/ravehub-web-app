@@ -15,10 +15,10 @@
       "state": "ACTIVE"
     },
     "production": {
-      "project_id": "ravehub-prod",
+      "project_id": "event-ticket-website-6b541",
       "project_number": "123456789014",
       "display_name": "Ravehub Production",
-      "name": "projects/ravehub-prod",
+      "name": "projects/event-ticket-website-6b541",
       "state": "ACTIVE"
     }
   },
