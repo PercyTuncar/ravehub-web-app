@@ -694,14 +694,15 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                 </div>
              </div>
              
-             {/* Mobile/Tablet CTA for WhatsApp */}
-             <div className="lg:hidden w-full md:w-auto">
+             {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE */}
+             <div className="lg:hidden w-full md:w-auto mt-4 md:mt-0">
                  <a 
                      href="/go" 
                      target="_blank"
+                     rel="noopener noreferrer"
                      className="flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group"
                    >
-                      <MessageCircle className="w-5 h-5 text-[#25D366] fill-current" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-5 h-5" />
                       <span className="font-bold text-[#25D366]">Unirme al Grupo WhatsApp</span>
                    </a>
              </div>
