@@ -6,7 +6,8 @@ import Link from 'next/link';
 import {
   ArrowLeft, Minus, Plus, CreditCard, Calendar,
   MapPin, Clock, Ticket, Lock, CheckCircle2,
-  Flame, TrendingUp, ShieldCheck, Sparkles, Music, Info
+  Flame, TrendingUp, ShieldCheck, Sparkles, Music, Info,
+  MessageCircle, ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
