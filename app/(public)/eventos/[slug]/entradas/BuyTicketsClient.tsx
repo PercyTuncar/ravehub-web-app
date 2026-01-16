@@ -1003,6 +1003,25 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                 <p className="text-xs text-center text-zinc-500">
                   Pagos procesados de forma segura.
                 </p>
+
+                {/* WhatsApp Community CTA - ALWAYS VISIBLE */}
+                <div className="pt-4 border-t border-white/5">
+                   <a 
+                     href="/go" 
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className="flex items-center gap-3 p-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group w-full"
+                   >
+                      <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center shrink-0 shadow-lg shadow-[#25D366]/20 group-hover:scale-110 transition-transform">
+                        <MessageCircle className="w-5 h-5 text-white fill-white" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-xs font-bold text-[#25D366] uppercase tracking-wide mb-0.5">Comunidad Oficial</p>
+                        <p className="text-sm font-medium text-white group-hover:text-[#25D366] transition-colors">Únete al grupo de WhatsApp</p>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                   </a>
+                </div>
               </div>
             </div>
           </div>
