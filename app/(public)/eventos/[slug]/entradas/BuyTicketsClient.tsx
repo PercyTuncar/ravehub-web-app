@@ -1013,7 +1013,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                      rel="noopener noreferrer"
                      className="flex items-center gap-3 p-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group w-full"
                    >
-                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-lg shadow-[#25D366]/20 group-hover:scale-110 transition-transform p-2">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-[#25D366]/20 group-hover:scale-110 transition-transform">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-full h-full" />
                       </div>
                       <div className="flex-1 text-left">
