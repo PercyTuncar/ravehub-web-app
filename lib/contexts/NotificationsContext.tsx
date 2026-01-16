@@ -36,8 +36,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     if (user) {
       loadNotifications();
       
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(loadNotifications, 30000);
+      // Poll for new notifications every 5 minutes (300000ms) instead of 30s to reduce reads
+      // Better yet: use onSnapshot for real-time updates if supported, but for now increasing interval is safer
+      const interval = setInterval(loadNotifications, 300000);
       
       return () => clearInterval(interval);
     } else {

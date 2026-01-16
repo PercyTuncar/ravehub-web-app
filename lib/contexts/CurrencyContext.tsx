@@ -74,16 +74,24 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   // Inicializar divisa al montar el componente
   useEffect(() => {
+    let mounted = true;
+
     async function initializeCurrency() {
       try {
+        // Evitar ejecución si ya está cargando o si ya tenemos divisa detectada
+        if (detectedCountry && currency !== 'USD') {
+            setIsLoading(false);
+            return;
+        }
+
         // 1. Verificar si el usuario autenticado tiene una preferencia (tiene prioridad sobre localStorage)
         if (user?.preferredCurrency && SUPPORTED_CURRENCIES[user.preferredCurrency as keyof typeof SUPPORTED_CURRENCIES]) {
           const currentCurrency = getInitialCurrency();
-          if (user.preferredCurrency !== currentCurrency) {
+          if (user.preferredCurrency !== currentCurrency && mounted) {
             console.log('Using user preferred currency:', user.preferredCurrency);
             setCurrency(user.preferredCurrency);
           }
-          setIsLoading(false);
+          if (mounted) setIsLoading(false);
           return;
         }
 
@@ -94,33 +102,52 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           if (savedCurrency && SUPPORTED_CURRENCIES[savedCurrency as keyof typeof SUPPORTED_CURRENCIES]) {
             // Ya está establecida en el estado inicial síncrono, solo marcamos como cargado
             console.log('Using saved currency:', savedCurrency);
-            setIsLoading(false);
+            if (mounted) setIsLoading(false);
             return;
           }
         }
 
         // 3. Si no hay divisa guardada, detectar ubicación geográfica y configurar divisa automática
+        // Check session storage to avoid repeated API calls in the same session
+        const sessionGeo = sessionStorage.getItem('ravehub_session_geo_checked');
+        if (sessionGeo) {
+             console.log('Geolocation already checked this session, skipping API call');
+             if (mounted) setIsLoading(false);
+             return;
+        }
+
         console.log('No saved currency found, detecting user location...');
         const location = await getUserLocation();
-        setDetectedCountry(location.countryCode);
+        
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('ravehub_session_geo_checked', 'true');
+        }
 
-        if (location.currency && SUPPORTED_CURRENCIES[location.currency as keyof typeof SUPPORTED_CURRENCIES]) {
-          console.log('Using detected currency:', location.currency);
-          setCurrency(location.currency);
-        } else {
-          console.log('Using default currency: USD');
-          setCurrency('USD');
+        if (mounted) {
+            setDetectedCountry(location.countryCode);
+
+            if (location.currency && SUPPORTED_CURRENCIES[location.currency as keyof typeof SUPPORTED_CURRENCIES]) {
+            console.log('Using detected currency:', location.currency);
+            setCurrency(location.currency);
+            } else {
+            console.log('Using default currency: USD');
+            setCurrency('USD');
+            }
         }
       } catch (error) {
         console.error('Error initializing currency:', error);
-        setCurrency('USD');
+        if (mounted) setCurrency('USD');
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     }
 
     initializeCurrency();
-  }, [user, setCurrency]);
+    
+    return () => {
+        mounted = false;
+    };
+  }, [user, setCurrency]); // Removed detectedCountry from dependency to avoid loop
 
   // Escuchar cambios de divisa desde otras pestañas
   useEffect(() => {

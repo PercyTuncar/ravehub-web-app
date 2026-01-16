@@ -100,17 +100,21 @@ export function WhatsAppDrawer({ isOpen, onOpenChange }: WhatsAppDrawerProps) {
         });
         setMsgCounts(counts);
 
-        // Update random counts periodically
-        const interval = setInterval(() => {
-            const randomId = GROUPS[Math.floor(Math.random() * GROUPS.length)].id;
-            setMsgCounts(prev => ({
-                ...prev,
-                [randomId]: prev[randomId] + 1 // Increment messages to simulate activity
-            }));
-        }, 3000);
+        // Update random counts periodically only when open to save resources
+        let interval: NodeJS.Timeout;
+        
+        if (isOpen) {
+            interval = setInterval(() => {
+                const randomId = GROUPS[Math.floor(Math.random() * GROUPS.length)].id;
+                setMsgCounts(prev => ({
+                    ...prev,
+                    [randomId]: prev[randomId] + 1 // Increment messages to simulate activity
+                }));
+            }, 3000);
+        }
 
         return () => clearInterval(interval);
-    }, []);
+    }, [isOpen]);
 
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>

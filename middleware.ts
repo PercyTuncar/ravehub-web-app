@@ -66,11 +66,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl, { status: 301 });
   }
 
-  // Force HTTPS in production
+  // Force HTTPS in production - REMOVED to avoid Vercel/Cloudflare loop conflicts
+  // Vercel handles HTTPS automatically.
+  /*
   if (process.env.NODE_ENV === 'production' && !request.url.startsWith('https://')) {
     url.protocol = 'https';
     return NextResponse.redirect(url);
   }
+  */
 
   // Protect Admin Routes
   if (url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')) {

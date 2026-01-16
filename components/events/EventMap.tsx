@@ -1073,6 +1073,9 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
+        // Stop processing if tab is in background to save resources
+        if (document.hidden) return;
+
         const now = Date.now();
         // Throttle updates to prevent too many route calculations
         if (now - lastUpdateTime < UPDATE_INTERVAL) {
