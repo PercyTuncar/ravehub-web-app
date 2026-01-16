@@ -20,12 +20,16 @@ export default function BTSLandingPage() {
     <div className="min-h-screen bg-[#F3E5F5] font-sans text-gray-800 selection:bg-purple-300 overflow-x-hidden relative flex flex-col items-center pt-20">
        
       {/* --- Fondo Mágico (Mejorado) --- */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-[#E1BEE7] to-transparent opacity-80"></div>
+      <div className="fixed inset-0 pointer-events-none z-0 bg-[#F3E5F5]">
+        <div className="absolute top-0 left-0 w-full h-[60vh] bg-gradient-to-b from-[#D1C4E9] via-[#E1BEE7] to-transparent opacity-60"></div>
         {/* Formas orgánicas de fondo */}
-        <div className="absolute top-[-100px] right-[-50px] w-72 h-72 bg-purple-400 rounded-full blur-[80px] opacity-20 animate-pulse"></div>
-        <div className="absolute top-[200px] left-[-50px] w-60 h-60 bg-pink-400 rounded-full blur-[80px] opacity-20 animate-pulse delay-1000"></div>
-        <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#F3E5F5] to-transparent"></div>
+        <div className="absolute top-[-150px] right-[-100px] w-96 h-96 bg-purple-500/30 rounded-full blur-[100px] opacity-40 animate-pulse"></div>
+        <div className="absolute top-[30%] left-[-100px] w-80 h-80 bg-pink-500/20 rounded-full blur-[100px] opacity-40 animate-pulse delay-1000"></div>
+        <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-[#F3E5F5] via-white/50 to-transparent"></div>
+        
+        {/* Destellos sutiles */}
+        <div className="absolute top-20 left-10 w-2 h-2 bg-white rounded-full animate-ping opacity-50"></div>
+        <div className="absolute top-40 right-20 w-1 h-1 bg-purple-400 rounded-full animate-ping delay-700 opacity-50"></div>
       </div>
 
       <div className="relative z-10 w-full max-w-md px-4 py-8 flex flex-col min-h-screen">
@@ -172,28 +176,30 @@ export default function BTSLandingPage() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="mt-8 mb-6 sticky bottom-4 z-50 w-full"
+            className="mt-8 mb-6 sticky bottom-6 z-50 w-full"
         >
           {/* Sombra Glow animada color WhatsApp */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-[#25D366] to-[#128C7E] rounded-3xl blur opacity-40 animate-pulse"></div>
+          <div className="absolute -inset-1 bg-gradient-to-r from-[#25D366] to-[#128C7E] rounded-3xl blur-lg opacity-60 animate-pulse"></div>
            
           <a 
             href={whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="relative w-full bg-[#25D366] hover:bg-[#128C7E] active:scale-95 text-white py-5 px-6 rounded-2xl shadow-xl flex items-center justify-between transition-all duration-200 group overflow-hidden border border-white/20"
+            className="relative w-full bg-[#25D366] hover:bg-[#20bd5a] active:scale-[0.98] text-white py-5 px-6 rounded-2xl shadow-2xl flex items-center justify-between transition-all duration-300 group overflow-hidden border-2 border-[#4ade80]"
           >
              {/* Shine effect */}
-             <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 group-hover:animate-shine"></div>
+             <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 group-hover:animate-shine"></div>
               
              <div className="flex flex-col items-start z-10">
-               <span className="text-[11px] font-bold text-green-100 uppercase tracking-widest mb-1 flex items-center gap-1">
-                 <Zap className="w-3 h-3 fill-current" /> ¡Quiero Unirme!
+               <span className="text-xs font-black text-green-100 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                 <Zap className="w-4 h-4 fill-current text-yellow-300" /> ¡ÚNETE AHORA!
                </span>
-               <span className="text-2xl font-black tracking-tighter leading-none drop-shadow-sm">INICIAR FILTRO</span>
+               <span className="text-2xl font-black tracking-tight leading-none drop-shadow-md">
+                 INICIAR FILTRO
+               </span>
              </div>
               
-             <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-colors shadow-inner z-10">
+             <div className="bg-white/20 p-3 rounded-full backdrop-blur-md group-hover:bg-white/30 transition-colors shadow-inner z-10 ring-2 ring-white/20">
                <MessageCircle className="w-8 h-8 text-white fill-current" />
              </div>
           </a>
