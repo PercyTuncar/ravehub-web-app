@@ -55,15 +55,22 @@ export default function BTSLandingPage() {
           <motion.h1 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-5xl font-black text-gray-900 mb-2 leading-none tracking-tight drop-shadow-sm"
+            className="text-4xl md:text-5xl font-black text-gray-900 mb-4 leading-tight tracking-tight drop-shadow-sm flex flex-col items-center gap-2"
           >
-            BTS <span className="text-purple-600">LIMA</span>
+            <span>BTS LIMA</span>
+            <span className="text-2xl md:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-extrabold flex items-center gap-2">
+              <MessageCircle className="w-6 h-6 md:w-8 md:h-8 fill-purple-600 text-purple-600" />
+              GRUPO DE WHATSAPP
+            </span>
           </motion.h1>
-          <div className="h-1 w-20 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full mb-3"></div>
+          <div className="h-1.5 w-32 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 mx-auto rounded-full mb-4 animate-gradient-x"></div>
            
-          <p className="text-base font-semibold text-gray-600 max-w-xs mx-auto">
-            Fanclub Oficial & Seguro <br/>
-            <span className="text-sm font-normal text-gray-500">Preparándonos para el concierto del reencuentro</span>
+          <p className="text-lg font-bold text-gray-700 max-w-sm mx-auto leading-relaxed">
+            Únete a la comunidad más grande y segura de ARMY en Perú.
+            <br/>
+            <span className="text-sm font-medium text-gray-500 mt-1 block">
+              💜 Conciertos • Proyectos • Amistad 💜
+            </span>
           </p>
         </div>
 
@@ -102,21 +109,21 @@ export default function BTSLandingPage() {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col relative group hover:shadow-md transition-all"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-purple-100 flex flex-col relative group hover:shadow-lg hover:border-purple-200 transition-all duration-300 hover:-translate-y-1"
             >
-              <div className="absolute top-4 right-4 bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase border border-purple-100">
+              <div className="absolute top-4 right-4 bg-purple-100 text-purple-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
                 Anti-Catfish
               </div>
               <div className="flex items-center gap-4 mb-3">
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-lg shadow-inner">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-50 flex items-center justify-center text-purple-700 font-black text-xl shadow-inner border border-purple-100 group-hover:scale-110 transition-transform">
                   1
                 </div>
-                <h3 className="font-bold text-gray-800 text-lg">Nota de Voz</h3>
+                <h3 className="font-bold text-gray-900 text-lg">Nota de Voz</h3>
               </div>
-              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-start gap-3">
-                <Mic className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-600 leading-snug">
-                  Envía un audio de <strong>10 segundos</strong>. Di tu nombre, edad y quién es tu bias.
+              <div className="bg-purple-50/50 rounded-xl p-4 border border-purple-50 flex items-start gap-3">
+                <Mic className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                  Envía un audio de <strong className="text-purple-700">10 segundos</strong> diciendo tu nombre, edad y quién es tu bias de BTS.
                 </p>
               </div>
             </motion.div>
@@ -126,21 +133,21 @@ export default function BTSLandingPage() {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col relative group hover:shadow-md transition-all"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-pink-100 flex flex-col relative group hover:shadow-lg hover:border-pink-200 transition-all duration-300 hover:-translate-y-1"
             >
-              <div className="absolute top-4 right-4 bg-pink-50 text-pink-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase border border-pink-100">
+              <div className="absolute top-4 right-4 bg-pink-100 text-pink-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
                 Prueba Real
               </div>
               <div className="flex items-center gap-4 mb-3">
-                <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold text-lg shadow-inner">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-100 to-pink-50 flex items-center justify-center text-pink-700 font-black text-xl shadow-inner border border-pink-100 group-hover:scale-110 transition-transform">
                   2
                 </div>
-                <h3 className="font-bold text-gray-800 text-lg">Video Check</h3>
+                <h3 className="font-bold text-gray-900 text-lg">Video Check</h3>
               </div>
-              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-start gap-3">
-                <Video className="w-5 h-5 text-pink-400 shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-600 leading-snug">
-                  Graba un video mostrando un papel con <strong>fecha y hora actual</strong> + tu merch, foto o un dibujo de BTS.
+              <div className="bg-pink-50/50 rounded-xl p-4 border border-pink-50 flex items-start gap-3">
+                <Video className="w-5 h-5 text-pink-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                  Graba un video corto mostrando un papel con <strong className="text-pink-700">fecha y hora actual</strong> junto a tu merch o dibujo.
                 </p>
               </div>
             </motion.div>
@@ -150,21 +157,21 @@ export default function BTSLandingPage() {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col relative group hover:shadow-md transition-all"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-blue-100 flex flex-col relative group hover:shadow-lg hover:border-blue-200 transition-all duration-300 hover:-translate-y-1"
             >
-               <div className="absolute top-4 right-4 bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase border border-blue-100">
+               <div className="absolute top-4 right-4 bg-blue-100 text-blue-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
                 Identidad
               </div>
               <div className="flex items-center gap-4 mb-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg shadow-inner">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-700 font-black text-xl shadow-inner border border-blue-100 group-hover:scale-110 transition-transform">
                   3
                 </div>
-                <h3 className="font-bold text-gray-800 text-lg">Tu Perfil Fan</h3>
+                <h3 className="font-bold text-gray-900 text-lg">Tu Perfil Fan</h3>
               </div>
-              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-start gap-3">
-                <Instagram className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-600 leading-snug">
-                  Envía el link de tu Instagram/Facebook/TikTok fan para verificar tu actividad.
+              <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-50 flex items-start gap-3">
+                <Instagram className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                  Comparte el link de tu Instagram, TikTok o Twitter fan para verificar que eres <strong className="text-blue-700">ARMY real</strong>.
                 </p>
               </div>
             </motion.div>
