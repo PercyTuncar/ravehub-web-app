@@ -206,8 +206,8 @@ export default function BTSLandingPage() {
                </span>
              </div>
               
-             <div className="bg-white/20 p-3 rounded-full backdrop-blur-md group-hover:bg-white/30 transition-colors shadow-inner z-10 ring-2 ring-white/20">
-               <MessageCircle className="w-8 h-8 text-white fill-current" />
+             <div className="bg-white/20 p-2 rounded-full backdrop-blur-md group-hover:bg-white/30 transition-colors shadow-inner z-10 ring-2 ring-white/20">
+               <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-8 h-8" />
              </div>
           </a>
         </motion.div>
