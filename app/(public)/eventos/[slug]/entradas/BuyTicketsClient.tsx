@@ -17,6 +17,13 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { Event, SalesPhase } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -30,6 +37,18 @@ import { toast } from 'sonner';
 
 // --- Constants ---
 const RESERVATION_FEE = 50;
+
+// WhatsApp Groups Data
+const WHATSAPP_GROUPS = [
+  { id: 'pe', country: 'Perú', flag: '🇵🇪', name: 'Ravehub Perú', url: 'https://chat.whatsapp.com/HKg7kLPcGTQHWbnIMCejbh' },
+  { id: 'bts', country: 'Perú', flag: '💜', name: 'BTS 2026 🇵🇪', url: 'https://chat.whatsapp.com/L6oVVLYSGiH2hhhYVVwlxr' },
+  { id: 'girls', country: 'Global', flag: '💐', name: 'Solo Chicas', url: 'https://chat.whatsapp.com/IF4mvCUaDmO786r2HaAnPF' },
+  { id: 'cl', country: 'Chile', flag: '🇨🇱', name: 'Ravehub Chile', url: 'https://chat.whatsapp.com/Kne2ymqKypU2MgJ9stz7n0' },
+  { id: 'ec', country: 'Ecuador', flag: '🇪🇨', name: 'Ravehub Ecuador', url: 'https://chat.whatsapp.com/ESpoFCJoC4H0IuB6E2zQiG' },
+  { id: 'ar', country: 'Argentina', flag: '🇦🇷', name: 'Ravehub Argentina', url: 'https://chat.whatsapp.com/EP8cKTnwIvo0RyFKmkM373' },
+  { id: 'mx', country: 'México', flag: '🇲🇽', name: 'Ravehub México', url: 'https://chat.whatsapp.com/JvxJIpVQ9z41BWwrjw2zT2' },
+  { id: 'py', country: 'Paraguay', flag: '🇵🇾', name: 'Ravehub Paraguay', url: 'https://chat.whatsapp.com/Cl398pcLxloIUa6N2M3qd1' },
+];
 
 // --- Types ---
 
@@ -406,6 +425,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [showWhatsAppDrawer, setShowWhatsAppDrawer] = useState(false);
 
   // Restore cart state from sessionStorage on mount (after auth redirect)
   useEffect(() => {
@@ -624,7 +644,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-orange-500/30 pb-32 lg:pb-12">
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-orange-500/30 pb-40 lg:pb-12">
       <VerificationRequiredModal
         isOpen={showVerificationModal}
         onClose={() => setShowVerificationModal(false)}
@@ -660,7 +680,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-24 flex flex-col gap-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-4 sm:pt-6 flex flex-col gap-6">
         {/* Navigation - Order 1 */}
         <Link href={`/eventos/${event.slug}`} className="order-1 inline-flex items-center text-zinc-400 hover:text-white transition-colors w-fit group">
           <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center mr-3 group-hover:bg-white/10 transition-colors">
@@ -696,15 +716,13 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
              
              {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE */}
              <div className="lg:hidden w-full md:w-auto mt-4 md:mt-0">
-                 <a 
-                     href="/go" 
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     className="flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group"
+                 <button 
+                     onClick={() => setShowWhatsAppDrawer(true)}
+                     className="flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 active:scale-[0.98] transition-all group"
                    >
                       <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-5 h-5" />
                       <span className="font-bold text-[#25D366]">Unirme al Grupo WhatsApp</span>
-                   </a>
+                   </button>
              </div>
           </div>
         </div>
@@ -1007,11 +1025,9 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
                 {/* WhatsApp Community CTA - ALWAYS VISIBLE */}
                 <div className="pt-4 border-t border-white/5">
-                   <a 
-                     href="/go" 
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     className="flex items-center gap-3 p-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group w-full"
+                   <button 
+                     onClick={() => setShowWhatsAppDrawer(true)}
+                     className="flex items-center gap-3 p-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group w-full text-left"
                    >
                       <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-[#25D366]/20 group-hover:scale-110 transition-transform">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-full h-full" />
@@ -1021,7 +1037,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                         <p className="text-sm font-medium text-white group-hover:text-[#25D366] transition-colors">Únete al grupo de WhatsApp</p>
                       </div>
                       <ExternalLink className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
-                   </a>
+                   </button>
                 </div>
               </div>
             </div>
@@ -1038,36 +1054,142 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         </div>
       </div>
 
-      {/* Mobile Sticky Footer */}
-      <div className="lg:hidden fixed bottom-0 left-0 w-full z-50 p-4">
-        <div className="bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 flex items-center justify-between gap-4">
-          <div className="flex flex-col">
-            <span className="text-xs text-zinc-400">
-              {isInstallmentMode ? 'A Pagar Hoy' : 'Total'}
-            </span>
-            <div className="text-xl font-black text-white">
-              <ConvertedPrice
-                amount={isInstallmentMode ? totalReservation : totalAmount}
-                currency={event.currency}
-                showOriginal={false}
-              />
-            </div>
-            {isInstallmentMode && totalTickets > 0 && (
-              <span className="text-[10px] text-blue-400 font-bold">
-                Restan: {installments} x <ConvertedPrice amount={monthlyInstallment} currency={event.currency} showOriginal={false} className="inline" />
+      {/* Mobile Sticky Footer - positioned above bottom navbar */}
+      <div className="lg:hidden fixed bottom-24 left-0 w-full z-40 px-3">
+        {/* Main Purchase CTA - Premium Glass Effect */}
+        <div className="relative overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          {/* Glass background layers */}
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/90 via-zinc-900/95 to-black/90" />
+          <div className="absolute inset-0 backdrop-blur-xl" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/[0.08] via-transparent to-white/[0.04]" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+          
+          {/* Content */}
+          <div className="relative z-10 p-4 flex items-center justify-between gap-4">
+            <div className="flex flex-col">
+              <span className="text-[11px] text-zinc-400 font-medium uppercase tracking-wider">
+                {isInstallmentMode ? 'A Pagar Hoy' : 'Total'}
               </span>
-            )}
+              <div className="text-2xl font-black text-white drop-shadow-sm">
+                <ConvertedPrice
+                  amount={isInstallmentMode ? totalReservation : totalAmount}
+                  currency={event.currency}
+                  showOriginal={false}
+                />
+              </div>
+              {isInstallmentMode && totalTickets > 0 && (
+                <span className="text-[10px] text-blue-400 font-bold">
+                  Restan: {installments} x <ConvertedPrice amount={monthlyInstallment} currency={event.currency} showOriginal={false} className="inline" />
+                </span>
+              )}
+            </div>
+            <Button
+              size="lg"
+              className="rounded-xl px-6 py-3 font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/30 border border-orange-400/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              disabled={totalTickets === 0 || !acceptTerms || processing}
+              onClick={handlePurchase}
+            >
+              {processing ? '...' : (isInstallmentMode ? 'Reservar' : 'Pagar')}
+            </Button>
           </div>
-          <Button
-            size="lg"
-            className="rounded-xl px-8 font-bold bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20"
-            disabled={totalTickets === 0 || !acceptTerms || processing}
-            onClick={handlePurchase}
-          >
-            {processing ? '...' : (isInstallmentMode ? 'Reservar' : 'Pagar')}
-          </Button>
         </div>
       </div>
+
+      {/* WhatsApp Groups Drawer */}
+      <Sheet open={showWhatsAppDrawer} onOpenChange={setShowWhatsAppDrawer}>
+        <SheetContent
+          side="bottom"
+          className="h-[75vh] rounded-t-[2rem] border-t border-[#25D366]/20 p-0 flex flex-col overflow-hidden"
+          style={{ background: 'linear-gradient(to bottom, rgba(10,10,10,0.98), rgba(5,5,5,0.99))' }}
+          onPointerDown={(e) => {
+            const startY = e.clientY;
+            const onMove = (moveEvent: PointerEvent) => {
+              if (moveEvent.clientY - startY > 100) {
+                setShowWhatsAppDrawer(false);
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup', onUp);
+              }
+            };
+            const onUp = () => {
+              document.removeEventListener('pointermove', onMove);
+              document.removeEventListener('pointerup', onUp);
+            };
+            document.addEventListener('pointermove', onMove);
+            document.addEventListener('pointerup', onUp);
+          }}
+        >
+          {/* Decorative glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[150px] bg-[#25D366]/20 blur-[80px] pointer-events-none" />
+          
+          {/* Drag handle */}
+          <div className="relative z-10 pt-4 pb-2 cursor-grab active:cursor-grabbing">
+            <div className="w-14 h-1.5 bg-gradient-to-r from-[#25D366]/40 via-[#25D366]/60 to-[#25D366]/40 rounded-full mx-auto" />
+            <p className="text-[10px] text-zinc-500 text-center mt-2">Arrastra hacia abajo para cerrar</p>
+          </div>
+          
+          <SheetHeader className="relative z-10 px-6 pb-5 pt-2 text-center shrink-0">
+            <SheetTitle className="flex flex-col items-center gap-3">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#25D366] to-[#128C7E] flex items-center justify-center shadow-lg shadow-[#25D366]/30">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-9 h-9" />
+              </div>
+              <span className="text-2xl font-black text-white">Grupos de WhatsApp</span>
+            </SheetTitle>
+            <SheetDescription className="text-zinc-400 text-sm mt-1">
+              Únete a la comunidad Ravehub de tu país 🎉
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="relative z-10 overflow-y-auto flex-1 px-4 pb-8">
+            <div className="grid gap-3">
+              {WHATSAPP_GROUPS.map((group, index) => (
+                <motion.a
+                  key={group.id}
+                  href={group.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: index * 0.05, type: 'spring', stiffness: 300, damping: 25 }}
+                  className="relative overflow-hidden flex items-center p-4 rounded-2xl border border-white/10 hover:border-[#25D366]/50 active:scale-[0.97] transition-all duration-200 group"
+                  style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)' }}
+                >
+                  {/* Hover glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#25D366]/0 via-[#25D366]/10 to-[#25D366]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  {/* Flag container */}
+                  <div className="relative w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mr-4 group-hover:bg-white/10 transition-colors">
+                    <span className="text-3xl">{group.flag}</span>
+                  </div>
+                  
+                  {/* Text content */}
+                  <div className="relative flex-1 min-w-0">
+                    <h3 className="font-bold text-white text-base group-hover:text-[#25D366] transition-colors">{group.name}</h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">{group.country}</p>
+                  </div>
+                  
+                  {/* Action button */}
+                  <div className="relative flex items-center gap-2">
+                    <span className="text-xs font-semibold text-[#25D366] opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Unirse</span>
+                    <div className="w-10 h-10 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 flex items-center justify-center group-hover:bg-[#25D366] group-hover:border-[#25D366] transition-all duration-200">
+                      <ExternalLink className="w-5 h-5 text-[#25D366] group-hover:text-white transition-colors" />
+                    </div>
+                  </div>
+                </motion.a>
+              ))}
+            </div>
+            
+            {/* Footer inside drawer */}
+            <div className="pt-8 pb-4 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5">
+                <span className="text-xs text-zinc-500">Powered by</span>
+                <span className="text-xs text-[#25D366] font-bold">Ravehub Latam</span>
+                <span className="text-sm">🎧</span>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
     </div >
   );
