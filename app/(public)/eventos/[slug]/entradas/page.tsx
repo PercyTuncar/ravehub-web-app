@@ -6,6 +6,7 @@ import BuyTicketsClient from './BuyTicketsClient';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Sparkles, Music, ShieldCheck, Info } from 'lucide-react';
+import { BTSRegistrationModal } from '@/components/tickets/bts-registration-modal';
 
 export const revalidate = 180;
 
@@ -209,6 +210,12 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
       <BuyTicketsClient event={event} eventDjs={eventDjs}>
         {/* SEO Text Content - Server Rendered & Visible */}
         {/* SEO Text Content - Premium Design */}
+
+        {/* Conditional Popup for BTS */}
+        {data.event.slug === 'bts-en-lima-2026' && (
+          <BTSRegistrationModal />
+        )}
+
         <div className="space-y-12">
 
           {/* Main Description */}
