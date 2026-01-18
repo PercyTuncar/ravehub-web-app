@@ -65,7 +65,7 @@ export function BTSRegistrationModal() {
 
                                 <p className="text-xs text-orange-200/90 leading-snug">
 
-                                    RaveHub es una plataforma 100% dedicada a la música electrónica.
+                                    Ravehub es una plataforma 100% dedicada a la música electrónica. Desde 2023, ofrecemos entradas seguras y confiables.
                                 </p>
                             </div>
 
