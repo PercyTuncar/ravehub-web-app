@@ -64,6 +64,9 @@ const config: Config = {
           DEFAULT: 'hsl(var(--info))',
           foreground: 'hsl(var(--info-foreground))',
         },
+        'acid-yellow': '#ccff00',
+        'acid-pink': '#ff0099',
+        'neon-green': '#39ff14',
         // Extended orange palette
         orange: {
           50: 'hsl(24, 100%, 97%)',

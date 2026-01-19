@@ -1,96 +1,128 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { ExternalLink, Sparkles, X, ShieldCheck } from "lucide-react"
+import { createPortal } from "react-dom"
+import { Star, X, ShieldCheck, ArrowRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
+import Link from "next/link"
+import { cn } from "@/lib/utils"
+
+function GlassCard({ className, children }: { className?: string; children: React.ReactNode }) {
+    return (
+        <div className={cn("backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl", className)}>
+            {children}
+        </div>
+    )
+}
 
 export function BTSRegistrationModal() {
-    const [open, setOpen] = useState(false)
+    const [isOpen, setIsOpen] = useState(false)
+    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
-        // Small delay to ensure animations play smoothly after page load
+        setMounted(true)
+        // Show modal after 3 seconds
         const timer = setTimeout(() => {
-            setOpen(true)
+            setIsOpen(true)
         }, 3000)
 
         return () => clearTimeout(timer)
     }, [])
 
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-sm sm:max-w-md overflow-hidden [&>button]:hidden">
-                <div className="relative bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl shadow-purple-900/20">
+    const onClose = () => setIsOpen(false)
 
-                    {/* Background Effects */}
-                    <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-purple-900/40 via-purple-900/10 to-transparent pointer-events-none" />
-                    <div className="absolute -top-20 -right-20 w-60 h-60 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+    if (!mounted) return null
 
-                    {/* Close Button Override */}
-                    <button
-                        onClick={() => setOpen(false)}
-                        className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/20 hover:bg-black/40 text-zinc-400 hover:text-white transition-colors backdrop-blur-sm"
+    return createPortal(
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                    />
+
+                    {/* Modal */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="relative w-full max-w-lg z-50 pointer-events-auto"
                     >
-                        <X className="w-4 h-4" />
-                    </button>
+                        <GlassCard className="p-0 overflow-hidden border-2 border-acid-yellow shadow-[0_0_50px_rgba(234,255,0,0.2)]">
 
-                    <div className="relative p-6 sm:p-8 flex flex-col items-center text-center space-y-6">
-
-                        {/* Header / Logo */}
-                        <div className="relative mb-2">
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400/20 to-emerald-600/20 flex items-center justify-center mb-4 ring-1 ring-emerald-500/30 shadow-[0_0_30px_-5px_rgba(16,185,129,0.3)] mx-auto animate-pulse-slow">
-                                {/* Using standard img tag for external fast loading svg, specific request */}
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-                                    alt="WhatsApp Logo"
-                                    className="w-10 h-10 drop-shadow-md"
-                                />
-                            </div>
-
-                            <DialogTitle className="text-3xl font-black text-white tracking-tight">
-                                BTS en <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Lima 2026</span>
-                            </DialogTitle>
-                            <DialogDescription className="text-zinc-400 mt-2 text-base font-medium">
-                                Únete a la comunidad oficial
-                            </DialogDescription>
-                        </div>
-
-                        {/* Main Content Card */}
-                        <div className="w-full bg-white/5 border border-white/5 rounded-2xl p-5 backdrop-blur-sm space-y-4">
-
-                            <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3 flex gap-3 text-left">
-
-                                <p className="text-xs text-orange-200/90 leading-snug">
-
-                                    Ravehub es una plataforma 100% dedicada a la música electrónica. Desde 2023, ofrecemos entradas seguras y confiables.
+                            {/* Header */}
+                            <div className="bg-acid-yellow p-6 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <Star className="w-32 h-32 text-black rotate-12" />
+                                </div>
+                                <button
+                                    onClick={onClose}
+                                    className="absolute top-4 right-4 p-2 bg-black/10 hover:bg-black/20 rounded-full transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-black" />
+                                </button>
+                                <h3 className="text-3xl font-black uppercase text-black leading-none mb-2 relative z-10">
+                                    ¡Espera Army!
+                                </h3>
+                                <p className="font-bold text-black/80 uppercase tracking-widest text-sm relative z-10">
+                                    Requisito Obligatorio de Preventa
                                 </p>
                             </div>
 
-                            <p className="text-sm text-zinc-300 font-medium leading-relaxed">
-                                Para información, precios y entradas de <strong className="text-white">BTS en Lima</strong>, debes visitar <a href="https://entradasbts.com/peru/" target="_blank" className="text-zinc-400 hover:text-white underline decoration-zinc-700 underline-offset-2 transition-colors">entradasbts.com</a>
-                            </p>
-                        </div>
+                            {/* Content */}
+                            <div className="p-8 space-y-6 bg-black/90">
+                                <div className="space-y-4">
+                                    <p className="text-xl text-white font-medium leading-relaxed">
+                                        Para poder comprar entradas en esta fase de preventa, es <span className="text-acid-pink font-bold">indispensable</span> contar con tu Membresía Oficial activa.
+                                    </p>
 
-                        {/* CTA Button */}
-                        <Button
-                            className="w-full h-14 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-lg rounded-xl shadow-lg shadow-green-500/20 hover:shadow-green-500/30 hover:-translate-y-0.5 transition-all duration-300 group"
-                            onClick={() => window.open('https://entradasbts.com/peru/', '_blank')}
-                        >
-                            Comprar Entradas para BTS, clic aquí
-                            <ExternalLink className="w-5 h-5 ml-2 opacity-80 group-hover:translate-x-1 transition-transform" />
-                        </Button>
+                                    <div className="bg-white/5 border border-white/10 p-4 rounded-lg flex gap-4 items-start">
+                                        <div className="bg-neon-green/20 p-2 rounded-full mt-1">
+                                            <ShieldCheck className="w-5 h-5 text-neon-green" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-white font-bold uppercase text-sm mb-1">Beneficio Exclusivo</h4>
+                                            <p className="text-gray-400 text-sm">
+                                                Solo los personas que compren la membresía oficial tendrán acceso a comprar entradas en la fase de preventa.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        {/* Disclaimer */}
-                        <p className="text-[11px] text-zinc-500 leading-tight max-w-xs mx-auto">
-                            <strong>Nota:</strong> Venta oficial aún no lo tenemos disponible. Precios y zonas son referenciales.
-                        </p>
+                                <div className="pt-2">
+                                    <Link
+                                        href="https://entradasbts.com/comprar-membresia-bts/"
+                                        target="_blank"
+                                        className="group block w-full bg-acid-pink hover:bg-white hover:text-black transition-all duration-300 text-white font-black uppercase text-xl py-4 text-center shadow-[4px_4px_0_white] hover:shadow-[6px_6px_0_white] hover:-translate-y-1"
+                                    >
+                                        <span className="flex items-center justify-center gap-2">
+                                            Comprar Membresía <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                                        </span>
+                                    </Link>
+                                    <p className="text-center text-gray-500 text-xs mt-3 uppercase tracking-widest font-bold">
+                                        S/. 99.50 • Pago Único / 1 Año
+                                    </p>
+                                </div>
 
-                    </div>
+                                {/* Disclaimer Note requested by user */}
+                                <div className="border-t border-dashed border-white/20 pt-4 mt-2">
+                                    <p className="text-[10px] md:text-xs text-gray-500 text-center leading-relaxed">
+                                        <span className="font-bold text-acid-yellow">NOTA:</span> La venta de entradas oficialmente no está disponible en este momento.
+                                        Pero para asegurar tu lugar, te recomendamos adquirir la membresía oficial.
+                                        Los precios y zonas de los tickets son referenciales.
+                                    </p>
+                                </div>
+                            </div>
+                        </GlassCard>
+                    </motion.div>
                 </div>
-            </DialogContent>
-        </Dialog>
+            )}
+        </AnimatePresence>,
+        document.body
     )
 }
