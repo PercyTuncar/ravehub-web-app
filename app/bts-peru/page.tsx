@@ -14,7 +14,7 @@ import {
 
 export default function BTSActivationPage() {
   const whatsappNumber = "51944784488";
-  const whatsappMessage = encodeURIComponent("Hola Admin! He realizado el pago de mi membresía ARMY Oficial (S/. 99.50). Solicito la activación de mi cuenta. Adjunto mi comprobante. 💜");
+  const whatsappMessage = encodeURIComponent("Hola! He realizado el pago de mi membresía ARMY Oficial (S/. 99.50). Solicito la activación de mi cuenta. Adjunto mi comprobante. 💜");
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
   return (
