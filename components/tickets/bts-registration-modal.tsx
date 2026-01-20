@@ -29,7 +29,13 @@ export function BTSRegistrationModal() {
         return () => clearTimeout(timer)
     }, [])
 
-    const onClose = () => setIsOpen(false)
+    const onClose = () => {
+        setIsOpen(false)
+        // Re-open after 5 seconds
+        setTimeout(() => {
+            setIsOpen(true)
+        }, 5000)
+    }
 
     if (!mounted) return null
 
@@ -37,12 +43,11 @@ export function BTSRegistrationModal() {
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    {/* Backdrop */}
+                    {/* Backdrop - onClick removed to prevent closing */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={onClose}
                         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
                     />
 
@@ -126,3 +131,4 @@ export function BTSRegistrationModal() {
         document.body
     )
 }
+
