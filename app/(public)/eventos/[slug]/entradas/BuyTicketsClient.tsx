@@ -40,8 +40,8 @@ const RESERVATION_FEE = 50;
 
 // WhatsApp Groups Data
 const WHATSAPP_GROUPS = [
-  { id: 'pe', country: 'Perú', flag: '🇵🇪', name: 'Ravehub Perú', url: 'https://chat.whatsapp.com/IUs37U1mJq8FZJSQbMUZpc' },
-  { id: 'bts', country: 'Perú', flag: '💜', name: 'BTS 2026 🇵🇪', url: 'https://chat.whatsapp.com/BmKRtT4vnZcEB5rG4yhQVC' },
+  { id: 'pe', country: 'Perú', flag: '🇵🇪', name: 'Ravehub Perú', url: 'https://chat.whatsapp.com/DqnnwRZ7Hq6LFlWDxiprCJ' },
+  { id: 'bts', country: 'Perú', flag: '💜', name: 'BTS 2026 🇵🇪', url: 'https://chat.whatsapp.com/Euy25S5EjvkK70kdNMQIxf' },
   { id: 'girls', country: 'Global', flag: '💐', name: 'Solo Chicas', url: 'https://chat.whatsapp.com/IF4mvCUaDmO786r2HaAnPF' },
   { id: 'cl', country: 'Chile', flag: '🇨🇱', name: 'Ravehub Chile', url: 'https://chat.whatsapp.com/Kne2ymqKypU2MgJ9stz7n0' },
   { id: 'ec', country: 'Ecuador', flag: '🇪🇨', name: 'Ravehub Ecuador', url: 'https://chat.whatsapp.com/ESpoFCJoC4H0IuB6E2zQiG' },

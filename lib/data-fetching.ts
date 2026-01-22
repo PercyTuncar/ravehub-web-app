@@ -26,13 +26,14 @@ export async function getBlogPosts(filters?: {
     const limit = filters?.limit || 12;
     const offset = filters?.offset || 0;
 
-    // Get total count first
-    const allPosts = await blogCollection.query(conditions, 'publishDate', 'desc');
-    const total = allPosts.length;
+    // OPTIMIZED: Use count() for total instead of fetching all documents
+    const total = await blogCollection.count(conditions);
 
-    // Get paginated posts using limit and offset
-    // Since Firestore doesn't support offset directly, we'll get all and slice
-    const allMatchingPosts = await blogCollection.query(conditions, 'publishDate', 'desc');
+    // Fetch only the needed documents with pagination
+    // Note: Firestore doesn't support offset directly, so we fetch limit + offset and slice
+    // For better performance with large offsets, consider cursor-based pagination
+    const fetchLimit = Math.min(offset + limit, 100); // Cap at 100 to prevent excessive reads
+    const allMatchingPosts = await blogCollection.query(conditions, 'publishDate', 'desc', fetchLimit);
     const fetchedPosts = allMatchingPosts.slice(offset, offset + limit);
 
     return { posts: fetchedPosts as BlogPost[], total };
@@ -55,17 +56,16 @@ export async function getEventsByCountry(countryCode: string, filters?: {
     // Filter by country in location
     conditions.push({ field: 'location.countryCode', operator: '==', value: countryCode.toUpperCase() });
 
-    // Note: filters.status is not used since we always filter by published
-    // If needed in the future, it should use 'eventStatus' not 'status'
-
-    const limit = filters?.limit || 50; // Higher limit for country pages
+    const limit = filters?.limit || 50;
     const offset = filters?.offset || 0;
 
-    // Get all matching events
-    const allEvents = await eventsCollection.query(conditions, 'startDate', 'asc');
-    const total = allEvents.length;
+    // OPTIMIZED: Use count() for total instead of fetching all documents
+    const total = await eventsCollection.count(conditions);
 
-    // Get paginated events
+    // Fetch only what we need with proper limit
+    // For offset > 0, we need to fetch offset + limit, then slice
+    const fetchLimit = Math.min(offset + limit, 100);
+    const allEvents = await eventsCollection.query(conditions, 'startDate', 'asc', fetchLimit);
     const fetchedEvents = allEvents.slice(offset, offset + limit);
 
     return { events: fetchedEvents as Event[], total };
@@ -76,24 +76,20 @@ export async function getEventsByCountry(countryCode: string, filters?: {
 
 export async function getUpcomingEvents(limit: number = 3): Promise<Event[]> {
   try {
-    const conditions: Array<{ field: string; operator: any; value: any }> = [
-      { field: 'eventStatus', operator: '==', value: 'published' }
-    ];
-
     // Get current date in ISO format for comparison
     const now = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
 
-    // Get events starting from today onwards, ordered by startDate ascending
-    const allEvents = await eventsCollection.query(conditions, 'startDate', 'asc');
+    // OPTIMIZED: Query with date filter directly in Firestore
+    // Filter events starting from today onwards using >= operator
+    const conditions: Array<{ field: string; operator: any; value: any }> = [
+      { field: 'eventStatus', operator: '==', value: 'published' },
+      { field: 'startDate', operator: '>=', value: now }
+    ];
 
-    // Filter events that start today or in the future
-    const upcomingEvents = allEvents.filter(event => {
-      const eventDate = event.startDate;
-      return eventDate >= now;
-    });
+    // Fetch only the limited number we need, ordered by startDate
+    const upcomingEvents = await eventsCollection.query(conditions, 'startDate', 'asc', limit);
 
-    // Return limited number of events
-    return upcomingEvents.slice(0, limit) as Event[];
+    return upcomingEvents as Event[];
   } catch (err) {
     throw new Error(err instanceof Error ? err.message : 'Error fetching upcoming events');
   }

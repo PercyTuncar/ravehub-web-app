@@ -25,11 +25,10 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
   const { categoria, ordenar, busqueda } = await searchParams;
 
   try {
-    // Get active products count for description
-    const allProducts = await productsCollection.query(
+    // OPTIMIZED: Use count() instead of fetching all documents
+    const totalProducts = await productsCollection.count(
       [{ field: 'isActive', operator: '==', value: true }]
     );
-    const totalProducts = allProducts.length;
 
     // Determine if this is a filtered page
     const hasFilters = categoria || ordenar || busqueda;
@@ -76,13 +75,21 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
 export default async function TiendaPage({ searchParams }: ShopPageProps) {
   const { categoria, ordenar, busqueda } = await searchParams;
 
-  // Load initial data on server
-  const allProducts = await productsCollection.query(
-    [{ field: 'isActive', operator: '==', value: true }]
+  // OPTIMIZED: Use cached queries to reduce repeated reads
+  const allProducts = await productsCollection.queryCached(
+    [{ field: 'isActive', operator: '==', value: true }],
+    'name',
+    'asc',
+    100, // Limit to 100 products
+    'products:active'
   );
 
-  const allCategories = await productCategoriesCollection.query(
-    [{ field: 'isActive', operator: '==', value: true }]
+  const allCategories = await productCategoriesCollection.queryCached(
+    [{ field: 'isActive', operator: '==', value: true }],
+    'order',
+    'asc',
+    50,
+    'productCategories:active'
   );
 
   return (

@@ -45,44 +45,32 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
         const startDate = getDateFromRange(timeRange);
         const startDateIso = startDate.toISOString();
 
-        // Parallel Fetching
+        // OPTIMIZED: Use count() and filtered queries instead of getAll()
+        // Get counts efficiently without fetching all documents
         const [
-            events,
-            tickets,
-            users
+            totalEventsCount,
+            activeEventsCount,
+            totalUsersCount,
+            // For tickets we need to fetch with date filter for calculations
         ] = await Promise.all([
-            eventsCollection.getAll(), // Optimize later with count() if SDK supports or queries
-            ticketTransactionsCollection.getAll(), // Needs optimization for scale
-            usersCollection.getAll()
+            eventsCollection.count([]),
+            eventsCollection.count([
+                { field: 'eventStatus', operator: '==', value: 'published' }
+            ]),
+            usersCollection.count([]),
         ]);
 
-        // Filter by Date Range (In-memory for now as Firestore inequality on different fields is strict)
-        // For production scaling, we should use backend specific count queries if possible or aggregate counters.
+        // Fetch only tickets within the time range for calculations
+        const ticketsInRange = await ticketTransactionsCollection.query(
+            timeRange === 'all' ? [] : [
+                { field: 'createdAt', operator: '>=', value: startDate }
+            ],
+            'createdAt',
+            'desc',
+            1000 // Limit to last 1000 transactions for dashboard
+        );
 
-        // 1. Events Stats
-        const filteredEvents = events.filter((e: any) => new Date(e.createdAt?.toDate ? e.createdAt.toDate() : e.createdAt) >= startDate);
-        const totalEvents = filteredEvents.length;
-        // Active events are usually "published" and future date, regardless of creation time?
-        // Or active events created in this period? 
-        // Usually "Active Events" implies current status. Let's filter from ALL events.
-        const activeEvents = events.filter((e: any) =>
-            e.eventStatus === 'published' &&
-            new Date(e.startDate) > new Date()
-        ).length;
-
-        // 2. Users Stats
-        const filteredUsers = users.filter((u: any) => {
-            const d = new Date(u.createdAt?.toDate ? u.createdAt.toDate() : u.createdAt || 0);
-            return d >= startDate;
-        });
-        const totalUsers = filteredUsers.length;
-
-        // 3. Tickets & Revenue
-        const filteredTickets = tickets.filter((t: any) => {
-            const d = new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt);
-            return d >= startDate;
-        });
-
+        // Calculate stats from filtered tickets
         let totalTickets = 0;
         let totalRevenue = 0;
         let pendingPayments = 0;
@@ -95,7 +83,7 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
             salesMap.set(d.toLocaleDateString('es-ES', { weekday: 'short' }), 0);
         }
 
-        filteredTickets.forEach((t: any) => {
+        ticketsInRange.forEach((t: any) => {
             const isPaid = t.status === 'approved' || t.paymentStatus === 'approved';
             const isPending = t.status === 'pending' || t.paymentStatus === 'pending';
 
@@ -111,10 +99,8 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
                 const amount = Number(t.totalAmount || t.amount) || 0;
                 totalRevenue += amount;
 
-                // Chart Data (Last 7 days strictly? Or distributed over range?)
-                // Keeping "Last 7 Days" visual for consistency with UI hook logic
+                // Chart Data (Last 7 days)
                 const tDate = new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt);
-                // Check if within last 7 days from NOW (not range start)
                 const sevenDaysAgo = new Date();
                 sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -133,13 +119,21 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
 
         const salesData = Array.from(salesMap.entries()).map(([name, sales]) => ({ name, sales }));
 
-        // 4. Recent Activity (Real Data)
-        // We want the most recent items from ALL lists.
-        // Create unified list
+        // OPTIMIZED: Recent activity - fetch only last 10 from each collection
+        const [recentEvents, recentTickets, recentUsers] = await Promise.all([
+            eventsCollection.query([], 'createdAt', 'desc', 10),
+            ticketTransactionsCollection.query(
+                [{ field: 'status', operator: '==', value: 'approved' }],
+                'createdAt',
+                'desc',
+                10
+            ),
+            usersCollection.query([], 'createdAt', 'desc', 10),
+        ]);
+
         const allActivity: any[] = [];
 
-        // Add recent events
-        events.forEach((e: any) => {
+        recentEvents.forEach((e: any) => {
             allActivity.push({
                 id: e.id,
                 type: 'event',
@@ -149,22 +143,17 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
             });
         });
 
-        // Add recent approved payments (tickets)
-        tickets.forEach((t: any) => {
-            if (t.status === 'approved' || t.paymentStatus === 'approved') {
-                // Try to find user name? Too expensive? Use "Un usuario"
-                allActivity.push({
-                    id: t.id,
-                    type: 'payment',
-                    message: `Pago aprobado por ${(t.currency || 'CLP')} ${t.totalAmount}`,
-                    timestamp: new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt),
-                    rawDate: new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt).getTime()
-                });
-            }
+        recentTickets.forEach((t: any) => {
+            allActivity.push({
+                id: t.id,
+                type: 'payment',
+                message: `Pago aprobado por ${(t.currency || 'CLP')} ${t.totalAmount}`,
+                timestamp: new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt),
+                rawDate: new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt).getTime()
+            });
         });
 
-        // Add recent users
-        users.forEach((u: any) => {
+        recentUsers.forEach((u: any) => {
             allActivity.push({
                 id: u.id,
                 type: 'user',
@@ -174,7 +163,7 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
             });
         });
 
-        // Sort descending by date and take top 10
+        // Sort and take top 10
         const recentActivity = allActivity
             .sort((a, b) => b.rawDate - a.rawDate)
             .slice(0, 10)
@@ -183,10 +172,10 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
         return {
             success: true,
             data: {
-                totalEvents,
-                activeEvents,
+                totalEvents: totalEventsCount,
+                activeEvents: activeEventsCount,
                 totalTickets,
-                totalUsers,
+                totalUsers: totalUsersCount,
                 pendingPayments,
                 totalRevenue,
                 salesData,
@@ -205,76 +194,70 @@ export async function getDetailedAnalytics(timeRange: TimeRange): Promise<{ succ
         await requireAdmin();
         const startDate = getDateFromRange(timeRange);
 
+        // OPTIMIZED: Fetch only filtered data with limits instead of getAll()
         const [tickets, users, events] = await Promise.all([
-            ticketTransactionsCollection.getAll(),
-            usersCollection.getAll(),
-            eventsCollection.getAll(),
+            ticketTransactionsCollection.query(
+                timeRange === 'all' ? [] : [{ field: 'createdAt', operator: '>=', value: startDate }],
+                'createdAt',
+                'desc',
+                2000 // Limit for analytics
+            ),
+            usersCollection.query(
+                timeRange === 'all' ? [] : [{ field: 'createdAt', operator: '>=', value: startDate }],
+                'createdAt',
+                'desc',
+                1000
+            ),
+            eventsCollection.query([], 'createdAt', 'desc', 100), // Just for name lookup
         ]);
 
-        // 1. Sales Over Time (Detailed)
-        // Group by Day (for 7d, 30d) or Month (for Year/All)
-        // Use proper aggregation.
-
-        // Filter tickets by range
-        const filteredTickets = tickets.filter((t: any) => {
-            const d = new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt);
-            return d >= startDate;
-        });
+        // Filter approved tickets
+        const filteredTickets = tickets.filter((t: any) => 
+            t.status === 'approved' || t.paymentStatus === 'approved'
+        );
 
         const revenueByDay = new Map<string, number>();
         const ticketsByDay = new Map<string, number>();
 
         filteredTickets.forEach((t: any) => {
-            if (t.status === 'approved' || t.paymentStatus === 'approved') {
-                const d = new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt);
-                const key = d.toISOString().split('T')[0]; // YYYY-MM-DD
+            const d = new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt);
+            const key = d.toISOString().split('T')[0]; // YYYY-MM-DD
 
-                const amount = Number(t.totalAmount || t.amount) || 0;
-                let qty = 0;
-                if (t.ticketItems && Array.isArray(t.ticketItems)) {
-                    t.ticketItems.forEach((item: any) => qty += (Number(item.quantity) || 0));
-                } else {
-                    qty = Number(t.quantity) || 0;
-                }
-
-                revenueByDay.set(key, (revenueByDay.get(key) || 0) + amount);
-                ticketsByDay.set(key, (ticketsByDay.get(key) || 0) + qty);
+            const amount = Number(t.totalAmount || t.amount) || 0;
+            let qty = 0;
+            if (t.ticketItems && Array.isArray(t.ticketItems)) {
+                t.ticketItems.forEach((item: any) => qty += (Number(item.quantity) || 0));
+            } else {
+                qty = Number(t.quantity) || 0;
             }
+
+            revenueByDay.set(key, (revenueByDay.get(key) || 0) + amount);
+            ticketsByDay.set(key, (ticketsByDay.get(key) || 0) + qty);
         });
 
         const salesTrend = Array.from(revenueByDay.entries())
             .map(([date, amount]) => ({ date, amount, tickets: ticketsByDay.get(date) || 0 }))
             .sort((a, b) => a.date.localeCompare(b.date));
 
-        // 2. Ticket Types Distribution
-        // Analyze which ticket types sell the most
+        // Ticket Types Distribution
         const ticketTypesMap = new Map<string, number>();
         filteredTickets.forEach((t: any) => {
-            if (t.status === 'approved' || t.paymentStatus === 'approved') {
-                if (t.ticketItems && Array.isArray(t.ticketItems)) {
-                    t.ticketItems.forEach((item: any) => {
-                        const name = item.name || 'General';
-                        ticketTypesMap.set(name, (ticketTypesMap.get(name) || 0) + (Number(item.quantity) || 0));
-                    });
-                }
+            if (t.ticketItems && Array.isArray(t.ticketItems)) {
+                t.ticketItems.forEach((item: any) => {
+                    const name = item.name || 'General';
+                    ticketTypesMap.set(name, (ticketTypesMap.get(name) || 0) + (Number(item.quantity) || 0));
+                });
             }
         });
 
         const topTicketTypes = Array.from(ticketTypesMap.entries())
             .map(([name, value]) => ({ name, value }))
             .sort((a, b) => b.value - a.value)
-            .slice(0, 5); // Top 5
+            .slice(0, 5);
 
-        // 3. User Demographics (Growth)
-        // New Users vs Returning? (Hard without deeper auth data)
-        // Just User Growth over time in range
-        const filteredUsers = users.filter((u: any) => {
-            const d = new Date(u.createdAt?.toDate ? u.createdAt.toDate() : u.createdAt || 0);
-            return d >= startDate;
-        });
-
+        // User Growth
         const usersByDay = new Map<string, number>();
-        filteredUsers.forEach((u: any) => {
+        users.forEach((u: any) => {
             const d = new Date(u.createdAt?.toDate ? u.createdAt.toDate() : u.createdAt || 0);
             const key = d.toISOString().split('T')[0];
             usersByDay.set(key, (usersByDay.get(key) || 0) + 1);
@@ -284,41 +267,33 @@ export async function getDetailedAnalytics(timeRange: TimeRange): Promise<{ succ
             .map(([date, count]) => ({ date, count }))
             .sort((a, b) => a.date.localeCompare(b.date));
 
-
-        // 4. Top Events
-        // Best selling events
-        const eventsMap = new Map<string, { name: string, revenue: number, tickets: number }>();
-
-        // We need to match tickets to events. Ticket usually has eventId.
-        // Optimization: Build event lookup
+        // Top Events
         const eventLookup = new Map<string, string>();
         events.forEach((e: any) => eventLookup.set(e.id, e.name));
 
+        const eventsMap = new Map<string, { name: string, revenue: number, tickets: number }>();
         filteredTickets.forEach((t: any) => {
-            if (t.status === 'approved' || t.paymentStatus === 'approved') {
-                const eventId = t.eventId;
-                if (eventId) {
-                    const current = eventsMap.get(eventId) || { name: eventLookup.get(eventId) || 'Evento Desconocido', revenue: 0, tickets: 0 };
+            const eventId = t.eventId;
+            if (eventId) {
+                const current = eventsMap.get(eventId) || { name: eventLookup.get(eventId) || 'Evento Desconocido', revenue: 0, tickets: 0 };
 
-                    const amount = Number(t.totalAmount || t.amount) || 0;
-                    let qty = 0;
-                    if (t.ticketItems && Array.isArray(t.ticketItems)) {
-                        t.ticketItems.forEach((item: any) => qty += (Number(item.quantity) || 0));
-                    } else {
-                        qty = Number(t.quantity) || 0;
-                    }
-
-                    current.revenue += amount;
-                    current.tickets += qty;
-                    eventsMap.set(eventId, current);
+                const amount = Number(t.totalAmount || t.amount) || 0;
+                let qty = 0;
+                if (t.ticketItems && Array.isArray(t.ticketItems)) {
+                    t.ticketItems.forEach((item: any) => qty += (Number(item.quantity) || 0));
+                } else {
+                    qty = Number(t.quantity) || 0;
                 }
+
+                current.revenue += amount;
+                current.tickets += qty;
+                eventsMap.set(eventId, current);
             }
         });
 
         const topEvents = Array.from(eventsMap.values())
             .sort((a, b) => b.revenue - a.revenue)
             .slice(0, 5);
-
 
         return {
             success: true,
@@ -330,7 +305,7 @@ export async function getDetailedAnalytics(timeRange: TimeRange): Promise<{ succ
                 summary: {
                     totalRevenue: Array.from(revenueByDay.values()).reduce((a, b) => a + b, 0),
                     totalTickets: Array.from(ticketsByDay.values()).reduce((a, b) => a + b, 0),
-                    totalNewUsers: filteredUsers.length
+                    totalNewUsers: users.length
                 }
             }
         };

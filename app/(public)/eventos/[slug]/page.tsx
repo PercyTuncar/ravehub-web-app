@@ -78,7 +78,7 @@ async function getEventData(slug: string): Promise<{ event: Event; eventDjs: Eve
   try {
     // Find event by slug with ISR cache and revalidation tags
     const conditions = [{ field: 'slug', operator: '==', value: slug }];
-    const events = await eventsCollection.query(conditions);
+    const events = await eventsCollection.query(conditions, undefined, 'desc', 1);
 
     if (events.length === 0) {
       return null;
@@ -87,16 +87,15 @@ async function getEventData(slug: string): Promise<{ event: Event; eventDjs: Eve
     const eventData = events[0] as Event;
     let eventDjs: EventDj[] = [];
 
-    // Load DJ profiles for lineup
+    // OPTIMIZED: Use batch query instead of N individual queries
     if (eventData.artistLineup && eventData.artistLineup.length > 0) {
       const djIds = eventData.artistLineup
         .map(artist => artist.eventDjId)
         .filter(id => id) as string[];
 
       if (djIds.length > 0) {
-        const djPromises = djIds.map(id => eventDjsCollection.get(id));
-        const djResults = await Promise.all(djPromises);
-        eventDjs = djResults.filter(dj => dj !== null) as EventDj[];
+        // Use getByIds for efficient batch fetching (uses 'in' operator)
+        eventDjs = await eventDjsCollection.getByIds(djIds) as EventDj[];
       }
     }
 

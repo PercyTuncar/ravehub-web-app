@@ -74,7 +74,14 @@ export function LineupSelector({
   const loadAvailableDjs = async () => {
     try {
       setLoading(true);
-      const djs = await eventDjsCollection.getAll() as EventDj[];
+      // OPTIMIZED: Use query with limit instead of getAll()
+      // Load only approved DJs, limited to 200 for performance
+      const djs = await eventDjsCollection.query(
+        [{ field: 'approved', operator: '==', value: true }],
+        'name',
+        'asc',
+        200
+      ) as EventDj[];
       setAvailableDjs(djs);
     } catch (error) {
       console.error('Error loading DJs:', error);

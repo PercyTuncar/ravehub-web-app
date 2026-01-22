@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BlogPost, BlogCategory, BlogTag, BlogComment, BlogReaction } from '@/lib/types';
 import { blogCollection, blogCategoriesCollection, blogTagsCollection, blogCommentsCollection, blogReactionsCollection } from '@/lib/firebase/collections';
 
@@ -13,6 +13,17 @@ export function useBlogPosts(filters?: {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // OPTIMIZED: Memoize filter key to prevent unnecessary re-fetches
+  const filterKey = useMemo(() => 
+    JSON.stringify({
+      category: filters?.category,
+      tag: filters?.tag,
+      status: filters?.status,
+      limit: filters?.limit
+    }),
+    [filters?.category, filters?.tag, filters?.status, filters?.limit]
+  );
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -32,11 +43,13 @@ export function useBlogPosts(filters?: {
           conditions.push({ field: 'tags', operator: 'array-contains', value: filters.tag });
         }
 
-        const fetchedPosts = await blogCollection.query(
+        // OPTIMIZED: Use cached query with proper limit
+        const fetchedPosts = await blogCollection.queryCached(
           conditions,
           'createdAt',
           'desc',
-          filters?.limit || 10
+          filters?.limit || 10,
+          `blog:posts:${filterKey}`
         );
 
         setPosts(fetchedPosts as BlogPost[]);
@@ -48,7 +61,7 @@ export function useBlogPosts(filters?: {
     };
 
     fetchPosts();
-  }, [filters]);
+  }, [filterKey]); // Use memoized key instead of filters object
 
   return { posts, loading, error };
 }
@@ -99,10 +112,13 @@ export function useBlogCategories() {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const fetchedCategories = await blogCategoriesCollection.query(
+        // OPTIMIZED: Use cached query for frequently accessed categories
+        const fetchedCategories = await blogCategoriesCollection.queryCached(
           [{ field: 'isActive', operator: '==', value: true }],
           'order',
-          'asc'
+          'asc',
+          50,
+          'blog:categories:active'
         );
         setCategories(fetchedCategories as BlogCategory[]);
       } catch (err) {
@@ -127,10 +143,13 @@ export function useBlogTags() {
     const fetchTags = async () => {
       try {
         setLoading(true);
-        const fetchedTags = await blogTagsCollection.query(
+        // OPTIMIZED: Use cached query with limit
+        const fetchedTags = await blogTagsCollection.queryCached(
           [{ field: 'isActive', operator: '==', value: true }],
           'postCount',
-          'desc'
+          'desc',
+          100,
+          'blog:tags:active'
         );
         setTags(fetchedTags as BlogTag[]);
       } catch (err) {

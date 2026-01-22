@@ -79,39 +79,47 @@ function TicketsAdminContent() {
     const loadTickets = async () => {
         setLoading(true);
         try {
-            const allTickets = await ticketTransactionsCollection.getAll();
+            // OPTIMIZED: Fetch tickets with limit and use batch queries for related data
+            const allTickets = await ticketTransactionsCollection.query(
+                [],
+                'createdAt',
+                'desc',
+                100 // Limit to last 100 tickets for admin view
+            );
 
-            const enhancedTickets = await Promise.all(allTickets.map(async (ticket: any) => {
-                let eventName = 'Evento desconocido';
-                let userEmail = 'Usuario desconocido';
-                let userName = '';
+            // Collect unique event and user IDs
+            const eventIds = new Set<string>();
+            const userIds = new Set<string>();
+            
+            allTickets.forEach((ticket: any) => {
+                if (ticket.eventId) eventIds.add(ticket.eventId);
+                if (ticket.userId) userIds.add(ticket.userId);
+            });
 
-                if (ticket.eventId) {
-                    try {
-                        const event = await eventsCollection.get(ticket.eventId);
-                        if (event) eventName = event.name;
-                    } catch (e) { }
-                }
+            // OPTIMIZED: Batch fetch events and users using getByIds
+            const [events, users] = await Promise.all([
+                eventIds.size > 0 ? eventsCollection.getByIds(Array.from(eventIds)) : Promise.resolve([]),
+                userIds.size > 0 ? usersCollection.getByIds(Array.from(userIds)) : Promise.resolve([]),
+            ]);
 
-                if (ticket.userId) {
-                    try {
-                        const user = await usersCollection.get(ticket.userId);
-                        if (user) {
-                            userEmail = user.email;
-                            userName = user.firstName || user.displayName || '';
-                        }
-                    } catch (e) { }
-                }
+            // Create lookup maps
+            const eventMap = new Map(events.map((e: any) => [e.id, e]));
+            const userMap = new Map(users.map((u: any) => [u.id, u]));
 
+            // Enhance tickets with event and user data
+            const enhancedTickets = allTickets.map((ticket: any) => {
+                const event = eventMap.get(ticket.eventId);
+                const user = userMap.get(ticket.userId);
+                
                 return {
                     ...ticket,
-                    eventName,
-                    userEmail,
-                    userName
+                    eventName: event?.name || 'Evento desconocido',
+                    userEmail: user?.email || 'Usuario desconocido',
+                    userName: user?.firstName || user?.displayName || ''
                 };
-            }));
+            });
 
-            enhancedTickets.sort((a, b) => {
+            enhancedTickets.sort((a: any, b: any) => {
                 return parseDate(b.createdAt).getTime() - parseDate(a.createdAt).getTime();
             });
 

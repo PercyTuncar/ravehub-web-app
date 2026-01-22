@@ -28,6 +28,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
   const { user } = useAuth();
   const router = useRouter();
   const searchParamsHook = useSearchParams();
+  // OPTIMIZED: Use initial data from server, no need to refetch
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories, setCategories] = useState<ProductCategory[]>(initialCategories);
   const [loading, setLoading] = useState(false);
@@ -46,30 +47,8 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
     router.push(queryString ? `/tienda?${queryString}` : '/tienda', { scroll: false });
   };
 
-  useEffect(() => {
-    loadProductsAndCategories();
-  }, []);
-
-  const loadProductsAndCategories = async () => {
-    try {
-      setLoading(true);
-      // Load active products
-      const allProducts = await productsCollection.query(
-        [{ field: 'isActive', operator: '==', value: true }]
-      );
-      setProducts(allProducts as Product[]);
-
-      // Load active categories
-      const allCategories = await productCategoriesCollection.query(
-        [{ field: 'isActive', operator: '==', value: true }]
-      );
-      setCategories(allCategories as ProductCategory[]);
-    } catch (error) {
-      console.error('Error loading products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // REMOVED: Unnecessary useEffect that duplicated the server-side query
+  // The initialProducts and initialCategories from the server are sufficient
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

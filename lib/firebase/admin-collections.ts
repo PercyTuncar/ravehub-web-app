@@ -67,6 +67,8 @@ export class AdminFirestoreCollection<T extends DocumentData> {
     }
 
     async getAll(): Promise<T[]> {
+        // WARNING: This method should be avoided - use query() with limits instead
+        console.warn(`[Firestore Admin] getAll() called on ${this.collectionName} - consider using query() with limits`);
         try {
             const querySnapshot = await this.db.collection(this.collectionName).get();
             return querySnapshot.docs.map(doc => {
@@ -76,6 +78,57 @@ export class AdminFirestoreCollection<T extends DocumentData> {
             });
         } catch (error) {
             console.error(`Admin: Error getting all ${this.collectionName} documents:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get document count without fetching all documents
+     */
+    async count(conditions: Array<{ field: string; operator: string; value: any }> = []): Promise<number> {
+        try {
+            let query: FirebaseFirestore.Query = this.db.collection(this.collectionName);
+            
+            conditions.forEach(({ field, operator, value }) => {
+                query = query.where(field, operator as FirebaseFirestore.WhereFilterOp, value);
+            });
+            
+            const snapshot = await query.count().get();
+            return snapshot.data().count;
+        } catch (error) {
+            console.error(`Admin: Error counting ${this.collectionName}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get multiple documents by their IDs in a single batch query
+     * Much more efficient than multiple get() calls
+     */
+    async getByIds(ids: string[]): Promise<T[]> {
+        if (ids.length === 0) return [];
+        
+        try {
+            const results: T[] = [];
+            // Firestore 'in' operator is limited to 30 values per query
+            const batchSize = 30;
+            
+            for (let i = 0; i < ids.length; i += batchSize) {
+                const batchIds = ids.slice(i, i + batchSize);
+                const querySnapshot = await this.db.collection(this.collectionName)
+                    .where('__name__', 'in', batchIds)
+                    .get();
+                
+                querySnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const serializedData = this.serializeTimestamps(data);
+                    results.push({ id: doc.id, ...serializedData } as unknown as T);
+                });
+            }
+            
+            return results;
+        } catch (error) {
+            console.error(`Admin: Error getting ${this.collectionName} by IDs:`, error);
             throw error;
         }
     }

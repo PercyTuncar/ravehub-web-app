@@ -15,7 +15,36 @@ import {
   Timestamp,
   DocumentData,
   QueryDocumentSnapshot,
+  documentId,
+  getCountFromServer,
 } from 'firebase/firestore';
+
+// In-memory cache for collections with short TTL
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 60000; // 1 minute cache for frequently accessed data
+
+function getCached<T>(key: string): T | null {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data as T;
+  }
+  cache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: any): void {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+export function clearCache(pattern?: string): void {
+  if (pattern) {
+    for (const key of cache.keys()) {
+      if (key.includes(pattern)) cache.delete(key);
+    }
+  } else {
+    cache.clear();
+  }
+}
 
 // Generic collection operations
 export class FirestoreCollection<T extends DocumentData> {
@@ -69,6 +98,8 @@ export class FirestoreCollection<T extends DocumentData> {
   }
 
   async getAll(): Promise<T[]> {
+    // WARNING: This method should be avoided in production - use query() with limits instead
+    console.warn(`[Firestore] getAll() called on ${this.collectionName} - consider using query() with limits`);
     try {
       const querySnapshot = await getDocs(collection(db, this.collectionName));
       return querySnapshot.docs.map(doc => {
@@ -80,6 +111,84 @@ export class FirestoreCollection<T extends DocumentData> {
       console.error(`Error getting all ${this.collectionName} documents:`, error);
       throw error;
     }
+  }
+
+  /**
+   * Get multiple documents by their IDs in a single batch query
+   * Much more efficient than multiple get() calls
+   * Firestore 'in' operator supports up to 30 values per query
+   */
+  async getByIds(ids: string[]): Promise<T[]> {
+    if (ids.length === 0) return [];
+    
+    try {
+      const results: T[] = [];
+      // Firestore 'in' operator is limited to 30 values per query
+      const batchSize = 30;
+      
+      for (let i = 0; i < ids.length; i += batchSize) {
+        const batchIds = ids.slice(i, i + batchSize);
+        const q = query(
+          collection(db, this.collectionName),
+          where(documentId(), 'in', batchIds)
+        );
+        const querySnapshot = await getDocs(q);
+        
+        querySnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const serializedData = this.serializeTimestamps(data);
+          results.push({ id: doc.id, ...serializedData } as unknown as T);
+        });
+      }
+      
+      return results;
+    } catch (error) {
+      console.error(`Error getting ${this.collectionName} by IDs:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get document count without fetching all documents
+   * Uses getCountFromServer for efficiency
+   */
+  async count(conditions: Array<{ field: string; operator: any; value: any }> = []): Promise<number> {
+    try {
+      let q = query(collection(db, this.collectionName));
+      
+      conditions.forEach(({ field, operator, value }) => {
+        q = query(q, where(field, operator, value));
+      });
+      
+      const snapshot = await getCountFromServer(q);
+      return snapshot.data().count;
+    } catch (error) {
+      console.error(`Error counting ${this.collectionName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cached query for frequently accessed data
+   * Returns cached results if available and within TTL
+   */
+  async queryCached(
+    conditions: Array<{ field: string; operator: any; value: any }>,
+    orderByField?: string,
+    orderDirection: 'asc' | 'desc' = 'desc',
+    limitCount?: number,
+    cacheKey?: string
+  ): Promise<T[]> {
+    const key = cacheKey || `${this.collectionName}:${JSON.stringify(conditions)}:${orderByField}:${orderDirection}:${limitCount}`;
+    
+    const cached = getCached<T[]>(key);
+    if (cached) {
+      return cached;
+    }
+    
+    const results = await this.query(conditions, orderByField, orderDirection, limitCount);
+    setCache(key, results);
+    return results;
   }
 
   async create(data: Omit<T, 'id'>): Promise<string> {

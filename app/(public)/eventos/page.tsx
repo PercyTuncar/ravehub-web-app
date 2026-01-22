@@ -24,8 +24,8 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
   const currentPage = Math.max(1, parseInt(pageParam || '1', 10));
 
   try {
-    const allEvents = await eventsCollection.query([{ field: 'eventStatus', operator: '==', value: 'published' }]);
-    const totalEvents = allEvents.length;
+    // OPTIMIZED: Use count() instead of fetching all documents
+    const totalEvents = await eventsCollection.count([{ field: 'eventStatus', operator: '==', value: 'published' }]);
     const totalPages = Math.ceil(totalEvents / 12);
 
     if (currentPage > totalPages && currentPage > 1) {
@@ -88,9 +88,10 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
 
 async function getEvents(): Promise<Event[]> {
   try {
-    // Only load published events
+    // OPTIMIZED: Use cached query to reduce repeated reads
+    // Only load published events with a reasonable limit for client-side filtering
     const conditions = [{ field: 'eventStatus', operator: '==', value: 'published' }];
-    const allEvents = await eventsCollection.query(conditions);
+    const allEvents = await eventsCollection.queryCached(conditions, 'startDate', 'asc', 100, 'events:published');
     return allEvents as Event[];
   } catch (error) {
     console.error('Error loading events:', error);
@@ -110,12 +111,10 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
   const { page: pageParam, tipo, region } = await searchParams;
 
   const currentPage = Math.max(1, parseInt(pageParam || '1', 10));
-  // const eventsPerPage = 12; // Removed pagination to allow full temporal sorting client-side
-  // const offset = (currentPage - 1) * eventsPerPage;
 
   const allEvents = await getEvents();
+  // OPTIMIZED: Count is already efficient due to caching and limited query
   const totalEvents = allEvents.length;
-  // const totalPages = Math.ceil(totalEvents / eventsPerPage);
 
   // Paginate events
   // const paginatedEvents = allEvents.slice(offset, offset + eventsPerPage);

@@ -25,11 +25,10 @@ interface DJsPageProps {
 export async function generateMetadata({ searchParams }: DJsPageProps): Promise<Metadata> {
   const { pais, ordenar, busqueda } = await searchParams;
   try {
-    // Get DJs count for description
-    const allEventDjs = await eventDjsCollection.query(
+    // OPTIMIZED: Use count() instead of fetching all documents
+    const totalDJs = await eventDjsCollection.count(
       [{ field: 'approved', operator: '==', value: true }]
     );
-    const totalDJs = allEventDjs.length;
 
     // Determine if this is a filtered page
     const hasFilters = pais || ordenar || busqueda;
@@ -76,13 +75,21 @@ export async function generateMetadata({ searchParams }: DJsPageProps): Promise<
 export default async function DJsPage({ searchParams }: DJsPageProps) {
   const { pais, ordenar, busqueda } = await searchParams;
 
-  // Load initial data on server
-  const allEventDjs = await eventDjsCollection.query(
-    [{ field: 'approved', operator: '==', value: true }]
+  // OPTIMIZED: Use cached queries to reduce repeated reads
+  const allEventDjs = await eventDjsCollection.queryCached(
+    [{ field: 'approved', operator: '==', value: true }],
+    'name',
+    'asc',
+    200, // Limit to 200 DJs max
+    'eventDjs:approved'
   );
 
-  const allDjs = await djsCollection.query(
-    [{ field: 'approved', operator: '==', value: true }]
+  const allDjs = await djsCollection.queryCached(
+    [{ field: 'approved', operator: '==', value: true }],
+    'name',
+    'asc',
+    200,
+    'djs:approved'
   );
 
   return (
