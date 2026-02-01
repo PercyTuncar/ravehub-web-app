@@ -2,16 +2,78 @@
 
 import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
-import { Star, X, ShieldCheck, ArrowRight } from "lucide-react"
+import { Star, X, Users, MessageCircle, ExternalLink } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 function GlassCard({ className, children }: { className?: string; children: React.ReactNode }) {
     return (
-        <div className={cn("backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl", className)}>
+        <div className={cn("backdrop-blur-xl bg-white/95 border border-purple-200/50 rounded-[2rem] shadow-2xl", className)}>
             {children}
         </div>
+    )
+}
+
+function WhatsAppButton({
+    active = false,
+    groupNumber,
+    membersCount = 1025,
+    link
+}: {
+    active?: boolean;
+    groupNumber: number;
+    membersCount?: number;
+    link?: string;
+}) {
+    if (!active) {
+        return (
+            <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl opacity-60">
+                <div className="flex items-center gap-3">
+                    <div className="bg-gray-200 p-2 rounded-full">
+                        <Users className="w-5 h-5 text-gray-500" />
+                    </div>
+                    <div>
+                        <p className="font-bold text-gray-900 text-sm">ARMY PERU #{groupNumber}</p>
+                        <p className="text-xs text-red-500 font-medium">Grupo lleno • {membersCount} integrantes</p>
+                    </div>
+                </div>
+                <div className="px-3 py-1 bg-gray-200 rounded-full">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Lleno</span>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <Link
+            href={link || "#"}
+            target="_blank"
+            className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 hover:scale-[1.02] hover:shadow-lg transition-all duration-300 w-full group cursor-pointer"
+        >
+            <div className="flex items-center gap-3">
+                <div className="relative w-10 h-10 shadow-sm transition-transform group-hover:scale-110">
+                    <img
+                        src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+                        alt="WhatsApp"
+                        className="w-full h-full object-contain drop-shadow-md"
+                    />
+                </div>
+                <div>
+                    <p className="font-bold text-gray-900 text-sm">ARMY PERU #{groupNumber}</p>
+                    <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        Cupos disponibles • Únete ahora
+                    </p>
+                </div>
+            </div>
+            <div className="w-8 h-8 flex items-center justify-center bg-white rounded-full text-green-600 shadow-sm group-hover:translate-x-1 transition-transform">
+                <ExternalLink className="w-4 h-4" />
+            </div>
+        </Link>
     )
 }
 
@@ -21,20 +83,20 @@ export function BTSRegistrationModal() {
 
     useEffect(() => {
         setMounted(true)
-        // Show modal after 3 seconds
+        // Show modal after 2 seconds
         const timer = setTimeout(() => {
             setIsOpen(true)
-        }, 3000)
+        }, 2000)
 
         return () => clearTimeout(timer)
     }, [])
 
     const onClose = () => {
         setIsOpen(false)
-        // Re-open after 5 seconds
+        // Re-open after 2 seconds - persistent logic requested previously
         setTimeout(() => {
             setIsOpen(true)
-        }, 5000)
+        }, 2000)
     }
 
     if (!mounted) return null
@@ -43,12 +105,12 @@ export function BTSRegistrationModal() {
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    {/* Backdrop - onClick removed to prevent closing */}
+                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                     />
 
                     {/* Modal */}
@@ -56,68 +118,57 @@ export function BTSRegistrationModal() {
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-full max-w-lg z-50 pointer-events-auto"
+                        className="relative w-full max-w-md z-50 pointer-events-auto"
                     >
-                        <GlassCard className="p-0 overflow-hidden border-2 border-acid-yellow shadow-[0_0_50px_rgba(234,255,0,0.2)]">
+                        <GlassCard className="p-0 overflow-hidden shadow-[0_0_40px_rgba(168,85,247,0.4)]">
 
                             {/* Header */}
-                            <div className="bg-acid-yellow p-6 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <Star className="w-32 h-32 text-black rotate-12" />
+                            <div className="bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 p-8 relative overflow-hidden text-center">
+                                <div className="absolute top-0 left-0 w-full h-full opacity-20">
+                                    <div className="absolute right-[-20px] top-[-20px] bg-white rounded-full w-32 h-32 blur-3xl"></div>
+                                    <div className="absolute left-[-20px] bottom-[-20px] bg-pink-500 rounded-full w-32 h-32 blur-3xl"></div>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="absolute top-4 right-4 p-2 bg-black/10 hover:bg-black/20 rounded-full transition-colors"
+                                    className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-md"
                                 >
-                                    <X className="w-5 h-5 text-black" />
+                                    <X className="w-4 h-4" />
                                 </button>
-                                <h3 className="text-3xl font-black uppercase text-black leading-none mb-2 relative z-10">
-                                    ¡Espera Army!
+
+                                <motion.div
+                                    initial={{ scale: 0.8 }}
+                                    animate={{ scale: 1 }}
+                                    className="relative z-10 inline-block bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full mb-4 border border-white/30"
+                                >
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                        Atención Army
+                                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                    </span>
+                                </motion.div>
+
+                                <h3 className="text-3xl font-black text-white leading-tight relative z-10 mb-2 drop-shadow-sm">
+                                    ¡Únete al Grupo de WhatsApp!
                                 </h3>
-                                <p className="font-bold text-black/80 uppercase tracking-widest text-sm relative z-10">
-                                    Requisito Obligatorio de Preventa
-                                </p>
+
                             </div>
 
                             {/* Content */}
-                            <div className="p-8 space-y-6 bg-black/90">
-                                <div className="space-y-4">
-                                    <p className="text-xl text-white font-medium leading-relaxed">
-                                        Para poder comprar entradas en esta fase de preventa, es <span className="text-acid-pink font-bold">indispensable</span> contar con tu Membresía Oficial activa.
-                                    </p>
-
-                                    <div className="bg-white/5 border border-white/10 p-4 rounded-lg flex gap-4 items-start">
-                                        <div className="bg-neon-green/20 p-2 rounded-full mt-1">
-                                            <ShieldCheck className="w-5 h-5 text-neon-green" />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-white font-bold uppercase text-sm mb-1">Beneficio Exclusivo</h4>
-                                            <p className="text-gray-400 text-sm">
-                                                Solo los personas que compren la membresía oficial tendrán acceso a comprar entradas en la fase de preventa.
-                                            </p>
-                                        </div>
-                                    </div>
+                            <div className="p-6 bg-white">
+                                <div className="space-y-3 mb-6">
+                                    <WhatsAppButton groupNumber={1} active={false} />
+                                    <WhatsAppButton groupNumber={2} active={false} />
+                                    <WhatsAppButton
+                                        groupNumber={3}
+                                        active={true}
+                                        link="https://chat.whatsapp.com/G7kEQYdvtvx1nFEChKPTW3"
+                                    />
                                 </div>
 
-                                <div className="pt-2">
-                                    <Link
-                                        href="https://entradasbts.com/comprar-membresia-bts/"
-                                        target="_blank"
-                                        className="group block w-full bg-acid-pink hover:bg-white hover:text-black transition-all duration-300 text-white font-black uppercase text-xl py-4 text-center shadow-[4px_4px_0_white] hover:shadow-[6px_6px_0_white] hover:-translate-y-1"
-                                    >
-                                        <span className="flex items-center justify-center gap-2">
-                                            Comprar Membresía <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                                        </span>
-                                    </Link>
-                                    <p className="text-center text-gray-500 text-xs mt-3 uppercase tracking-widest font-bold">
-                                        S/. 99.50 • Pago Único / 1 Año
-                                    </p>
-                                </div>
-
-                                {/* Disclaimer Note requested by user */}
-                                <div className="border-t border-dashed border-white/20 pt-4 mt-2">
-                                    <p className="text-[10px] md:text-xs text-gray-500 text-center leading-relaxed">
-                                        <span className="font-bold text-acid-yellow">NOTA:</span> La venta de entradas oficialmente no está disponible en este momento.
+                                {/* Disclaimer Note */}
+                                <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                                    <p className="text-[11px] text-gray-600 text-center leading-relaxed font-medium">
+                                        <span className="font-bold text-purple-700">NOTA:</span> La venta de entradas oficialmente no está disponible en este momento.
                                         Pero para asegurar tu lugar, te recomendamos adquirir la membresía oficial.
                                         Los precios y zonas de los tickets son referenciales.
                                     </p>
