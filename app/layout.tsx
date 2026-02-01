@@ -13,6 +13,7 @@ import { Toaster } from 'react-hot-toast'
 import { Toaster as SonnerToaster } from 'sonner'
 import './globals.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import Script from 'next/script'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -127,6 +128,16 @@ export default function RootLayout({
         <SonnerToaster richColors position="top-center" closeButton />
         <SpeedInsights />
         <Analytics />
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-KLMK6Q830S" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-KLMK6Q830S');
+          `}
+        </Script>
       </body>
     </html>
   )
