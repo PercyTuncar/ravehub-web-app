@@ -157,12 +157,12 @@ export function BTSRegistrationModal() {
                             <div className="p-6 bg-white">
                                 <div className="space-y-3 mb-6">
                                     <WhatsAppButton groupNumber={1} active={false} />
-                                    <WhatsAppButton groupNumber={2} active={false} />
                                     <WhatsAppButton
-                                        groupNumber={3}
+                                        groupNumber={2}
                                         active={true}
-                                        link="https://chat.whatsapp.com/G7kEQYdvtvx1nFEChKPTW3"
+                                        link="https://chat.whatsapp.com/H2ja4Ra1PHHJAQTpAXAaka"
                                     />
+                                    <WhatsAppButton groupNumber={3} active={false} />
                                 </div>
 
                                 {/* Disclaimer Note */}
