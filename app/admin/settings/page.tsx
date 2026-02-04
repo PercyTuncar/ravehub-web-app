@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Settings, 
-  Save, 
-  Globe, 
-  Mail, 
-  Phone, 
-  Facebook, 
-  Instagram, 
+import {
+  Settings,
+  Save,
+  Globe,
+  Mail,
+  Phone,
+  Facebook,
+  Instagram,
   Twitter,
   AlertTriangle
 } from 'lucide-react';
@@ -44,7 +44,7 @@ interface SiteConfig {
 const DEFAULT_CONFIG: SiteConfig = {
   siteName: 'Ravehub',
   siteDescription: 'Tu portal de música electrónica y eventos.',
-  contactEmail: 'contacto@ravehub.com',
+  contactEmail: 'contacto@ravehublatam.com',
   contactPhone: '',
   maintenanceMode: false,
   socialMedia: {
@@ -101,32 +101,32 @@ function SettingsAdminContent() {
       // depending on how our collection wrapper works. 
       // Assuming update works if document exists, or we might need to use setDoc equivalent.
       // Based on typical Firestore patterns, let's try to update. 
-      
+
       // Checking if document exists first is safer, but here we'll just try to save.
       // If your collection wrapper has a specific 'set' method that handles upsert, that's best.
       // For now, I'll assume 'update' works for existing docs. 
       // If it's the first time, we might need a way to create with specific ID.
       // Looking at common patterns, often 'update' fails if doc doesn't exist.
       // Let's assume we might need to create if it doesn't exist.
-      
+
       // For simplicity in this UI wrapper:
-      await configCollection.update('general', config); 
+      await configCollection.update('general', config);
       // If this throws "not found", we might need to handle it manually or use a set method if available.
-      
+
       toast.success('Configuración guardada exitosamente');
     } catch (error) {
       console.error('Error saving config:', error);
-      
+
       // Fallback: try to create if update failed (likely due to missing doc)
       try {
-         // Note: The collection wrapper 'create' usually generates an ID. 
-         // If we want a specific ID 'general', we might need to use the underlying firebase SDK directly 
-         // or if our wrapper supports setting ID.
-         // Let's assume for now we can just use the update and if it fails, it's a real error.
-         // Or better, check if doc exists in loadConfig and if not, create it then.
-         toast.error('Error al guardar la configuración');
+        // Note: The collection wrapper 'create' usually generates an ID. 
+        // If we want a specific ID 'general', we might need to use the underlying firebase SDK directly 
+        // or if our wrapper supports setting ID.
+        // Let's assume for now we can just use the update and if it fails, it's a real error.
+        // Or better, check if doc exists in loadConfig and if not, create it then.
+        toast.error('Error al guardar la configuración');
       } catch (e) {
-         // ignore
+        // ignore
       }
     } finally {
       setSaving(false);
@@ -203,16 +203,16 @@ function SettingsAdminContent() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Nombre del Sitio</Label>
-                <Input 
-                  value={config.siteName} 
-                  onChange={(e) => updateConfig('siteName', e.target.value)} 
+                <Input
+                  value={config.siteName}
+                  onChange={(e) => updateConfig('siteName', e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Descripción</Label>
-                <Textarea 
-                  value={config.siteDescription} 
-                  onChange={(e) => updateConfig('siteDescription', e.target.value)} 
+                <Textarea
+                  value={config.siteDescription}
+                  onChange={(e) => updateConfig('siteDescription', e.target.value)}
                 />
               </div>
             </CardContent>
@@ -229,10 +229,10 @@ function SettingsAdminContent() {
                   <Label>Email de Contacto</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      className="pl-10" 
-                      value={config.contactEmail} 
-                      onChange={(e) => updateConfig('contactEmail', e.target.value)} 
+                    <Input
+                      className="pl-10"
+                      value={config.contactEmail}
+                      onChange={(e) => updateConfig('contactEmail', e.target.value)}
                     />
                   </div>
                 </div>
@@ -240,10 +240,10 @@ function SettingsAdminContent() {
                   <Label>Teléfono (Opcional)</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      className="pl-10" 
-                      value={config.contactPhone} 
-                      onChange={(e) => updateConfig('contactPhone', e.target.value)} 
+                    <Input
+                      className="pl-10"
+                      value={config.contactPhone}
+                      onChange={(e) => updateConfig('contactPhone', e.target.value)}
                     />
                   </div>
                 </div>
@@ -263,11 +263,11 @@ function SettingsAdminContent() {
                 <Label>Facebook</Label>
                 <div className="relative">
                   <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    className="pl-10" 
+                  <Input
+                    className="pl-10"
                     placeholder="https://facebook.com/..."
-                    value={config.socialMedia.facebook} 
-                    onChange={(e) => updateSocial('facebook', e.target.value)} 
+                    value={config.socialMedia.facebook}
+                    onChange={(e) => updateSocial('facebook', e.target.value)}
                   />
                 </div>
               </div>
@@ -275,11 +275,11 @@ function SettingsAdminContent() {
                 <Label>Instagram</Label>
                 <div className="relative">
                   <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    className="pl-10" 
+                  <Input
+                    className="pl-10"
                     placeholder="https://instagram.com/..."
-                    value={config.socialMedia.instagram} 
-                    onChange={(e) => updateSocial('instagram', e.target.value)} 
+                    value={config.socialMedia.instagram}
+                    onChange={(e) => updateSocial('instagram', e.target.value)}
                   />
                 </div>
               </div>
@@ -287,11 +287,11 @@ function SettingsAdminContent() {
                 <Label>Twitter / X</Label>
                 <div className="relative">
                   <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    className="pl-10" 
+                  <Input
+                    className="pl-10"
                     placeholder="https://twitter.com/..."
-                    value={config.socialMedia.twitter} 
-                    onChange={(e) => updateSocial('twitter', e.target.value)} 
+                    value={config.socialMedia.twitter}
+                    onChange={(e) => updateSocial('twitter', e.target.value)}
                   />
                 </div>
               </div>
@@ -307,18 +307,18 @@ function SettingsAdminContent() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-2">
-                <Switch 
+                <Switch
                   checked={config.announcementBar.enabled}
                   onCheckedChange={(checked) => updateAnnouncement('enabled', checked)}
                 />
                 <Label>Activar barra de anuncios</Label>
               </div>
-              
+
               {config.announcementBar.enabled && (
                 <>
                   <div className="space-y-2">
                     <Label>Mensaje</Label>
-                    <Input 
+                    <Input
                       value={config.announcementBar.text}
                       onChange={(e) => updateAnnouncement('text', e.target.value)}
                       placeholder="Ej: ¡Envío gratis en compras mayores a $100!"
@@ -326,7 +326,7 @@ function SettingsAdminContent() {
                   </div>
                   <div className="space-y-2">
                     <Label>Enlace (Opcional)</Label>
-                    <Input 
+                    <Input
                       value={config.announcementBar.link}
                       onChange={(e) => updateAnnouncement('link', e.target.value)}
                       placeholder="/tienda/ofertas"
@@ -352,7 +352,7 @@ function SettingsAdminContent() {
                     Si se activa, el sitio público mostrará una página de mantenimiento.
                   </p>
                 </div>
-                <Switch 
+                <Switch
                   checked={config.maintenanceMode}
                   onCheckedChange={(checked) => updateConfig('maintenanceMode', checked)}
                 />
