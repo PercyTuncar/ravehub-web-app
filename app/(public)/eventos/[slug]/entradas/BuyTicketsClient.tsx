@@ -431,11 +431,11 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   useEffect(() => {
     const storageKey = getCartStorageKey();
     const savedCart = sessionStorage.getItem(storageKey);
-    
+
     if (savedCart) {
       try {
         const cartData = JSON.parse(savedCart);
-        
+
         // Restore ticket quantities
         if (cartData.selections && Array.isArray(cartData.selections)) {
           setTicketSelections(prev => prev.map(selection => {
@@ -446,7 +446,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
             return selection;
           }));
         }
-        
+
         // Restore other states
         if (typeof cartData.acceptTerms === 'boolean') {
           setAcceptTerms(cartData.acceptTerms);
@@ -460,10 +460,10 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         if (typeof cartData.installments === 'number') {
           setInstallments(cartData.installments);
         }
-        
+
         // Clear the saved cart after restoring
         sessionStorage.removeItem(storageKey);
-        
+
         // Show a toast to inform user their selection was restored
         toast.success('Tu selección de entradas ha sido restaurada');
       } catch (e) {
@@ -526,7 +526,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
     if (!firebaseUser) {
       // Save cart state before redirecting to preserve user's selection
       saveCartToSession();
-      
+
       // Save the current URL to redirect back after login
       const currentPath = `/eventos/${event.slug}/entradas`;
       sessionStorage.setItem('redirectAfterAuth', currentPath);
@@ -692,38 +692,38 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         {/* Header - Order 2 */}
         <div className="order-2">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-             <div>
-                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-4">
-                  Entradas Oficiales para {event.name}
-                </h1>
-                <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
-                  <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                    <Calendar className="w-4 h-4" style={{ color: colorPalette.accent }} />
-                    <span>{format(getEventDate(event.startDate), 'EEEE d MMMM, yyyy', { locale: es })}</span>
-                  </div>
-                  {event.startTime && (
-                    <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                      <Clock className="w-4 h-4" style={{ color: colorPalette.accent }} />
-                      <span>{event.startTime}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                    <MapPin className="w-4 h-4" style={{ color: colorPalette.accent }} />
-                    <span>{event.location.venue}</span>
-                  </div>
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-4">
+                Entradas Oficiales para {event.name}
+              </h1>
+              <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
+                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                  <Calendar className="w-4 h-4" style={{ color: colorPalette.accent }} />
+                  <span>{format(getEventDate(event.startDate), 'EEEE d MMMM, yyyy', { locale: es })}</span>
                 </div>
-             </div>
-             
-             {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE */}
-             <div className="lg:hidden w-full md:w-auto mt-4 md:mt-0">
-                 <button 
-                     onClick={() => setShowWhatsAppDrawer(true)}
-                     className="flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 active:scale-[0.98] transition-all group"
-                   >
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-5 h-5" />
-                      <span className="font-bold text-[#25D366]">Unirme al Grupo WhatsApp</span>
-                   </button>
-             </div>
+                {event.startTime && (
+                  <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                    <Clock className="w-4 h-4" style={{ color: colorPalette.accent }} />
+                    <span>{event.startTime}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                  <MapPin className="w-4 h-4" style={{ color: colorPalette.accent }} />
+                  <span>{event.location.venue}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE */}
+            <div className="lg:hidden w-full md:w-auto mt-4 md:mt-0">
+              <button
+                onClick={() => setShowWhatsAppDrawer(true)}
+                className="flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 active:scale-[0.98] transition-all group"
+              >
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-5 h-5" />
+                <span className="font-bold text-[#25D366]">Unirme al Grupo WhatsApp</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -820,6 +820,11 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                 <Ticket className="w-5 h-5" style={{ color: colorPalette.primary }} />
                 Selecciona tus entradas
               </h2>
+              {event.slug === 'bts-en-lima-2026' && (
+                <p className="text-xs text-zinc-400 mt-1 mb-4 italic">
+                  <span className="font-bold text-orange-500 not-italic">Nota importante:</span> El botón de compra no realiza la adquisición de entradas, ya que estas aún no se encuentran disponibles oficialmente y los precios mostrados son solo referenciales.
+                </p>
+              )}
               <div className="space-y-4">
                 {ticketSelections.map(selection => (
                   <TicketCard
@@ -1025,19 +1030,19 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
                 {/* WhatsApp Community CTA - ALWAYS VISIBLE */}
                 <div className="pt-4 border-t border-white/5">
-                   <button 
-                     onClick={() => setShowWhatsAppDrawer(true)}
-                     className="flex items-center gap-3 p-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group w-full text-left"
-                   >
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-[#25D366]/20 group-hover:scale-110 transition-transform">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-full h-full" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-xs font-bold text-[#25D366] uppercase tracking-wide mb-0.5">Grupo Oficial</p>
-                        <p className="text-sm font-medium text-white group-hover:text-[#25D366] transition-colors">Únete al grupo de WhatsApp</p>
-                      </div>
-                      <ExternalLink className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
-                   </button>
+                  <button
+                    onClick={() => setShowWhatsAppDrawer(true)}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group w-full text-left"
+                  >
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-[#25D366]/20 group-hover:scale-110 transition-transform">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-full h-full" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-xs font-bold text-[#25D366] uppercase tracking-wide mb-0.5">Grupo Oficial</p>
+                      <p className="text-sm font-medium text-white group-hover:text-[#25D366] transition-colors">Únete al grupo de WhatsApp</p>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -1054,6 +1059,13 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         </div>
       </div>
 
+      {/* Autonomy Notice Footer */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pb-8 text-center border-t border-white/5 pt-8">
+        <p className="text-xs text-zinc-500 max-w-3xl mx-auto leading-relaxed">
+          <span className="font-bold text-zinc-400">Aviso de Autonomía:</span> Operamos como una plataforma independiente de Personal Shopper para la adquisición de entradas y membresias, funcionando como una entidad ajena a las redes de ticketeras y organizadores oficiales.
+        </p>
+      </div>
+
       {/* Mobile Sticky Footer - positioned above bottom navbar */}
       <div className="lg:hidden fixed bottom-24 left-0 w-full z-40 px-3">
         {/* Main Purchase CTA - Premium Glass Effect */}
@@ -1064,7 +1076,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
           <div className="absolute inset-0 bg-gradient-to-r from-white/[0.08] via-transparent to-white/[0.04]" />
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-          
+
           {/* Content */}
           <div className="relative z-10 p-4 flex items-center justify-between gap-4">
             <div className="flex flex-col">
@@ -1121,13 +1133,13 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         >
           {/* Decorative glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[150px] bg-[#25D366]/20 blur-[80px] pointer-events-none" />
-          
+
           {/* Drag handle */}
           <div className="relative z-10 pt-4 pb-2 cursor-grab active:cursor-grabbing">
             <div className="w-14 h-1.5 bg-gradient-to-r from-[#25D366]/40 via-[#25D366]/60 to-[#25D366]/40 rounded-full mx-auto" />
             <p className="text-[10px] text-zinc-500 text-center mt-2">Arrastra hacia abajo para cerrar</p>
           </div>
-          
+
           <SheetHeader className="relative z-10 px-6 pb-5 pt-2 text-center shrink-0">
             <SheetTitle className="flex flex-col items-center gap-3">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#25D366] to-[#128C7E] flex items-center justify-center shadow-lg shadow-[#25D366]/30">
@@ -1156,18 +1168,18 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                 >
                   {/* Hover glow effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-[#25D366]/0 via-[#25D366]/10 to-[#25D366]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
+
                   {/* Flag container */}
                   <div className="relative w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mr-4 group-hover:bg-white/10 transition-colors">
                     <span className="text-3xl">{group.flag}</span>
                   </div>
-                  
+
                   {/* Text content */}
                   <div className="relative flex-1 min-w-0">
                     <h3 className="font-bold text-white text-base group-hover:text-[#25D366] transition-colors">{group.name}</h3>
                     <p className="text-xs text-zinc-500 mt-0.5">{group.country}</p>
                   </div>
-                  
+
                   {/* Action button */}
                   <div className="relative flex items-center gap-2">
                     <span className="text-xs font-semibold text-[#25D366] opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">Unirse</span>
@@ -1178,7 +1190,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                 </motion.a>
               ))}
             </div>
-            
+
             {/* Footer inside drawer */}
             <div className="pt-8 pb-4 text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/5">

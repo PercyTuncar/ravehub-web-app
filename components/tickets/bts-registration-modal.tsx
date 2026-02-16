@@ -168,9 +168,7 @@ export function BTSRegistrationModal() {
                                 {/* Disclaimer Note */}
                                 <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
                                     <p className="text-[11px] text-gray-600 text-center leading-relaxed font-medium">
-                                        <span className="font-bold text-purple-700">NOTA:</span> La venta de entradas oficialmente no está disponible en este momento.
-                                        Pero para asegurar tu lugar, te recomendamos adquirir la membresía oficial.
-                                        Los precios y zonas de los tickets son referenciales.
+                                        <span className="font-bold text-purple-700">Aviso:</span> Las entradas aún no están disponibles (los precios mostrados son referenciales según otros países). ¡Únete a nuestro grupo de WhatsApp ARMY, te avisaremos cuando comience la venta oficial! <br /><span className="font-bold text-purple-700">Aviso de Autonomía:</span> Operamos como una plataforma independiente
                                     </p>
                                 </div>
                             </div>
