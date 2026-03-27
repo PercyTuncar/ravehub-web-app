@@ -165,16 +165,15 @@ export function BTSRegistrationModal() {
                                     <WhatsAppButton
                                         groupNumber={3}
                                         active={true}
-                                        link="https://chat.whatsapp.com/CcCFSAb9YfxCvScR810WbR"
+                                        link="https://chat.whatsapp.com/JY5rMMGp2n3HEHqxJZTam9"
                                     />
                                 </div>
 
                                 {/* Disclaimer Note */}
                                 <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
                                     <p className="text-[11px] text-gray-600 text-center leading-relaxed font-medium">
-                                        <span className="font-bold text-purple-700">NOTA:</span> La venta de entradas oficialmente no está disponible en este momento.
-                                        Pero para asegurar tu lugar, te recomendamos adquirir la membresía oficial.
-                                        Los precios y zonas de los tickets son referenciales.
+                                        <span className="font-bold text-purple-700">NOTA:</span> Los precios son oficiales, pero primero debes adquirir una membresía hasta el 6 de abril a las 11:59 PM.
+                                        Después podrás comprar tus entradas en preventa el día 7 de abril.
                                     </p>
                                 </div>
                             </div>
