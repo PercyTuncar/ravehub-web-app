@@ -223,7 +223,15 @@ function PhaseTimeline({
   );
 }
 
-function PhaseTimeProgress({ startDate, endDate }: { startDate: string; endDate: string }) {
+function PhaseTimeProgress({
+  startDate,
+  endDate,
+  isSoldOut = false
+}: {
+  startDate: string;
+  endDate: string;
+  isSoldOut?: boolean;
+}) {
   const [progress, setProgress] = useState(0);
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true });
@@ -250,14 +258,19 @@ function PhaseTimeProgress({ startDate, endDate }: { startDate: string; endDate:
     return () => clearInterval(interval);
   }, [startDate, endDate]);
 
-  const isCritical = progress > 90;
-  const isWarning = progress > 75;
+  const displayProgress = isSoldOut ? 100 : progress;
+  const isCritical = isSoldOut || displayProgress > 90;
+  const isWarning = !isSoldOut && displayProgress > 75;
 
   return (
     <div ref={containerRef} className="w-full max-w-xs space-y-1.5">
       <div className="flex justify-between text-[10px] font-medium uppercase tracking-wider text-zinc-500">
         <span className="flex items-center gap-1">
-          {isCritical ? (
+          {isSoldOut ? (
+            <span className="text-red-400 flex items-center gap-1 font-bold">
+              <Flame className="w-3 h-3" /> Fase agotada
+            </span>
+          ) : isCritical ? (
             <span className="text-red-400 flex items-center gap-1 animate-pulse font-bold">
               <Flame className="w-3 h-3" /> Fase por finalizar
             </span>
@@ -268,14 +281,14 @@ function PhaseTimeProgress({ startDate, endDate }: { startDate: string; endDate:
           )}
         </span>
         <span className="tabular-nums font-bold text-zinc-300">
-          {Math.round(progress)}%
+          {Math.round(displayProgress)}%
         </span>
       </div>
 
       <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden border border-white/5">
         <motion.div
           initial={{ width: 0 }}
-          animate={isInView ? { width: `${progress}%` } : { width: 0 }}
+          animate={isInView ? { width: `${displayProgress}%` } : { width: 0 }}
           transition={{ duration: 1.5, ease: "easeOut" }}
           className={`h-full rounded-full relative overflow-hidden ${isCritical ? 'bg-gradient-to-r from-red-600 to-red-500' :
             isWarning ? 'bg-gradient-to-r from-orange-500 to-amber-500' :
@@ -299,7 +312,8 @@ function TicketCard({
   currency,
   totalTickets,
   phaseStartDate,
-  phaseEndDate
+  phaseEndDate,
+  phaseStatus
 }: {
   selection: TicketSelection;
   onUpdateQuantity: (q: number) => void;
@@ -309,6 +323,7 @@ function TicketCard({
   totalTickets: number;
   phaseStartDate: string;
   phaseEndDate: string;
+  phaseStatus: ResolvedPhaseStatus;
 }) {
   const stockPercent = Math.max(0, Math.min(100, (selection.sold / (selection.sold + selection.available)) * 100));
   const isLowStock = selection.available < 20 || stockPercent > 90;
@@ -349,7 +364,11 @@ function TicketCard({
           </p>
 
           {/* Time Progress Bar instead of Stock */}
-          <PhaseTimeProgress startDate={phaseStartDate} endDate={phaseEndDate} />
+          <PhaseTimeProgress
+            startDate={phaseStartDate}
+            endDate={phaseEndDate}
+            isSoldOut={phaseStatus === 'sold_out'}
+          />
 
         </div>
 
@@ -911,6 +930,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                     totalTickets={totalTickets}
                     phaseStartDate={activePhaseData?.startDate || ''}
                     phaseEndDate={activePhaseData?.endDate || ''}
+                    phaseStatus={activePhaseStatus}
                   />
                 ))}
               </div>
