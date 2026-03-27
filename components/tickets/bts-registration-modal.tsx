@@ -93,10 +93,6 @@ export function BTSRegistrationModal() {
 
     const onClose = () => {
         setIsOpen(false)
-        // Re-open after 2 seconds - persistent logic requested previously
-        setTimeout(() => {
-            setIsOpen(true)
-        }, 2000)
     }
 
     if (!mounted) return null

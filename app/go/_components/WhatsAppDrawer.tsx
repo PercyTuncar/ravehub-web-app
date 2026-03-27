@@ -29,14 +29,14 @@ const GROUPS: WhatsAppGroup[] = [
         country: 'Perú',
         flag: '🇵🇪',
         name: 'Ravehub Perú',
-        url: 'https://chat.whatsapp.com/Jrm3oKf9bcrGXHzmPQJSs8'
+        url: 'https://chat.whatsapp.com/CYrC84gD1gGDwv3Kbs6kxU?mode=gi_t'
     },
     {
         id: 'bts',
         country: 'Perú',
         flag: '💜',
         name: 'BTS 2026 🇵🇪',
-        url: 'https://chat.whatsapp.com/Euy25S5EjvkK70kdNMQIxf'
+        url: 'https://chat.whatsapp.com/JY5rMMGp2n3HEHqxJZTam9'
     },
     {
         id: 'girls',
