@@ -69,6 +69,51 @@ interface BuyTicketsClientProps {
   children?: React.ReactNode;
 }
 
+type ResolvedPhaseStatus = 'active' | 'upcoming' | 'sold_out' | 'expired';
+
+interface ResolvedPhase {
+  phase: SalesPhase;
+  status: ResolvedPhaseStatus;
+  hasAvailableStock: boolean;
+}
+
+function getResolvedPhaseStatus(phase: SalesPhase): ResolvedPhaseStatus {
+  if (phase.manualStatus === 'active') return 'active';
+  if (phase.manualStatus === 'sold_out') return 'sold_out';
+
+  const now = new Date();
+  const start = new Date(phase.startDate);
+  const end = new Date(phase.endDate);
+
+  if (now < start) return 'upcoming';
+  if (now > end) return 'expired';
+
+  const zones = phase.zonesPricing || [];
+  const allSoldOut = zones.length > 0 && zones.every(zone => Number(zone.available || 0) <= 0);
+  return allSoldOut ? 'sold_out' : 'active';
+}
+
+function resolvePrimaryPhase(phases: ResolvedPhase[]): ResolvedPhase | null {
+  if (phases.length === 0) return null;
+
+  let selected = phases.find(phase => phase.status === 'active' && phase.hasAvailableStock);
+  if (selected) return selected;
+
+  const hasSoldOutActive = phases.some(phase => phase.status === 'sold_out');
+  if (hasSoldOutActive) {
+    selected = phases.find(phase => phase.status === 'upcoming');
+    if (selected) return selected;
+  }
+
+  selected = phases.find(phase => phase.status === 'active');
+  if (selected) return selected;
+
+  selected = phases.find(phase => phase.status === 'upcoming');
+  if (selected) return selected;
+
+  return phases[phases.length - 1];
+}
+
 // --- Components ---
 
 function Countdown({ targetDate }: { targetDate: Date }) { // ... existing component ...
@@ -374,48 +419,72 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   // Enable dynamic color extraction
   useEnhancedColorExtraction(event.bannerImageUrl || event.mainImageUrl || '');
 
-  // Initialization Logic for SEO/SSR
-  const getActivePhase = () => {
-    return event.salesPhases?.find(phase => {
-      const now = new Date();
-      const startDate = new Date(phase.startDate);
-      const endDate = new Date(phase.endDate);
-      return now >= startDate && now <= endDate;
-    }) || null;
-  };
+  const resolvedPhases = useMemo<ResolvedPhase[]>(() => {
+    const phases = [...(event.salesPhases || [])].sort(
+      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
 
-  const initialActivePhase = getActivePhase();
+    return phases.map(phase => {
+      const status = getResolvedPhaseStatus(phase);
+      const hasAvailableStock = (phase.zonesPricing || []).some(zone => Number(zone.available || 0) > 0);
+      return { phase, status, hasAvailableStock };
+    });
+  }, [event.salesPhases]);
+
+  const initialResolvedPhase = useMemo(() => resolvePrimaryPhase(resolvedPhases), [resolvedPhases]);
 
   // Helper to get cart storage key for this specific event
   const getCartStorageKey = () => `ticketCart_${event.id}`;
 
   // State
-  const [selectedPhase, setSelectedPhase] = useState<string>(initialActivePhase?.id || '');
-  const [activePhaseData, setActivePhaseData] = useState<SalesPhase | null>(initialActivePhase);
+  const [selectedPhase, setSelectedPhase] = useState<string>(initialResolvedPhase?.phase.id || '');
+
+  const activeResolvedPhase = useMemo(() => {
+    return (
+      resolvedPhases.find(phase => phase.phase.id === selectedPhase) ||
+      initialResolvedPhase ||
+      null
+    );
+  }, [resolvedPhases, selectedPhase, initialResolvedPhase]);
+
+  const activePhaseData = activeResolvedPhase?.phase || null;
+  const activePhaseStatus = activeResolvedPhase?.status || 'upcoming';
+  const nextUpcomingPhase = useMemo(() => {
+    return resolvedPhases.find(phase => phase.status === 'upcoming')?.phase || null;
+  }, [resolvedPhases]);
+  const isAdvanceReservationMode = activePhaseStatus !== 'active';
+
+  const buildTicketSelections = (phase: SalesPhase | null, reservationMode: boolean): TicketSelection[] => {
+    if (!phase) return [];
+
+    return (phase.zonesPricing || [])
+      .filter(zonePricing => {
+        const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
+        return zone !== undefined;
+      })
+      .map(zonePricing => {
+        const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
+        const available = Number(zonePricing.available || 0);
+        const safeCapacity = zone?.capacity && zone.capacity > 0 ? zone.capacity : 10;
+        const maxPerTransaction = reservationMode
+          ? 10
+          : Math.max(0, Math.min(10, safeCapacity, available));
+
+        return {
+          zoneId: zonePricing.zoneId,
+          zoneName: zone?.name || 'Zona General',
+          zoneDescription: zone?.description,
+          quantity: 0,
+          price: zonePricing.price,
+          maxPerTransaction,
+          available,
+          sold: zonePricing.sold || 0,
+        };
+      });
+  };
 
   const [ticketSelections, setTicketSelections] = useState<TicketSelection[]>(() => {
-    if (initialActivePhase) {
-      return (initialActivePhase.zonesPricing || [])
-        .filter(zonePricing => {
-          // Only include zones that still exist
-          const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
-          return zone !== undefined;
-        })
-        .map(zonePricing => {
-          const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
-          return {
-            zoneId: zonePricing.zoneId,
-            zoneName: zone?.name || 'Zona General',
-            zoneDescription: zone?.description,
-            quantity: 0,
-            price: zonePricing.price,
-            maxPerTransaction: zone?.capacity || 10,
-            available: zonePricing.available || 0,
-            sold: zonePricing.sold || 0,
-          };
-        });
-    }
-    return [];
+    return buildTicketSelections(initialResolvedPhase?.phase || null, (initialResolvedPhase?.status || 'upcoming') !== 'active');
   });
 
   const [isInstallmentMode, setIsInstallmentMode] = useState(false);
@@ -426,6 +495,28 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [showWhatsAppDrawer, setShowWhatsAppDrawer] = useState(false);
+  const [showAdvanceReservationSheet, setShowAdvanceReservationSheet] = useState(false);
+  const [advancePaymentMode, setAdvancePaymentMode] = useState<'cash' | 'installments'>('cash');
+  const [advanceInstallments, setAdvanceInstallments] = useState<number>(2);
+
+  useEffect(() => {
+    if (!initialResolvedPhase) return;
+    setSelectedPhase(initialResolvedPhase.phase.id);
+  }, [initialResolvedPhase]);
+
+  useEffect(() => {
+    setTicketSelections(prev => {
+      const next = buildTicketSelections(activePhaseData, isAdvanceReservationMode);
+      return next.map(selection => {
+        const existing = prev.find(prevSelection => prevSelection.zoneId === selection.zoneId);
+        if (!existing) return selection;
+        return {
+          ...selection,
+          quantity: Math.min(existing.quantity, selection.maxPerTransaction),
+        };
+      });
+    });
+  }, [activePhaseData, isAdvanceReservationMode]);
 
   // Restore cart state from sessionStorage on mount (after auth redirect)
   useEffect(() => {
@@ -501,6 +592,9 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const getTotalAmount = () => ticketSelections.reduce((acc, s) => acc + (s.quantity * s.price), 0);
   const totalTickets = getTotalTickets();
   const totalAmount = getTotalAmount();
+  const advanceReservationAmount = totalTickets * RESERVATION_FEE;
+  const advanceRemainingAmount = Math.max(0, totalAmount - advanceReservationAmount);
+  const advanceInstallmentAmount = advanceInstallments > 0 ? (advanceRemainingAmount / advanceInstallments) : 0;
 
   // Calculate totals for installment mode
   const totalReservation = totalTickets * RESERVATION_FEE;
@@ -643,6 +737,48 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
     }
   };
 
+  const handleAdvanceReservationCheckout = () => {
+    const selectedTickets = ticketSelections.filter(selection => selection.quantity > 0);
+    if (selectedTickets.length === 0) return;
+
+    const symbol = event.currency === 'USD' ? '$' : 'S/';
+    const phaseLabel = activePhaseData?.name || 'Fase por confirmar';
+    const phaseDate = activePhaseData?.startDate
+      ? format(getEventDate(activePhaseData.startDate), 'dd MMM yyyy HH:mm', { locale: es })
+      : 'Por confirmar';
+
+    const ticketsList = selectedTickets
+      .map(ticket => `• ${ticket.quantity}x ${ticket.zoneName} (${symbol} ${ticket.price})`)
+      .join('\n');
+
+    const total = selectedTickets.reduce((sum, ticket) => sum + (ticket.quantity * ticket.price), 0);
+
+    const reservationAmount = selectedTickets.reduce((sum, ticket) => sum + (ticket.quantity * RESERVATION_FEE), 0);
+    const remainingAmount = Math.max(0, total - reservationAmount);
+    const installmentAmount = advanceInstallments > 0 ? (remainingAmount / advanceInstallments) : 0;
+
+    let paymentDetails = `💳 *Modalidad:* Pago al contado\n💵 *Monto total a pagar:* ${symbol} ${total}`;
+    if (advancePaymentMode === 'installments') {
+      paymentDetails =
+        `💳 *Modalidad:* Reserva + cuotas\n` +
+        `💵 *Pago inicial (reserva):* ${symbol} ${reservationAmount}\n` +
+        `📉 *Saldo restante:* ${symbol} ${remainingAmount}\n` +
+        `🧾 *Plan:* ${advanceInstallments} cuotas de ${symbol} ${installmentAmount.toFixed(2)}`;
+    }
+
+    const message =
+      `🎟️ *RESERVA ANTICIPADA - ${event.name}*\n\n` +
+      `🗓️ *Fase:* ${phaseLabel}\n` +
+      `⏳ *Inicio estimado:* ${phaseDate}\n\n` +
+      `🎫 *Entradas solicitadas:*\n${ticketsList}\n\n` +
+      `💰 *Total referencial:* ${symbol} ${total}\n` +
+      `${paymentDetails}\n` +
+      `📌 *Solicitud:* Realizar una reserva con anticipación`;
+
+    window.open(`https://wa.me/51944784488?text=${encodeURIComponent(message)}`, '_blank');
+    setShowAdvanceReservationSheet(false);
+  };
+
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-orange-500/30 pb-40 lg:pb-12">
       <VerificationRequiredModal
@@ -743,6 +879,46 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
               </div>
             )}
 
+            {activePhaseData && activePhaseStatus === 'sold_out' && (
+              <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 space-y-3">
+                <p className="text-sm text-red-300 font-semibold">
+                  Las entradas de la fase actual están agotadas.
+                </p>
+                {nextUpcomingPhase && (
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <span className="text-xs text-zinc-300">Próxima fase: {nextUpcomingPhase.name}</span>
+                    <Countdown targetDate={new Date(nextUpcomingPhase.startDate)} />
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  className="w-full sm:w-auto bg-orange-500 hover:bg-orange-400 text-white"
+                  onClick={() => setShowAdvanceReservationSheet(true)}
+                >
+                  Realizar una reserva con anticipación
+                </Button>
+              </div>
+            )}
+
+            {activePhaseData && activePhaseStatus === 'upcoming' && (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
+                <p className="text-sm text-amber-300 font-semibold">
+                  La fase {activePhaseData.name} todavía no inicia.
+                </p>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <span className="text-xs text-zinc-300">Faltan:</span>
+                  <Countdown targetDate={new Date(activePhaseData.startDate)} />
+                </div>
+                <Button
+                  type="button"
+                  className="w-full sm:w-auto bg-orange-500 hover:bg-orange-400 text-white"
+                  onClick={() => setShowAdvanceReservationSheet(true)}
+                >
+                  Realizar una reserva con anticipación
+                </Button>
+              </div>
+            )}
+
             {/* Installment Plan Toggle */}
             {event.allowInstallmentPayments && (
               <div className={`
@@ -822,7 +998,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
               </h2>
               {event.slug === 'bts-en-lima-2026' && (
                 <p className="text-xs text-zinc-400 mt-1 mb-4 italic">
-                  <span className="font-bold text-orange-500 not-italic">Nota importante:</span> El botón de compra no realiza la adquisición de entradas, ya que estas aún no se encuentran disponibles oficialmente y los precios mostrados son solo referenciales.
+                  <span className="font-bold text-orange-500 not-italic">Nota importante:</span> Si la fase está agotada o aún no inicia, puedes realizar una reserva con anticipación y te contactaremos por WhatsApp.
                 </p>
               )}
               <div className="space-y-4">
@@ -843,7 +1019,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
             </div>
 
             {/* Payment Method (Inline for Desktop context) */}
-            {totalTickets > 0 && (
+            {totalTickets > 0 && !isAdvanceReservationMode && (
               <Card className="bg-zinc-900/40 border-white/10 backdrop-blur-md overflow-hidden">
                 <CardContent className="p-6 space-y-4">
                   <h3 className="font-bold text-white mb-4 flex items-center gap-2">
@@ -1004,8 +1180,8 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                 <Button
                   size="lg"
                   className="w-full h-14 text-lg font-bold rounded-xl shadow-lg transition-all hover:scale-[1.02]"
-                  disabled={totalTickets === 0 || !acceptTerms || processing}
-                  onClick={handlePurchase}
+                  disabled={isAdvanceReservationMode ? totalTickets === 0 : (totalTickets === 0 || !acceptTerms || processing)}
+                  onClick={isAdvanceReservationMode ? () => setShowAdvanceReservationSheet(true) : handlePurchase}
                   style={{
                     backgroundColor: totalTickets > 0 ? colorPalette.primary : undefined,
                     boxShadow: totalTickets > 0 ? `0 0 20px ${colorPalette.primary}50` : undefined,
@@ -1019,13 +1195,13 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                   ) : (
                     <span className="flex items-center gap-2">
                       <ShieldCheck className="w-5 h-5" />
-                      {isInstallmentMode ? 'Pagar Reserva' : 'Pagar Ahora'}
+                      {isAdvanceReservationMode ? 'Realizar reserva con anticipación' : (isInstallmentMode ? 'Pagar Reserva' : 'Pagar Ahora')}
                     </span>
                   )}
                 </Button>
 
                 <p className="text-xs text-center text-zinc-500">
-                  Pagos procesados de forma segura.
+                  {isAdvanceReservationMode ? 'Se abrirá WhatsApp para gestionar tu reserva.' : 'Pagos procesados de forma segura.'}
                 </p>
 
                 {/* WhatsApp Community CTA - ALWAYS VISIBLE */}
@@ -1099,14 +1275,154 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
             <Button
               size="lg"
               className="rounded-xl px-6 py-3 font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/30 border border-orange-400/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-              disabled={totalTickets === 0 || !acceptTerms || processing}
-              onClick={handlePurchase}
+              disabled={isAdvanceReservationMode ? totalTickets === 0 : (totalTickets === 0 || !acceptTerms || processing)}
+              onClick={isAdvanceReservationMode ? () => setShowAdvanceReservationSheet(true) : handlePurchase}
             >
-              {processing ? '...' : (isInstallmentMode ? 'Reservar' : 'Pagar')}
+              {processing ? '...' : (isAdvanceReservationMode ? 'Reserva anticipada' : (isInstallmentMode ? 'Reservar' : 'Pagar'))}
             </Button>
           </div>
         </div>
       </div>
+
+      <Sheet open={showAdvanceReservationSheet} onOpenChange={setShowAdvanceReservationSheet}>
+        <SheetContent
+          side="bottom"
+          className="h-[80vh] rounded-t-[2rem] border-t border-orange-500/20 p-0 flex flex-col overflow-hidden"
+          style={{ background: 'linear-gradient(to bottom, rgba(10,10,10,0.98), rgba(5,5,5,0.99))' }}
+        >
+          <SheetHeader className="px-6 pt-6 pb-4 text-left shrink-0">
+            <SheetTitle className="text-white text-2xl font-black">Reserva con anticipación</SheetTitle>
+            <SheetDescription className="text-zinc-400">
+              Selecciona la cantidad de entradas y te enviaremos al checkout por WhatsApp.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
+            {ticketSelections.map(selection => (
+              <div key={`advance-${selection.zoneId}`} className="rounded-xl border border-white/10 bg-white/5 p-4 flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-white">{selection.zoneName}</p>
+                  <p className="text-sm text-zinc-400">
+                    <ConvertedPrice amount={selection.price} currency={event.currency} showOriginal={false} />
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => updateTicketQuantity(selection.zoneId, selection.quantity - 1)}
+                    disabled={selection.quantity <= 0}
+                    className="w-8 h-8 rounded-lg bg-zinc-800 text-zinc-300 disabled:opacity-40"
+                  >
+                    <Minus className="w-4 h-4 mx-auto" />
+                  </button>
+                  <span className="w-8 text-center font-bold text-white tabular-nums">{selection.quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => updateTicketQuantity(selection.zoneId, selection.quantity + 1)}
+                    disabled={selection.quantity >= selection.maxPerTransaction || totalTickets >= 10}
+                    className="w-8 h-8 rounded-lg bg-orange-500 text-white disabled:opacity-40"
+                  >
+                    <Plus className="w-4 h-4 mx-auto" />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-4">
+              <p className="text-sm font-semibold text-white">Forma de pago para la reserva</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAdvancePaymentMode('cash')}
+                  className={`rounded-lg px-3 py-2 text-sm font-semibold border transition-colors ${advancePaymentMode === 'cash'
+                    ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300'
+                    : 'bg-zinc-900/50 border-white/10 text-zinc-300 hover:bg-zinc-800/70'
+                    }`}
+                >
+                  Al contado
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdvancePaymentMode('installments')}
+                  className={`rounded-lg px-3 py-2 text-sm font-semibold border transition-colors ${advancePaymentMode === 'installments'
+                    ? 'bg-blue-500/20 border-blue-400/60 text-blue-300'
+                    : 'bg-zinc-900/50 border-white/10 text-zinc-300 hover:bg-zinc-800/70'
+                    }`}
+                >
+                  En cuotas
+                </button>
+              </div>
+
+              {advancePaymentMode === 'installments' && (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    {[1, 2, 3].map((num) => (
+                      <button
+                        key={`advance-installment-${num}`}
+                        type="button"
+                        onClick={() => setAdvanceInstallments(num)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-bold border transition-colors ${advanceInstallments === num
+                          ? 'bg-blue-500 border-blue-400 text-white'
+                          : 'bg-zinc-900/50 border-white/10 text-zinc-300 hover:bg-zinc-800/70'
+                          }`}
+                      >
+                        {num} cuota{num > 1 ? 's' : ''}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3 text-xs text-blue-200 space-y-1">
+                    <p>Pago inicial (reserva): <span className="font-bold"><ConvertedPrice amount={advanceReservationAmount} currency={event.currency} showOriginal={false} /></span></p>
+                    <p>Saldo restante: <span className="font-bold"><ConvertedPrice amount={advanceRemainingAmount} currency={event.currency} showOriginal={false} /></span></p>
+                    <p>{advanceInstallments} cuota(s) de: <span className="font-bold"><ConvertedPrice amount={advanceInstallmentAmount} currency={event.currency} showOriginal={false} /></span></p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 p-4 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-400">Total referencial</span>
+              <span className="text-white font-bold">
+                <ConvertedPrice amount={totalAmount} currency={event.currency} showOriginal={false} />
+              </span>
+            </div>
+            {advancePaymentMode === 'cash' ? (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-zinc-400">Pago al contado</span>
+                <span className="text-emerald-300 font-bold">
+                  <ConvertedPrice amount={totalAmount} currency={event.currency} showOriginal={false} />
+                </span>
+              </div>
+            ) : (
+              <div className="space-y-1 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400">Reserva inicial</span>
+                  <span className="text-blue-300 font-bold">
+                    <ConvertedPrice amount={advanceReservationAmount} currency={event.currency} showOriginal={false} />
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400">{advanceInstallments} cuota(s)</span>
+                  <span className="text-blue-300 font-bold">
+                    <ConvertedPrice amount={advanceInstallmentAmount} currency={event.currency} showOriginal={false} />
+                  </span>
+                </div>
+              </div>
+            )}
+            <Button
+              type="button"
+              className="w-full bg-orange-500 hover:bg-orange-400 text-white"
+              disabled={totalTickets === 0}
+              onClick={handleAdvanceReservationCheckout}
+            >
+              Realizar reserva con anticipación
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* WhatsApp Groups Drawer */}
       <Sheet open={showWhatsAppDrawer} onOpenChange={setShowWhatsAppDrawer}>
