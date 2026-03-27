@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Minus, Plus, CreditCard, Calendar,
@@ -31,8 +30,6 @@ import { ConvertedPrice } from '@/components/common/ConvertedPrice';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 
-import { VerificationRequiredModal } from '@/components/auth/VerificationRequiredModal';
-import { useAuth } from '@/lib/contexts/AuthContext';
 import { toast } from 'sonner';
 
 // --- Constants ---
@@ -81,6 +78,10 @@ function getResolvedPhaseStatus(phase: SalesPhase): ResolvedPhaseStatus {
   if (phase.manualStatus === 'active') return 'active';
   if (phase.manualStatus === 'sold_out') return 'sold_out';
 
+  const zones = phase.zonesPricing || [];
+  const allSoldOut = zones.length > 0 && zones.every(zone => Number(zone.available || 0) <= 0);
+  if (allSoldOut) return 'sold_out';
+
   const now = new Date();
   const start = new Date(phase.startDate);
   const end = new Date(phase.endDate);
@@ -88,9 +89,7 @@ function getResolvedPhaseStatus(phase: SalesPhase): ResolvedPhaseStatus {
   if (now < start) return 'upcoming';
   if (now > end) return 'expired';
 
-  const zones = phase.zonesPricing || [];
-  const allSoldOut = zones.length > 0 && zones.every(zone => Number(zone.available || 0) <= 0);
-  return allSoldOut ? 'sold_out' : 'active';
+  return 'active';
 }
 
 function resolvePrimaryPhase(phases: ResolvedPhase[]): ResolvedPhase | null {
@@ -151,56 +150,72 @@ function Countdown({ targetDate }: { targetDate: Date }) { // ... existing compo
   );
 }
 
-function PhaseTimeline({ phases, activePhaseId }: { phases: SalesPhase[], activePhaseId: string }) {
+function PhaseTimeline({
+  phases,
+  activePhaseId,
+  onPhaseSelect
+}: {
+  phases: ResolvedPhase[];
+  activePhaseId: string;
+  onPhaseSelect: (phaseId: string) => void;
+}) {
   // Sort phases by date
   const sortedPhases = useMemo(() => {
-    return [...phases].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    return [...phases].sort((a, b) => new Date(a.phase.startDate).getTime() - new Date(b.phase.startDate).getTime());
   }, [phases]);
 
   return (
     <div className="w-full overflow-x-auto no-scrollbar pb-4">
       <div className="flex items-center min-w-max gap-4 px-1">
-        {sortedPhases.map((phase, index) => {
-          const isActive = phase.id === activePhaseId;
-          const isPast = !isActive && new Date(phase.endDate) < new Date();
-          const isFuture = !isActive && !isPast;
+        {sortedPhases.map((resolved, index) => {
+          const { phase, status } = resolved;
+          const isSelected = phase.id === activePhaseId;
+          const statusLabel = status === 'sold_out'
+            ? 'Agotado'
+            : status === 'active'
+              ? 'Activa'
+              : status === 'upcoming'
+                ? 'Próximamente'
+                : 'Finalizada';
 
           return (
-            <div
+            <button
               key={phase.id}
+              type="button"
+              onClick={() => onPhaseSelect(phase.id)}
               className={`
-                relative flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300
-                ${isActive
+                relative flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 text-left
+                ${isSelected
                   ? 'bg-orange-500/10 border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.2)]'
-                  : 'bg-zinc-900/40 border-white/5 opacity-60'
+                  : 'bg-zinc-900/40 border-white/5 hover:border-white/20 hover:bg-zinc-800/40'
                 }
               `}
             >
               <div className={`
                 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
-                ${isActive ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-500'}
+                ${isSelected ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-400'}
               `}>
-                {isPast ? <CheckCircle2 className="w-4 h-4" /> : (isFuture ? <Lock className="w-3 h-3" /> : (index + 1))}
+                {status === 'sold_out' ? <Flame className="w-4 h-4" /> : (status === 'upcoming' ? <Lock className="w-3 h-3" /> : (status === 'expired' ? <CheckCircle2 className="w-4 h-4" /> : (index + 1)))}
               </div>
 
               <div className="flex flex-col">
-                <span className={`text-xs uppercase tracking-wider font-bold ${isActive ? 'text-orange-400' : 'text-zinc-500'}`}>
-                  {isActive ? 'Fase Activa' : (isPast ? 'Finalizada' : 'Próximamente')}
+                <span className={`text-xs uppercase tracking-wider font-bold ${isSelected ? 'text-orange-400' : (status === 'sold_out' ? 'text-red-400' : 'text-zinc-500')}`}>
+                  {statusLabel}
                 </span>
-                <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-zinc-400'}`}>
+                <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-zinc-300'}`}>
                   {phase.name}
                 </span>
-                {isActive && (
+                {isSelected && status === 'active' && (
                   <div className="mt-1">
                     <Countdown targetDate={new Date(phase.endDate)} />
                   </div>
                 )}
               </div>
 
-              {isActive && (
+              {isSelected && (
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-orange-500 rounded-full blur-[2px]" />
               )}
-            </div>
+            </button>
           );
         })}
       </div>
@@ -408,11 +423,11 @@ function TicketCard({
 import { EventColorProvider, useEnhancedColorExtraction, useEventColors } from '@/components/events/EventColorContext';
 import { TermsModal } from '@/components/events/TermsModal';
 import { PrivacyModal } from '@/components/events/PrivacyModal';
+import { EventStageMap } from '@/components/events/EventStageMap';
 
 
 // Internal Wrapper component to use the context
 function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps) {
-  const router = useRouter();
   const { currency: selectedCurrency } = useCurrency();
   const { colorPalette } = useEventColors();
 
@@ -431,30 +446,41 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
     });
   }, [event.salesPhases]);
 
-  const initialResolvedPhase = useMemo(() => resolvePrimaryPhase(resolvedPhases), [resolvedPhases]);
+  const firstResolvedPhase = useMemo(() => resolvedPhases[0] || null, [resolvedPhases]);
 
   // Helper to get cart storage key for this specific event
   const getCartStorageKey = () => `ticketCart_${event.id}`;
 
   // State
-  const [selectedPhase, setSelectedPhase] = useState<string>(initialResolvedPhase?.phase.id || '');
+  const [selectedPhase, setSelectedPhase] = useState<string>(firstResolvedPhase?.phase.id || '');
 
   const activeResolvedPhase = useMemo(() => {
     return (
       resolvedPhases.find(phase => phase.phase.id === selectedPhase) ||
-      initialResolvedPhase ||
+      firstResolvedPhase ||
       null
     );
-  }, [resolvedPhases, selectedPhase, initialResolvedPhase]);
+  }, [resolvedPhases, selectedPhase, firstResolvedPhase]);
 
   const activePhaseData = activeResolvedPhase?.phase || null;
   const activePhaseStatus = activeResolvedPhase?.status || 'upcoming';
+  const canPurchaseNow = activePhaseStatus === 'active';
   const nextUpcomingPhase = useMemo(() => {
     return resolvedPhases.find(phase => phase.status === 'upcoming')?.phase || null;
   }, [resolvedPhases]);
-  const isAdvanceReservationMode = activePhaseStatus !== 'active';
+  const hasUpcomingAfterSoldOut = activePhaseStatus === 'sold_out' && !!nextUpcomingPhase;
+  const canAdvanceReservation = activePhaseStatus === 'upcoming' || hasUpcomingAfterSoldOut;
+  const canCreateOrder = canPurchaseNow || canAdvanceReservation;
+  const isAdvanceReservationMode = canAdvanceReservation;
 
-  const buildTicketSelections = (phase: SalesPhase | null, reservationMode: boolean): TicketSelection[] => {
+  const openAdvanceReservationFlow = () => {
+    if (activePhaseStatus === 'sold_out' && nextUpcomingPhase) {
+      setSelectedPhase(nextUpcomingPhase.id);
+    }
+    setShowAdvanceReservationSheet(true);
+  };
+
+  const buildTicketSelections = (phase: SalesPhase | null, status: ResolvedPhaseStatus): TicketSelection[] => {
     if (!phase) return [];
 
     return (phase.zonesPricing || [])
@@ -466,9 +492,11 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         const zone = event.zones?.find(z => z.id === zonePricing.zoneId);
         const available = Number(zonePricing.available || 0);
         const safeCapacity = zone?.capacity && zone.capacity > 0 ? zone.capacity : 10;
-        const maxPerTransaction = reservationMode
-          ? 10
-          : Math.max(0, Math.min(10, safeCapacity, available));
+        const maxPerTransaction = status === 'active'
+          ? Math.max(0, Math.min(10, safeCapacity, available))
+          : status === 'upcoming'
+            ? 10
+            : 0;
 
         return {
           zoneId: zonePricing.zoneId,
@@ -484,7 +512,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   };
 
   const [ticketSelections, setTicketSelections] = useState<TicketSelection[]>(() => {
-    return buildTicketSelections(initialResolvedPhase?.phase || null, (initialResolvedPhase?.status || 'upcoming') !== 'active');
+    return buildTicketSelections(firstResolvedPhase?.phase || null, firstResolvedPhase?.status || 'upcoming');
   });
 
   const [isInstallmentMode, setIsInstallmentMode] = useState(false);
@@ -500,13 +528,13 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const [advanceInstallments, setAdvanceInstallments] = useState<number>(2);
 
   useEffect(() => {
-    if (!initialResolvedPhase) return;
-    setSelectedPhase(initialResolvedPhase.phase.id);
-  }, [initialResolvedPhase]);
+    if (!firstResolvedPhase) return;
+    setSelectedPhase(prev => prev || firstResolvedPhase.phase.id);
+  }, [firstResolvedPhase]);
 
   useEffect(() => {
     setTicketSelections(prev => {
-      const next = buildTicketSelections(activePhaseData, isAdvanceReservationMode);
+      const next = buildTicketSelections(activePhaseData, activePhaseStatus);
       return next.map(selection => {
         const existing = prev.find(prevSelection => prevSelection.zoneId === selection.zoneId);
         if (!existing) return selection;
@@ -516,67 +544,13 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
         };
       });
     });
-  }, [activePhaseData, isAdvanceReservationMode]);
+  }, [activePhaseData, activePhaseStatus]);
 
-  // Restore cart state from sessionStorage on mount (after auth redirect)
   useEffect(() => {
-    const storageKey = getCartStorageKey();
-    const savedCart = sessionStorage.getItem(storageKey);
-
-    if (savedCart) {
-      try {
-        const cartData = JSON.parse(savedCart);
-
-        // Restore ticket quantities
-        if (cartData.selections && Array.isArray(cartData.selections)) {
-          setTicketSelections(prev => prev.map(selection => {
-            const saved = cartData.selections.find((s: any) => s.zoneId === selection.zoneId);
-            if (saved && typeof saved.quantity === 'number') {
-              return { ...selection, quantity: Math.min(saved.quantity, selection.maxPerTransaction) };
-            }
-            return selection;
-          }));
-        }
-
-        // Restore other states
-        if (typeof cartData.acceptTerms === 'boolean') {
-          setAcceptTerms(cartData.acceptTerms);
-        }
-        if (typeof cartData.isInstallmentMode === 'boolean') {
-          setIsInstallmentMode(cartData.isInstallmentMode);
-        }
-        if (cartData.paymentMethod === 'online' || cartData.paymentMethod === 'offline') {
-          setPaymentMethod(cartData.paymentMethod);
-        }
-        if (typeof cartData.installments === 'number') {
-          setInstallments(cartData.installments);
-        }
-
-        // Clear the saved cart after restoring
-        sessionStorage.removeItem(storageKey);
-
-        // Show a toast to inform user their selection was restored
-        toast.success('Tu selección de entradas ha sido restaurada');
-      } catch (e) {
-        console.error('Error restoring cart:', e);
-        sessionStorage.removeItem(storageKey);
-      }
+    if (!canAdvanceReservation) {
+      setShowAdvanceReservationSheet(false);
     }
-  }, [event.id]);
-
-  // Function to save cart state before redirecting to login
-  const saveCartToSession = () => {
-    const storageKey = getCartStorageKey();
-    const cartData = {
-      selections: ticketSelections.map(s => ({ zoneId: s.zoneId, quantity: s.quantity })),
-      acceptTerms,
-      isInstallmentMode,
-      paymentMethod,
-      installments,
-      timestamp: Date.now(),
-    };
-    sessionStorage.setItem(storageKey, JSON.stringify(cartData));
-  };
+  }, [canAdvanceReservation]);
 
   const updateTicketQuantity = (zoneId: string, quantity: number) => {
     setTicketSelections(prev =>
@@ -610,128 +584,44 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
     return new Date(date.getTime() + userTimezoneOffset);
   };
 
-  const { firebaseUser } = useAuth();
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
-
   const handlePurchase = async () => {
     if (!event || !acceptTerms || totalTickets === 0) return;
 
-    // Redirect to login if not authenticated
-    if (!firebaseUser) {
-      // Save cart state before redirecting to preserve user's selection
-      saveCartToSession();
-
-      // Save the current URL to redirect back after login
-      const currentPath = `/eventos/${event.slug}/entradas`;
-      sessionStorage.setItem('redirectAfterAuth', currentPath);
-      toast.info('Inicia sesión para continuar con tu compra');
-      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
-      return;
-    }
-
-    if (firebaseUser && !firebaseUser.emailVerified) {
-      setShowVerificationModal(true);
-      return;
-    }
-
     setProcessing(true);
-    // ... (rest of function)
     try {
-      const response = await fetch('/api/tickets/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventId: event.id,
-          tickets: ticketSelections.filter(s => s.quantity > 0).map(s => ({
-            zoneId: s.zoneId,
-            zoneName: s.zoneName,
-            quantity: s.quantity,
-            pricePerTicket: s.price,
-          })),
-          paymentMethod,
-          paymentType: isInstallmentMode ? 'installment' : 'full',
-          installments: isInstallmentMode ? installments : undefined,
-          reservationFee: isInstallmentMode ? (RESERVATION_FEE * ticketSelections.filter(s => s.quantity > 0).reduce((acc, s) => acc + s.quantity, 0)) : undefined,
-          userId: firebaseUser?.uid,
-          totalAmount: totalAmount,
-          currency: event.currency,
-        }),
-      });
+      const symbol = event.currency === 'USD' ? '$' : 'S/';
 
-      const result = await response.json();
+      const ticketsList = ticketSelections
+        .filter(s => s.quantity > 0)
+        .map(s => `• ${s.quantity}x ${s.zoneName} (${symbol} ${s.price})`)
+        .join('\n');
 
-      if (response.ok) {
-        if (paymentMethod === 'online' && result.paymentUrl) {
-          window.location.href = result.paymentUrl;
-        } else {
-          // Redirect to tickets page after successful purchase
-          router.push('/profile/tickets');
-        }
-        // WhatsApp formatting
-        const symbol = event.currency === 'USD' ? '$' : 'S/';
+      let paymentDetails = `📝 *Método:* ${paymentMethod === 'online' ? 'Pago Online' : 'Pago Offline'}`;
+      let totalToPayText = `${symbol} ${totalAmount}`;
 
-        const ticketsList = ticketSelections
-          .filter(s => s.quantity > 0)
-          .map(s => `• ${s.quantity}x ${s.zoneName} (${symbol} ${s.price})`)
-          .join('\n');
-
-        let paymentDetails = `📝 *Método:* Pago Offline`;
-        let totalToPayText = `${symbol} ${totalAmount}`;
-
-        // Helper for Emojis to avoid encoding issues
-        const EMOJI = {
-          TICKETS: '\uD83C\uDF9F\uFE0F',
-          CALENDAR: '\uD83D\uDCC5',
-          PIN: '\uD83D\uDCCD',
-          TICKET: '\uD83C\uDFAB',
-          MONEY_BAG: '\uD83D\uDCB0',
-          DOLLAR: '\uD83D\uDCB5',
-          ID: '\uD83C\uDD94',
-          MEMO: '\uD83D\uDCDD',
-          CHART: '\uD83D\uDCC9',
-          DIAMOND: '\uD83D\uDD39'
-        };
-
-        const message = `${EMOJI.TICKETS} *NUEVA RESERVA - ${event.name}* ${EMOJI.TICKETS}\n\n` +
-          `${EMOJI.CALENDAR} *Fecha:* ${format(getEventDate(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
-          `${EMOJI.PIN} *Lugar:* ${event.location.venue}\n\n` +
-          `${EMOJI.TICKET} *Tickets:*\n${ticketsList}\n\n` +
-          `${EMOJI.MONEY_BAG} *TOTAL PEDIDO:* ${symbol} ${totalAmount}\n` +
-          `${EMOJI.DOLLAR} *A PAGAR HOY:* ${totalToPayText}\n` +
-          `${EMOJI.ID} *Ref:* ${result.orderId || 'N/A'}\n` +
-          paymentDetails.replace('📝', EMOJI.MEMO).replace('📉', EMOJI.CHART).replace('🔹', EMOJI.DIAMOND).replace('🔹', EMOJI.DIAMOND); // Global replace if needed or just rebuild paymentDetails logic if it was dynamic, but here it's easier to just rebuild it if possible, but paymentDetails is built above. 
-
-        // Actually, let's rebuild paymentDetails to be safe and clean
-
-        let finalPaymentDetails = `${EMOJI.MEMO} *Método:* Pago Offline`;
-        if (isInstallmentMode) {
-          const installmentValue = ((totalAmount - (RESERVATION_FEE * totalTickets)) / installments).toFixed(2);
-          finalPaymentDetails += `\n${EMOJI.CHART} *Facilidad de Pago:* Reserva + ${installments} cuotas`;
-          finalPaymentDetails += `\n${EMOJI.DIAMOND} *Pago Inicial (Reserva):* ${symbol} ${totalReservation}`;
-          finalPaymentDetails += `\n${EMOJI.DIAMOND} *Saldo Restante:* ${symbol} ${totalRemaining} en ${installments} cuotas de ${symbol} ${installmentValue}`;
-        } else {
-          finalPaymentDetails = paymentDetails.replace('📝', EMOJI.MEMO); // partial fallback if not installment
-        }
-
-        const finalMessage = `${EMOJI.TICKETS} *NUEVA RESERVA - ${event.name}* ${EMOJI.TICKETS}\n\n` +
-          `${EMOJI.CALENDAR} *Fecha:* ${format(getEventDate(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
-          `${EMOJI.PIN} *Lugar:* ${event.location.venue}\n\n` +
-          `${EMOJI.TICKET} *Tickets:*\n${ticketsList}\n\n` +
-          `${EMOJI.MONEY_BAG} *TOTAL PEDIDO:* ${symbol} ${totalAmount}\n` +
-          `${EMOJI.DOLLAR} *A PAGAR HOY:* ${totalToPayText}\n` +
-          `${EMOJI.ID} *Ref:* ${result.orderId || 'N/A'}\n` +
-          finalPaymentDetails;
-
-        // Encode the entire message properly
-        const encodedMessage = encodeURIComponent(finalMessage);
-        window.open(`https://wa.me/51944784488?text=${encodedMessage}`, '_blank');
-
-      } else {
-        alert(`Error: ${result.error}`);
+      if (isInstallmentMode) {
+        const installmentValue = ((totalAmount - (RESERVATION_FEE * totalTickets)) / installments).toFixed(2);
+        paymentDetails += `\n📉 *Facilidad de Pago:* Reserva + ${installments} cuotas`;
+        paymentDetails += `\n🔹 *Pago Inicial (Reserva):* ${symbol} ${totalReservation}`;
+        paymentDetails += `\n🔹 *Saldo Restante:* ${symbol} ${totalRemaining} en ${installments} cuotas de ${symbol} ${installmentValue}`;
+        totalToPayText = `${symbol} ${totalReservation}`;
       }
+
+      const message =
+        `🎟️ *NUEVA RESERVA - ${event.name}* 🎟️\n\n` +
+        `📅 *Fecha:* ${format(getEventDate(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
+        `📍 *Lugar:* ${event.location.venue}\n\n` +
+        `🎫 *Tickets:*\n${ticketsList}\n\n` +
+        `💰 *TOTAL PEDIDO:* ${symbol} ${totalAmount}\n` +
+        `💵 *A PAGAR HOY:* ${totalToPayText}\n` +
+        `${paymentDetails}\n` +
+        `🆔 *Canal:* Checkout directo desde web`;
+
+      window.open(`https://wa.me/51944784488?text=${encodeURIComponent(message)}`, '_blank');
+      toast.success('Te estamos redirigiendo a WhatsApp para completar tu pedido.');
     } catch (error) {
-      console.error('Purchase error:', error);
-      alert('Error al procesar la compra');
+      console.error('WhatsApp checkout error:', error);
+      alert('No pudimos abrir WhatsApp. Intenta nuevamente.');
     } finally {
       setProcessing(false);
     }
@@ -781,12 +671,6 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-orange-500/30 pb-40 lg:pb-12">
-      <VerificationRequiredModal
-        isOpen={showVerificationModal}
-        onClose={() => setShowVerificationModal(false)}
-        title="Verificación Necesaria"
-        message="Para comprar entradas, necesitamos verificar tu identidad. Por favor confirma tu correo electrónico."
-      />
       {/* Background Ambience - Dynamic Colors */}
       <div className="fixed inset-0 pointer-events-none transition-colors duration-1000">
         {event.bannerImageUrl && (
@@ -875,14 +759,26 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                   <Clock className="w-5 h-5" style={{ color: colorPalette.primary }} />
                   Fases de Venta
                 </h2>
-                <PhaseTimeline phases={event.salesPhases} activePhaseId={selectedPhase} />
+                <PhaseTimeline phases={resolvedPhases} activePhaseId={selectedPhase} onPhaseSelect={setSelectedPhase} />
               </div>
             )}
+
+            {/* Stage Map */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <MapPin className="w-5 h-5" style={{ color: colorPalette.primary }} />
+                Mapa del Escenario
+              </h2>
+              <EventStageMap
+                stageMapUrl={event.stageMapUrl}
+                specifications={event.specifications}
+              />
+            </div>
 
             {activePhaseData && activePhaseStatus === 'sold_out' && (
               <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 space-y-3">
                 <p className="text-sm text-red-300 font-semibold">
-                  Las entradas de la fase actual están agotadas.
+                  Las entradas de esta fase están agotadas. Esta vista es solo informativa y no permite pedidos.
                 </p>
                 {nextUpcomingPhase && (
                   <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -890,13 +786,15 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                     <Countdown targetDate={new Date(nextUpcomingPhase.startDate)} />
                   </div>
                 )}
-                <Button
-                  type="button"
-                  className="w-full sm:w-auto bg-orange-500 hover:bg-orange-400 text-white"
-                  onClick={() => setShowAdvanceReservationSheet(true)}
-                >
-                  Realizar una reserva con anticipación
-                </Button>
+                {nextUpcomingPhase && (
+                  <Button
+                    type="button"
+                    className="w-full sm:w-auto bg-orange-500 hover:bg-orange-400 text-white"
+                    onClick={openAdvanceReservationFlow}
+                  >
+                    Comprar anticipado para {nextUpcomingPhase.name}
+                  </Button>
+                )}
               </div>
             )}
 
@@ -1180,8 +1078,12 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                 <Button
                   size="lg"
                   className="w-full h-14 text-lg font-bold rounded-xl shadow-lg transition-all hover:scale-[1.02]"
-                  disabled={isAdvanceReservationMode ? totalTickets === 0 : (totalTickets === 0 || !acceptTerms || processing)}
-                  onClick={isAdvanceReservationMode ? () => setShowAdvanceReservationSheet(true) : handlePurchase}
+                  disabled={
+                    !canCreateOrder ||
+                    (canPurchaseNow ? (totalTickets === 0 || !acceptTerms || processing) : false) ||
+                    (canAdvanceReservation ? processing : false)
+                  }
+                  onClick={canPurchaseNow ? handlePurchase : (canAdvanceReservation ? openAdvanceReservationFlow : undefined)}
                   style={{
                     backgroundColor: totalTickets > 0 ? colorPalette.primary : undefined,
                     boxShadow: totalTickets > 0 ? `0 0 20px ${colorPalette.primary}50` : undefined,
@@ -1195,13 +1097,17 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                   ) : (
                     <span className="flex items-center gap-2">
                       <ShieldCheck className="w-5 h-5" />
-                      {isAdvanceReservationMode ? 'Realizar reserva con anticipación' : (isInstallmentMode ? 'Pagar Reserva' : 'Pagar Ahora')}
+                      {!canCreateOrder
+                        ? 'No disponible en esta fase'
+                        : (canAdvanceReservation ? 'Realizar reserva con anticipación' : (isInstallmentMode ? 'Pagar Reserva' : 'Pagar Ahora'))}
                     </span>
                   )}
                 </Button>
 
                 <p className="text-xs text-center text-zinc-500">
-                  {isAdvanceReservationMode ? 'Se abrirá WhatsApp para gestionar tu reserva.' : 'Pagos procesados de forma segura.'}
+                  {!canCreateOrder
+                    ? 'Revisa una fase activa o próxima para generar un pedido.'
+                    : (isAdvanceReservationMode ? 'Se abrirá WhatsApp para gestionar tu reserva.' : 'Pagos procesados de forma segura.')}
                 </p>
 
                 {/* WhatsApp Community CTA - ALWAYS VISIBLE */}
@@ -1275,10 +1181,18 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
             <Button
               size="lg"
               className="rounded-xl px-6 py-3 font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/30 border border-orange-400/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-              disabled={isAdvanceReservationMode ? totalTickets === 0 : (totalTickets === 0 || !acceptTerms || processing)}
-              onClick={isAdvanceReservationMode ? () => setShowAdvanceReservationSheet(true) : handlePurchase}
+              disabled={
+                !canCreateOrder ||
+                (canPurchaseNow ? (totalTickets === 0 || !acceptTerms || processing) : false) ||
+                (canAdvanceReservation ? processing : false)
+              }
+              onClick={canPurchaseNow ? handlePurchase : (canAdvanceReservation ? openAdvanceReservationFlow : undefined)}
             >
-              {processing ? '...' : (isAdvanceReservationMode ? 'Reserva anticipada' : (isInstallmentMode ? 'Reservar' : 'Pagar'))}
+              {processing
+                ? '...'
+                : (!canCreateOrder
+                  ? 'No disponible'
+                  : (isAdvanceReservationMode ? 'Reserva anticipada' : (isInstallmentMode ? 'Reservar' : 'Pagar')))}
             </Button>
           </div>
         </div>
