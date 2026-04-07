@@ -587,7 +587,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
   const [isInstallmentMode, setIsInstallmentMode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline'>('offline');
-  const [installments, setInstallments] = useState<number>(1); // Default to 1 additional installment (Total 2)
+  const [installments, setInstallments] = useState<number>(2); // Default to 2 installments when using installment mode
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -653,6 +653,19 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
   // Maximum installments available for this event (cap to 9 for UI consistency)
   const availableInstallments = Math.max(1, Math.min(event.maxInstallments ?? 9, 9));
+
+  // Ensure when entering installment mode the selected installments is within allowed range
+  useEffect(() => {
+    if (isInstallmentMode) {
+      setInstallments(prev => {
+        const minInstallments = 2;
+        const maxInstallments = availableInstallments;
+        if (prev < minInstallments) return Math.min(maxInstallments, minInstallments);
+        if (prev > maxInstallments) return maxInstallments;
+        return prev;
+      });
+    }
+  }, [isInstallmentMode, availableInstallments]);
 
   const getEventDate = (dateString: string) => {
     // Helper to parse date string and prevent timezone shifts
@@ -946,7 +959,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                             </span>
                           </div>
                           <div className="flex gap-2">
-                            {Array.from({ length: availableInstallments }, (_, i) => i + 1).map((num) => (
+                            {Array.from({ length: Math.max(0, availableInstallments - 1) }, (_, i) => i + 2).map((num) => (
                               <button
                                 key={num}
                                 onClick={() => setInstallments(num)}
