@@ -581,6 +581,27 @@ export default function EditEventPage() {
                 </div>
               </div>
 
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Género Musical</Label>
+                  <Select
+                    value={eventData.musicGenre || ''}
+                    onValueChange={(value) => updateEventData('musicGenre', value)}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pop">Pop</SelectItem>
+                      <SelectItem value="Hip-Hop / Rap">Hip-Hop / Rap</SelectItem>
+                      <SelectItem value="Música Latina">Música Latina</SelectItem>
+                      <SelectItem value="K-pop">K-pop</SelectItem>
+                      <SelectItem value="música electrónica">música electrónica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-foreground">Venta de Entradas *</Label>
                 <Select
