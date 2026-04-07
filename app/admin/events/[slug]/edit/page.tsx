@@ -2276,9 +2276,9 @@ export default function EditEventPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="3">3 cuotas</SelectItem>
-                      <SelectItem value="6">6 cuotas</SelectItem>
-                      <SelectItem value="12">12 cuotas</SelectItem>
+                      {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
+                        <SelectItem key={`mi-${n}`} value={String(n)}>{n} cuotas</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -651,6 +651,9 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const totalRemaining = Math.max(0, totalAmount - totalReservation);
   const monthlyInstallment = installments > 0 ? totalRemaining / installments : 0;
 
+  // Maximum installments available for this event (cap to 9 for UI consistency)
+  const availableInstallments = Math.max(1, Math.min(event.maxInstallments ?? 9, 9));
+
   const getEventDate = (dateString: string) => {
     // Helper to parse date string and prevent timezone shifts
     // Appends T00:00:00 if it's a date-only string to ensure local time parsing
@@ -943,7 +946,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                             </span>
                           </div>
                           <div className="flex gap-2">
-                            {[1, 2, 3].map((num) => (
+                            {Array.from({ length: availableInstallments }, (_, i) => i + 1).map((num) => (
                               <button
                                 key={num}
                                 onClick={() => setInstallments(num)}
