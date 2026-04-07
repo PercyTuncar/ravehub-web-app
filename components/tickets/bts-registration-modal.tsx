@@ -161,7 +161,7 @@ export function BTSRegistrationModal() {
                                     <WhatsAppButton
                                         groupNumber={3}
                                         active={true}
-                                        link="https://chat.whatsapp.com/JY5rMMGp2n3HEHqxJZTam9"
+                                        link="https://chat.whatsapp.com/BYtWjcMlclrC7oRj2h3B6Q?mode=gi_t"
                                     />
                                 </div>
 
