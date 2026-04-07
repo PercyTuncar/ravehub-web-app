@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Eye, Calendar, MapPin, Users, Trash2, Search, Filter, RefreshCw, MoreHorizontal, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Eye, Calendar, MapPin, Users, Trash2, Search, Filter, RefreshCw, MoreHorizontal, CheckCircle, XCircle, AlertCircle, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AuthGuard } from '@/components/admin/AuthGuard';
 import { eventsCollection } from '@/lib/firebase/collections';
+import { generateSlug, generateUniqueSlug } from '@/lib/utils/slug-generator';
+import { revalidateEvent, revalidateEventsListing } from '@/lib/revalidate';
 import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -38,6 +42,11 @@ export default function EventsAdminPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [duplicateEvent, setDuplicateEvent] = useState<Partial<Event> | null>(null);
+  const [duplicateData, setDuplicateData] = useState<Partial<Event>>({});
+  const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
     loadEvents();
@@ -112,6 +121,63 @@ export default function EventsAdminPage() {
     } catch (error) {
       console.error('Error updating event status:', error);
       toast.error('Error al actualizar el estado');
+    }
+  };
+
+  const openDuplicateModal = (ev: Event) => {
+    setDuplicateEvent(ev);
+    setDuplicateData({
+      name: ev.name,
+      slug: ev.slug ? `${ev.slug}-copy` : undefined,
+      startDate: ev.startDate,
+      endDate: ev.endDate,
+      currency: ev.currency,
+      eventType: ev.eventType,
+      location: ev.location ? { ...ev.location } : undefined,
+    });
+    setDuplicateOpen(true);
+  };
+
+  const handleCreateDuplicate = async () => {
+    if (!duplicateEvent) return;
+    setDuplicating(true);
+    try {
+      const existingSlugs = events.map(e => e.slug).filter(Boolean) as string[];
+      const base = (duplicateData.slug || duplicateData.name || duplicateEvent.name || `${duplicateEvent.slug || 'event'}-copy`).toString();
+      const newSlug = generateUniqueSlug(base, existingSlugs);
+
+      const payload: any = {
+        ...duplicateEvent,
+        ...duplicateData,
+        slug: newSlug,
+        eventStatus: 'draft',
+        createdBy: 'admin',
+      };
+
+      delete payload.id;
+      delete payload.createdAt;
+      delete payload.updatedAt;
+
+      const newId = await eventsCollection.create(payload);
+
+      const createdEvent = { id: newId, ...payload } as Event;
+      setEvents(prev => [createdEvent, ...prev]);
+
+      toast.success('Evento duplicado correctamente');
+
+      await revalidateEvent(newSlug);
+      await revalidateEventsListing();
+
+      setDuplicateOpen(false);
+      setDuplicateEvent(null);
+      setDuplicateData({});
+
+      window.location.href = `/admin/events/${newId}/edit`;
+    } catch (error) {
+      console.error('Error duplicating event:', error);
+      toast.error('Error al duplicar evento');
+    } finally {
+      setDuplicating(false);
     }
   };
 
@@ -428,11 +494,18 @@ export default function EventsAdminPage() {
                                 )}
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                                onClick={() => handleDeleteEvent(event.id, event.name)}
-                                className="text-red-400 focus:text-red-400 cursor-pointer py-2 hover:bg-red-500/10"
+                              onClick={() => openDuplicateModal(event)}
+                              className="cursor-pointer py-2"
                             >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Eliminar
+                              <Copy className="w-4 h-4 mr-2 text-indigo-400" />
+                              Duplicar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteEvent(event.id, event.name)}
+                              className="text-red-400 focus:text-red-400 cursor-pointer py-2 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -443,6 +516,85 @@ export default function EventsAdminPage() {
               ))}
             </div>
           )}
+            {/* Duplicate Event Dialog */}
+            <Dialog open={duplicateOpen} onOpenChange={(open) => { if (!open && duplicating) return; setDuplicateOpen(open); if (!open) { setDuplicateEvent(null); setDuplicateData({}); } }}>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 bg-[#1A1D21] border-white/10 text-white">
+                <DialogHeader className="px-6 py-4 border-b border-white/10">
+                  <DialogTitle className="text-2xl">Duplicar Evento</DialogTitle>
+                  <DialogDescription className="text-white/60">Edita los campos clave antes de crear el nuevo evento.</DialogDescription>
+                </DialogHeader>
+
+                <div className="p-6 space-y-4">
+                  {duplicateEvent && (
+                    <div className="text-sm text-white/60 mb-2">Original: {duplicateEvent.name} — slug: {duplicateEvent.slug}</div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm">Nombre del Evento</Label>
+                      <Input value={duplicateData?.name || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, name: e.target.value }))} className="h-10" />
+                    </div>
+
+                    <div>
+                      <Label className="text-sm">Slug (URL)</Label>
+                      <div className="flex gap-2">
+                        <Input value={duplicateData?.slug || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, slug: e.target.value }))} className="h-10" />
+                        <Button onClick={() => setDuplicateData(prev => ({ ...prev, slug: generateSlug((prev.name || duplicateEvent?.name || '').toString()) }))} className="h-10">Generar</Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm">Fecha de Inicio</Label>
+                      <Input type="date" value={(duplicateData?.startDate || '').split('T')[0] || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, startDate: e.target.value }))} className="h-10" />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Fecha de Fin</Label>
+                      <Input type="date" value={(duplicateData?.endDate || '').split('T')[0] || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, endDate: e.target.value }))} className="h-10" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm">Lugar / Recinto</Label>
+                      <Input value={duplicateData?.location?.venue || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), venue: e.target.value } }))} className="h-10" />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Ciudad</Label>
+                      <Input value={duplicateData?.location?.city || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), city: e.target.value } }))} className="h-10" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm">Región / Provincia</Label>
+                      <Input value={duplicateData?.location?.region || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), region: e.target.value } }))} className="h-10" />
+                    </div>
+                    <div>
+                      <Label className="text-sm">País</Label>
+                      <Input value={duplicateData?.location?.country || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), country: e.target.value } }))} className="h-10" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm">Código de País (ISO)</Label>
+                      <Input value={duplicateData?.location?.countryCode || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), countryCode: e.target.value } }))} className="h-10" />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Divisa</Label>
+                      <Input value={duplicateData?.currency || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, currency: e.target.value }))} className="h-10" />
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter className="px-6 py-4 border-t border-white/10 flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => { setDuplicateOpen(false); setDuplicateEvent(null); setDuplicateData({}); }} disabled={duplicating}>Cancelar</Button>
+                  <Button onClick={handleCreateDuplicate} disabled={duplicating} className="bg-primary text-white">{duplicating ? 'Creando...' : 'Crear Evento Duplicado'}</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
         </div>
       </div>
     </AuthGuard>
