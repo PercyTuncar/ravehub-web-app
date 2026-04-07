@@ -155,10 +155,13 @@ function PhaseTimeline({
   phases,
   activePhaseId,
   onPhaseSelect
+  ,
+  disabled = false,
 }: {
   phases: ResolvedPhase[];
   activePhaseId: string;
   onPhaseSelect: (phaseId: string) => void;
+  disabled?: boolean;
 }) {
   // Sort phases by date
   const sortedPhases = useMemo(() => {
@@ -179,28 +182,59 @@ function PhaseTimeline({
                 ? 'Próximamente'
                 : 'Finalizada';
 
+          // Determine styles per status
+          const containerSelectedMap: Record<string, string> = {
+            active: 'bg-emerald-600/10 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.12)]',
+            sold_out: 'bg-red-600/10 border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.08)]',
+            upcoming: 'bg-amber-500/10 border-amber-400/30 shadow-[0_0_12px_rgba(245,158,11,0.08)]',
+            expired: 'bg-zinc-800/20 border-zinc-700/20'
+          };
+
+          const circleSelectedMap: Record<string, string> = {
+            active: 'bg-emerald-500 text-white',
+            sold_out: 'bg-red-500 text-white',
+            upcoming: 'bg-amber-500 text-white',
+            expired: 'bg-zinc-600 text-white'
+          };
+
+          const labelSelectedMap: Record<string, string> = {
+            active: 'text-emerald-400',
+            sold_out: 'text-red-400',
+            upcoming: 'text-amber-400',
+            expired: 'text-zinc-500'
+          };
+
+          const containerClass = isSelected
+            ? containerSelectedMap[status] || 'bg-zinc-900/40 border-white/5'
+            : `bg-zinc-900/40 border-white/5 hover:border-white/20 hover:bg-zinc-800/40`;
+
+          const circleClass = isSelected
+            ? circleSelectedMap[status] || 'bg-zinc-800 text-zinc-50'
+            : 'bg-zinc-800 text-zinc-400';
+
+          const labelClass = isSelected
+            ? labelSelectedMap[status] || 'text-zinc-300'
+            : (status === 'sold_out' ? 'text-red-400' : (status === 'upcoming' ? 'text-amber-400' : 'text-zinc-500'));
+
+          const underlineClass = isSelected
+            ? (status === 'active' ? 'bg-emerald-500' : (status === 'sold_out' ? 'bg-red-500' : (status === 'upcoming' ? 'bg-amber-500' : 'bg-zinc-500')))
+            : 'bg-orange-500';
+
           return (
             <button
               key={phase.id}
               type="button"
-              onClick={() => onPhaseSelect(phase.id)}
-              className={`
-                relative flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 text-left
-                ${isSelected
-                  ? 'bg-orange-500/10 border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.2)]'
-                  : 'bg-zinc-900/40 border-white/5 hover:border-white/20 hover:bg-zinc-800/40'
-                }
-              `}
+              onClick={() => !disabled && onPhaseSelect(phase.id)}
+              disabled={disabled}
+              aria-disabled={disabled}
+              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 text-left ${containerClass} ${disabled ? 'opacity-60 pointer-events-none' : ''}`}
             >
-              <div className={`
-                w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
-                ${isSelected ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-400'}
-              `}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${circleClass}`}>
                 {status === 'sold_out' ? <Flame className="w-4 h-4" /> : (status === 'upcoming' ? <Lock className="w-3 h-3" /> : (status === 'expired' ? <CheckCircle2 className="w-4 h-4" /> : (index + 1)))}
               </div>
 
               <div className="flex flex-col">
-                <span className={`text-xs uppercase tracking-wider font-bold ${isSelected ? 'text-orange-400' : (status === 'sold_out' ? 'text-red-400' : 'text-zinc-500')}`}>
+                <span className={`text-xs uppercase tracking-wider font-bold ${labelClass}`}>
                   {statusLabel}
                 </span>
                 <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-zinc-300'}`}>
@@ -214,7 +248,7 @@ function PhaseTimeline({
               </div>
 
               {isSelected && (
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-orange-500 rounded-full blur-[2px]" />
+                <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-0.5 ${underlineClass} rounded-full blur-[2px]`} />
               )}
             </button>
           );
@@ -474,13 +508,21 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
     });
   }, [event.salesPhases]);
 
+  const primaryResolvedPhase = useMemo(() => resolvePrimaryPhase(resolvedPhases), [resolvedPhases]);
   const firstResolvedPhase = useMemo(() => resolvedPhases[0] || null, [resolvedPhases]);
 
   // Helper to get cart storage key for this specific event
   const getCartStorageKey = () => `ticketCart_${event.id}`;
 
   // State
-  const [selectedPhase, setSelectedPhase] = useState<string>(firstResolvedPhase?.phase.id || '');
+  const [selectedPhase, setSelectedPhase] = useState<string>('');
+
+  useEffect(() => {
+    const desiredId = primaryResolvedPhase?.phase.id || firstResolvedPhase?.phase.id || '';
+    if (desiredId && desiredId !== selectedPhase) setSelectedPhase(desiredId);
+  }, [primaryResolvedPhase, firstResolvedPhase, selectedPhase]);
+
+  const allExpired = resolvedPhases.length > 0 && resolvedPhases.every(p => p.status === 'expired');
 
   const activeResolvedPhase = useMemo(() => {
     return (
@@ -796,7 +838,7 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                   <Clock className="w-5 h-5" style={{ color: colorPalette.primary }} />
                   Fases de Venta
                 </h2>
-                <PhaseTimeline phases={resolvedPhases} activePhaseId={selectedPhase} onPhaseSelect={setSelectedPhase} />
+                <PhaseTimeline phases={resolvedPhases} activePhaseId={selectedPhase} onPhaseSelect={setSelectedPhase} disabled={allExpired} />
               </div>
             )}
 
