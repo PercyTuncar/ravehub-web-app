@@ -98,10 +98,17 @@ export async function POST(request: NextRequest) {
     if (paymentType === 'installment' && installments) {
       const { calculateInstallmentPlan } = await import('@/lib/utils/admin-ticket-calculator');
 
-      const reservationAmount = body.reservationFee || 0;
-      // Note: calculateInstallmentPlan expects totalAmount to be the FULL price. 
-      // The logic: (Total - Reservation) / Installments
+      // Determine reservation amount: prefer client-provided, otherwise fallback to event config
+      let reservationAmount: number;
+      if (reservationFee !== undefined && reservationFee !== null) {
+        reservationAmount = reservationFee;
+      } else {
+        const ticketCount = Array.isArray(tickets) ? tickets.reduce((acc, t: any) => acc + (t.quantity || 1), 0) : 0;
+        reservationAmount = (event.reservationAmount ?? 50) * ticketCount;
+      }
 
+      // Note: calculateInstallmentPlan expects totalAmount to be the FULL price.
+      // The logic: (Total - Reservation) / Installments
       const plan = calculateInstallmentPlan(
         totalAmount,
         reservationAmount,

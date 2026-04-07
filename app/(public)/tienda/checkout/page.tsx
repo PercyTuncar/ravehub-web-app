@@ -20,6 +20,7 @@ import { FileUpload } from '@/components/common/FileUpload';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usersCollection } from '@/lib/firebase/collections';
 import { Address } from '@/lib/types';
+import { toast } from 'sonner';
 
 export default function CheckoutPage() {
   const { items, getTotalAmount, clearCart } = useCart();
@@ -137,115 +138,40 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     if (!acceptTerms || items.length === 0) return;
-
-    // Check if user is logged in before processing
-    if (!user) {
-      setShowAuthPrompt(true);
-      return;
-    }
-
-    // Validar comprobante para pagos offline
+    // We now always send order summary to WhatsApp so users don't need to log in.
     if (paymentMethod === 'offline' && !paymentProof) {
-      alert('Por favor sube tu comprobante de pago');
-      return;
+      // Still allow proceeding without proof — the admin will coordinate via WhatsApp.
     }
 
     setProcessing(true);
     try {
-      // Crear orden
-      const orderData = {
-        userId: user.id,
-        orderItems: items.map(item => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          currency: item.currency,
-        })),
-        totalAmount: getTotalAmount(),
-        currency: items[0]?.currency || 'PEN',
-        paymentMethod,
-        shippingAddress: shippingInfo,
-        shippingCost: shippingCost,
-        shippingMethod: 'home_delivery',
-        estimatedDeliveryDays: 5,
-        notes: shippingInfo.notes,
-      };
+      const symbol = items[0]?.currency === 'USD' ? '$' : 'S/';
 
-      const response = await fetch('/api/orders/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
-      });
+      const itemsList = items
+        .map(item => `• ${item.quantity}x ${item.name} (${symbol} ${item.price})`)
+        .join('\n');
 
-      const result = await response.json();
+      const message =
+        `🛒 *NUEVO PEDIDO*` +
+        `\n\n` +
+        `📦 *Productos:*\n${itemsList}\n\n` +
+        `💰 *TOTAL:* ${symbol} ${getTotalAmount()}\n` +
+        `💳 *Método:* ${paymentMethod === 'online' ? 'Pago Online' : 'Pago Offline'}\n\n` +
+        `📍 *Envío / Datos de contacto:*\n` +
+        `${shippingInfo.fullName || ''}\n` +
+        `${shippingInfo.phone || ''}\n` +
+        `${shippingInfo.address || ''} ${shippingInfo.city || ''} ${shippingInfo.region || ''}\n` +
+        `${shippingInfo.postalCode || ''}\n` +
+        `${shippingInfo.email || ''}\n\n` +
+        `📝 *Notas:* ${shippingInfo.notes || '-'}\n\n` +
+        `📌 *Canal:* Checkout web`;
 
-      if (response.ok) {
-        const orderId = result.orderId;
-
-        // Si es pago offline, subir comprobante
-        if (paymentMethod === 'offline' && paymentProof) {
-          const proofResponse = await fetch(`/api/orders/${orderId}/upload-proof`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              paymentProofUrl: paymentProof,
-              offlinePaymentMethod: offlinePaymentMethod,
-            }),
-          });
-
-          if (proofResponse.ok) {
-            clearCart();
-            alert('Pedido creado exitosamente. Tu comprobante será revisado pronto.');
-            router.push(`/profile/orders`);
-          } else {
-            alert('Error al subir el comprobante. Por favor contacta con soporte.');
-          }
-        } else if (paymentMethod === 'online') {
-          // Integrar con Mercado Pago
-          console.log('💳 [CHECKOUT] Creando preferencia de Mercado Pago...');
-          
-          const mpResponse = await fetch('/api/mercadopago/create-preference', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              orderId,
-              orderItems: items,
-              totalAmount: finalTotal,
-              currency: items[0]?.currency || 'PEN',
-              buyerEmail: shippingInfo.email,
-              buyerName: shippingInfo.fullName,
-              buyerPhone: shippingInfo.phone,
-            }),
-          });
-
-          if (mpResponse.ok) {
-            const mpData = await mpResponse.json();
-            console.log('✅ [CHECKOUT] Preferencia creada:', mpData.preferenceId);
-            
-            // Limpiar carrito antes de redirigir
-            clearCart();
-            
-            // Redirigir a Mercado Pago
-            const redirectUrl = process.env.NODE_ENV === 'production' 
-              ? mpData.initPoint 
-              : mpData.sandboxInitPoint || mpData.initPoint;
-            
-            console.log('🔗 [CHECKOUT] Redirigiendo a:', redirectUrl);
-            window.location.href = redirectUrl;
-          } else {
-            const mpError = await mpResponse.json();
-            console.error('❌ [CHECKOUT] Error creando preferencia:', mpError);
-            alert('Error al conectar con Mercado Pago. Por favor intenta nuevamente.');
-          }
-        }
-      } else {
-        alert(`Error: ${result.error}`);
-      }
+      window.open(`https://wa.me/51944784488?text=${encodeURIComponent(message)}`, '_blank');
+      toast.success('Te estamos redirigiendo a WhatsApp para completar tu pedido.');
+      // Do not clear cart automatically; keep it until admin confirms via WhatsApp
     } catch (error) {
-      console.error('Error processing checkout:', error);
-      alert('Error al procesar el pedido');
+      console.error('WhatsApp checkout error:', error);
+      alert('No pudimos abrir WhatsApp. Intenta nuevamente.');
     } finally {
       setProcessing(false);
     }

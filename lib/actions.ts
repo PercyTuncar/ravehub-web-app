@@ -875,14 +875,23 @@ export async function recalculateTicketInstallments(ticketId: string) {
     if (ticket.paymentType !== 'installment') throw new Error('Not an installment ticket');
 
     // 1. Calculate correct values
-    const RESERVATION_FEE_PER_TICKET = 50;
-    // Assuming ticketItems contains quantity info. If not, fallback to ticket.quantity
+    // Determine per-ticket reservation amount from event if available
     let quantity = ticket.quantity || 1;
     if (ticket.ticketItems && ticket.ticketItems.length > 0) {
       quantity = ticket.ticketItems.reduce((acc: number, item: any) => acc + item.quantity, 0);
     }
 
-    const correctReservationTotal = RESERVATION_FEE_PER_TICKET * quantity;
+    let perTicket = 50;
+    try {
+      const evt = await eventsCollection.get(ticket.eventId);
+      if (evt && evt.reservationAmount !== undefined && evt.reservationAmount !== null) {
+        perTicket = evt.reservationAmount;
+      }
+    } catch (err) {
+      console.warn('Unable to load event to determine reservation amount, falling back to 50', err);
+    }
+
+    const correctReservationTotal = perTicket * quantity;
     const itemsTotal = ticket.totalAmount; // This should be correct (1490)
     const amountToFinance = itemsTotal - correctReservationTotal;
 

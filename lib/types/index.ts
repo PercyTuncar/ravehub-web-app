@@ -110,6 +110,9 @@ export interface Event {
   allowOfflinePayments: boolean;
   allowInstallmentPayments: boolean;
   maxInstallments?: number;
+  reservationAmount?: number;
+  extraPercentageInstallments?: number;
+  extraPercentageFullPayment?: number;
   externalTicketUrl?: string;
   audienceType?: string;
   typicalAgeRange?: string;

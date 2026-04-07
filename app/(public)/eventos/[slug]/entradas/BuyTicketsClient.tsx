@@ -33,11 +33,12 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { toast } from 'sonner';
 
 // --- Constants ---
-const RESERVATION_FEE = 50;
+const DEFAULT_RESERVATION_FEE = 50;
 
 // WhatsApp Groups Data
 const WHATSAPP_GROUPS = [
-  { id: 'pe', country: 'Perú', flag: '🇵🇪', name: 'Ravehub Perú', url: 'https://chat.whatsapp.com/CYrC84gD1gGDwv3Kbs6kxU?mode=gi_t' },
+  { id: 'pe', country: 'Perú', flag: '🇵🇪', name: 'Ravehub Perú', url: 'https://chat.whatsapp.com/CWccZfH5GvbHXjJaIZaKiS' },
+  { id: 'army', country: 'Perú', flag: '🇵🇪', name: 'Army Perú', url: 'https://chat.whatsapp.com/BYtWjcMlclrC7oRj2h3B6Q?mode=gi_t' },
   { id: 'bts', country: 'Perú', flag: '💜', name: 'BTS 2026 🇵🇪', url: 'https://chat.whatsapp.com/JY5rMMGp2n3HEHqxJZTam9' },
   { id: 'girls', country: 'Global', flag: '💐', name: 'Solo Chicas', url: 'https://chat.whatsapp.com/IF4mvCUaDmO786r2HaAnPF' },
   { id: 'cl', country: 'Chile', flag: '🇨🇱', name: 'Ravehub Chile', url: 'https://chat.whatsapp.com/Kne2ymqKypU2MgJ9stz7n0' },
@@ -313,7 +314,10 @@ function TicketCard({
   totalTickets,
   phaseStartDate,
   phaseEndDate,
-  phaseStatus
+  phaseStatus,
+  reservationPerTicket = DEFAULT_RESERVATION_FEE,
+  extraPercentageInstallments = 0,
+  extraPercentageFullPayment = 0,
 }: {
   selection: TicketSelection;
   onUpdateQuantity: (q: number) => void;
@@ -324,14 +328,19 @@ function TicketCard({
   phaseStartDate: string;
   phaseEndDate: string;
   phaseStatus: ResolvedPhaseStatus;
+  reservationPerTicket?: number;
+  extraPercentageInstallments?: number;
+  extraPercentageFullPayment?: number;
 }) {
   const stockPercent = Math.max(0, Math.min(100, (selection.sold / (selection.sold + selection.available)) * 100));
   const isLowStock = selection.available < 20 || stockPercent > 90;
 
-  // Installment Price Calculation
-  const reservationPrice = RESERVATION_FEE;
-  const remainingPrice = Math.max(0, selection.price - reservationPrice);
-  const installmentPrice = remainingPrice / installments;
+  // Installment Price Calculation (apply event-level extra percentage)
+  const reservationPrice = reservationPerTicket ?? DEFAULT_RESERVATION_FEE;
+  const extraPercent = isInstallmentMode ? (extraPercentageInstallments ?? 0) : (extraPercentageFullPayment ?? 0);
+  const adjustedPrice = selection.price * (1 + (extraPercent / 100));
+  const remainingPrice = Math.max(0, adjustedPrice - reservationPrice);
+  const installmentPrice = installments > 0 ? remainingPrice / installments : 0;
 
   return (
     <motion.div
@@ -394,7 +403,7 @@ function TicketCard({
                     <span className="text-xs font-bold text-zinc-500 mr-0.5">+ {installments} x</span>
                     <ConvertedPrice amount={installmentPrice} currency={currency} showOriginal={false} />
                   </div>
-                  <span className="text-[10px] text-zinc-500 mt-0.5">Total: <ConvertedPrice amount={selection.price} currency={currency} showOriginal={false} className="inline" /></span>
+                  <span className="text-[10px] text-zinc-500 mt-0.5">Total: <ConvertedPrice amount={adjustedPrice} currency={currency} showOriginal={false} className="inline" /></span>
                 </motion.div>
               ) : (
                 <motion.div
@@ -584,13 +593,19 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
   const getTotalTickets = () => ticketSelections.reduce((acc, s) => acc + s.quantity, 0);
   const getTotalAmount = () => ticketSelections.reduce((acc, s) => acc + (s.quantity * s.price), 0);
   const totalTickets = getTotalTickets();
-  const totalAmount = getTotalAmount();
-  const advanceReservationAmount = totalTickets * RESERVATION_FEE;
+  const totalAmountBase = getTotalAmount();
+  const reservationPerTicket = event.reservationAmount ?? DEFAULT_RESERVATION_FEE;
+  const extraPercentInstallments = event.extraPercentageInstallments ?? 0;
+  const extraPercentFull = event.extraPercentageFullPayment ?? 0;
+  const extraPercentForInstall = isInstallmentMode ? extraPercentInstallments : extraPercentFull;
+  const totalAmount = totalAmountBase * (1 + (extraPercentForInstall / 100));
+
+  const advanceReservationAmount = totalTickets * reservationPerTicket;
   const advanceRemainingAmount = Math.max(0, totalAmount - advanceReservationAmount);
   const advanceInstallmentAmount = advanceInstallments > 0 ? (advanceRemainingAmount / advanceInstallments) : 0;
 
-  // Calculate totals for installment mode
-  const totalReservation = totalTickets * RESERVATION_FEE;
+  // Calculate totals for installment mode (after extra percent)
+  const totalReservation = totalTickets * reservationPerTicket;
   const totalRemaining = Math.max(0, totalAmount - totalReservation);
   const monthlyInstallment = installments > 0 ? totalRemaining / installments : 0;
 
@@ -619,10 +634,9 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
       let totalToPayText = `${symbol} ${totalAmount}`;
 
       if (isInstallmentMode) {
-        const installmentValue = ((totalAmount - (RESERVATION_FEE * totalTickets)) / installments).toFixed(2);
         paymentDetails += `\n📉 *Facilidad de Pago:* Reserva + ${installments} cuotas`;
         paymentDetails += `\n🔹 *Pago Inicial (Reserva):* ${symbol} ${totalReservation}`;
-        paymentDetails += `\n🔹 *Saldo Restante:* ${symbol} ${totalRemaining} en ${installments} cuotas de ${symbol} ${installmentValue}`;
+        paymentDetails += `\n🔹 *Saldo Restante:* ${symbol} ${totalRemaining} en ${installments} cuotas de ${symbol} ${monthlyInstallment.toFixed(2)}`;
         totalToPayText = `${symbol} ${totalReservation}`;
       }
 
@@ -662,8 +676,12 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
 
     const total = selectedTickets.reduce((sum, ticket) => sum + (ticket.quantity * ticket.price), 0);
 
-    const reservationAmount = selectedTickets.reduce((sum, ticket) => sum + (ticket.quantity * RESERVATION_FEE), 0);
-    const remainingAmount = Math.max(0, total - reservationAmount);
+    const reservationPerTicket = event.reservationAmount ?? DEFAULT_RESERVATION_FEE;
+    const extraPercentAdvance = advancePaymentMode === 'installments' ? (event.extraPercentageInstallments ?? 0) : (event.extraPercentageFullPayment ?? 0);
+    const totalAdjusted = total * (1 + (extraPercentAdvance / 100));
+
+    const reservationAmount = selectedTickets.reduce((sum, ticket) => sum + (ticket.quantity * reservationPerTicket), 0);
+    const remainingAmount = Math.max(0, totalAdjusted - reservationAmount);
     const installmentAmount = advanceInstallments > 0 ? (remainingAmount / advanceInstallments) : 0;
 
     let paymentDetails = `💳 *Modalidad:* Pago al contado\n💵 *Monto total a pagar:* ${symbol} ${total}`;
@@ -931,6 +949,9 @@ function BuyTicketsContent({ event, eventDjs, children }: BuyTicketsClientProps)
                     phaseStartDate={activePhaseData?.startDate || ''}
                     phaseEndDate={activePhaseData?.endDate || ''}
                     phaseStatus={activePhaseStatus}
+                    reservationPerTicket={event.reservationAmount ?? DEFAULT_RESERVATION_FEE}
+                    extraPercentageInstallments={event.extraPercentageInstallments ?? 0}
+                    extraPercentageFullPayment={event.extraPercentageFullPayment ?? 0}
                   />
                 ))}
               </div>

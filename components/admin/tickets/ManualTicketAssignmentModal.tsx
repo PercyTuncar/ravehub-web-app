@@ -111,6 +111,9 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
         setAssignmentType('sale');
         setIsPaid(false);
         setPaidInstallments([]);
+        // Default reservation amount from event if available
+        const ev = events.find(e => e.id === selectedEventId);
+        setReservationAmount(ev?.reservationAmount ?? 50);
     }, [selectedEventId]);
 
     useEffect(() => {

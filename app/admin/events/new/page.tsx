@@ -145,6 +145,9 @@ export default function NewEventPage() {
     sellTicketsOnPlatform: true,
     allowOfflinePayments: true,
     allowInstallmentPayments: false,
+    reservationAmount: 50,
+    extraPercentageInstallments: 0,
+    extraPercentageFullPayment: 0,
     ticketDeliveryMode: 'automatic',
     audienceType: 'Adultos 18+',
     typicalAgeRange: '18+',
@@ -2298,6 +2301,41 @@ export default function NewEventPage() {
                   </Select>
                 </div>
               )}
+
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-sm font-semibold text-foreground">Monto Reserva (por entrada)</Label>
+                  <Input
+                    type="number"
+                    value={eventData.reservationAmount ?? 50}
+                    onChange={(e) => updateEventData('reservationAmount', Number(e.target.value))}
+                    className="h-12"
+                  />
+                  <p className="text-xs text-muted-foreground">Monto fijo que se solicita como reserva por cada entrada (en la divisa del evento)</p>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-sm font-semibold text-foreground">Porcentaje extra (cuotas)</Label>
+                  <Input
+                    type="number"
+                    value={eventData.extraPercentageInstallments ?? 0}
+                    onChange={(e) => updateEventData('extraPercentageInstallments', Number(e.target.value))}
+                    className="h-12"
+                  />
+                  <p className="text-xs text-muted-foreground">Porcentaje adicional aplicado cuando el pago es en cuotas (ej: 5 = 5%)</p>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-sm font-semibold text-foreground">Porcentaje extra (pago completo)</Label>
+                  <Input
+                    type="number"
+                    value={eventData.extraPercentageFullPayment ?? 0}
+                    onChange={(e) => updateEventData('extraPercentageFullPayment', Number(e.target.value))}
+                    className="h-12"
+                  />
+                  <p className="text-xs text-muted-foreground">Porcentaje adicional aplicado cuando el pago es al contado</p>
+                </div>
+              </div>
 
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-foreground">Modo de entrega de tickets</Label>
