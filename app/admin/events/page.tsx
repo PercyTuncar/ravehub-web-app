@@ -558,29 +558,29 @@ export default function EventsAdminPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm">Lugar / Recinto</Label>
-                      <Input value={duplicateData?.location?.venue || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), venue: e.target.value } }))} className="h-10" />
+                      <Input value={duplicateData?.location?.venue || ''} onChange={(e) => setDuplicateData(prev => ({ ...(prev as any), location: { ...((prev as any).location || {}), venue: e.target.value } }) as Partial<Event>)} className="h-10" />
                     </div>
                     <div>
                       <Label className="text-sm">Ciudad</Label>
-                      <Input value={duplicateData?.location?.city || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), city: e.target.value } }))} className="h-10" />
+                      <Input value={duplicateData?.location?.city || ''} onChange={(e) => setDuplicateData(prev => ({ ...(prev as any), location: { ...((prev as any).location || {}), city: e.target.value } }) as Partial<Event>)} className="h-10" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm">Región / Provincia</Label>
-                      <Input value={duplicateData?.location?.region || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), region: e.target.value } }))} className="h-10" />
+                      <Input value={duplicateData?.location?.region || ''} onChange={(e) => setDuplicateData(prev => ({ ...(prev as any), location: { ...((prev as any).location || {}), region: e.target.value } }) as Partial<Event>)} className="h-10" />
                     </div>
                     <div>
                       <Label className="text-sm">País</Label>
-                      <Input value={duplicateData?.location?.country || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), country: e.target.value } }))} className="h-10" />
+                      <Input value={duplicateData?.location?.country || ''} onChange={(e) => setDuplicateData(prev => ({ ...(prev as any), location: { ...((prev as any).location || {}), country: e.target.value } }) as Partial<Event>)} className="h-10" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm">Código de País (ISO)</Label>
-                      <Input value={duplicateData?.location?.countryCode || ''} onChange={(e) => setDuplicateData(prev => ({ ...prev, location: { ...(prev.location || {}), countryCode: e.target.value } }))} className="h-10" />
+                      <Input value={duplicateData?.location?.countryCode || ''} onChange={(e) => setDuplicateData(prev => ({ ...(prev as any), location: { ...((prev as any).location || {}), countryCode: e.target.value } }) as Partial<Event>)} className="h-10" />
                     </div>
                     <div>
                       <Label className="text-sm">Divisa</Label>
