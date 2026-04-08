@@ -185,10 +185,7 @@ export function BTSRegistrationModal() {
                 {/* Disclaimer Note */}
                 <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
                   <p className="text-[11px] text-gray-600 text-center leading-relaxed font-medium">
-                    <span className="font-bold text-purple-700">NOTA:</span> Los
-                    precios son oficiales, pero primero debes adquirir una
-                    membresía hasta el 6 de abril a las 11:59 PM. Después podrás
-                    comprar tus entradas en preventa el día 7 de abril.
+                    <span className="font-bold text-purple-700">NOTA:</span> Únete a nuestro grupo de WhatsApp para mantenerte informad@.
                   </p>
                 </div>
               </div>
