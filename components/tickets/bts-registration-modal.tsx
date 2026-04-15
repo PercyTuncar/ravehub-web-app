@@ -175,17 +175,13 @@ export function BTSRegistrationModal() {
                     active={false}
                     membersCount={1025}
                   />
-                  <WhatsAppButton
-                    groupNumber={3}
-                    active={true}
-                    link="https://entradasbts.com/eventos/"
-                  />
                 </div>
 
                 {/* Disclaimer Note */}
                 <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
                   <p className="text-[11px] text-gray-600 text-center leading-relaxed font-medium">
-                    <span className="font-bold text-purple-700">NOTA:</span> Únete a nuestro grupo de WhatsApp para mantenerte informad@.
+                    <span className="font-bold text-purple-700">NOTA:</span>{" "}
+                    Únete a nuestro grupo de WhatsApp para mantenerte informad@.
                   </p>
                 </div>
               </div>
