@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import {
   Calendar,
   MapPin,
@@ -20,33 +20,43 @@ import {
   Shield,
   ArrowRight,
   Play,
-  Pause
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Event } from '@/lib/types';
-import { CountdownTimer } from './CountdownTimer';
-import { useEventColors } from './EventColorContext';
-import { useEnhancedColorExtraction } from './EventColorContext';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { cn } from '@/lib/utils';
+  Pause,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Event } from "@/lib/types";
+import { CountdownTimer } from "./CountdownTimer";
+import { useEventColors } from "./EventColorContext";
+import { useEnhancedColorExtraction } from "./EventColorContext";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+} from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface EnhancedEventHeroProps {
   event: Event;
   className?: string;
 }
 
-export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) {
+export function EnhancedEventHero({
+  event,
+  className,
+}: EnhancedEventHeroProps) {
   const { colorPalette } = useEventColors();
-  const { loading: colorLoading } = useEnhancedColorExtraction(event.mainImageUrl);
+  const { loading: colorLoading } = useEnhancedColorExtraction(
+    event.mainImageUrl,
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [showMobileCTA, setShowMobileCTA] = useState(false);
 
   // Get active sales phase
   const activePhase = event.salesPhases?.find(
-    (phase) => phase.status === 'active' || phase.manualStatus === 'active'
+    (phase) => phase.status === "active" || phase.manualStatus === "active",
   );
 
   // Calculate scroll progress
@@ -57,8 +67,8 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
       setShowMobileCTA(currentScrollY > 400);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Parallax transforms
@@ -88,21 +98,21 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
     hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,
-      y: 0
-    }
+      y: 0,
+    },
   };
 
   const staggerChildren = {
     hidden: { opacity: 0 },
     visible: {
-      opacity: 1
-    }
+      opacity: 1,
+    },
   };
 
   // Format event date
   const formatEventDate = () => {
     const date = new Date(event.startDate);
-    return format(date, 'PPP', { locale: es });
+    return format(date, "PPP", { locale: es });
   };
 
   // Get zone pricing info
@@ -110,31 +120,40 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
     if (!activePhase?.zonesPricing) return null;
 
     const cheapestZone = activePhase.zonesPricing.reduce((prev, curr) =>
-      (prev.price < curr.price ? prev : curr)
+      prev.price < curr.price ? prev : curr,
     );
 
-    const availableZones = activePhase.zonesPricing.filter(zone => zone.available > 0);
+    const availableZones = activePhase.zonesPricing.filter((zp) => {
+      const zone = event.zones?.find((z) => z.id === zp.zoneId);
+      const available = Number(zp.available ?? zone?.capacity ?? 0);
+      return available > 0;
+    });
+
+    const totalAvailable = availableZones.reduce((sum, zp) => {
+      const zone = event.zones?.find((z) => z.id === zp.zoneId);
+      const available = Number(zp.available ?? zone?.capacity ?? 0);
+      return sum + available;
+    }, 0);
 
     return {
       cheapest: cheapestZone,
       availableCount: availableZones.length,
-      totalAvailable: availableZones.reduce((sum, zone) => sum + zone.available, 0)
+      totalAvailable,
     };
   };
 
   const zoneInfo = getZoneInfo();
 
   return (
-    <section className={cn(
-      'relative min-h-[100vh] md:min-h-[80vh] overflow-hidden',
-      'bg-gradient-to-br from-background via-background/95 to-card/50',
-      className
-    )}>
+    <section
+      className={cn(
+        "relative min-h-[100vh] md:min-h-[80vh] overflow-hidden",
+        "bg-gradient-to-br from-background via-background/95 to-card/50",
+        className,
+      )}
+    >
       {/* Dynamic Background with Parallax */}
-      <motion.div
-        className="absolute inset-0 z-0"
-        style={{ y: backgroundY }}
-      >
+      <motion.div className="absolute inset-0 z-0" style={{ y: backgroundY }}>
         {/* Banner Image with Blur */}
         {event.bannerImageUrl && (
           <div className="absolute inset-0">
@@ -150,10 +169,10 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
               className="absolute inset-0"
               style={{
                 background: `linear-gradient(135deg, 
-                  ${colorPalette?.background || 'rgba(0,0,0,0.8)'} 0%, 
-                  ${colorPalette?.background || 'rgba(0,0,0,0.6)'} 40%,
+                  ${colorPalette?.background || "rgba(0,0,0,0.8)"} 0%, 
+                  ${colorPalette?.background || "rgba(0,0,0,0.6)"} 40%,
                   rgba(0,0,0,0.8) 100%)`,
-                transition: 'background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: "background 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             />
           </div>
@@ -164,12 +183,12 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
           className="absolute inset-0"
           style={{
             background: `radial-gradient(circle at 50% 30%, 
-              ${colorPalette?.dominant || '#FBA905'}15 0%, 
-              ${colorPalette?.background || 'rgba(0,0,0,0.9)'} 60%)`,
-            transition: 'background 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+              ${colorPalette?.dominant || "#FBA905"}15 0%, 
+              ${colorPalette?.background || "rgba(0,0,0,0.9)"} 60%)`,
+            transition: "background 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
           animate={{
-            opacity: opacityTransform.get()
+            opacity: opacityTransform.get(),
           }}
         />
       </motion.div>
@@ -228,18 +247,16 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
             {/* Left Content - Event Info */}
             <div className="space-y-8">
               {/* Badges */}
-              <motion.div
-                className="flex flex-wrap gap-3"
-                variants={fadeInUp}
-              >
+              <motion.div className="flex flex-wrap gap-3" variants={fadeInUp}>
                 {event.categories?.map((cat, index) => (
                   <Badge
                     key={`category-${index}-${cat}`}
                     className="backdrop-blur-md bg-white/10 text-white border-white/20 px-3 py-1"
                     style={{
-                      backgroundColor: `${colorPalette?.dominant || 'rgba(251,169,5,0.3)'}40`,
-                      borderColor: `${colorPalette?.accent || 'rgba(251,169,5,0.6)'}60`,
-                      transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                      backgroundColor: `${colorPalette?.dominant || "rgba(251,169,5,0.3)"}40`,
+                      borderColor: `${colorPalette?.accent || "rgba(251,169,5,0.6)"}60`,
+                      transition:
+                        "background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                   >
                     {cat}
@@ -250,9 +267,10 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                   <Badge
                     className="backdrop-blur-md bg-white/10 text-white border-white/20 px-3 py-1"
                     style={{
-                      backgroundColor: `${colorPalette?.dominant || 'rgba(251,169,5,0.3)'}40`,
-                      borderColor: `${colorPalette?.accent || 'rgba(251,169,5,0.6)'}60`,
-                      transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                      backgroundColor: `${colorPalette?.dominant || "rgba(251,169,5,0.3)"}40`,
+                      borderColor: `${colorPalette?.accent || "rgba(251,169,5,0.6)"}60`,
+                      transition:
+                        "background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                   >
                     <Users className="h-3 w-3 mr-1" />
@@ -290,7 +308,9 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                   <div>
                     <div className="font-semibold">{formatEventDate()}</div>
                     {event.startTime && (
-                      <div className="text-sm text-white/70">Desde {event.startTime}</div>
+                      <div className="text-sm text-white/70">
+                        Desde {event.startTime}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -301,7 +321,9 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                   </div>
                   <div>
                     <div className="font-semibold">{event.location.venue}</div>
-                    <div className="text-sm text-white/70">{event.location.city}</div>
+                    <div className="text-sm text-white/70">
+                      {event.location.city}
+                    </div>
                   </div>
                 </div>
 
@@ -312,7 +334,9 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                     </div>
                     <div>
                       <div className="font-semibold">Puertas</div>
-                      <div className="text-sm text-white/70">{event.doorTime}</div>
+                      <div className="text-sm text-white/70">
+                        {event.doorTime}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -324,7 +348,8 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                     </div>
                     <div>
                       <div className="font-semibold">
-                        Desde {event.currencySymbol || event.currency} {zoneInfo.cheapest.price.toFixed(2)}
+                        Desde {event.currencySymbol || event.currency}{" "}
+                        {zoneInfo.cheapest.price.toFixed(2)}
                       </div>
                       <div className="text-sm text-white/70">
                         {zoneInfo.availableCount} zonas disponibles
@@ -364,9 +389,10 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                       size="lg"
                       className="w-full sm:w-auto text-lg px-8 py-6 relative overflow-hidden group"
                       style={{
-                        background: `linear-gradient(135deg, ${colorPalette?.dominant || '#FBA905'}, ${colorPalette?.accent || '#F1A000'})`,
-                        color: colorPalette?.text || '#fff',
-                        transition: 'background 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                        background: `linear-gradient(135deg, ${colorPalette?.dominant || "#FBA905"}, ${colorPalette?.accent || "#F1A000"})`,
+                        color: colorPalette?.text || "#fff",
+                        transition:
+                          "background 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
@@ -458,7 +484,7 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
           >
             <div className="backdrop-blur-xl bg-background/90 border-t border-white/20 p-4">
               <Link href={`/eventos/${event.slug}/entradas`} className="block">
@@ -466,8 +492,8 @@ export function EnhancedEventHero({ event, className }: EnhancedEventHeroProps) 
                   size="lg"
                   className="w-full text-lg"
                   style={{
-                    background: `linear-gradient(135deg, ${colorPalette?.dominant || '#FBA905'}, ${colorPalette?.accent || '#F1A000'})`,
-                    color: colorPalette?.text || '#fff',
+                    background: `linear-gradient(135deg, ${colorPalette?.dominant || "#FBA905"}, ${colorPalette?.accent || "#F1A000"})`,
+                    color: colorPalette?.text || "#fff",
                   }}
                 >
                   <CreditCard className="h-5 w-5 mr-2" />

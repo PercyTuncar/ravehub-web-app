@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import MercadoPago from 'mercadopago';
 
 // Configurar Mercado Pago
-const mp = new MercadoPagoConfig({
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
-});
+const mp = new MercadoPago(process.env.MERCADOPAGO_ACCESS_TOKEN || '');
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,9 +91,6 @@ export async function POST(request: NextRequest) {
     // Webhook URL - debe ser pública (https) en producción
     const webhookUrl = process.env.MP_WEBHOOK_URL || `${siteUrl}/api/mercadopago/webhook`;
 
-    // Crear preferencia según la documentación oficial de Mercado Pago
-    const preference = new Preference(mp);
-    
     const preferenceBody: any = {
       items,
       payer: {
@@ -144,17 +139,18 @@ export async function POST(request: NextRequest) {
     console.log('🔍 [MERCADOPAGO] Serialized body (first 500 chars):', JSON.stringify(preferenceBody).substring(0, 500));
 
     // Crear la preferencia
-    const response = await preference.create({ body: preferenceBody });
+    const mpResponse = await mp.createPreference(preferenceBody);
+    const response = (mpResponse as any)?.response ?? mpResponse;
 
     console.log('✅ [MERCADOPAGO] Preferencia creada:', response.id);
     console.log('🔗 [MERCADOPAGO] Init Point:', response.init_point);
-    console.log('🔗 [MERCADOPAGO] Sandbox Init Point:', (response as any).sandbox_init_point);
+    console.log('🔗 [MERCADOPAGO] Sandbox Init Point:', response.sandbox_init_point);
 
     return NextResponse.json({
       success: true,
       preferenceId: response.id,
       initPoint: response.init_point, // URL para redirigir al usuario (producción)
-      sandboxInitPoint: (response as any).sandbox_init_point, // URL para testing (sandbox)
+      sandboxInitPoint: response.sandbox_init_point, // URL para testing (sandbox)
     });
 
   } catch (error: any) {

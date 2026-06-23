@@ -1,6 +1,6 @@
 import 'server-only';
 import { adminDb } from './admin';
-import { Timestamp, FieldValue } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from '@google-cloud/firestore';
 
 // Helper interface to match DocumentData
 interface DocumentData {
@@ -71,7 +71,7 @@ export class AdminFirestoreCollection<T extends DocumentData> {
         console.warn(`[Firestore Admin] getAll() called on ${this.collectionName} - consider using query() with limits`);
         try {
             const querySnapshot = await this.db.collection(this.collectionName).get();
-            return querySnapshot.docs.map(doc => {
+            return querySnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
                 const data = doc.data();
                 const serializedData = this.serializeTimestamps(data);
                 return { id: doc.id, ...serializedData } as unknown as T;
@@ -93,8 +93,8 @@ export class AdminFirestoreCollection<T extends DocumentData> {
                 query = query.where(field, operator as FirebaseFirestore.WhereFilterOp, value);
             });
             
-            const snapshot = await query.count().get();
-            return snapshot.data().count;
+            const querySnapshot = await query.get();
+            return querySnapshot.size;
         } catch (error) {
             console.error(`Admin: Error counting ${this.collectionName}:`, error);
             throw error;
@@ -119,7 +119,7 @@ export class AdminFirestoreCollection<T extends DocumentData> {
                     .where('__name__', 'in', batchIds)
                     .get();
                 
-                querySnapshot.docs.forEach(doc => {
+                querySnapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
                     const data = doc.data();
                     const serializedData = this.serializeTimestamps(data);
                     results.push({ id: doc.id, ...serializedData } as unknown as T);

@@ -6,7 +6,6 @@ import {
     usersCollection
 } from '@/lib/firebase/admin-collections';
 import { requireAdmin } from '@/lib/auth-admin';
-import { Timestamp } from 'firebase-admin/firestore';
 
 export type TimeRange = '24h' | '7d' | '30d' | '90d' | 'year' | 'all';
 

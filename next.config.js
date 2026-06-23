@@ -2,11 +2,14 @@
 const nextConfig = {
   images: {
     unoptimized: true,
-    domains: ['firebasestorage.googleapis.com', 'cdn.ravehublatam.com'],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'firebasestorage.googleapis.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.ravehublatam.com',
       },
     ],
   },

@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MercadoPagoConfig, Payment } from 'mercadopago';
+import MercadoPago from 'mercadopago';
 import { ordersCollection } from '@/lib/firebase/collections';
 import { notifyOrderStatusChange } from '@/lib/utils/notifications';
 
 // Configurar Mercado Pago
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
-});
-const payment = new Payment(client);
+const payment = new MercadoPago(process.env.MERCADOPAGO_ACCESS_TOKEN || '');
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,9 +27,8 @@ export async function POST(request: NextRequest) {
       console.log(`🔍 [WEBHOOK] Buscando información del pago: ${paymentId}`);
 
       // Obtener información del pago
-      const paymentResponse = await payment.get({ id: paymentId });
-      // La nueva API devuelve el objeto directamente, no en .body
-      const paymentData = paymentResponse as any;
+      const rawPaymentResponse = await payment.getPayment(paymentId);
+      const paymentData = (rawPaymentResponse as any)?.response ?? rawPaymentResponse;
 
       console.log('💳 [WEBHOOK] Estado del pago:', paymentData.status);
       console.log('💰 [WEBHOOK] Monto:', paymentData.transaction_amount, paymentData.currency_id);

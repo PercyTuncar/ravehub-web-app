@@ -1,7 +1,5 @@
 import 'server-only';
-import { initializeApp, getApps, getApp, cert, ServiceAccount } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import admin, { ServiceAccount } from 'firebase-admin';
 
 // Helper to format private key correctly (handle newline characters)
 const formatPrivateKey = (key: string) => {
@@ -9,8 +7,8 @@ const formatPrivateKey = (key: string) => {
 };
 
 function getAdminApp() {
-    if (getApps().length > 0) {
-        return getApp();
+    if (admin.apps.length > 0) {
+        return admin.app();
     }
 
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
@@ -34,8 +32,8 @@ function getAdminApp() {
         privateKey: formatPrivateKey(privateKey),
     };
 
-    return initializeApp({
-        credential: cert(serviceAccount),
+    return admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
         projectId,
     });
 }
@@ -43,5 +41,5 @@ function getAdminApp() {
 const app = getAdminApp();
 
 // Exports (check if app exists to avoid crashes if envs missing in dev)
-export const adminAuth = app ? getAuth(app) : null;
-export const adminDb = app ? getFirestore(app) : null;
+export const adminAuth = app ? app.auth() : null;
+export const adminDb = app ? app.firestore() : null;

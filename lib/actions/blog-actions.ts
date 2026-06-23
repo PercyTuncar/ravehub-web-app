@@ -7,7 +7,7 @@ import {
     usersCollection
 } from '@/lib/firebase/admin-collections';
 import { BlogComment } from '@/lib/types';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue } from '@google-cloud/firestore';
 
 export async function createComment(data: {
     postId: string;
