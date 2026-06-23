@@ -149,7 +149,11 @@ function getResolvedPhaseStatus(phase: SalesPhase): ResolvedPhaseStatus {
 
   const zones = phase.zonesPricing || [];
   const allSoldOut =
-    zones.length > 0 && zones.every((zone) => Number(zone.available || 0) <= 0);
+    zones.length > 0 &&
+    zones.every((zone) => {
+      const available = Number(zone.available ?? zone?.capacity ?? 0);
+      return available <= 0;
+    });
   if (allSoldOut) return "sold_out";
 
   const now = new Date();
@@ -252,122 +256,176 @@ function PhaseTimeline({
   }, [phases]);
 
   return (
-    <div className="w-full overflow-x-auto no-scrollbar pb-4">
-      <div className="flex items-center min-w-max gap-4 px-1">
-        {sortedPhases.map((resolved, index) => {
-          const { phase, status } = resolved;
-          const isSelected = phase.id === activePhaseId;
-          const statusLabel =
-            status === "sold_out"
-              ? "Agotado"
-              : status === "active"
-                ? "Activa"
-                : status === "upcoming"
-                  ? "Próximamente"
-                  : "Finalizada";
-
-          // Determine styles per status
-          const containerSelectedMap: Record<string, string> = {
-            active:
-              "bg-emerald-600/10 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.12)]",
-            sold_out:
-              "bg-red-600/10 border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.08)]",
-            upcoming:
-              "bg-amber-500/10 border-amber-400/30 shadow-[0_0_12px_rgba(245,158,11,0.08)]",
-            expired: "bg-zinc-800/20 border-zinc-700/20",
-          };
-
-          const circleSelectedMap: Record<string, string> = {
-            active: "bg-emerald-500 text-white",
-            sold_out: "bg-red-500 text-white",
-            upcoming: "bg-amber-500 text-white",
-            expired: "bg-zinc-600 text-white",
-          };
-
-          const labelSelectedMap: Record<string, string> = {
-            active: "text-emerald-400",
-            sold_out: "text-red-400",
-            upcoming: "text-amber-400",
-            expired: "text-zinc-500",
-          };
-
-          const containerClass = isSelected
-            ? containerSelectedMap[status] || "bg-zinc-900/40 border-white/5"
-            : `bg-zinc-900/40 border-white/5 hover:border-white/20 hover:bg-zinc-800/40`;
-
-          const circleClass = isSelected
-            ? circleSelectedMap[status] || "bg-zinc-800 text-zinc-50"
-            : "bg-zinc-800 text-zinc-400";
-
-          const labelClass = isSelected
-            ? labelSelectedMap[status] || "text-zinc-300"
-            : status === "sold_out"
-              ? "text-red-400"
-              : status === "upcoming"
-                ? "text-amber-400"
-                : "text-zinc-500";
-
-          const underlineClass = isSelected
-            ? status === "active"
-              ? "bg-emerald-500"
-              : status === "sold_out"
-                ? "bg-red-500"
-                : status === "upcoming"
-                  ? "bg-amber-500"
-                  : "bg-zinc-500"
-            : "bg-orange-500";
-
-          return (
-            <button
-              key={phase.id}
-              type="button"
-              onClick={() => !disabled && onPhaseSelect(phase.id)}
+    <div className="w-full">
+      {/* Desktop/Tablet: Horizontal scrollable timeline */}
+      <div className="hidden md:block w-full overflow-x-auto no-scrollbar pb-4">
+        <div className="flex items-center min-w-max gap-4 px-1">
+          {sortedPhases.map((resolved, index) => (
+            <PhaseButton
+              key={resolved.phase.id}
+              resolved={resolved}
+              index={index}
+              isSelected={resolved.phase.id === activePhaseId}
+              onSelect={() => !disabled && onPhaseSelect(resolved.phase.id)}
               disabled={disabled}
-              aria-disabled={disabled}
-              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 text-left ${containerClass} ${disabled ? "opacity-60 pointer-events-none" : ""}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${circleClass}`}
-              >
-                {status === "sold_out" ? (
-                  <Flame className="w-4 h-4" />
-                ) : status === "upcoming" ? (
-                  <Lock className="w-3 h-3" />
-                ) : status === "expired" ? (
-                  <CheckCircle2 className="w-4 h-4" />
-                ) : (
-                  index + 1
-                )}
-              </div>
+            />
+          ))}
+        </div>
+      </div>
 
-              <div className="flex flex-col">
-                <span
-                  className={`text-xs uppercase tracking-wider font-bold ${labelClass}`}
-                >
-                  {statusLabel}
-                </span>
-                <span
-                  className={`text-sm font-medium ${isSelected ? "text-white" : "text-zinc-300"}`}
-                >
-                  {phase.name}
-                </span>
-                {isSelected && status === "active" && (
-                  <div className="mt-1">
-                    <Countdown targetDate={new Date(phase.endDate)} />
-                  </div>
-                )}
-              </div>
-
-              {isSelected && (
-                <div
-                  className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-0.5 ${underlineClass} rounded-full blur-[2px]`}
-                />
-              )}
-            </button>
-          );
-        })}
+      {/* Mobile: Vertical stacked timeline */}
+      <div className="md:hidden space-y-3">
+        {sortedPhases.map((resolved, index) => (
+          <PhaseButton
+            key={resolved.phase.id}
+            resolved={resolved}
+            index={index}
+            isSelected={resolved.phase.id === activePhaseId}
+            onSelect={() => !disabled && onPhaseSelect(resolved.phase.id)}
+            disabled={disabled}
+            mobile
+          />
+        ))}
       </div>
     </div>
+  );
+}
+
+// Extracted button component for reuse
+function PhaseButton({
+  resolved,
+  index,
+  isSelected,
+  onSelect,
+  disabled,
+  mobile = false,
+}: {
+  resolved: ResolvedPhase;
+  index: number;
+  isSelected: boolean;
+  onSelect: () => void;
+  disabled: boolean;
+  mobile?: boolean;
+}) {
+  const { phase, status } = resolved;
+  const statusLabel =
+    status === "sold_out"
+      ? "Agotado"
+      : status === "active"
+        ? "Activa"
+        : status === "upcoming"
+          ? "Próximamente"
+          : "Finalizada";
+
+  // Determine styles per status
+  const containerSelectedMap: Record<string, string> = {
+    active:
+      "bg-emerald-600/10 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.12)]",
+    sold_out:
+      "bg-red-600/10 border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.08)]",
+    upcoming:
+      "bg-amber-500/10 border-amber-400/30 shadow-[0_0_12px_rgba(245,158,11,0.08)]",
+    expired: "bg-zinc-800/20 border-zinc-700/20",
+  };
+
+  const circleSelectedMap: Record<string, string> = {
+    active: "bg-emerald-500 text-white",
+    sold_out: "bg-red-500 text-white",
+    upcoming: "bg-amber-500 text-white",
+    expired: "bg-zinc-600 text-white",
+  };
+
+  const labelSelectedMap: Record<string, string> = {
+    active: "text-emerald-400",
+    sold_out: "text-red-400",
+    upcoming: "text-amber-400",
+    expired: "text-zinc-500",
+  };
+
+  const containerClass = isSelected
+    ? containerSelectedMap[status] || "bg-zinc-900/40 border-white/5"
+    : `bg-zinc-900/40 border-white/5 hover:border-white/20 hover:bg-zinc-800/40`;
+
+  const circleClass = isSelected
+    ? circleSelectedMap[status] || "bg-zinc-800 text-zinc-50"
+    : "bg-zinc-800 text-zinc-400";
+
+  const labelClass = isSelected
+    ? labelSelectedMap[status] || "text-zinc-300"
+    : status === "sold_out"
+      ? "text-red-400"
+      : status === "upcoming"
+        ? "text-amber-400"
+        : "text-zinc-500";
+
+  const underlineClass = isSelected
+    ? status === "active"
+      ? "bg-emerald-500"
+      : status === "sold_out"
+        ? "bg-red-500"
+        : status === "upcoming"
+          ? "bg-amber-500"
+          : "bg-zinc-500"
+    : "bg-orange-500";
+
+  // Mobile-specific classes
+  const mobileContainerClass = mobile
+    ? "w-full flex items-start gap-3 p-4 rounded-xl border transition-all duration-300"
+    : "relative flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 text-left";
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      disabled={disabled}
+      aria-disabled={disabled}
+      className={`${mobileContainerClass} ${containerClass} ${disabled ? "opacity-60 pointer-events-none" : ""}`}
+    >
+      <div
+        className={`${mobile ? "w-8 h-8" : "w-8 h-8"} rounded-full flex items-center justify-center text-xs font-bold ${circleClass} shrink-0`}
+      >
+        {status === "sold_out" ? (
+          <Flame className="w-4 h-4" />
+        ) : status === "upcoming" ? (
+          <Lock className="w-3 h-3" />
+        ) : status === "expired" ? (
+          <CheckCircle2 className="w-4 h-4" />
+        ) : (
+          index + 1
+        )}
+      </div>
+
+      <div className="flex-1 space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={`text-xs uppercase tracking-wider font-bold ${labelClass}`}
+          >
+            {statusLabel}
+          </span>
+          {isSelected && status === "active" && !mobile && (
+            <div className="mt-1">
+              <Countdown targetDate={new Date(phase.endDate)} />
+            </div>
+          )}
+        </div>
+        <span
+          className={`text-sm font-medium ${isSelected ? "text-white" : "text-zinc-300"}`}
+        >
+          {phase.name}
+        </span>
+        {isSelected && status === "active" && mobile && (
+          <div className="mt-2">
+            <Countdown targetDate={new Date(phase.endDate)} />
+          </div>
+        )}
+      </div>
+
+      {isSelected && !mobile && (
+        <div
+          className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-0.5 ${underlineClass} rounded-full blur-[2px]`}
+        />
+      )}
+    </button>
   );
 }
 
@@ -663,9 +721,11 @@ function BuyTicketsContent({
 
     return phases.map((phase) => {
       const status = getResolvedPhaseStatus(phase);
-      const hasAvailableStock = (phase.zonesPricing || []).some(
-        (zone) => Number(zone.available || 0) > 0,
-      );
+      const hasAvailableStock = (phase.zonesPricing || []).some((zone) => {
+        const zoneData = event.zones?.find((z) => z.id === zone.zoneId);
+        const available = Number(zone.available ?? zoneData?.capacity ?? 0);
+        return available > 0;
+      });
       return { phase, status, hasAvailableStock };
     });
   }, [event.salesPhases]);
@@ -738,7 +798,7 @@ function BuyTicketsContent({
       })
       .map((zonePricing) => {
         const zone = event.zones?.find((z) => z.id === zonePricing.zoneId);
-        const available = Number(zonePricing.available || 0);
+        const available = Number(zonePricing.available ?? zone?.capacity ?? 0);
         const safeCapacity =
           zone?.capacity && zone.capacity > 0 ? zone.capacity : 10;
         const maxPerTransaction =
@@ -775,7 +835,7 @@ function BuyTicketsContent({
     "offline",
   );
   const [installments, setInstallments] = useState<number>(2); // Default to 2 installments when using installment mode
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(true);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -1295,7 +1355,7 @@ function BuyTicketsContent({
                 />
                 Selecciona tus entradas
               </h2>
-              {event.slug === "bts-en-lima-2026" && (
+              {(event.slug === "bts-en-lima-2026" || event.slug === "bts-lima-2026") && (
                 <p className="text-xs text-zinc-400 mt-1 mb-4 italic">
                   <span className="font-bold text-orange-500 not-italic">
                     Nota importante:

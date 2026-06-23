@@ -212,7 +212,7 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
         {/* SEO Text Content - Premium Design */}
 
         {/* Conditional Popup for BTS */}
-        {data.event.slug === 'bts-en-lima-2026' && (
+        {(data.event.slug === 'bts-en-lima-2026' || data.event.slug === 'bts-lima-2026') && (
           <BTSRegistrationModal />
         )}
 
