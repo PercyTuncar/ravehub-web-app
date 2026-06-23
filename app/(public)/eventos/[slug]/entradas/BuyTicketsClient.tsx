@@ -151,7 +151,7 @@ function getResolvedPhaseStatus(phase: SalesPhase): ResolvedPhaseStatus {
   const allSoldOut =
     zones.length > 0 &&
     zones.every((zone) => {
-      const available = Number(zone.available ?? zone?.capacity ?? 0);
+      const available = Number(zone.available ?? 0);
       return available <= 0;
     });
   if (allSoldOut) return "sold_out";
