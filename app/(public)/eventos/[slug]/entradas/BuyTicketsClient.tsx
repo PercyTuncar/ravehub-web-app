@@ -70,7 +70,7 @@ const WHATSAPP_GROUPS = [
     country: "Perú",
     flag: "💜",
     name: "BTS 2026 🇵🇪",
-    url: "https://chat.whatsapp.com/JY5rMMGp2n3HEHqxJZTam9",
+    url: "https://chat.whatsapp.com/HXqzQToJt3O0TmjaNTOq3K",
   },
   {
     id: "girls",
