@@ -100,8 +100,8 @@ export function ContentFeed({ initialEvents, initialNews }: ContentFeedProps) {
                         exit={{ opacity: 0, x: 20 }}
                         className="space-y-6"
                     >
-                        {events.map((event) => (
-                            <EventCard key={event.id} event={event} />
+                        {events.map((event, idx) => (
+                            <EventCard key={`${event.id}-${idx}`} event={event} />
                         ))}
                     </motion.div>
                 ) : (
