@@ -38,6 +38,27 @@ function WhatsAppButton({
   link?: string;
 }) {
   if (!active) {
+    // If it's the second group, show it as full/disabled
+    if (groupNumber === 2) {
+      return (
+        <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl opacity-60">
+          <div className="flex items-center gap-3">
+            <div className="bg-gray-200 p-2 rounded-full">
+              <Users className="w-5 h-5 text-gray-500" />
+            </div>
+            <div>
+              <p className="font-bold text-gray-900 text-sm">ARMY PERU #{groupNumber}</p>
+              <p className="text-xs text-red-500 font-medium">Grupo lleno • {membersCount} integrantes</p>
+            </div>
+          </div>
+          <div className="px-3 py-1 bg-gray-200 rounded-full">
+            <span className="text-[10px] font-bold text-gray-500 uppercase">Lleno</span>
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback for other disabled groups
     return (
       <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl opacity-60">
         <div className="flex items-center gap-3">
@@ -45,18 +66,18 @@ function WhatsAppButton({
             <Users className="w-5 h-5 text-gray-500" />
           </div>
           <div>
-            <p className="font-bold text-gray-900 text-sm">
-              ARMY PERU #{groupNumber}
-            </p>
-            <p className="text-xs text-red-500 font-medium">
-              Grupo lleno • {membersCount} integrantes
+            <p className="font-bold text-gray-900 text-sm">ARMY PERU #{groupNumber}</p>
+            <p className="text-xs text-orange-600 font-bold flex items-center gap-1">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-300 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+              </span>
+              Cupos limitados • Quedan pocos lugares — ¡Únete ya!
             </p>
           </div>
         </div>
         <div className="px-3 py-1 bg-gray-200 rounded-full">
-          <span className="text-[10px] font-bold text-gray-500 uppercase">
-            Lleno
-          </span>
+          <span className="text-[10px] font-bold text-gray-600 uppercase">Últimos</span>
         </div>
       </div>
     );
@@ -85,8 +106,22 @@ function WhatsAppButton({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
-            Cupos disponibles • Únete ahora
+            Quedan pocos lugares • ¡Únete ya!
           </p>
+          {/* If this is the primary group we can show a progress bar to create urgency */}
+          {groupNumber === 1 && (
+            <div className="mt-3 w-full">
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: '10%' }}
+                  animate={{ width: '92%' }}
+                  transition={{ duration: 1.6, ease: 'easeOut' }}
+                  className="h-full bg-orange-500"
+                />
+              </div>
+              <p className="text-[11px] text-gray-500 mt-1">Cupos casi agotados</p>
+            </div>
+          )}
         </div>
       </div>
       <div className="w-8 h-8 flex items-center justify-center bg-white rounded-full text-green-600 shadow-sm group-hover:translate-x-1 transition-transform">
@@ -169,12 +204,12 @@ export function BTSRegistrationModal() {
               {/* Content */}
               <div className="p-6 bg-white">
                 <div className="space-y-3 mb-6">
-                  <WhatsAppButton groupNumber={1} active={false} />
                   <WhatsAppButton
-                    groupNumber={2}
-                    active={false}
-                    membersCount={1025}
+                    groupNumber={1}
+                    active={true}
+                    link={"https://chat.whatsapp.com/HXqzQToJt3O0TmjaNTOq3K"}
                   />
+                  <WhatsAppButton groupNumber={2} active={false} membersCount={1025} />
                 </div>
 
                 {/* Disclaimer Note */}
