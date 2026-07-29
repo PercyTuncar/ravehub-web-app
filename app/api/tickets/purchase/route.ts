@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ticketTransactionsCollection, eventsCollection, paymentInstallmentsCollection, usersCollection } from '@/lib/firebase/collections';
+// CRITICAL: Must use Admin SDK in API routes — the Client SDK has no auth context
+// so Firestore security rules silently reject every write.
+import {
+  ticketTransactionsCollection,
+  eventsCollection,
+  paymentInstallmentsCollection,
+  usersCollection,
+} from '@/lib/firebase/admin-collections';
 import { TicketTransaction, PaymentInstallment } from '@/lib/types';
 import { createNotification } from '@/lib/utils/notifications';
 
@@ -16,7 +23,8 @@ export async function POST(request: NextRequest) {
       guestEmail,
       totalAmount,
       currency,
-      reservationFee
+      reservationFee,
+      proofUrl,        // Optional: payment proof URL uploaded client-side before this call
     } = body;
 
     // Validate required fields (User OR GuestEmail)
@@ -82,14 +90,15 @@ export async function POST(request: NextRequest) {
       currency,
       paymentMethod,
       paymentType,
-      paymentStatus: paymentMethod === 'online' ? 'pending' : 'pending',
+      paymentStatus: 'pending',
       ticketDeliveryMode: event.ticketDeliveryMode || 'automatic',
       ticketDeliveryStatus: 'pending',
       ticketsDownloadAvailableDate: event.ticketDownloadAvailableDate,
       isCourtesy: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour expiration for pending payments
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h expiry
+      ...(proofUrl ? { paymentProofUrl: proofUrl } : {}),     // Store proof if uploaded at checkout
     };
 
     const transactionId = await ticketTransactionsCollection.create(transactionData);
@@ -126,9 +135,15 @@ export async function POST(request: NextRequest) {
             installmentNumber: 0,
             amount: reservationAmount,
             currency,
-            dueDate: new Date().toISOString(), // Pay NOW
-            status: 'pending', // Offline purchase starts pending
+            dueDate: new Date().toISOString(),
+            status: 'pending',
             adminApproved: false,
+            // If proof was uploaded at checkout, mark it as "pending admin review"
+            // so InstallmentTimeline shows "En Revisión" instead of "Subir comprobante"
+            ...(proofUrl ? {
+              userUploadedProofUrl: proofUrl,
+              userUploadedAt: new Date().toISOString(),
+            } : {}),
           };
           batchPromises.push(paymentInstallmentsCollection.create(reservationData));
         }

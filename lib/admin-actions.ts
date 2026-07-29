@@ -121,8 +121,10 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
         // OPTIMIZED: Recent activity - fetch only last 10 from each collection
         const [recentEvents, recentTickets, recentUsers] = await Promise.all([
             eventsCollection.query([], 'createdAt', 'desc', 10),
-            ticketTransactionsCollection.query(
-                [{ field: 'status', operator: '==', value: 'approved' }],
+            // `paymentStatus` is the canonical field on ticketTransactions.
+        // The old query on `status` never matched any document.
+        ticketTransactionsCollection.query(
+                [{ field: 'paymentStatus', operator: '==', value: 'approved' }],
                 'createdAt',
                 'desc',
                 10

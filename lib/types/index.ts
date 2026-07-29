@@ -795,17 +795,21 @@ export interface StoreBanner {
 }
 
 // Notification types
+// `read` (not `isRead`) matches both NotificationsContext.tsx and the Firestore documents
+// created by lib/utils/notifications.ts.
+// `type` must match the values used by createNotification() and NotificationsContext.
 export interface Notification {
   id: string;
+  userId: string;
   title: string;
   body: string;
-  message?: string;
-  imageUrl?: string;
-  redirectUrl?: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  isRead: boolean;
-  createdAt: Date;
-  userId: string;
+  /** Runtime type values – must align with NotificationsContext and notifications.ts */
+  type: 'order' | 'payment' | 'shipping' | 'general';
+  /** Foreign-key to the related ticket/order document */
+  orderId?: string;
+  /** `read` (lowercase) is the canonical field name stored in Firestore */
+  read: boolean;
+  createdAt: string | Date | { seconds: number; nanoseconds: number };
 }
 
 // Bio Link Analytics

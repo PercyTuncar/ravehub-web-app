@@ -25,7 +25,8 @@ const STORAGE_EVENT = 'ravehub_currency_change';
 // Función helper para obtener la divisa inicial del localStorage de forma síncrona
 function getInitialCurrency(): string {
   if (typeof window === 'undefined') {
-    return 'USD';
+    // Server-side: default to PEN (plataforma peruana)
+    return 'PEN';
   }
   
   const savedCurrency = localStorage.getItem(STORAGE_KEY);
@@ -33,7 +34,9 @@ function getInitialCurrency(): string {
     return savedCurrency;
   }
   
-  return 'USD';
+  // Default PEN — la plataforma opera principalmente en Perú.
+  // El geolocation detector sobrescribirá con la moneda real del usuario en el siguiente ciclo.
+  return 'PEN';
 }
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {

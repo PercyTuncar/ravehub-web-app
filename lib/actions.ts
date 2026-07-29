@@ -137,21 +137,31 @@ export async function updateEventCapacity(eventId: string, capacity: number) {
 }
 
 /**
- * Server action to approve/reject blog comment with revalidation
+ * Server action to approve/reject blog comment with revalidation.
+ *
+ * BlogComment uses `isApproved: boolean` (not a `status` string field).
+ * Post lookup uses `postId` to find the post and then its slug for revalidation.
  */
 export async function updateCommentStatus(commentId: string, status: 'approved' | 'rejected' | 'pending') {
   try {
     await requireAdmin();
+
+    const isApproved = status === 'approved';
+
     await blogCommentsCollection.update(commentId, {
-      status,
+      isApproved,
       updatedAt: new Date().toISOString(),
-      ...(status === 'approved' && { approvedAt: new Date().toISOString() })
+      ...(isApproved && { approvedAt: new Date().toISOString() }),
     });
 
-    // Get comment to find post slug for revalidation
+    // Fetch the comment to get `postId`, then look up the post slug for revalidation.
+    // BlogComment has `postId` (string), NOT `postSlug`.
     const comment = await blogCommentsCollection.get(commentId);
-    if (comment?.postSlug) {
-      await revalidateCommentApproval(comment.postSlug);
+    if (comment?.postId) {
+      const post = await blogCollection.get(comment.postId);
+      if (post?.slug) {
+        await revalidateCommentApproval(post.slug);
+      }
     }
 
     return { success: true };
@@ -385,6 +395,13 @@ export async function createManualTicketTransaction(data: {
 }): Promise<{ success: boolean; error?: string; ticketId?: string }> {
   try {
     await requireAdmin();
+
+    // Resolve event currency — never fall back silently to a hardcoded value.
+    // Fetching the event also lets us validate it exists before creating the ticket.
+    const event = await eventsCollection.get(data.eventId);
+    if (!event) throw new Error(`Event ${data.eventId} not found`);
+    const eventCurrency = event.currency || 'PEN';
+
     // 1. Create Ticket Transaction
     const ticketData: any = {
       userId: data.userId,
@@ -401,7 +418,7 @@ export async function createManualTicketTransaction(data: {
         }
       ],
       totalAmount: data.totalAmount,
-      currency: 'PEN', // Todo: Get from Event or dynamic
+      currency: eventCurrency,
       paymentMethod: data.paymentMethod,
       paymentType: data.paymentType,
       paymentStatus: data.paymentStatus,
@@ -421,12 +438,15 @@ export async function createManualTicketTransaction(data: {
     // 2. Create Payment Installments (if applicable)
     if (data.paymentType === 'installment' && data.installmentsCount && data.firstInstallmentDate) {
       const { calculateInstallmentPlan } = await import('@/lib/utils/admin-ticket-calculator');
+      const { parseLocalDate } = await import('@/lib/utils/date');
 
+      // Parse the ISO date string as LOCAL midnight to avoid timezone-shift bugs
+      // where `new Date('YYYY-MM-DD')` returns UTC midnight (wrong day in negative-offset zones).
       const plan = calculateInstallmentPlan(
-        data.unitPrice * data.quantity, // Use base amount for calculation, not the (potentially 0) totalAmount
+        data.unitPrice * data.quantity,
         data.reservationAmount || 0,
         data.installmentsCount,
-        new Date(data.firstInstallmentDate)
+        parseLocalDate(data.firstInstallmentDate)
       );
 
       if (plan.success && plan.installments) {
@@ -443,7 +463,7 @@ export async function createManualTicketTransaction(data: {
               transactionId: ticketId,
               installmentNumber: 0, // 0 for Reservation
               amount: data.reservationAmount,
-              currency: 'PEN',
+              currency: eventCurrency,
               dueDate: new Date().toISOString(), // Due immediately
               status: isReservationPaid ? 'paid' : 'pending',
               adminApproved: isReservationPaid ? true : false,
@@ -464,7 +484,7 @@ export async function createManualTicketTransaction(data: {
             transactionId: ticketId,
             installmentNumber: inst.installmentNumber,
             amount: inst.amount,
-            currency: 'PEN',
+            currency: eventCurrency,
             dueDate: inst.dueDate.toISOString(),
             status: isPaid ? 'paid' : 'pending',
             adminApproved: isPaid ? true : false,
@@ -495,8 +515,10 @@ export async function deleteTicketTransaction(ticketId: string): Promise<{ succe
 
   try {
     // Delete all payment installments associated with this ticket
+    // NOTE: The relation field is `transactionId` (see PaymentInstallment type & all create calls).
+    // The previous value `ticketTransactionId` never matched, leaving orphaned installments.
     const installments = await paymentInstallmentsCollection.query([
-      { field: 'ticketTransactionId', operator: '==', value: ticketId }
+      { field: 'transactionId', operator: '==', value: ticketId }
     ]);
 
     // Delete installments in parallel
@@ -607,14 +629,26 @@ export async function uploadUserInstallmentProof(
     await paymentInstallmentsCollection.update(installmentId, {
       userUploadedProofUrl: downloadURL,
       userUploadedAt: new Date().toISOString(),
-      status: 'pending', // Reset status to pending so it goes back to review
-      // status remains 'pending', but UI shows 'pending-approval'
+      status: 'pending', // Back to review; UI derives 'pending-approval' from userUploadedProofUrl + !adminApproved
     });
 
-    // Notify Admin (System)
-    // In a real app, you might notify a topic or specific admin IDs.
-    // For now, we'll log it or create a general notification if we had an admin user ID context.
-    console.log(`[Admin Notification] New proof for installment ${installment.installmentNumber} of ticket ${installment.transactionId}`);
+    // Notify all admins so the proof shows up for review (in-app notification).
+    try {
+      const admins = await usersCollection.query([
+        { field: 'role', operator: '==', value: 'admin' }
+      ]);
+      await Promise.all(
+        admins.map((admin: any) =>
+          createNotification({
+            userId: admin.id,
+            ...InstallmentNotifications.proofUploaded(installment.transactionId, installment.installmentNumber)
+          })
+        )
+      );
+    } catch (notifyError) {
+      // Best-effort: never fail the upload because notifications failed
+      console.error('Error notifying admins of new installment proof:', notifyError);
+    }
 
     return { success: true };
   } catch (error: any) {

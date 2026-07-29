@@ -2,7 +2,17 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { notificationsCollection } from '@/lib/firebase/collections';
+import { db } from '@/lib/firebase/config';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore';
 
 export interface Notification {
   id: string;
@@ -22,10 +32,20 @@ interface NotificationsContextType {
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
-  refreshNotifications: () => Promise<void>;
+  refreshNotifications: () => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
+
+/** Normalize any createdAt shape (Timestamp, { seconds }, ISO string, Date) to ISO string */
+function normalizeDate(createdAt: any): string {
+  if (!createdAt) return new Date().toISOString();
+  if (typeof createdAt === 'string') return createdAt;
+  if (createdAt instanceof Date) return createdAt.toISOString();
+  if (typeof createdAt === 'object' && 'toDate' in createdAt) return createdAt.toDate().toISOString();
+  if (typeof createdAt === 'object' && 'seconds' in createdAt) return new Date(createdAt.seconds * 1000).toISOString();
+  return new Date().toISOString();
+}
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -33,64 +53,52 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      loadNotifications();
-      
-      // Poll for new notifications every 5 minutes (300000ms) instead of 30s to reduce reads
-      // Better yet: use onSnapshot for real-time updates if supported, but for now increasing interval is safer
-      const interval = setInterval(loadNotifications, 300000);
-      
-      return () => clearInterval(interval);
-    } else {
+    if (!user) {
       setNotifications([]);
       setLoading(false);
+      return;
     }
+
+    setLoading(true);
+
+    // Real-time listener — fires immediately with current data, then on every change.
+    // No polling needed: new notifications from the server (Admin SDK writes) appear
+    // in the client as soon as Firestore propagates the write (~1-2 seconds).
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.id),
+      orderBy('createdAt', 'desc'),
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const notifs: Notification[] = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            ...(data as Omit<Notification, 'id' | 'createdAt'>),
+            id: docSnap.id,
+            createdAt: normalizeDate(data.createdAt),
+          } as Notification;
+        });
+        setNotifications(notifs);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error in notifications listener:', error);
+        setLoading(false);
+      },
+    );
+
+    return () => unsubscribe();
   }, [user]);
-
-  const loadNotifications = async () => {
-    if (!user) return;
-
-    try {
-      const userNotifications = await notificationsCollection.query(
-        [{ field: 'userId', operator: '==', value: user.id }],
-        'createdAt',
-        'desc'
-      );
-      
-      // Normalize createdAt to ISO string format
-      const normalizedNotifications = userNotifications.map((notif: any) => {
-        let createdAt = notif.createdAt;
-        
-        // Handle Firestore Timestamp
-        if (createdAt && typeof createdAt === 'object') {
-          if ('toDate' in createdAt) {
-            createdAt = createdAt.toDate().toISOString();
-          } else if ('seconds' in createdAt) {
-            createdAt = new Date(createdAt.seconds * 1000).toISOString();
-          } else if (createdAt instanceof Date) {
-            createdAt = createdAt.toISOString();
-          }
-        }
-        
-        return {
-          ...notif,
-          createdAt: typeof createdAt === 'string' ? createdAt : new Date().toISOString(),
-        };
-      });
-      
-      setNotifications(normalizedNotifications as Notification[]);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const markAsRead = async (notificationId: string) => {
     try {
-      await notificationsCollection.update(notificationId, { read: true });
+      await updateDoc(doc(db, 'notifications', notificationId), { read: true });
+      // onSnapshot will update state automatically; optimistic update for instant UI
       setNotifications(prev =>
-        prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
       );
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -99,9 +107,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const markAllAsRead = async () => {
     try {
-      const unreadNotifications = notifications.filter(n => !n.read);
+      const unread = notifications.filter(n => !n.read);
       await Promise.all(
-        unreadNotifications.map(n => notificationsCollection.update(n.id, { read: true }))
+        unread.map(n => updateDoc(doc(db, 'notifications', n.id), { read: true }))
       );
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (error) {
@@ -111,17 +119,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      await notificationsCollection.delete(notificationId);
+      await deleteDoc(doc(db, 'notifications', notificationId));
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
   };
 
-  const refreshNotifications = async () => {
-    setLoading(true);
-    await loadNotifications();
-  };
+  // With onSnapshot, a manual refresh is a no-op (data is always live).
+  // Kept in the API for backwards compatibility.
+  const refreshNotifications = () => { /* onSnapshot keeps data current */ };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -149,5 +156,4 @@ export function useNotifications() {
   }
   return context;
 }
-
 

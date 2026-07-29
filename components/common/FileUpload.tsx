@@ -37,6 +37,17 @@ export function FileUpload({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /** Returns true if the file MIME type matches the accept prop (supports * wildcards and .ext) */
+  const isTypeAccepted = (file: File): boolean => {
+    if (!accept || accept === '*' || accept === '*/*') return true;
+    return accept.split(',').some((raw) => {
+      const t = raw.trim();
+      if (t.endsWith('/*')) return file.type.startsWith(t.replace('/*', '/'));
+      if (t.startsWith('.')) return file.name.toLowerCase().endsWith(t.toLowerCase());
+      return file.type === t;
+    });
+  };
+
   const handleFileSelect = (file: File) => {
     console.log('📁 File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
     setError(null);
@@ -47,9 +58,9 @@ export function FileUpload({
       return;
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Solo se permiten archivos de imagen');
+    // Validate file type against the accept prop (not hard-coded to images)
+    if (!isTypeAccepted(file)) {
+      setError(`Formato no permitido. Se aceptan: ${accept}`);
       return;
     }
 

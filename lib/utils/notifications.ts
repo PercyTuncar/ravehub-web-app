@@ -1,15 +1,26 @@
-import { notificationsCollection } from '@/lib/firebase/collections';
+/**
+ * Server-side notification utilities.
+ * Uses the Firebase Admin SDK to bypass Firestore security rules when called
+ * from Server Actions or API Routes (where no client auth context exists).
+ *
+ * DO NOT import this file in client components.
+ */
+import 'server-only';
+import { notificationsCollection } from '@/lib/firebase/admin-collections';
 
 export interface CreateNotificationParams {
   userId: string;
   title: string;
   body: string;
+  /** 'order' | 'payment' | 'shipping' | 'general' */
   type: 'order' | 'payment' | 'shipping' | 'general';
   orderId?: string;
 }
 
 /**
- * Crear una notificación para un usuario
+ * Create an in-app notification for a user via the Admin SDK.
+ * The notification document uses `read: false` (not `isRead`) to match
+ * what NotificationsContext actually reads from Firestore.
  */
 export async function createNotification(params: CreateNotificationParams): Promise<void> {
   try {
@@ -18,18 +29,24 @@ export async function createNotification(params: CreateNotificationParams): Prom
       title: params.title,
       body: params.body,
       type: params.type,
-      orderId: params.orderId,
+      orderId: params.orderId ?? null,
+      // `read` matches the field queried in NotificationsContext.tsx (not `isRead`)
       read: false,
-      createdAt: new Date().toISOString(),
     });
     console.log(`✅ [NOTIFICATION] Created for user ${params.userId}: ${params.title}`);
   } catch (error) {
+    // Notifications are best-effort — never let a failure bubble up and break
+    // the main transaction (payment approval, etc.).
     console.error('❌ [NOTIFICATION] Error creating notification:', error);
   }
 }
 
+// ---------------------------------------------------------------------------
+// Pre-built notification templates
+// ---------------------------------------------------------------------------
+
 /**
- * Notificaciones predefinidas para estados de pedido
+ * Notifications for e-commerce order state changes.
  */
 export const OrderNotifications = {
   paymentApproved: (orderId: string): Omit<CreateNotificationParams, 'userId'> => ({
@@ -49,7 +66,7 @@ export const OrderNotifications = {
   shipped: (orderId: string, trackingNumber?: string): Omit<CreateNotificationParams, 'userId'> => ({
     title: '🚚 Pedido Enviado',
     body: trackingNumber
-      ? `Tu pedido #${orderId.slice(0, 8).toUpperCase()} ha sido enviado. Código de seguimiento: ${trackingNumber}`
+      ? `Tu pedido #${orderId.slice(0, 8).toUpperCase()} ha sido enviado. Código: ${trackingNumber}`
       : `Tu pedido #${orderId.slice(0, 8).toUpperCase()} ha sido enviado`,
     type: 'shipping',
     orderId,
@@ -65,15 +82,15 @@ export const OrderNotifications = {
   cancelled: (orderId: string, reason?: string): Omit<CreateNotificationParams, 'userId'> => ({
     title: '❌ Pedido Cancelado',
     body: reason
-      ? `Tu pedido #${orderId.slice(0, 8).toUpperCase()} ha sido cancelado. Razón: ${reason}`
-      : `Tu pedido #${orderId.slice(0, 8).toUpperCase()} ha sido cancelado`,
+      ? `Tu pedido #${orderId.slice(0, 8).toUpperCase()} fue cancelado. Razón: ${reason}`
+      : `Tu pedido #${orderId.slice(0, 8).toUpperCase()} fue cancelado`,
     type: 'order',
     orderId,
   }),
 
   paymentRejected: (orderId: string): Omit<CreateNotificationParams, 'userId'> => ({
     title: '⚠️ Pago Rechazado',
-    body: `El pago de tu pedido #${orderId.slice(0, 8).toUpperCase()} no pudo ser procesado. Por favor, intenta nuevamente.`,
+    body: `El pago de tu pedido #${orderId.slice(0, 8).toUpperCase()} no pudo ser procesado. Por favor intenta nuevamente.`,
     type: 'payment',
     orderId,
   }),
@@ -87,19 +104,19 @@ export const OrderNotifications = {
 };
 
 /**
- * Notificaciones para cuotas de tickets
+ * Notifications for ticket installment (cuotas) events.
  */
 export const InstallmentNotifications = {
   proofUploaded: (ticketId: string, installmentNumber: number): Omit<CreateNotificationParams, 'userId'> => ({
     title: '📸 Nuevo Comprobante',
-    body: `Se ha subido un comprobante para la cuota #${installmentNumber} del ticket #${ticketId.slice(0, 8).toUpperCase()}`,
+    body: `Se subió un comprobante para la cuota #${installmentNumber} del ticket #${ticketId.slice(0, 8).toUpperCase()}`,
     type: 'payment',
     orderId: ticketId,
   }),
 
   paymentApproved: (ticketId: string, installmentNumber: number): Omit<CreateNotificationParams, 'userId'> => ({
     title: '✅ Pago de Cuota Aprobado',
-    body: `El pago de la cuota #${installmentNumber} para tu ticket #${ticketId.slice(0, 8).toUpperCase()} ha sido verificado.`,
+    body: `El pago de la cuota #${installmentNumber} de tu ticket #${ticketId.slice(0, 8).toUpperCase()} ha sido verificado.`,
     type: 'payment',
     orderId: ticketId,
   }),
@@ -112,16 +129,24 @@ export const InstallmentNotifications = {
     type: 'payment',
     orderId: ticketId,
   }),
+
+  allPaid: (ticketId: string): Omit<CreateNotificationParams, 'userId'> => ({
+    title: '🎉 ¡Pagos Completados!',
+    body: `Has completado todos los pagos de tu ticket #${ticketId.slice(0, 8).toUpperCase()}. Tus entradas ya están disponibles.`,
+    type: 'payment',
+    orderId: ticketId,
+  }),
 };
 
 /**
- * Enviar notificación según el estado del pedido
+ * Dispatch a notification based on order status string.
+ * Useful for webhook handlers where only the status string is known.
  */
 export async function notifyOrderStatusChange(
   userId: string,
   orderId: string,
   status: string,
-  trackingNumber?: string
+  trackingNumber?: string,
 ): Promise<void> {
   let notification: Omit<CreateNotificationParams, 'userId'> | null = null;
 
@@ -142,24 +167,11 @@ export async function notifyOrderStatusChange(
       notification = OrderNotifications.cancelled(orderId);
       break;
     default:
-      console.log(`ℹ️ [NOTIFICATION] No notification template for status: ${status}`);
+      console.log(`ℹ️ [NOTIFICATION] No template for status: ${status}`);
       return;
   }
 
   if (notification) {
-    await createNotification({
-      userId,
-      ...notification,
-    });
+    await createNotification({ userId, ...notification });
   }
 }
-
-
-
-
-
-
-
-
-
-

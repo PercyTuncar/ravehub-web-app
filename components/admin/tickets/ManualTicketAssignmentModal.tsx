@@ -33,6 +33,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { FileUpload } from '@/components/common/FileUpload';
 import { toast } from 'sonner';
 
+import { parseLocalDate } from '@/lib/utils/date';
 import { eventsCollection, usersCollection } from '@/lib/firebase/collections';
 import { createManualTicketTransaction } from '@/lib/actions';
 import { calculateInstallmentPlan, CalculationResult } from '@/lib/utils/admin-ticket-calculator';
@@ -128,7 +129,8 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 baseTotalAmount,
                 reservationAmount,
                 installmentsCount,
-                new Date(firstPaymentDate)
+                // Parse as local midnight so the preview matches the persisted due dates
+                parseLocalDate(firstPaymentDate)
             );
             setInstallmentPlan(result);
             // Reset paid installments selection on recalcc

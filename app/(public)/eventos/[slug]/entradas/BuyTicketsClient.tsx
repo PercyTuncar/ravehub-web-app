@@ -43,6 +43,8 @@ import { es } from "date-fns/locale";
 import { ConvertedPrice } from "@/components/common/ConvertedPrice";
 import { useCurrency } from "@/lib/contexts/CurrencyContext";
 import { motion, AnimatePresence, useInView } from "framer-motion";
+import { CheckoutPaymentModal } from "@/components/checkout/CheckoutPaymentModal";
+import type { CheckoutTicketItem } from "@/components/checkout/CheckoutPaymentModal";
 
 import { toast } from "sonner";
 
@@ -598,69 +600,67 @@ function TicketCard({
 
         {/* Pricing & Actions */}
         <div className="flex flex-col items-end justify-between gap-4 min-w-[140px]">
-          <div className="text-right">
-            <AnimatePresence mode="wait">
-              {isInstallmentMode ? (
-                <motion.div
-                  key="installment"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="flex flex-col items-end"
-                >
-                  <div className="flex flex-col items-end mb-1">
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">
-                      Reserva
-                    </span>
-                    <span className="text-sm font-bold text-white bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
-                      <ConvertedPrice
-                        amount={reservationPrice}
-                        currency={currency}
-                        showOriginal={false}
-                      />
-                    </span>
-                  </div>
-                  <div className="flex items-baseline gap-1 text-xl font-black text-orange-400">
-                    <span className="text-xs font-bold text-zinc-500 mr-0.5">
-                      + {installments} x
-                    </span>
-                    <ConvertedPrice
-                      amount={installmentPrice}
-                      currency={currency}
-                      showOriginal={false}
-                    />
-                  </div>
-                  <span className="text-[10px] text-zinc-500 mt-0.5">
-                    Total:{" "}
-                    <ConvertedPrice
-                      amount={adjustedPrice}
-                      currency={currency}
-                      showOriginal={false}
-                      className="inline"
-                    />
-                  </span>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="full"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="flex flex-col items-end"
-                >
-                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">
-                    Precio
-                  </span>
-                  <div className="text-2xl font-black text-white">
-                    <ConvertedPrice
-                      amount={selection.price}
-                      currency={currency}
-                      showOriginal={false}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="text-right relative min-h-[72px]">
+            {/* Installment view — CSS fade instead of AnimatePresence to avoid React DevTools fiber warning */}
+            <div
+              className={`flex flex-col items-end transition-all duration-300 ${
+                isInstallmentMode
+                  ? "opacity-100 translate-x-0 pointer-events-auto"
+                  : "opacity-0 translate-x-4 pointer-events-none absolute inset-0"
+              }`}
+            >
+              <div className="flex flex-col items-end mb-1">
+                <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">
+                  Reserva
+                </span>
+                <span className="text-sm font-bold text-white bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
+                  <ConvertedPrice
+                    amount={reservationPrice}
+                    currency={currency}
+                    showOriginal={false}
+                  />
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1 text-xl font-black text-orange-400">
+                <span className="text-xs font-bold text-zinc-500 mr-0.5">
+                  + {installments} x
+                </span>
+                <ConvertedPrice
+                  amount={installmentPrice}
+                  currency={currency}
+                  showOriginal={false}
+                />
+              </div>
+              <span className="text-[10px] text-zinc-500 mt-0.5">
+                Total:{" "}
+                <ConvertedPrice
+                  amount={adjustedPrice}
+                  currency={currency}
+                  showOriginal={false}
+                  className="inline"
+                />
+              </span>
+            </div>
+
+            {/* Full-price view */}
+            <div
+              className={`flex flex-col items-end transition-all duration-300 ${
+                !isInstallmentMode
+                  ? "opacity-100 translate-x-0 pointer-events-auto"
+                  : "opacity-0 -translate-x-4 pointer-events-none absolute inset-0"
+              }`}
+            >
+              <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">
+                Precio
+              </span>
+              <div className="text-2xl font-black text-white">
+                <ConvertedPrice
+                  amount={selection.price}
+                  currency={currency}
+                  showOriginal={false}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 bg-zinc-950/50 p-1.5 rounded-xl border border-white/10">
@@ -846,6 +846,8 @@ function BuyTicketsContent({
     "cash" | "installments"
   >("cash");
   const [advanceInstallments, setAdvanceInstallments] = useState<number>(2);
+  // ── New: checkout payment modal ──────────────────────────────────────────
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   useEffect(() => {
     if (!firstResolvedPhase) return;
@@ -950,49 +952,10 @@ function BuyTicketsContent({
 
   const handlePurchase = async () => {
     if (!event || !acceptTerms || totalTickets === 0) return;
-
-    setProcessing(true);
-    try {
-      const symbol = event.currency === "USD" ? "$" : "S/";
-
-      const ticketsList = ticketSelections
-        .filter((s) => s.quantity > 0)
-        .map((s) => `• ${s.quantity}x ${s.zoneName} (${symbol} ${s.price})`)
-        .join("\n");
-
-      let paymentDetails = `📝 *Método:* ${paymentMethod === "online" ? "Pago Online" : "Pago Offline"}`;
-      let totalToPayText = `${symbol} ${totalAmount}`;
-
-      if (isInstallmentMode) {
-        paymentDetails += `\n📉 *Facilidad de Pago:* Reserva + ${installments} cuotas`;
-        paymentDetails += `\n🔹 *Pago Inicial (Reserva):* ${symbol} ${totalReservation}`;
-        paymentDetails += `\n🔹 *Saldo Restante:* ${symbol} ${totalRemaining} en ${installments} cuotas de ${symbol} ${monthlyInstallment.toFixed(2)}`;
-        totalToPayText = `${symbol} ${totalReservation}`;
-      }
-
-      const message =
-        `🎟️ *NUEVA RESERVA - ${event.name}* 🎟️\n\n` +
-        `📅 *Fecha:* ${format(getEventDate(event.startDate), "dd MMM yyyy", { locale: es })}\n` +
-        `📍 *Lugar:* ${event.location.venue}\n\n` +
-        `🎫 *Tickets:*\n${ticketsList}\n\n` +
-        `💰 *TOTAL PEDIDO:* ${symbol} ${totalAmount}\n` +
-        `💵 *A PAGAR HOY:* ${totalToPayText}\n` +
-        `${paymentDetails}\n` +
-        `🆔 *Canal:* Checkout directo desde web`;
-
-      window.open(
-        `https://wa.me/51944784488?text=${encodeURIComponent(message)}`,
-        "_blank",
-      );
-      toast.success(
-        "Te estamos redirigiendo a WhatsApp para completar tu pedido.",
-      );
-    } catch (error) {
-      console.error("WhatsApp checkout error:", error);
-      alert("No pudimos abrir WhatsApp. Intenta nuevamente.");
-    } finally {
-      setProcessing(false);
-    }
+    // Open the two-path checkout modal instead of going directly to WhatsApp.
+    // The modal handles both "Pagar Ahora" (proof upload, auth required)
+    // and "Pedir por WhatsApp" (no auth required).
+    setShowCheckoutModal(true);
   };
 
   const handleAdvanceReservationCheckout = () => {
@@ -2156,6 +2119,36 @@ function BuyTicketsContent({
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* ── Checkout Payment Modal ─────────────────────────────────────────── */}
+      <CheckoutPaymentModal
+        isOpen={showCheckoutModal}
+        onClose={() => setShowCheckoutModal(false)}
+        event={{
+          id: event.id,
+          name: event.name,
+          startDate: event.startDate,
+          currency: event.currency,
+          location: { venue: event.location.venue },
+          ticketDeliveryMode: event.ticketDeliveryMode,
+          ticketDownloadAvailableDate: event.ticketDownloadAvailableDate,
+        }}
+        selectedTickets={ticketSelections
+          .filter((s) => s.quantity > 0)
+          .map((s): CheckoutTicketItem => ({
+            zoneId: s.zoneId,
+            zoneName: s.zoneName,
+            quantity: s.quantity,
+            price: s.price,
+            phaseId: activePhaseData?.id,
+            phaseName: activePhaseData?.name,
+          }))}
+        isInstallmentMode={isInstallmentMode}
+        installments={installments}
+        totalAmount={totalAmount}
+        totalReservation={totalReservation}
+        monthlyInstallment={monthlyInstallment}
+      />
     </div>
   );
 }
