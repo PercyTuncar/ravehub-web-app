@@ -45,6 +45,21 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Error fetching countries:', error);
+
+    // Fallback to static data
+    try {
+      const { getStaticCountries } = await import('@/lib/data/locations');
+      const staticCountries = getStaticCountries();
+
+      if (staticCountries.length > 0) {
+        const response = NextResponse.json(staticCountries);
+        response.headers.set('X-Robots-Tag', 'noindex');
+        return response;
+      }
+    } catch (fallbackError) {
+      console.error('Error loading static countries:', fallbackError);
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch countries' },
       { status: 500 }

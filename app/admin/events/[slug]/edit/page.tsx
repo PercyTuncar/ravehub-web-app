@@ -202,15 +202,12 @@ export default function EditEventPage() {
       }
 
       try {
-        const response = await fetch(`https://restcountries.com/v3.1/alpha/${eventData.location.countryCode}`);
+        const response = await fetch(`/api/locations/timezone?country=${eventData.location.countryCode}`);
         if (response.ok) {
           const data = await response.json();
-          const country = data[0];
-          if (country?.timezones?.length > 0) {
-            // Use the first timezone and format it properly
-            const tz = country.timezones[0];
-            setTimezone(tz);
-            updateEventData('timezone', tz);
+          if (data.timezone) {
+            setTimezone(data.timezone);
+            updateEventData('timezone', data.timezone);
           }
         }
       } catch (error) {

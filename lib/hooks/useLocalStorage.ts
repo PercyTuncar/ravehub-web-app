@@ -10,6 +10,11 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       return item ? JSON.parse(item) : initialValue
     } catch (error) {
       console.error(`Error reading localStorage key "${key}":`, error)
+      try {
+        window.localStorage.setItem(key, JSON.stringify(initialValue))
+      } catch {
+        // ignore write failures (e.g. storage disabled/full)
+      }
       return initialValue
     }
   })

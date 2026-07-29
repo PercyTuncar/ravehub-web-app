@@ -120,3 +120,85 @@ export function getStaticCities(countryCode: string, regionName?: string) {
     // Return all cities if no region specified or region not found in static map
     return Object.values(countryData.cities).flat();
 }
+
+// Zona horaria principal (IANA) por país, usada como fallback cuando la API externa falla
+export const STATIC_TIMEZONES: Record<string, string> = {
+    PE: "America/Lima",
+    CL: "America/Santiago",
+    CO: "America/Bogota",
+    MX: "America/Mexico_City",
+    AR: "America/Argentina/Buenos_Aires",
+    BR: "America/Sao_Paulo",
+    PY: "America/Asuncion",
+    UY: "America/Montevideo",
+    US: "America/New_York",
+    EC: "America/Guayaquil",
+    SV: "America/El_Salvador",
+    BO: "America/La_Paz",
+    VE: "America/Caracas",
+    PA: "America/Panama",
+    CR: "America/Costa_Rica",
+    GT: "America/Guatemala",
+    HN: "America/Tegucigalpa",
+    NI: "America/Managua",
+    DO: "America/Santo_Domingo",
+    CU: "America/Havana",
+    PR: "America/Puerto_Rico",
+    ES: "Europe/Madrid",
+    CA: "America/Toronto",
+};
+
+export function getStaticTimezone(countryCode: string) {
+    return STATIC_TIMEZONES[countryCode.toUpperCase()] || "";
+}
+
+// Datos básicos de países, usados como fallback cuando la API externa (restcountries.com) falla
+export const STATIC_COUNTRIES: {
+    code: string;
+    name: string;
+    flag: string;
+    currency: { code: string; name: string; symbol: string };
+}[] = [
+    { code: "PE", name: "Perú", flag: "https://flagcdn.com/pe.svg", currency: { code: "PEN", name: "Sol peruano", symbol: "S/" } },
+    { code: "CL", name: "Chile", flag: "https://flagcdn.com/cl.svg", currency: { code: "CLP", name: "Peso chileno", symbol: "$" } },
+    { code: "CO", name: "Colombia", flag: "https://flagcdn.com/co.svg", currency: { code: "COP", name: "Peso colombiano", symbol: "$" } },
+    { code: "MX", name: "México", flag: "https://flagcdn.com/mx.svg", currency: { code: "MXN", name: "Peso mexicano", symbol: "$" } },
+    { code: "AR", name: "Argentina", flag: "https://flagcdn.com/ar.svg", currency: { code: "ARS", name: "Peso argentino", symbol: "$" } },
+    { code: "BR", name: "Brasil", flag: "https://flagcdn.com/br.svg", currency: { code: "BRL", name: "Real brasileño", symbol: "R$" } },
+    { code: "PY", name: "Paraguay", flag: "https://flagcdn.com/py.svg", currency: { code: "PYG", name: "Guaraní", symbol: "₲" } },
+    { code: "UY", name: "Uruguay", flag: "https://flagcdn.com/uy.svg", currency: { code: "UYU", name: "Peso uruguayo", symbol: "$" } },
+    { code: "US", name: "Estados Unidos", flag: "https://flagcdn.com/us.svg", currency: { code: "USD", name: "Dólar estadounidense", symbol: "$" } },
+    { code: "EC", name: "Ecuador", flag: "https://flagcdn.com/ec.svg", currency: { code: "USD", name: "Dólar estadounidense", symbol: "$" } },
+    { code: "SV", name: "El Salvador", flag: "https://flagcdn.com/sv.svg", currency: { code: "USD", name: "Dólar estadounidense", symbol: "$" } },
+    { code: "BO", name: "Bolivia", flag: "https://flagcdn.com/bo.svg", currency: { code: "BOB", name: "Boliviano", symbol: "Bs" } },
+    { code: "VE", name: "Venezuela", flag: "https://flagcdn.com/ve.svg", currency: { code: "VES", name: "Bolívar", symbol: "Bs" } },
+    { code: "PA", name: "Panamá", flag: "https://flagcdn.com/pa.svg", currency: { code: "PAB", name: "Balboa", symbol: "B/." } },
+    { code: "CR", name: "Costa Rica", flag: "https://flagcdn.com/cr.svg", currency: { code: "CRC", name: "Colón costarricense", symbol: "₡" } },
+    { code: "GT", name: "Guatemala", flag: "https://flagcdn.com/gt.svg", currency: { code: "GTQ", name: "Quetzal", symbol: "Q" } },
+    { code: "HN", name: "Honduras", flag: "https://flagcdn.com/hn.svg", currency: { code: "HNL", name: "Lempira", symbol: "L" } },
+    { code: "NI", name: "Nicaragua", flag: "https://flagcdn.com/ni.svg", currency: { code: "NIO", name: "Córdoba", symbol: "C$" } },
+    { code: "DO", name: "República Dominicana", flag: "https://flagcdn.com/do.svg", currency: { code: "DOP", name: "Peso dominicano", symbol: "$" } },
+    { code: "CU", name: "Cuba", flag: "https://flagcdn.com/cu.svg", currency: { code: "CUP", name: "Peso cubano", symbol: "$" } },
+    { code: "PR", name: "Puerto Rico", flag: "https://flagcdn.com/pr.svg", currency: { code: "USD", name: "Dólar estadounidense", symbol: "$" } },
+    { code: "ES", name: "España", flag: "https://flagcdn.com/es.svg", currency: { code: "EUR", name: "Euro", symbol: "€" } },
+    { code: "CA", name: "Canadá", flag: "https://flagcdn.com/ca.svg", currency: { code: "CAD", name: "Dólar canadiense", symbol: "$" } },
+];
+
+export function getStaticCountries() {
+    return STATIC_COUNTRIES.map((country) => ({
+        id: country.code,
+        code: country.code,
+        name: country.name,
+        nativeName: country.name,
+        region: "",
+        subregion: "",
+        capital: undefined,
+        currencies: [country.currency],
+        languages: [],
+        flag: country.flag,
+        population: 0,
+        timezones: STATIC_TIMEZONES[country.code] ? [STATIC_TIMEZONES[country.code]] : [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    }));
+}
