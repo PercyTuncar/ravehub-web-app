@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase/admin';
 import { redirect } from 'next/navigation';
 import { User } from '@/lib/types';
 
@@ -8,6 +8,8 @@ import { User } from '@/lib/types';
 const SESSION_COOKIE_NAME = 'session';
 
 export async function verifySession() {
+    const adminAuth = await getAdminAuth();
+
     if (!adminAuth) {
         console.error('Firebase Admin not initialized - check environment variables');
         console.error('Required: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
@@ -33,6 +35,7 @@ export async function verifySession() {
 
 export async function getCurrentUser(): Promise<User | null> {
     const claims = await verifySession();
+    const adminDb = await getAdminDb();
 
     if (!claims || !adminDb) {
         return null;
@@ -40,19 +43,21 @@ export async function getCurrentUser(): Promise<User | null> {
 
     try {
         const userDoc = await adminDb.collection('users').doc(claims.uid).get();
+
         if (!userDoc.exists) {
             return null;
         }
 
-        // We need to match the User type from @/lib/types
-        // Assuming the DB structure matches the type
         const userData = userDoc.data();
         return {
             id: userDoc.id,
-            ...userData
+            email: userData?.email || claims.email || '',
+            name: userData?.name || claims.name || '',
+            role: userData?.role || 'user',
+            ...userData,
         } as User;
     } catch (error) {
-        console.error('Error fetching current user:', error);
+        console.error('Error fetching user:', error);
         return null;
     }
 }
@@ -66,6 +71,9 @@ export async function requireAuth() {
 }
 
 export async function requireAdmin() {
+    const adminAuth = await getAdminAuth();
+    const adminDb = await getAdminDb();
+
     if (!adminAuth || !adminDb) {
         console.error('Firebase Admin not initialized - check environment variables');
         console.error('Required: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
@@ -88,6 +96,8 @@ export async function requireAdmin() {
 }
 
 export async function createSessionCookie(idToken: string) {
+    const adminAuth = await getAdminAuth();
+
     if (!adminAuth) throw new Error('Firebase Admin not initialized');
 
     // Set session expiration to 5 days

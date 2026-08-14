@@ -1,16 +1,17 @@
 import 'server-only';
-import { initializeApp, getApps, getApp, cert, App, ServiceAccount } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
 
 // Helper to format private key correctly (handle newline characters)
 const formatPrivateKey = (key: string) => {
     return key.replace(/\\n/g, '\n');
 };
 
-function getAdminApp(): App | undefined {
-    if (getApps().length > 0) {
-        return getApp();
+let adminAppInstance: any = undefined;
+let adminAuthInstance: any = null;
+let adminDbInstance: any = null;
+
+async function initializeFirebaseAdmin() {
+    if (adminAppInstance !== undefined) {
+        return { app: adminAppInstance, auth: adminAuthInstance, db: adminDbInstance };
     }
 
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
@@ -18,41 +19,63 @@ function getAdminApp(): App | undefined {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
     if (!projectId || !clientEmail || !privateKey) {
-        // In build time or if envs are missing, we might want to fail gracefully or throw
-        // For safety in production, we throw.
         if (process.env.NODE_ENV === 'production') {
             console.warn('Firebase Admin credentials missing in production build. Admin features will be disabled.');
-            return undefined;
+            adminAppInstance = null;
+            return { app: null, auth: null, db: null };
         }
-        // Fallback for dev/build without creds (optional, but risky if logic depends on it)
         console.warn('Firebase Admin credentials missing. Admin SDK not initialized.');
-        return undefined;
+        adminAppInstance = null;
+        return { app: null, auth: null, db: null };
     }
 
     try {
-        const serviceAccount: ServiceAccount = {
-            projectId,
-            clientEmail,
-            privateKey: formatPrivateKey(privateKey),
-        };
+        // Dynamic import to avoid ESM issues with Turbopack
+        const { initializeApp, getApps, getApp, cert } = await import('firebase-admin/app');
+        const { getAuth } = await import('firebase-admin/auth');
+        const { getFirestore } = await import('firebase-admin/firestore');
 
-        return initializeApp({
-            credential: cert(serviceAccount),
-            projectId,
-        });
+        if (getApps().length > 0) {
+            adminAppInstance = getApp();
+        } else {
+            const serviceAccount = {
+                projectId,
+                clientEmail,
+                privateKey: formatPrivateKey(privateKey),
+            };
+
+            adminAppInstance = initializeApp({
+                credential: cert(serviceAccount),
+                projectId,
+            });
+        }
+
+        adminAuthInstance = getAuth(adminAppInstance);
+        adminDbInstance = getFirestore(adminAppInstance);
+
+        return { app: adminAppInstance, auth: adminAuthInstance, db: adminDbInstance };
     } catch (error) {
         console.error('Failed to initialize Firebase Admin:', error);
-        // During build time, return undefined instead of throwing
         if (process.env.NODE_ENV === 'production') {
             console.warn('Firebase Admin initialization failed during build. Admin features will be disabled.');
-            return undefined;
+            adminAppInstance = null;
+            return { app: null, auth: null, db: null };
         }
         throw error;
     }
 }
 
-const app = getAdminApp();
+// Lazy getters that initialize on first access
+export const getAdminAuth = async () => {
+    const { auth } = await initializeFirebaseAdmin();
+    return auth;
+};
 
-// Exports (check if app exists to avoid crashes if envs missing in dev)
-export const adminAuth = app ? getAuth(app) : null;
-export const adminDb = app ? getFirestore(app) : null;
+export const getAdminDb = async () => {
+    const { db } = await initializeFirebaseAdmin();
+    return db;
+};
+
+// Backward compatibility exports (deprecated - use getAdminAuth/getAdminDb instead)
+export let adminAuth: any = null;
+export let adminDb: any = null;
