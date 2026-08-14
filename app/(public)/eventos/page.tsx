@@ -17,7 +17,6 @@ import JsonLd from '@/components/seo/JsonLd';
 
 // ISR: Revalidate every 10 minutes (600 seconds) + on-demand revalidation
 export const revalidate = 600;
-export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ searchParams }: EventsPageProps): Promise<Metadata> {
   const { page: pageParam, tipo, region } = await searchParams;
