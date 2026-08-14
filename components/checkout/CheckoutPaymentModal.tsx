@@ -163,6 +163,13 @@ export function CheckoutPaymentModal({
 
   // ── WhatsApp helpers ──────────────────────────────────────────────────────
 
+  // Helper to prevent timezone shifts when formatting dates
+  const getEventDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() + userTimezoneOffset);
+  };
+
   const buildWhatsAppMessage = useCallback(() => {
     const ticketsList = selectedTickets
       .map((t) => `• ${t.quantity}x ${t.zoneName} (${symbol} ${t.price})`)
@@ -178,7 +185,7 @@ export function CheckoutPaymentModal({
 
     return (
       `🎟️ *NUEVO PEDIDO - ${event.name}* 🎟️\n\n` +
-      `📅 *Fecha:* ${format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
+      `📅 *Fecha:* ${format(getEventDate(event.startDate), 'dd MMM yyyy', { locale: es })}\n` +
       `📍 *Lugar:* ${event.location.venue}\n\n` +
       `🎫 *Tickets:*\n${ticketsList}\n\n` +
       `💰 *Total pedido:* ${symbol} ${totalAmount}\n` +
