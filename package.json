@@ -95,7 +95,8 @@
     "typescript": "^5.6.3"
   },
   "overrides": {
-    "glob": "^10.0.0",
+    "glob": "^11.1.0",
+    "uuid": "^11.0.0",
     "inflight": "^1.0.6",
     "jsdom": "^26.0.0",
     "data-urls": "^5.0.0"
