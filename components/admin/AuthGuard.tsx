@@ -17,6 +17,8 @@ export function AuthGuard({ children, requiredRole = 'admin' }: AuthGuardProps) 
 
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('[AdminAuthGuard] Starting check, loading:', loading);
+
       if (!loading) {
         // Wait a bit for session to sync
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -24,6 +26,7 @@ export function AuthGuard({ children, requiredRole = 'admin' }: AuthGuardProps) 
         console.log('[AdminAuthGuard] User:', user);
         console.log('[AdminAuthGuard] User role:', user?.role);
         console.log('[AdminAuthGuard] Loading:', loading);
+        console.log('[AdminAuthGuard] Required role:', requiredRole);
 
         if (!user) {
           console.log('[AdminAuthGuard] No user, redirecting to login');
@@ -33,14 +36,14 @@ export function AuthGuard({ children, requiredRole = 'admin' }: AuthGuardProps) 
         }
 
         if (!['admin', 'moderator'].includes(user.role)) {
-          console.log('[AdminAuthGuard] User is not admin/moderator, redirecting to home');
+          console.log('[AdminAuthGuard] User role is:', user.role, '- not admin/moderator, redirecting to home');
           // Not authorized, redirect to home
           router.push('/');
           return;
         }
 
         if (requiredRole === 'admin' && user.role !== 'admin') {
-          console.log('[AdminAuthGuard] User needs admin role, redirecting to /admin');
+          console.log('[AdminAuthGuard] User needs admin role but has:', user.role, '- redirecting to /admin');
           // Need admin role but only have moderator
           router.push('/admin');
           return;

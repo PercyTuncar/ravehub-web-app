@@ -75,7 +75,10 @@ export function proxy(request: NextRequest) {
   }
   */
 
-  // Protect Admin Routes
+  // Protect Admin Routes - DISABLED
+  // Admin routes are now protected by AuthGuard component on the client side
+  // Server-side session validation has race conditions with Firebase Auth
+  /*
   if (url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')) {
     const session = request.cookies.get('session');
     if (!session) {
@@ -84,6 +87,7 @@ export function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   }
+  */
 
   return NextResponse.next();
 }

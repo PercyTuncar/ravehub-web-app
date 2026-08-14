@@ -135,9 +135,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!result.success) {
         console.error('Failed to create session cookie:', result.error);
+        // Don't throw - allow the app to continue with client-side auth only
       }
     } catch (error) {
       console.error('Error syncing session:', error);
+      // Don't throw - allow the app to continue with client-side auth only
+      // The guards will still work because they check the user from AuthContext
     }
   };
 
