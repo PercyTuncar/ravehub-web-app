@@ -13,6 +13,8 @@ const nextConfig = {
       },
     ],
   },
+  // Fix firebase-admin ESM issues in production
+  serverExternalPackages: ['firebase-admin'],
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000'],
