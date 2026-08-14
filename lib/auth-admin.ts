@@ -78,13 +78,13 @@ export async function requireAdmin() {
         console.error('Firebase Admin not initialized - check environment variables');
         console.error('Required: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
         // Redirect to login with error message instead of throwing 500
-        redirect('/admin/login?error=server_config');
+        redirect('/login?error=server_config&redirect=/admin');
     }
 
     const user = await getCurrentUser();
 
     if (!user) {
-        redirect('/admin/login');
+        redirect('/login?redirect=/admin');
     }
 
     if (user.role !== 'admin' && user.role !== 'moderator') {
