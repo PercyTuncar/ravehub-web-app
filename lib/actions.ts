@@ -230,7 +230,12 @@ export async function createProduct(productData: Omit<Product, 'id' | 'createdAt
  */
 export async function uploadTicketProof(ticketId: string, proofUrl: string) {
   try {
-    await requireAuth();
+    // Check auth but don't redirect
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'No autenticado' };
+    }
+
     await ticketTransactionsCollection.update(ticketId, {
       paymentProofUrl: proofUrl,
       paymentStatus: 'pending', // Reset to pending for review
@@ -545,7 +550,12 @@ export async function getTicketInstallments(transactionId: string): Promise<{
   error?: string;
 }> {
   'use server';
-  await requireAuth();
+
+  // Check auth but don't redirect
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    return { success: false, error: 'No autenticado' };
+  }
 
   try {
     const installments = await paymentInstallmentsCollection.query([
@@ -618,7 +628,12 @@ export async function uploadUserInstallmentProof(
   downloadURL: string
 ): Promise<{ success: boolean; error?: string }> {
   'use server';
-  await requireAuth();
+
+  // Check auth but don't redirect
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    return { success: false, error: 'No autenticado' };
+  }
 
   try {
     const installment = await paymentInstallmentsCollection.get(installmentId);
@@ -818,11 +833,17 @@ export async function revertInstallmentPayment(
 export async function getUserProfileData(userId: string) {
   'use server';
 
-  // Verify auth
-  const currentUser = await requireAuth();
+  // Verify auth - but don't redirect, just check
+  const currentUser = await getCurrentUser();
+
+  // If no user, return error instead of redirecting
+  if (!currentUser) {
+    return { success: false, error: 'No autenticado' };
+  }
+
   // Ensure user is requesting their own data or is admin
   if (currentUser.id !== userId && currentUser.role !== 'admin') {
-    throw new Error('Unauthorized');
+    return { success: false, error: 'No autorizado' };
   }
 
   try {
