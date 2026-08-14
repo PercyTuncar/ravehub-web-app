@@ -8,11 +8,22 @@ const formatPrivateKey = (key: string) => {
 let adminAppInstance: any = undefined;
 let adminAuthInstance: any = null;
 let adminDbInstance: any = null;
+let initPromise: Promise<any> | null = null;
 
 async function initializeFirebaseAdmin() {
+    // Return cached instance if already initialized
     if (adminAppInstance !== undefined) {
+        console.log('[Firebase Admin] Returning cached instance');
         return { app: adminAppInstance, auth: adminAuthInstance, db: adminDbInstance };
     }
+
+    // Return existing promise if initialization is in progress
+    if (initPromise) {
+        console.log('[Firebase Admin] Initialization already in progress, waiting...');
+        return initPromise;
+    }
+
+    console.log('[Firebase Admin] Starting initialization...');
 
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -20,63 +31,79 @@ async function initializeFirebaseAdmin() {
 
     console.log('[Firebase Admin] Initializing with:', {
         hasProjectId: !!projectId,
+        projectId: projectId?.substring(0, 20) + '...',
         hasClientEmail: !!clientEmail,
+        clientEmail: clientEmail?.substring(0, 30) + '...',
         hasPrivateKey: !!privateKey,
         privateKeyLength: privateKey?.length || 0,
+        privateKeyStart: privateKey?.substring(0, 50) + '...',
         environment: process.env.NODE_ENV
     });
 
     if (!projectId || !clientEmail || !privateKey) {
-        if (process.env.NODE_ENV === 'production') {
-            console.warn('[Firebase Admin] Credentials missing in production build. Admin features will be disabled.');
-            adminAppInstance = null;
-            return { app: null, auth: null, db: null };
-        }
-        console.warn('Firebase Admin credentials missing. Admin SDK not initialized.');
+        console.error('[Firebase Admin] Missing credentials!');
         adminAppInstance = null;
         return { app: null, auth: null, db: null };
     }
 
-    try {
-        // Dynamic import to avoid ESM issues with Turbopack
-        const { initializeApp, getApps, getApp, cert } = await import('firebase-admin/app');
-        const { getAuth } = await import('firebase-admin/auth');
-        const { getFirestore } = await import('firebase-admin/firestore');
+    // Create initialization promise
+    initPromise = (async () => {
+        try {
+            console.log('[Firebase Admin] Importing firebase-admin modules...');
+            // Dynamic import to avoid ESM issues with Turbopack
+            const { initializeApp, getApps, getApp, cert } = await import('firebase-admin/app');
+            const { getAuth } = await import('firebase-admin/auth');
+            const { getFirestore } = await import('firebase-admin/firestore');
 
-        if (getApps().length > 0) {
-            adminAppInstance = getApp();
-        } else {
-            const serviceAccount = {
-                projectId,
-                clientEmail,
-                privateKey: formatPrivateKey(privateKey),
-            };
+            console.log('[Firebase Admin] Checking existing apps...');
+            const existingApps = getApps();
+            console.log('[Firebase Admin] Existing apps count:', existingApps.length);
 
-            adminAppInstance = initializeApp({
-                credential: cert(serviceAccount),
-                projectId,
+            if (existingApps.length > 0) {
+                console.log('[Firebase Admin] Using existing app');
+                adminAppInstance = getApp();
+            } else {
+                console.log('[Firebase Admin] Creating new app...');
+                const formattedKey = formatPrivateKey(privateKey);
+
+                const serviceAccount = {
+                    projectId,
+                    clientEmail,
+                    privateKey: formattedKey,
+                };
+
+                console.log('[Firebase Admin] Service account prepared, initializing app...');
+                adminAppInstance = initializeApp({
+                    credential: cert(serviceAccount),
+                    projectId,
+                });
+                console.log('[Firebase Admin] App initialized successfully');
+            }
+
+            console.log('[Firebase Admin] Getting Auth instance...');
+            adminAuthInstance = getAuth(adminAppInstance);
+            console.log('[Firebase Admin] Auth instance obtained:', !!adminAuthInstance);
+
+            console.log('[Firebase Admin] Getting Firestore instance...');
+            adminDbInstance = getFirestore(adminAppInstance);
+            console.log('[Firebase Admin] Firestore instance obtained:', !!adminDbInstance);
+
+            console.log('[Firebase Admin] Successfully initialized:', {
+                hasApp: !!adminAppInstance,
+                hasAuth: !!adminAuthInstance,
+                hasDb: !!adminDbInstance
             });
-        }
 
-        adminAuthInstance = getAuth(adminAppInstance);
-        adminDbInstance = getFirestore(adminAppInstance);
-
-        console.log('[Firebase Admin] Successfully initialized:', {
-            hasApp: !!adminAppInstance,
-            hasAuth: !!adminAuthInstance,
-            hasDb: !!adminDbInstance
-        });
-
-        return { app: adminAppInstance, auth: adminAuthInstance, db: adminDbInstance };
-    } catch (error) {
-        console.error('[Firebase Admin] Failed to initialize:', error);
-        if (process.env.NODE_ENV === 'production') {
-            console.warn('[Firebase Admin] Initialization failed during build. Admin features will be disabled.');
+            return { app: adminAppInstance, auth: adminAuthInstance, db: adminDbInstance };
+        } catch (error) {
+            console.error('[Firebase Admin] Failed to initialize:', error);
             adminAppInstance = null;
-            return { app: null, auth: null, db: null };
+            initPromise = null; // Reset promise to allow retry
+            throw error;
         }
-        throw error;
-    }
+    })();
+
+    return initPromise;
 }
 
 // Lazy getters that initialize on first access
@@ -90,20 +117,6 @@ export const getAdminDb = async () => {
     return db;
 };
 
-// Backward compatibility exports (deprecated - use getAdminAuth/getAdminDb instead)
+// Deprecated exports - kept for backward compatibility but should migrate to getAdminAuth/getAdminDb
 export let adminAuth: any = null;
 export let adminDb: any = null;
-
-// Initialize on module load for backward compatibility
-console.log('[Firebase Admin] Module loaded, starting IIFE initialization...');
-(async () => {
-    try {
-        console.log('[Firebase Admin] IIFE: Calling initializeFirebaseAdmin...');
-        const { auth, db } = await initializeFirebaseAdmin();
-        adminAuth = auth;
-        adminDb = db;
-        console.log('[Firebase Admin] IIFE: Completed. adminAuth:', !!adminAuth, 'adminDb:', !!adminDb);
-    } catch (error) {
-        console.error('[Firebase Admin] IIFE: Failed to initialize:', error);
-    }
-})();
