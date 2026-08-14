@@ -14,18 +14,24 @@ export const revalidate = 180;
 // This reduces Active CPU usage by avoiding dynamic generation for popular ticket pages
 export async function generateStaticParams() {
   try {
-    // Get the most recent 20 published events with ticket sales enabled
-    const events = await eventsCollection.query(
-      [
-        { field: 'eventStatus', operator: '==', value: 'published' },
-        { field: 'sellTicketsOnPlatform', operator: '==', value: true }
-      ],
+    // Get the most recent events (without filters to avoid needing composite index)
+    // Filter in memory instead
+    const allEvents = await eventsCollection.query(
+      [],
       'startDate',
       'desc',
-      20
+      50 // Fetch more to account for filtering
     );
 
-    return events.map((event) => ({
+    // Filter to published events with ticket sales enabled and take top 20
+    const ticketEvents = allEvents
+      .filter(event =>
+        event.eventStatus === 'published' &&
+        event.sellTicketsOnPlatform === true
+      )
+      .slice(0, 20);
+
+    return ticketEvents.map((event) => ({
       slug: event.slug,
     }));
   } catch (error) {

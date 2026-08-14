@@ -32,15 +32,21 @@ export const revalidate = 180;
 // This significantly reduces Active CPU usage on Vercel by avoiding dynamic generation for popular pages
 export async function generateStaticParams() {
   try {
-    // Get the most recent 20 published events (adjust based on your traffic patterns)
-    const events = await eventsCollection.query(
-      [{ field: 'eventStatus', operator: '==', value: 'published' }],
+    // Get the most recent events (without status filter to avoid needing composite index)
+    // Filter by status in memory instead
+    const allEvents = await eventsCollection.query(
+      [],
       'startDate',
       'desc',
-      20
+      50 // Fetch more to account for filtering
     );
 
-    return events.map((event) => ({
+    // Filter to published events and take top 20
+    const publishedEvents = allEvents
+      .filter(event => event.eventStatus === 'published')
+      .slice(0, 20);
+
+    return publishedEvents.map((event) => ({
       slug: event.slug,
     }));
   } catch (error) {
