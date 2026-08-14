@@ -79,3 +79,10 @@ export const getAdminDb = async () => {
 // Backward compatibility exports (deprecated - use getAdminAuth/getAdminDb instead)
 export let adminAuth: any = null;
 export let adminDb: any = null;
+
+// Initialize on module load for backward compatibility
+(async () => {
+    const { auth, db } = await initializeFirebaseAdmin();
+    adminAuth = auth;
+    adminDb = db;
+})();
