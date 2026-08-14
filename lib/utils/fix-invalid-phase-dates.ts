@@ -10,16 +10,16 @@ export async function findEventsWithInvalidPhaseDates() {
   console.log('🔍 Buscando eventos con fechas de fase inválidas...\n');
 
   const allEvents = await eventsCollection.query([]) as Event[];
-  const problematicEvents = [];
+  const problematicEvents: any[] = [];
 
   for (const event of allEvents) {
-    if (!event.ticketPhases || !Array.isArray(event.ticketPhases)) {
+    if (!event.salesPhases || !Array.isArray(event.salesPhases)) {
       continue;
     }
 
-    const invalidPhases = [];
+    const invalidPhases: any[] = [];
 
-    event.ticketPhases.forEach((phase, index) => {
+    event.salesPhases.forEach((phase: any, index: number) => {
       if (!phase.startDate || !phase.endDate) {
         return;
       }
@@ -59,12 +59,12 @@ export async function findEventsWithInvalidPhaseDates() {
 export async function fixInvalidPhaseDatesForEvent(eventId: string) {
   const event = await eventsCollection.get(eventId) as Event | null;
 
-  if (!event || !event.ticketPhases) {
+  if (!event || !event.salesPhases) {
     return { success: false, message: 'Event not found or has no phases' };
   }
 
   let hasChanges = false;
-  const updatedPhases = event.ticketPhases.map((phase) => {
+  const updatedPhases = event.salesPhases.map((phase: any) => {
     const startDate = typeof phase.startDate === 'string'
       ? new Date(phase.startDate)
       : new Date(phase.startDate);
@@ -88,7 +88,7 @@ export async function fixInvalidPhaseDatesForEvent(eventId: string) {
 
   if (hasChanges) {
     await eventsCollection.update(eventId, {
-      ticketPhases: updatedPhases,
+      salesPhases: updatedPhases,
       updatedAt: new Date(),
     });
 

@@ -16,16 +16,16 @@ export async function GET(request: NextRequest) {
     console.log('🔍 Buscando eventos con fechas de fase inválidas...');
 
     const allEvents = await eventsCollection.query([]) as Event[];
-    const problematicEvents = [];
+    const problematicEvents: any[] = [];
 
     for (const event of allEvents) {
-      if (!event.ticketPhases || !Array.isArray(event.ticketPhases)) {
+      if (!event.salesPhases || !Array.isArray(event.salesPhases)) {
         continue;
       }
 
-      const invalidPhases = [];
+      const invalidPhases: any[] = [];
 
-      event.ticketPhases.forEach((phase, index) => {
+      event.salesPhases.forEach((phase: any, index: number) => {
         if (!phase.startDate || !phase.endDate) {
           return;
         }
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 async function fixSingleEvent(eventId: string) {
   const event = await eventsCollection.get(eventId) as Event | null;
 
-  if (!event || !event.ticketPhases) {
+  if (!event || !event.salesPhases) {
     return NextResponse.json(
       { error: 'Evento no encontrado o sin fases' },
       { status: 404 }
@@ -129,7 +129,7 @@ async function fixSingleEvent(eventId: string) {
   }
 
   let hasChanges = false;
-  const updatedPhases = event.ticketPhases.map((phase) => {
+  const updatedPhases = event.salesPhases.map((phase: any) => {
     const startDate = typeof phase.startDate === 'string'
       ? new Date(phase.startDate)
       : phase.startDate instanceof Date
@@ -157,7 +157,7 @@ async function fixSingleEvent(eventId: string) {
 
   if (hasChanges) {
     await eventsCollection.update(eventId, {
-      ticketPhases: updatedPhases,
+      salesPhases: updatedPhases,
       updatedAt: new Date(),
     });
 
@@ -185,11 +185,11 @@ async function fixAllEvents() {
   const problematicEvents = [];
 
   for (const event of allEvents) {
-    if (!event.ticketPhases || !Array.isArray(event.ticketPhases)) {
+    if (!event.salesPhases || !Array.isArray(event.salesPhases)) {
       continue;
     }
 
-    const hasInvalidPhases = event.ticketPhases.some((phase) => {
+    const hasInvalidPhases = event.salesPhases.some((phase: any) => {
       if (!phase.startDate || !phase.endDate) return false;
 
       const startDate = typeof phase.startDate === 'string'
@@ -223,7 +223,7 @@ async function fixAllEvents() {
   // Corregir cada evento
   const results = [];
   for (const event of problematicEvents) {
-    const updatedPhases = event.ticketPhases!.map((phase) => {
+    const updatedPhases = event.salesPhases!.map((phase: any) => {
       const startDate = typeof phase.startDate === 'string'
         ? new Date(phase.startDate)
         : phase.startDate instanceof Date
@@ -248,7 +248,7 @@ async function fixAllEvents() {
     });
 
     await eventsCollection.update(event.id, {
-      ticketPhases: updatedPhases,
+      salesPhases: updatedPhases,
       updatedAt: new Date(),
     });
 
