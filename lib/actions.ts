@@ -8,7 +8,7 @@ import { blogCollection, eventsCollection, productsCollection, blogCommentsColle
 import { createNotification, InstallmentNotifications, OrderNotifications } from '@/lib/utils/notifications';
 import { revalidateBlogPost, revalidateBlogListing, revalidateEvent, revalidateEventsListing, revalidateProduct, revalidateShopListing, revalidateCommentApproval, revalidateProductStock, revalidateEventCapacity } from '@/lib/revalidate';
 import { BlogPost, Event, Product, BlogComment } from '@/lib/types';
-import { requireAdmin, requireAuth } from '@/lib/auth-admin';
+import { requireAdmin, requireAuth, getCurrentUser } from '@/lib/auth-admin';
 
 
 /**
