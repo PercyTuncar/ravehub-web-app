@@ -94,9 +94,6 @@
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3"
   },
-  "engines": {
-    "node": "22.x"
-  },
   "overrides": {
     "glob": "^10.0.0",
     "inflight": "^1.0.6",
