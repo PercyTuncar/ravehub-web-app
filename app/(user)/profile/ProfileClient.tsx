@@ -112,6 +112,11 @@ export default function ProfileClient() {
     { id: 'favorites', label: 'Favoritos', icon: Heart },
   ];
 
+  // Safety check - should not happen due to ProfileAuthGuard, but TypeScript needs it
+  if (!user) {
+    return null;
+  }
+
   return (
     <>
       <VerificationRequiredModal

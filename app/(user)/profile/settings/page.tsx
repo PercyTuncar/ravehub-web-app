@@ -98,16 +98,15 @@ export default function SettingsPage() {
     toast.success('Preferencias guardadas');
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.1 } }
-  };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
 
+  // Safety check - should not happen due to ProfileAuthGuard, but TypeScript needs it
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen relative bg-[#141618] pt-24 pb-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
