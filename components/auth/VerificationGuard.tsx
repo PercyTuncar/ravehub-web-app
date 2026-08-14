@@ -23,12 +23,12 @@ export function VerificationGuard({ children }: { children: React.ReactNode }) {
                 '/login',
                 '/register',
                 '/forgot-password',
-                // Allow admin routes - they have their own auth guards
                 '/admin',
             ];
 
             // Allow paths that start with these prefixes
             const allowedPrefixes = [
+                '/profile',      // Allow all profile routes
                 '/admin/',
                 '/api/',
             ];
@@ -59,7 +59,7 @@ export function VerificationGuard({ children }: { children: React.ReactNode }) {
 
     // If unverified and not on allowed path, render nothing (while redirecting)
     const allowedPaths = ['/verify-email', '/login', '/register', '/forgot-password', '/admin'];
-    const allowedPrefixes = ['/admin/', '/api/'];
+    const allowedPrefixes = ['/profile', '/admin/', '/api/'];
     const isAllowedPath = allowedPaths.includes(pathname) ||
         allowedPrefixes.some(prefix => pathname.startsWith(prefix));
 

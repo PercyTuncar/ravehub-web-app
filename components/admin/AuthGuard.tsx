@@ -21,24 +21,32 @@ export function AuthGuard({ children, requiredRole = 'admin' }: AuthGuardProps) 
         // Wait a bit for session to sync
         await new Promise(resolve => setTimeout(resolve, 300));
 
+        console.log('[AdminAuthGuard] User:', user);
+        console.log('[AdminAuthGuard] User role:', user?.role);
+        console.log('[AdminAuthGuard] Loading:', loading);
+
         if (!user) {
+          console.log('[AdminAuthGuard] No user, redirecting to login');
           // Redirect to login with admin redirect
           router.push('/login?redirect=/admin');
           return;
         }
 
         if (!['admin', 'moderator'].includes(user.role)) {
+          console.log('[AdminAuthGuard] User is not admin/moderator, redirecting to home');
           // Not authorized, redirect to home
           router.push('/');
           return;
         }
 
         if (requiredRole === 'admin' && user.role !== 'admin') {
+          console.log('[AdminAuthGuard] User needs admin role, redirecting to /admin');
           // Need admin role but only have moderator
           router.push('/admin');
           return;
         }
 
+        console.log('[AdminAuthGuard] User authorized, allowing access');
         setChecking(false);
       }
     };

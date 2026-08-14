@@ -20,13 +20,18 @@ export function ProfileAuthGuard({ children }: ProfileAuthGuardProps) {
         // Wait a bit for session to sync
         await new Promise(resolve => setTimeout(resolve, 300));
 
+        console.log('[ProfileAuthGuard] User:', user);
+        console.log('[ProfileAuthGuard] Loading:', loading);
+
         if (!user) {
+          console.log('[ProfileAuthGuard] No user, redirecting to login');
           // Store the current path to redirect back after login
           const currentPath = window.location.pathname;
           router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
           return;
         }
 
+        console.log('[ProfileAuthGuard] User authenticated, allowing access');
         setChecking(false);
       }
     };
