@@ -13,6 +13,7 @@ import { es } from 'date-fns/locale';
 import Image from 'next/image';
 import EventsClient from '@/components/events/EventsClient';
 import { Pagination } from '@/components/ui/pagination';
+import { SchemaGenerator } from '@/lib/seo/schema-generator';
 
 // ISR: Revalidate every 10 minutes (600 seconds) + on-demand revalidation
 export const revalidate = 600;
@@ -116,11 +117,59 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
   // OPTIMIZED: Count is already efficient due to caching and limited query
   const totalEvents = allEvents.length;
 
+  // Generate ItemList schema for the events listing page
+  const eventsListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Eventos de Música Electrónica en Latinoamérica',
+    description: 'Lista completa de eventos de música electrónica, festivales y conciertos en Latinoamérica',
+    numberOfItems: totalEvents,
+    itemListElement: allEvents.slice(0, 50).map((event, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'MusicEvent',
+        '@id': `https://www.ravehublatam.com/eventos/${event.slug}`,
+        name: event.name,
+        url: `https://www.ravehublatam.com/eventos/${event.slug}`,
+        image: event.mainImageUrl,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: {
+          '@type': 'Place',
+          name: event.location?.venue || 'Por confirmar',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: event.location?.city || '',
+            addressRegion: event.location?.state || '',
+            addressCountry: event.country || 'PE',
+          },
+        },
+        ...(event.sellTicketsOnPlatform && {
+          offers: {
+            '@type': 'Offer',
+            url: `https://www.ravehublatam.com/eventos/${event.slug}/entradas`,
+            availability: 'https://schema.org/InStock',
+            priceCurrency: event.currency || 'PEN',
+          },
+        }),
+      },
+    })),
+  };
+
   // Paginate events
   // const paginatedEvents = allEvents.slice(offset, offset + eventsPerPage);
 
   return (
     <div>
+      {/* JSON-LD Schema for Events List */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventsListSchema) }}
+      />
+
       <EventsClient
         initialEvents={allEvents} // Pass ALL events
         currentPage={currentPage}
