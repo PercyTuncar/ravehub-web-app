@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+// Force Node.js runtime instead of Edge
+export const runtime = 'nodejs';
 // Force dynamic to ensure this runs on every request
 export const dynamic = 'force-dynamic';
 

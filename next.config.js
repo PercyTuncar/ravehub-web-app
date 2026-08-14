@@ -14,10 +14,26 @@ const nextConfig = {
     ],
   },
   // Fix firebase-admin ESM issues in production
-  serverExternalPackages: ['firebase-admin'],
+  serverExternalPackages: [
+    'firebase-admin',
+    '@firebase/app',
+    '@firebase/auth',
+    'firebase-admin/app',
+    'firebase-admin/auth',
+    'firebase-admin/firestore',
+  ],
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000'],
+    },
+    // Disable turbopack in production to avoid ESM issues
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
     },
   },
   env: {
