@@ -1,12 +1,9 @@
 import 'server-only';
 import { adminDb } from './admin';
-import admin from 'firebase-admin';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
-// IMPORTANT: FieldValue and Timestamp MUST come from the same firebase-admin
-// package that created adminDb. Importing them from @google-cloud/firestore
-// produces objects with a different prototype that Firestore rejects with:
-// "Couldn't serialize object of type ServerTimestampTransform".
-const { FieldValue, Timestamp } = admin.firestore;
+// IMPORTANT: FieldValue and Timestamp MUST come from firebase-admin/firestore
+// in v14+ to ensure compatibility with the Admin SDK
 
 // Helper interface to match DocumentData
 interface DocumentData {

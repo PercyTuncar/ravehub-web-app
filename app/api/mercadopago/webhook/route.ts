@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import MercadoPago from 'mercadopago';
+import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { ordersCollection } from '@/lib/firebase/collections';
 import { notifyOrderStatusChange } from '@/lib/utils/notifications';
 
 // Configurar Mercado Pago
-const payment = new MercadoPago(process.env.MERCADOPAGO_ACCESS_TOKEN || '');
+const client = new MercadoPagoConfig({
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
+});
+const paymentClient = new Payment(client);
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,9 +29,8 @@ export async function POST(request: NextRequest) {
 
       console.log(`🔍 [WEBHOOK] Buscando información del pago: ${paymentId}`);
 
-      // Obtener información del pago
-      const rawPaymentResponse = await payment.getPayment(paymentId);
-      const paymentData = (rawPaymentResponse as any)?.response ?? rawPaymentResponse;
+      // Obtener información del pago con la nueva API v3
+      const paymentData = await paymentClient.get({ id: paymentId });
 
       console.log('💳 [WEBHOOK] Estado del pago:', paymentData.status);
       console.log('💰 [WEBHOOK] Monto:', paymentData.transaction_amount, paymentData.currency_id);
@@ -116,9 +118,11 @@ export async function POST(request: NextRequest) {
 
       // Si el pago fue aprobado, agregar detalles del pago
       if (paymentData.status === 'approved') {
+        const feeAmount = paymentData.fee_details?.reduce((sum: number, fee: any) => sum + (fee.amount || 0), 0) || 0;
+
         updateData.paymentDetails = {
           transactionAmount: paymentData.transaction_amount,
-          netAmount: paymentData.transaction_amount - (paymentData.fee_details?.reduce((sum: number, fee: any) => sum + fee.amount, 0) || 0),
+          netAmount: (paymentData.transaction_amount || 0) - feeAmount,
           paymentTypeId: paymentData.payment_type_id,
           paymentMethodId: paymentData.payment_method_id,
           cardLastFourDigits: paymentData.card?.last_four_digits,

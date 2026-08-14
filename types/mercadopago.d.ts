@@ -1,18 +1,35 @@
+// Type definitions for mercadopago v3.x
+// The new SDK exports specific classes instead of a default export
+
 declare module 'mercadopago' {
-  class MercadoPago {
-    constructor(accessToken: string);
-    sandboxMode(enable?: boolean): boolean;
-    getAccessToken(): Promise<string>;
-    get(req: { uri: string; params?: any; authenticate?: boolean } | string, params?: any, authenticate?: boolean): Promise<any>;
-    post(req: any): Promise<any>;
-    put(req: any): Promise<any>;
-    delete(req: any): Promise<any>;
-    createPreference(preference: any): Promise<any>;
-    updatePreference(id: string, preference: any): Promise<any>;
-    getPreference(id: string): Promise<any>;
-    getPayment(id: string): Promise<any>;
-    getPaymentInfo(id: string): Promise<any>;
+  export class MercadoPagoConfig {
+    constructor(options: { accessToken: string; options?: any });
   }
 
-  export default MercadoPago;
+  export class Preference {
+    constructor(client: MercadoPagoConfig);
+    create(params: { body: any }): Promise<any>;
+    update(params: { id: string; body: any }): Promise<any>;
+    get(params: { id: string }): Promise<any>;
+  }
+
+  export class Payment {
+    constructor(client: MercadoPagoConfig);
+    get(params: { id: string }): Promise<any>;
+    create(params: { body: any }): Promise<any>;
+    update(params: { id: string; body: any }): Promise<any>;
+    search(params: { options: any }): Promise<any>;
+  }
+
+  export class MerchantOrder {
+    constructor(client: MercadoPagoConfig);
+    get(params: { id: string }): Promise<any>;
+  }
+
+  export class Customer {
+    constructor(client: MercadoPagoConfig);
+    create(params: { body: any }): Promise<any>;
+    get(params: { id: string }): Promise<any>;
+    update(params: { id: string; body: any }): Promise<any>;
+  }
 }

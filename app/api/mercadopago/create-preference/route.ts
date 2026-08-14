@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import MercadoPago from 'mercadopago';
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 
 // Configurar Mercado Pago
-const mp = new MercadoPago(process.env.MERCADOPAGO_ACCESS_TOKEN || '');
+const client = new MercadoPagoConfig({
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
+});
+const preference = new Preference(client);
 
 export async function POST(request: NextRequest) {
   try {
@@ -138,9 +141,10 @@ export async function POST(request: NextRequest) {
     // Log del objeto completo serializado (para verificar la estructura exacta)
     console.log('🔍 [MERCADOPAGO] Serialized body (first 500 chars):', JSON.stringify(preferenceBody).substring(0, 500));
 
-    // Crear la preferencia
-    const mpResponse = await mp.createPreference(preferenceBody);
-    const response = (mpResponse as any)?.response ?? mpResponse;
+    // Crear la preferencia con la nueva API v3
+    const response = await preference.create({
+      body: preferenceBody
+    });
 
     console.log('✅ [MERCADOPAGO] Preferencia creada:', response.id);
     console.log('🔗 [MERCADOPAGO] Init Point:', response.init_point);
