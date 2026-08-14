@@ -13,31 +13,42 @@ function getAdminApp(): App | undefined {
         return getApp();
     }
 
-    const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY;
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
     if (!projectId || !clientEmail || !privateKey) {
         // In build time or if envs are missing, we might want to fail gracefully or throw
         // For safety in production, we throw.
         if (process.env.NODE_ENV === 'production') {
-            throw new Error('Missing Firebase Admin credentials (FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY)');
+            console.warn('Firebase Admin credentials missing in production build. Admin features will be disabled.');
+            return undefined;
         }
         // Fallback for dev/build without creds (optional, but risky if logic depends on it)
         console.warn('Firebase Admin credentials missing. Admin SDK not initialized.');
         return undefined;
     }
 
-    const serviceAccount: ServiceAccount = {
-        projectId,
-        clientEmail,
-        privateKey: formatPrivateKey(privateKey),
-    };
+    try {
+        const serviceAccount: ServiceAccount = {
+            projectId,
+            clientEmail,
+            privateKey: formatPrivateKey(privateKey),
+        };
 
-    return initializeApp({
-        credential: cert(serviceAccount),
-        projectId,
-    });
+        return initializeApp({
+            credential: cert(serviceAccount),
+            projectId,
+        });
+    } catch (error) {
+        console.error('Failed to initialize Firebase Admin:', error);
+        // During build time, return undefined instead of throwing
+        if (process.env.NODE_ENV === 'production') {
+            console.warn('Firebase Admin initialization failed during build. Admin features will be disabled.');
+            return undefined;
+        }
+        throw error;
+    }
 }
 
 const app = getAdminApp();
