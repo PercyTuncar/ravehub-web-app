@@ -39,28 +39,39 @@ export async function POST(request: NextRequest) {
     // Sincronizar con DJs
     await syncEventWithDjs(eventId);
 
-    // Verificar que se actualizó correctamente
+    // Verificar que se actualizó correctamente usando batch query
     const lineupDjIds = event.artistLineup
       .map(artist => artist.eventDjId)
       .filter(id => id) as string[];
 
-    const updatedDjs = [];
-    for (const djId of lineupDjIds) {
-      const dj = await eventDjsCollection.get(djId) as EventDj | null;
-      if (dj) {
-        const eventSummary = dj.eventsSummary?.find(e => e.eventId === eventId);
-        if (eventSummary) {
-          updatedDjs.push({
-            djId,
-            djName: dj.name,
-            hasImage: !!eventSummary.mainImageUrl,
-            hasSlug: !!eventSummary.slug,
-            imageUrl: eventSummary.mainImageUrl,
-            slug: eventSummary.slug
-          });
-        }
-      }
+    if (lineupDjIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: `Evento ${event.name} sincronizado (sin DJs en lineup)`,
+        event: {
+          id: eventId,
+          name: event.name,
+          mainImageUrl: event.mainImageUrl,
+          slug: event.slug
+        },
+        updatedDjs: []
+      });
     }
+
+    // OPTIMIZADO: Usar batch query en lugar de N queries individuales
+    const djs = await eventDjsCollection.getByIds(lineupDjIds) as EventDj[];
+
+    const updatedDjs = djs.map(dj => {
+      const eventSummary = dj.eventsSummary?.find(e => e.eventId === eventId);
+      return {
+        djId: dj.id,
+        djName: dj.name,
+        hasImage: !!eventSummary?.mainImageUrl,
+        hasSlug: !!eventSummary?.slug,
+        imageUrl: eventSummary?.mainImageUrl,
+        slug: eventSummary?.slug
+      };
+    }).filter(dj => dj.hasImage || dj.hasSlug); // Solo incluir DJs que tienen datos
 
     return NextResponse.json({
       success: true,

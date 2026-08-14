@@ -4,6 +4,9 @@ import { EventDj } from '@/lib/types';
 import { generateSlug } from '@/lib/utils/slug-generator';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 
+// Timeout protection for Vercel Hobby plan (max 10s)
+export const maxDuration = 10;
+
 interface DjUploadData {
   name: string;
   slug?: string;
@@ -78,10 +81,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Limit bulk upload to prevent abuse
-    if (djsToProcess.length > 100) {
+    // Limit bulk upload to prevent excessive CPU usage and timeout
+    // Reduced from 100 to 25 for better performance on Vercel Hobby plan
+    if (djsToProcess.length > 25) {
       return NextResponse.json(
-        { error: 'Máximo 100 DJs por carga masiva' },
+        { error: 'Máximo 25 DJs por carga masiva. Para más DJs, divida en múltiples requests.' },
         { status: 400 }
       );
     }
