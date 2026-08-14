@@ -9,7 +9,10 @@ const SESSION_COOKIE_NAME = 'session';
 
 export async function verifySession() {
     if (!adminAuth) {
-        throw new Error('Firebase Admin not initialized');
+        console.error('Firebase Admin not initialized - check environment variables');
+        console.error('Required: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
+        // Return null instead of throwing to prevent 500 errors
+        return null;
     }
 
     const cookieStore = await cookies();
@@ -63,6 +66,13 @@ export async function requireAuth() {
 }
 
 export async function requireAdmin() {
+    if (!adminAuth || !adminDb) {
+        console.error('Firebase Admin not initialized - check environment variables');
+        console.error('Required: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
+        // Redirect to login with error message instead of throwing 500
+        redirect('/admin/login?error=server_config');
+    }
+
     const user = await getCurrentUser();
 
     if (!user) {
