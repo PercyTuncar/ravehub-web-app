@@ -18,20 +18,32 @@ export function VerificationGuard({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!loading && firebaseUser) {
             // List of paths allowed for unverified users
-            // We allow /verify-email obviously.
-            const allowedPaths = ['/verify-email'];
+            const allowedPaths = [
+                '/verify-email',
+                '/login',
+                '/register',
+                '/forgot-password',
+                // Allow admin routes - they have their own auth guards
+                '/admin',
+            ];
+
+            // Allow paths that start with these prefixes
+            const allowedPrefixes = [
+                '/admin/',
+                '/api/',
+            ];
+
+            // Check if current path is allowed
+            const isAllowedPath = allowedPaths.includes(pathname) ||
+                allowedPrefixes.some(prefix => pathname.startsWith(prefix));
 
             // If user is NOT verified
             if (!firebaseUser.emailVerified) {
                 // And they are NOT on an allowed path
-                if (!allowedPaths.includes(pathname)) {
+                if (!isAllowedPath) {
                     // Redirect to verify email
                     router.push('/verify-email');
                 }
-            } else {
-                // If user IS verified, they shouldn't be trapped on /verify-email if they reload
-                // But maybe they want to see the success message. 
-                // We will leave them there unless they navigate away.
             }
         }
     }, [firebaseUser, loading, pathname, router]);
@@ -46,8 +58,12 @@ export function VerificationGuard({ children }: { children: React.ReactNode }) {
     }
 
     // If unverified and not on allowed path, render nothing (while redirecting)
-    // Prevents content flash
-    if (firebaseUser && !firebaseUser.emailVerified && pathname !== '/verify-email') {
+    const allowedPaths = ['/verify-email', '/login', '/register', '/forgot-password', '/admin'];
+    const allowedPrefixes = ['/admin/', '/api/'];
+    const isAllowedPath = allowedPaths.includes(pathname) ||
+        allowedPrefixes.some(prefix => pathname.startsWith(prefix));
+
+    if (firebaseUser && !firebaseUser.emailVerified && !isAllowedPath) {
         return null;
     }
 

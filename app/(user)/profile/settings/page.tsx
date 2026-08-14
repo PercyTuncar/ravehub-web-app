@@ -98,20 +98,6 @@ export default function SettingsPage() {
     toast.success('Preferencias guardadas');
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#141618]">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-2">Acceso requerido</h1>
-          <p className="text-white/60 mb-6">Debes iniciar sesión para configurar tu perfil.</p>
-          <Link href="/login">
-            <Button className="bg-primary hover:bg-primary/90 text-white">Iniciar Sesión</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.1 } }

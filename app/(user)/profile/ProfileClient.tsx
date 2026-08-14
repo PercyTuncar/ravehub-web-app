@@ -94,20 +94,6 @@ export default function ProfileClient() {
     return false;
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#141618]">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-2">Acceso requerido</h1>
-          <p className="text-white/60 mb-6">Debes iniciar sesión para ver tu perfil.</p>
-          <Link href="/login">
-            <Button className="bg-primary hover:bg-primary/90 text-white">Iniciar Sesión</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },

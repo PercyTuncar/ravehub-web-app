@@ -5,12 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
-interface AuthGuardProps {
+interface ProfileAuthGuardProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'moderator';
 }
 
-export function AuthGuard({ children, requiredRole = 'admin' }: AuthGuardProps) {
+export function ProfileAuthGuard({ children }: ProfileAuthGuardProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
@@ -22,20 +21,9 @@ export function AuthGuard({ children, requiredRole = 'admin' }: AuthGuardProps) 
         await new Promise(resolve => setTimeout(resolve, 300));
 
         if (!user) {
-          // Redirect to login with admin redirect
-          router.push('/login?redirect=/admin');
-          return;
-        }
-
-        if (!['admin', 'moderator'].includes(user.role)) {
-          // Not authorized, redirect to home
-          router.push('/');
-          return;
-        }
-
-        if (requiredRole === 'admin' && user.role !== 'admin') {
-          // Need admin role but only have moderator
-          router.push('/admin');
+          // Store the current path to redirect back after login
+          const currentPath = window.location.pathname;
+          router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
           return;
         }
 
@@ -44,20 +32,20 @@ export function AuthGuard({ children, requiredRole = 'admin' }: AuthGuardProps) 
     };
 
     checkAuth();
-  }, [user, loading, router, requiredRole]);
+  }, [user, loading, router]);
 
   if (loading || checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="min-h-screen flex items-center justify-center bg-[#141618]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-white/70 text-sm font-medium">Verificando permisos de administrador...</p>
+          <p className="text-white/70 text-sm font-medium">Verificando sesión...</p>
         </div>
       </div>
     );
   }
 
-  if (!user || !['admin', 'moderator'].includes(user.role)) {
+  if (!user) {
     return null;
   }
 

@@ -94,17 +94,6 @@ export default function OrdersPage() {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Acceso requerido</h1>
-          <p className="text-muted-foreground">Debes iniciar sesión para ver tus pedidos.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}

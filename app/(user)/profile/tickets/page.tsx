@@ -119,14 +119,6 @@ export default function TicketsPage() {
     fetchTickets();
   }, [user]);
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#141618]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#141618] pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background Gradient */}
