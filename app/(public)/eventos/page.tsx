@@ -143,7 +143,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
           address: {
             '@type': 'PostalAddress',
             addressLocality: event.location?.city || '',
-            addressRegion: event.location?.state || '',
+            addressRegion: event.location?.region || '',
             addressCountry: event.country || 'PE',
           },
         },
