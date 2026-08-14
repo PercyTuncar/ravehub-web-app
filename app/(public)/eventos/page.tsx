@@ -13,7 +13,7 @@ import { es } from 'date-fns/locale';
 import Image from 'next/image';
 import EventsClient from '@/components/events/EventsClient';
 import { Pagination } from '@/components/ui/pagination';
-import { SchemaGenerator } from '@/lib/seo/schema-generator';
+import JsonLd from '@/components/seo/JsonLd';
 
 // ISR: Revalidate every 10 minutes (600 seconds) + on-demand revalidation
 export const revalidate = 600;
@@ -163,20 +163,17 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
   // const paginatedEvents = allEvents.slice(offset, offset + eventsPerPage);
 
   return (
-    <div>
-      {/* JSON-LD Schema for Events List */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventsListSchema) }}
-      />
+    <>
+      {/* JSON-LD Schema for Events List - Server Component renders before client hydration */}
+      <JsonLd data={eventsListSchema} id="events-list-schema" />
 
       <EventsClient
-        initialEvents={allEvents} // Pass ALL events
+        initialEvents={allEvents}
         currentPage={currentPage}
-        totalPages={1} // Disable server pagination UI
+        totalPages={1}
         totalEvents={totalEvents}
         searchParams={{ tipo, region }}
       />
-    </div>
+    </>
   );
 }
