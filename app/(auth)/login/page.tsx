@@ -59,6 +59,10 @@ function LoginContent() {
 
     try {
       await signInWithEmail(email, password);
+
+      // Wait a bit for session cookie to be set on server
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Navigation will be handled by useEffect
     } catch (error: any) {
       const code = error.code;
@@ -75,6 +79,10 @@ function LoginContent() {
 
     try {
       await signInWithGoogle();
+
+      // Wait a bit for session cookie to be set on server
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Navigation will be handled by useEffect
     } catch (error: any) {
       setError('Error al iniciar sesión con Google. Intenta nuevamente.');

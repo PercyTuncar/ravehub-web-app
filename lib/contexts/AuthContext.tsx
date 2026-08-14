@@ -123,9 +123,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const syncSession = async (firebaseUser: FirebaseUser) => {
     try {
-      const idToken = await firebaseUser.getIdToken();
+      const idToken = await firebaseUser.getIdToken(true); // Force refresh to get latest token
       const { loginAction } = await import('@/lib/auth-actions');
-      await loginAction(idToken);
+      const result = await loginAction(idToken);
+
+      if (!result.success) {
+        console.error('Failed to create session cookie:', result.error);
+      }
     } catch (error) {
       console.error('Error syncing session:', error);
     }

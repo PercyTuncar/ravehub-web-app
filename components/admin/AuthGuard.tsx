@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -12,30 +13,44 @@ interface AuthGuardProps {
 export function AuthGuard({ children, requiredRole = 'admin' }: AuthGuardProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login?redirect=/admin');
-        return;
-      }
+    // Add a small delay to ensure session cookie is set
+    const checkAuth = async () => {
+      if (!loading) {
+        // Wait a bit for session to sync
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-      if (!['admin', 'moderator'].includes(user.role)) {
-        router.push('/');
-        return;
-      }
+        if (!user) {
+          router.push('/login?redirect=/admin');
+          return;
+        }
 
-      if (requiredRole === 'admin' && user.role !== 'admin') {
-        router.push('/admin');
-        return;
+        if (!['admin', 'moderator'].includes(user.role)) {
+          router.push('/');
+          return;
+        }
+
+        if (requiredRole === 'admin' && user.role !== 'admin') {
+          router.push('/admin');
+          return;
+        }
+
+        setChecking(false);
       }
-    }
+    };
+
+    checkAuth();
   }, [user, loading, router, requiredRole]);
 
-  if (loading) {
+  if (loading || checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-white/70 text-sm font-medium">Verificando sesión...</p>
+        </div>
       </div>
     );
   }

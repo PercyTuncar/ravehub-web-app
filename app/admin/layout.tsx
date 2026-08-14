@@ -1,17 +1,12 @@
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { Metadata } from 'next';
-import { requireAdmin } from '@/lib/auth-admin';
 
 export const metadata: Metadata = {
   title: 'Ravehub Admin',
   robots: { index: false, follow: false },
 };
 
-export const dynamic = 'force-dynamic';
-
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await requireAdmin();
-
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-black">
       <AdminSidebar />
