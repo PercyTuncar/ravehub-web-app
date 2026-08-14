@@ -18,9 +18,17 @@ async function initializeFirebaseAdmin() {
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
+    console.log('[Firebase Admin] Initializing with:', {
+        hasProjectId: !!projectId,
+        hasClientEmail: !!clientEmail,
+        hasPrivateKey: !!privateKey,
+        privateKeyLength: privateKey?.length || 0,
+        environment: process.env.NODE_ENV
+    });
+
     if (!projectId || !clientEmail || !privateKey) {
         if (process.env.NODE_ENV === 'production') {
-            console.warn('Firebase Admin credentials missing in production build. Admin features will be disabled.');
+            console.warn('[Firebase Admin] Credentials missing in production build. Admin features will be disabled.');
             adminAppInstance = null;
             return { app: null, auth: null, db: null };
         }
@@ -53,11 +61,17 @@ async function initializeFirebaseAdmin() {
         adminAuthInstance = getAuth(adminAppInstance);
         adminDbInstance = getFirestore(adminAppInstance);
 
+        console.log('[Firebase Admin] Successfully initialized:', {
+            hasApp: !!adminAppInstance,
+            hasAuth: !!adminAuthInstance,
+            hasDb: !!adminDbInstance
+        });
+
         return { app: adminAppInstance, auth: adminAuthInstance, db: adminDbInstance };
     } catch (error) {
-        console.error('Failed to initialize Firebase Admin:', error);
+        console.error('[Firebase Admin] Failed to initialize:', error);
         if (process.env.NODE_ENV === 'production') {
-            console.warn('Firebase Admin initialization failed during build. Admin features will be disabled.');
+            console.warn('[Firebase Admin] Initialization failed during build. Admin features will be disabled.');
             adminAppInstance = null;
             return { app: null, auth: null, db: null };
         }
@@ -81,8 +95,15 @@ export let adminAuth: any = null;
 export let adminDb: any = null;
 
 // Initialize on module load for backward compatibility
+console.log('[Firebase Admin] Module loaded, starting IIFE initialization...');
 (async () => {
-    const { auth, db } = await initializeFirebaseAdmin();
-    adminAuth = auth;
-    adminDb = db;
+    try {
+        console.log('[Firebase Admin] IIFE: Calling initializeFirebaseAdmin...');
+        const { auth, db } = await initializeFirebaseAdmin();
+        adminAuth = auth;
+        adminDb = db;
+        console.log('[Firebase Admin] IIFE: Completed. adminAuth:', !!adminAuth, 'adminDb:', !!adminDb);
+    } catch (error) {
+        console.error('[Firebase Admin] IIFE: Failed to initialize:', error);
+    }
 })();

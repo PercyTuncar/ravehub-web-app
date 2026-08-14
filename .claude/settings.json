@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit *)",
+      "Bash(git commit -m 'Refactor admin-collections to use async getAdminDb\\(\\) instead of deprecated adminDb export *)"
+    ]
+  }
+}

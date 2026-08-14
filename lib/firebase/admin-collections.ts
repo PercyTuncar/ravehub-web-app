@@ -1,5 +1,5 @@
 import 'server-only';
-import { adminDb } from './admin';
+import { getAdminDb } from './admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 // IMPORTANT: FieldValue and Timestamp MUST come from firebase-admin/firestore
@@ -14,9 +14,10 @@ interface DocumentData {
 export class AdminFirestoreCollection<T extends DocumentData> {
     constructor(private collectionName: string) { }
 
-    private get db() {
-        if (!adminDb) throw new Error('Firebase Admin DB not initialized');
-        return adminDb;
+    private async getDb() {
+        const db = await getAdminDb();
+        if (!db) throw new Error('Firebase Admin DB not initialized');
+        return db;
     }
 
     private serializeTimestamps(data: DocumentData): DocumentData {
@@ -56,7 +57,8 @@ export class AdminFirestoreCollection<T extends DocumentData> {
 
     async get(id: string): Promise<T | null> {
         try {
-            const docSnap = await this.db.collection(this.collectionName).doc(id).get();
+            const db = await this.getDb();
+            const docSnap = await db.collection(this.collectionName).doc(id).get();
             if (docSnap.exists) {
                 const data = docSnap.data() as DocumentData;
                 const serializedData = this.serializeTimestamps(data);
@@ -73,7 +75,8 @@ export class AdminFirestoreCollection<T extends DocumentData> {
         // WARNING: This method should be avoided - use query() with limits instead
         console.warn(`[Firestore Admin] getAll() called on ${this.collectionName} - consider using query() with limits`);
         try {
-            const querySnapshot = await this.db.collection(this.collectionName).get();
+            const db = await this.getDb();
+            const querySnapshot = await db.collection(this.collectionName).get();
             return querySnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
                 const data = doc.data();
                 const serializedData = this.serializeTimestamps(data);
@@ -90,12 +93,13 @@ export class AdminFirestoreCollection<T extends DocumentData> {
      */
     async count(conditions: Array<{ field: string; operator: string; value: any }> = []): Promise<number> {
         try {
-            let query: FirebaseFirestore.Query = this.db.collection(this.collectionName);
-            
+            const db = await this.getDb();
+            let query: FirebaseFirestore.Query = db.collection(this.collectionName);
+
             conditions.forEach(({ field, operator, value }) => {
                 query = query.where(field, operator as FirebaseFirestore.WhereFilterOp, value);
             });
-            
+
             const querySnapshot = await query.get();
             return querySnapshot.size;
         } catch (error) {
@@ -110,15 +114,16 @@ export class AdminFirestoreCollection<T extends DocumentData> {
      */
     async getByIds(ids: string[]): Promise<T[]> {
         if (ids.length === 0) return [];
-        
+
         try {
+            const db = await this.getDb();
             const results: T[] = [];
             // Firestore 'in' operator is limited to 30 values per query
             const batchSize = 30;
-            
+
             for (let i = 0; i < ids.length; i += batchSize) {
                 const batchIds = ids.slice(i, i + batchSize);
-                const querySnapshot = await this.db.collection(this.collectionName)
+                const querySnapshot = await db.collection(this.collectionName)
                     .where('__name__', 'in', batchIds)
                     .get();
                 
@@ -138,7 +143,8 @@ export class AdminFirestoreCollection<T extends DocumentData> {
 
     async create(data: Omit<T, 'id'>): Promise<string> {
         try {
-            const docRef = await this.db.collection(this.collectionName).add({
+            const db = await this.getDb();
+            const docRef = await db.collection(this.collectionName).add({
                 ...data,
                 createdAt: FieldValue.serverTimestamp(),
                 updatedAt: FieldValue.serverTimestamp(),
@@ -152,7 +158,8 @@ export class AdminFirestoreCollection<T extends DocumentData> {
 
     async update(id: string, data: Partial<Omit<T, 'id'>>): Promise<void> {
         try {
-            await this.db.collection(this.collectionName).doc(id).update({
+            const db = await this.getDb();
+            await db.collection(this.collectionName).doc(id).update({
                 ...data,
                 updatedAt: FieldValue.serverTimestamp(),
             });
@@ -164,7 +171,8 @@ export class AdminFirestoreCollection<T extends DocumentData> {
 
     async delete(id: string): Promise<void> {
         try {
-            await this.db.collection(this.collectionName).doc(id).delete();
+            const db = await this.getDb();
+            await db.collection(this.collectionName).doc(id).delete();
         } catch (error) {
             console.error(`Admin: Error deleting ${this.collectionName} document:`, error);
             throw error;
@@ -173,7 +181,8 @@ export class AdminFirestoreCollection<T extends DocumentData> {
 
     async query(conditions: Array<{ field: string; operator: string; value: any }>, orderByField?: string, orderDirection: 'asc' | 'desc' = 'desc', limitCount?: number): Promise<T[]> {
         try {
-            let q: FirebaseFirestore.Query = this.db.collection(this.collectionName);
+            const db = await this.getDb();
+            let q: FirebaseFirestore.Query = db.collection(this.collectionName);
 
             conditions.forEach(({ field, operator, value }) => {
                 // Map Firestore operators to Admin SDK operators if needed
