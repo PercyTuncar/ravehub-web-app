@@ -10,6 +10,31 @@ import { BTSRegistrationModal } from '@/components/tickets/bts-registration-moda
 
 export const revalidate = 180;
 
+// Pre-generate the most popular/recent events' ticket pages at build time
+// This reduces Active CPU usage by avoiding dynamic generation for popular ticket pages
+export async function generateStaticParams() {
+  try {
+    // Get the most recent 20 published events with ticket sales enabled
+    const events = await eventsCollection.query(
+      [
+        { field: 'eventStatus', operator: '==', value: 'published' },
+        { field: 'sellTicketsOnPlatform', operator: '==', value: true }
+      ],
+      'startDate',
+      'desc',
+      20
+    );
+
+    return events.map((event) => ({
+      slug: event.slug,
+    }));
+  } catch (error) {
+    console.error('Error generating static params for ticket pages:', error);
+    // Return empty array on error - Next.js will generate pages on-demand
+    return [];
+  }
+}
+
 async function getEventData(slug: string): Promise<{ event: Event; eventDjs: EventDj[] } | null> {
   try {
     const conditions = [{ field: 'slug', operator: '==', value: slug }];

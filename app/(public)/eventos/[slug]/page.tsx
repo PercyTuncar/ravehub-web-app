@@ -28,6 +28,28 @@ import { PreventAutoScroll } from '@/components/events/PreventAutoScroll';
 // ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
 export const revalidate = 180;
 
+// Pre-generate the most popular/recent events at build time to reduce on-demand generation
+// This significantly reduces Active CPU usage on Vercel by avoiding dynamic generation for popular pages
+export async function generateStaticParams() {
+  try {
+    // Get the most recent 20 published events (adjust based on your traffic patterns)
+    const events = await eventsCollection.query(
+      [{ field: 'eventStatus', operator: '==', value: 'published' }],
+      'startDate',
+      'desc',
+      20
+    );
+
+    return events.map((event) => ({
+      slug: event.slug,
+    }));
+  } catch (error) {
+    console.error('Error generating static params for events:', error);
+    // Return empty array on error - Next.js will generate pages on-demand
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   try {
     const { slug } = await params;
