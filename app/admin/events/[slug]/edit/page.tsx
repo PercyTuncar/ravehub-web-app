@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Eye, Wand2, Image, Video, Plus, X, Upload, CheckCircle, Circle, Clock, Sparkles, Edit } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Wand2, Image, Video, Plus, X, Upload, CheckCircle, Circle, Clock, Sparkles, Edit, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { AuthGuard } from '@/components/admin/AuthGuard';
 import { eventsCollection } from '@/lib/firebase/collections';
 import { Event, Country, Region, City } from '@/lib/types';
@@ -28,6 +29,7 @@ import { generateSlug } from '@/lib/utils/slug-generator';
 import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
 import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart, formatDateTimeLocalForInput, convertDateTimeLocalToISO, parseLocalDate, compareDates } from '@/lib/utils/date-timezone';
+import { countTicketsForEvent, syncEventDownloadDateToTickets } from '@/lib/actions';
 import toast from 'react-hot-toast';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { revalidateSitemap } from '@/lib/revalidate';
@@ -124,6 +126,11 @@ export default function EditEventPage() {
   }>({});
   const [timezone, setTimezone] = useState('');
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+
+  // Ticket sync states
+  const [syncTicketsDate, setSyncTicketsDate] = useState(false);
+  const [ticketCount, setTicketCount] = useState<{ total: number; withOverrides: number }>({ total: 0, withOverrides: 0 });
+  const [loadingTicketCount, setLoadingTicketCount] = useState(false);
 
   // Load countries on component mount
   useEffect(() => {
@@ -255,6 +262,29 @@ export default function EditEventPage() {
       loadEvent(params.slug as string);
     }
   }, [params.slug]);
+
+  // Load ticket count when event is loaded
+  useEffect(() => {
+    if (originalEvent?.id) {
+      loadTicketCount();
+    }
+  }, [originalEvent?.id]);
+
+  const loadTicketCount = async () => {
+    if (!originalEvent?.id) return;
+
+    setLoadingTicketCount(true);
+    try {
+      const result = await countTicketsForEvent(originalEvent.id);
+      if (result.success) {
+        setTicketCount({ total: result.total, withOverrides: result.withOverrides });
+      }
+    } catch (error) {
+      console.error('Error loading ticket count:', error);
+    } finally {
+      setLoadingTicketCount(false);
+    }
+  };
 
   const loadEvent = async (eventId: string) => {
     try {
@@ -396,6 +426,32 @@ export default function EditEventPage() {
 
       await eventsCollection.update(params.slug as string, eventToUpdate);
 
+      // Sync tickets date if checkbox is enabled
+      if (syncTicketsDate && originalEvent?.id) {
+        toast.dismiss(loadingToast);
+        const syncToast = toast.loading('Sincronizando fecha con tickets existentes...');
+
+        try {
+          const syncResult = await syncEventDownloadDateToTickets(
+            originalEvent.id,
+            eventToUpdate.ticketDownloadAvailableDate || null,
+            false // Don't clear overrides, just update all tickets
+          );
+
+          if (syncResult.success) {
+            toast.dismiss(syncToast);
+            toast.success(`${syncResult.updatedCount} ticket(s) sincronizados correctamente`);
+          } else {
+            toast.dismiss(syncToast);
+            toast.error(syncResult.error || 'Error al sincronizar tickets');
+          }
+        } catch (syncError) {
+          console.error('Error syncing tickets:', syncError);
+          toast.dismiss(syncToast);
+          toast.error('Error al sincronizar tickets');
+        }
+      }
+
       // Sync DJ events locally
       try {
         await syncEventWithDjs(params.slug as string);
@@ -414,8 +470,10 @@ export default function EditEventPage() {
         // Don't block the save process if revalidation fails
       }
 
-      toast.dismiss(loadingToast);
-      toast.success('Cambios guardados correctamente');
+      if (!syncTicketsDate) {
+        toast.dismiss(loadingToast);
+        toast.success('Cambios guardados correctamente');
+      }
 
       // Limpiar localStorage
       localStorage.removeItem(`event_draft_${params.slug}`);
@@ -2363,6 +2421,48 @@ export default function EditEventPage() {
                 <p className="text-xs text-muted-foreground mt-1">
                   Fecha a partir de la cual los usuarios podrán descargar sus tickets
                 </p>
+
+                {/* Ticket Sync Section */}
+                {ticketCount.total > 0 && (
+                  <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg space-y-3">
+                    {/* Ticket Count Info */}
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <div className="text-xs text-yellow-300">
+                        <p className="font-medium mb-1">Tickets Existentes</p>
+                        <p className="text-yellow-200">
+                          Este evento tiene <strong>{ticketCount.total} ticket(s)</strong> vendidos o asignados.
+                          {ticketCount.withOverrides > 0 && (
+                            <span className="block mt-1">
+                              {ticketCount.withOverrides} ticket(s) tienen fecha personalizada que será sobrescrita.
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Sync Checkbox */}
+                    <div className="flex items-start space-x-2">
+                      <Checkbox
+                        id="syncTicketsDate"
+                        checked={syncTicketsDate}
+                        onCheckedChange={(checked) => setSyncTicketsDate(checked as boolean)}
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor="syncTicketsDate"
+                          className="text-xs font-medium cursor-pointer text-yellow-300"
+                        >
+                          Sincronizar esta fecha con todos los tickets existentes
+                        </Label>
+                        <p className="text-xs text-yellow-200/70 mt-1">
+                          Al guardar, se actualizará la fecha de descarga en todos los {ticketCount.total} tickets,
+                          sobrescribiendo fechas personalizadas si existen.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

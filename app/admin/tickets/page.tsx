@@ -17,7 +17,8 @@ import {
     Trash2,
     Plus,
     RefreshCw,
-    AlertCircle
+    AlertCircle,
+    Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,6 +31,8 @@ import { AuthGuard } from '@/components/admin/AuthGuard';
 import { ticketTransactionsCollection, eventsCollection, usersCollection } from '@/lib/firebase/collections';
 import { updateTicketPaymentStatus, deleteTicketTransaction } from '@/lib/actions';
 import { ManualTicketAssignmentModal } from '@/components/admin/tickets/ManualTicketAssignmentModal';
+import { TicketFileUploadModal } from '@/components/admin/tickets/TicketFileUploadModal';
+import { TicketUploadHistory } from '@/components/admin/tickets/TicketUploadHistory';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { TicketFiltersSkeleton, TicketRowSkeleton, TicketStatSkeleton } from '@/components/admin/TicketLoadingSkeletons';
@@ -70,6 +73,7 @@ function TicketsAdminContent() {
     const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
     const [detailModalOpen, setDetailModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [uploadModalOpen, setUploadModalOpen] = useState(false);
     const [manualAssignModalOpen, setManualAssignModalOpen] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
 
@@ -172,6 +176,31 @@ function TicketsAdminContent() {
             }
         } catch (error) {
             toast.error('Error inesperado');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleCheckAvailability = async () => {
+        setActionLoading(true);
+        try {
+            const response = await fetch('/api/cron/check-ticket-availability', {
+                method: 'POST',
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                toast.success(
+                    `Verificación completada: ${data.stats.updated} ticket(s) actualizados, ${data.stats.notificationsSent} notificación(es) enviadas`
+                );
+                // Reload tickets to show updated statuses
+                loadTickets();
+            } else {
+                toast.error(data.error || 'Error al verificar disponibilidad');
+            }
+        } catch (error) {
+            toast.error('Error inesperado al verificar disponibilidad');
         } finally {
             setActionLoading(false);
         }
@@ -397,6 +426,16 @@ function TicketsAdminContent() {
                             >
                                 <RefreshCw className="w-4 h-4 mr-2" />
                                 Actualizar
+                            </Button>
+
+                            <Button
+                                onClick={handleCheckAvailability}
+                                variant="outline"
+                                disabled={actionLoading}
+                                className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                            >
+                                <Clock className="w-4 h-4 mr-2" />
+                                {actionLoading ? 'Verificando...' : 'Verificar Disponibilidad'}
                             </Button>
 
                             <Button
@@ -695,10 +734,43 @@ function TicketsAdminContent() {
                                     </Button>
                                 )}
                             </div>
+
+                            {/* Upload Files Button for Manual Delivery */}
+                            {selectedTicket.ticketDeliveryMode === 'manualUpload' && (
+                                <div className="pt-4 border-t border-white/10 space-y-4">
+                                    {/* Upload History */}
+                                    <TicketUploadHistory uploadedFiles={selectedTicket.ticketsUploadedFiles} />
+
+                                    {/* Upload Button */}
+                                    <Button
+                                        onClick={() => {
+                                            setDetailModalOpen(false);
+                                            setUploadModalOpen(true);
+                                        }}
+                                        className="w-full bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        <Upload className="w-4 h-4 mr-2" />
+                                        {selectedTicket.ticketsUploadedFiles?.length > 0 ? 'Subir Más Archivos' : 'Subir Archivos de Tickets'}
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* Upload Files Modal */}
+            <TicketFileUploadModal
+                isOpen={uploadModalOpen}
+                onClose={() => setUploadModalOpen(false)}
+                transactionId={selectedTicket?.id || ''}
+                eventId={selectedTicket?.eventId || ''}
+                currentDownloadDate={selectedTicket?.ticketsDownloadAvailableDate}
+                onSuccess={() => {
+                    setUploadModalOpen(false);
+                    loadTickets();
+                }}
+            />
 
             {/* Manual Assignment Modal */}
             <ManualTicketAssignmentModal

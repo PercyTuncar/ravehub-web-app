@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ticketTransactionsCollection } from '@/lib/firebase/collections';
+import { ticketTransactionsCollection, eventsCollection } from '@/lib/firebase/collections';
 import { storage } from '@/lib/firebase/config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { requireAdmin } from '@/lib/auth-admin';
@@ -12,9 +12,11 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const transactionId = formData.get('transactionId') as string;
+    const eventId = formData.get('eventId') as string;
     const files = formData.getAll('files') as File[];
     const availableDate = formData.get('availableDate') as string | null;
     const makeAvailableImmediately = formData.get('makeAvailableImmediately') === 'true';
+    const updateEventDate = formData.get('updateEventDate') === 'true';
 
     if (!transactionId || !files || files.length === 0) {
       return NextResponse.json(
@@ -123,6 +125,29 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
+    // Update event date if requested
+    let eventUpdated = false;
+    if (updateEventDate && eventId) {
+      try {
+        const updateData: any = {
+          updatedAt: new Date(),
+        };
+
+        if (makeAvailableImmediately) {
+          // Remove or set to null to indicate immediate availability
+          updateData.ticketDownloadAvailableDate = null;
+        } else if (effectiveAvailableDate) {
+          updateData.ticketDownloadAvailableDate = effectiveAvailableDate;
+        }
+
+        await eventsCollection.update(eventId, updateData);
+        eventUpdated = true;
+      } catch (eventError) {
+        console.error('Error updating event date:', eventError);
+        // Don't fail the whole operation if event update fails
+      }
+    }
+
     // Send notification to user only if immediately available
     if (newDeliveryStatus === 'available') {
       await createNotification({
@@ -138,7 +163,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Tickets uploaded successfully',
       files: uploadedFiles,
-      deliveryStatus: newDeliveryStatus
+      deliveryStatus: newDeliveryStatus,
+      eventUpdated
     });
     response.headers.set('X-Robots-Tag', 'noindex');
     return response;

@@ -554,6 +554,91 @@ export async function deleteTicketTransaction(ticketId: string): Promise<{ succe
 }
 
 /**
+ * Count tickets for an event (to show admin how many would be affected)
+ */
+export async function countTicketsForEvent(eventId: string): Promise<{
+  success: boolean;
+  total: number;
+  withOverrides: number;
+  error?: string;
+}> {
+  'use server';
+
+  try {
+    await requireAdmin();
+
+    const tickets = await ticketTransactionsCollection.query([
+      { field: 'eventId', operator: '==', value: eventId }
+    ]);
+
+    const withOverrides = tickets.filter(t => t.ticketsDownloadAvailableDate).length;
+
+    return {
+      success: true,
+      total: tickets.length,
+      withOverrides
+    };
+  } catch (error: any) {
+    console.error('Error counting tickets:', error);
+    return {
+      success: false,
+      total: 0,
+      withOverrides: 0,
+      error: error.message || 'Error al contar tickets'
+    };
+  }
+}
+
+/**
+ * Sync event download date to all existing tickets
+ * Used when admin changes event date and wants to apply it to all tickets
+ */
+export async function syncEventDownloadDateToTickets(
+  eventId: string,
+  newDownloadDate: string | null,
+  clearTicketOverrides: boolean
+): Promise<{ success: boolean; updatedCount: number; error?: string }> {
+  'use server';
+
+  try {
+    await requireAdmin();
+
+    // Get all tickets for this event
+    const tickets = await ticketTransactionsCollection.query([
+      { field: 'eventId', operator: '==', value: eventId }
+    ]);
+
+    if (tickets.length === 0) {
+      return { success: true, updatedCount: 0 };
+    }
+
+    // Update tickets in parallel
+    const updatePromises = tickets.map(async (ticket) => {
+      const updateData: any = {
+        updatedAt: new Date().toISOString()
+      };
+
+      if (clearTicketOverrides) {
+        // Remove individual ticket override to use event date
+        updateData.ticketsDownloadAvailableDate = null;
+      } else {
+        // Set ticket date to match event date (creates snapshot)
+        updateData.ticketsDownloadAvailableDate = newDownloadDate;
+      }
+
+      return ticketTransactionsCollection.update(ticket.id, updateData);
+    });
+
+    await Promise.all(updatePromises);
+
+    return { success: true, updatedCount: tickets.length };
+  } catch (error: any) {
+    console.error('Error syncing event date to tickets:', error);
+    return { success: false, updatedCount: 0, error: error.message || 'Error al sincronizar fechas' };
+  }
+}
+
+/**
  * Get all installments for a ticket transaction
  */
 export async function getTicketInstallments(transactionId: string): Promise<{
