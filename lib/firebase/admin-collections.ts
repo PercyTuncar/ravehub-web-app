@@ -235,6 +235,7 @@ export const storeBannersCollection = new AdminFirestoreCollection('storeBanners
 export const notificationsCollection = new AdminFirestoreCollection('notifications');
 export const newsletterSubscribersCollection = new AdminFirestoreCollection('newsletter_subscribers');
 export const newsletterFingerprintsCollection = new AdminFirestoreCollection('newsletter_fingerprints');
+export const bioLinkEventsCollection = new AdminFirestoreCollection('bioLinkEvents');
 export const configCollection = new AdminFirestoreCollection('config');
 export const countriesCollection = new AdminFirestoreCollection('countries');
 export const slugRedirectsCollection = new AdminFirestoreCollection('slugRedirects');
