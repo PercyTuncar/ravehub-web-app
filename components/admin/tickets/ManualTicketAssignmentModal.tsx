@@ -76,6 +76,9 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
     const [firstPaymentDate, setFirstPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [installmentPlan, setInstallmentPlan] = useState<CalculationResult | null>(null);
 
+    // Ticket Delivery Config
+    const [ticketsDownloadAvailableDate, setTicketsDownloadAvailableDate] = useState<string>(new Date().toISOString().split('T')[0]);
+
     // Status
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -226,6 +229,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 installmentsCount: (assignmentType === 'sale' && paymentType === 'installment') ? installmentsCount : undefined,
                 firstInstallmentDate: (assignmentType === 'sale' && paymentType === 'installment') ? firstPaymentDate : undefined,
                 paymentStatus: finalStatus,
+                ticketsDownloadAvailableDate,
 
                 // Pass new flags
                 paidInstallmentsIndices: (assignmentType === 'sale' && paymentType === 'installment') ? paidInstallments : undefined,
@@ -712,6 +716,23 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                     </>
                                 )}
 
+
+                                {/* Ticket Delivery Date */}
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-semibold flex items-center gap-2">
+                                        <Calendar className="w-4 h-4" />
+                                        Fecha de Disponibilidad de Descarga
+                                    </Label>
+                                    <Input
+                                        type="date"
+                                        value={ticketsDownloadAvailableDate}
+                                        onChange={(e) => setTicketsDownloadAvailableDate(e.target.value)}
+                                        className="w-full"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Los tickets estarán disponibles para descarga a partir de esta fecha.
+                                    </p>
+                                </div>
 
                                 {/* Final Summary */}
                                 <div className="bg-primary/5 p-4 rounded-lg space-y-2 text-sm">

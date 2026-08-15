@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ticketTransactionsCollection } from '@/lib/firebase/collections';
-// TODO: Import storage utilities
-// import { uploadToStorage } from '@/lib/firebase/storage';
+import { storage } from '@/lib/firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { requireAdmin } from '@/lib/auth-admin';
+import { createNotification } from '@/lib/utils/notifications';
 
 export async function POST(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin();
+
     const formData = await request.formData();
     const transactionId = formData.get('transactionId') as string;
     const files = formData.getAll('files') as File[];
+    const availableDate = formData.get('availableDate') as string | null;
+    const makeAvailableImmediately = formData.get('makeAvailableImmediately') === 'true';
 
     if (!transactionId || !files || files.length === 0) {
       return NextResponse.json(
@@ -40,7 +47,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload files to Firebase Storage
-    const uploadedUrls: string[] = [];
+    const uploadedFiles: Array<{
+      fileUrl: string;
+      fileName: string;
+      uploadedBy: string;
+      uploadedAt: string;
+      availableDate?: string;
+      mimeType?: string;
+    }> = [];
+
+    const adminUser = await requireAdmin();
 
     for (const file of files) {
       // Validate file type
@@ -59,29 +75,70 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // TODO: Upload to Firebase Storage
-      // const url = await uploadToStorage(file, `tickets/${transactionId}/${file.name}`);
-      // uploadedUrls.push(url);
+      // Upload to Firebase Storage
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${file.name}`;
+      const storageRef = ref(storage, `tickets/${transactionId}/${fileName}`);
 
-      // For now, simulate upload
-      const mockUrl = `https://storage.googleapis.com/ravehub-tickets/${transactionId}/${file.name}`;
-      uploadedUrls.push(mockUrl);
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      await uploadBytes(storageRef, buffer, {
+        contentType: file.type,
+      });
+
+      const downloadUrl = await getDownloadURL(storageRef);
+
+      uploadedFiles.push({
+        fileUrl: downloadUrl,
+        fileName: file.name,
+        uploadedBy: adminUser.id,
+        uploadedAt: new Date().toISOString(),
+        availableDate: makeAvailableImmediately ? undefined : (availableDate || transaction.ticketsDownloadAvailableDate),
+        mimeType: file.type,
+      });
     }
 
-    // Update transaction with file URLs and mark as delivered
+    // Determine delivery status based on availability date
+    const now = new Date();
+    const effectiveAvailableDate = makeAvailableImmediately ? null : (availableDate || transaction.ticketsDownloadAvailableDate);
+
+    let newDeliveryStatus: 'scheduled' | 'available' | 'delivered' = 'available';
+
+    if (effectiveAvailableDate) {
+      const availableDateObj = new Date(effectiveAvailableDate);
+      if (availableDateObj > now) {
+        newDeliveryStatus = 'scheduled';
+      } else {
+        newDeliveryStatus = 'available';
+      }
+    }
+
+    // Update transaction with uploaded files metadata
     await ticketTransactionsCollection.update(transactionId, {
-      ticketsFiles: uploadedUrls,
-      ticketDeliveryStatus: 'delivered',
-      deliveredAt: new Date(),
+      ticketsUploadedFiles: uploadedFiles,
+      ticketsFiles: uploadedFiles.map(f => f.fileUrl), // Keep legacy field for compatibility
+      ticketDeliveryStatus: newDeliveryStatus,
+      deliveredAt: newDeliveryStatus === 'available' ? new Date() : undefined,
       updatedAt: new Date(),
     });
 
-    // TODO: Send notification to user
+    // Send notification to user only if immediately available
+    if (newDeliveryStatus === 'available') {
+      await createNotification({
+        userId: transaction.userId,
+        title: '🎉 Tickets Entregados',
+        body: 'Tus tickets están listos para descargar.',
+        type: 'general',
+        orderId: transactionId
+      });
+    }
 
     const response = NextResponse.json({
       success: true,
       message: 'Tickets uploaded successfully',
-      files: uploadedUrls
+      files: uploadedFiles,
+      deliveryStatus: newDeliveryStatus
     });
     response.headers.set('X-Robots-Tag', 'noindex');
     return response;

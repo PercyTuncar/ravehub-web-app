@@ -12,6 +12,14 @@ interface TicketDownloadProps {
   deliveryMode: 'automatic' | 'manualUpload';
   downloadAvailableDate?: string;
   ticketsFiles?: string[];
+  ticketsUploadedFiles?: Array<{
+    fileUrl: string;
+    fileName: string;
+    uploadedBy: string;
+    uploadedAt: string;
+    availableDate?: string;
+    mimeType?: string;
+  }>;
   onDownload?: (transactionId: string) => void;
 }
 
@@ -21,6 +29,7 @@ export function TicketDownload({
   deliveryMode,
   downloadAvailableDate,
   ticketsFiles,
+  ticketsUploadedFiles,
   onDownload
 }: TicketDownloadProps) {
   const [downloading, setDownloading] = useState(false);
@@ -88,7 +97,16 @@ export function TicketDownload({
 
   // Check if download is available based on date
   const isDateAvailable = !downloadAvailableDate || new Date() >= new Date(downloadAvailableDate);
-  const canDownload = statusInfo.canDownload && isDateAvailable && (deliveryMode === 'automatic' || ticketsFiles?.length);
+
+  // Filter uploaded files by availability date
+  const availableUploadedFiles = ticketsUploadedFiles?.filter(file => {
+    if (!file.availableDate) return true; // No date restriction
+    return new Date() >= new Date(file.availableDate);
+  }) || [];
+
+  const hasAvailableFiles = availableUploadedFiles.length > 0 || (ticketsFiles && ticketsFiles.length > 0);
+
+  const canDownload = statusInfo.canDownload && isDateAvailable && (deliveryMode === 'automatic' || hasAvailableFiles);
 
   return (
     <Card>
@@ -138,12 +156,25 @@ export function TicketDownload({
         )}
 
         {/* Show available files */}
-        {ticketsFiles && ticketsFiles.length > 0 && (
+        {(availableUploadedFiles.length > 0 || (ticketsFiles && ticketsFiles.length > 0)) && (
           <div className="mt-4">
             <p className="text-sm font-medium mb-2">Archivos disponibles:</p>
             <div className="space-y-1">
-              {ticketsFiles.map((file, index) => (
-                <div key={index} className="text-sm text-muted-foreground">
+              {availableUploadedFiles.map((file, index) => (
+                <div key={index} className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">• {file.fileName}</span>
+                  <a
+                    href={file.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Descargar
+                  </a>
+                </div>
+              ))}
+              {ticketsFiles?.map((file, index) => (
+                <div key={`legacy-${index}`} className="text-sm text-muted-foreground">
                   • {file.split('/').pop()}
                 </div>
               ))}

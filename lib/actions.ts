@@ -395,6 +395,7 @@ export async function createManualTicketTransaction(data: {
   installmentsCount?: number;
   firstInstallmentDate?: string; // ISO String
   paymentStatus: 'pending' | 'approved';
+  ticketsDownloadAvailableDate?: string; // ISO String
   paidInstallmentsIndices?: number[]; // -1 for reservation, 0+ for installments
   installmentProofs?: Record<number, string>; // { -1: "url1", 0: "url2", ... }
 }): Promise<{ success: boolean; error?: string; ticketId?: string }> {
@@ -429,6 +430,7 @@ export async function createManualTicketTransaction(data: {
       paymentStatus: data.paymentStatus,
       ticketDeliveryMode: 'manualUpload', // Default for now
       ticketDeliveryStatus: data.paymentStatus === 'approved' ? 'available' : 'pending',
+      ticketsDownloadAvailableDate: data.ticketsDownloadAvailableDate,
       isCourtesy: data.paymentMethod === 'courtesy',
       createdAt: new Date().toISOString()
     };
@@ -503,6 +505,16 @@ export async function createManualTicketTransaction(data: {
         await Promise.all(batchPromises);
       }
     }
+
+    // 3. Create notification for user
+    const selectedEvent = await eventsCollection.get(data.eventId);
+    await createNotification({
+      userId: data.userId,
+      title: '🎟️ Ticket Asignado',
+      body: `Se te ha asignado ${data.quantity} ticket(s) para ${selectedEvent?.name || 'el evento'}`,
+      type: 'general',
+      orderId: ticketId
+    });
 
     return { success: true, ticketId };
   } catch (error: any) {

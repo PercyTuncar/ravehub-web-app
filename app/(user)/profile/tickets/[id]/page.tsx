@@ -277,6 +277,35 @@ export default function TicketDetailPage() {
                                 )}
                             </div>
 
+                            {/* Download Availability Date Info */}
+                            {(ticket.ticketsDownloadAvailableDate || ticket.ticketDownloadAvailableDate) && (
+                                <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                                    <div className="flex items-start gap-3">
+                                        <Clock className="w-5 h-5 text-blue-400 mt-0.5" />
+                                        <div>
+                                            <h3 className="text-blue-400 font-bold mb-1">
+                                                Fecha de Disponibilidad de Descarga
+                                            </h3>
+                                            <p className="text-sm text-zinc-300">
+                                                Los tickets estarán disponibles para descarga a partir del{' '}
+                                                <strong className="text-white">
+                                                    {(() => {
+                                                        const dateStr = ticket.ticketsDownloadAvailableDate || ticket.ticketDownloadAvailableDate;
+                                                        const validDate = getValidDate(dateStr);
+                                                        return validDate ? validDate.toLocaleDateString('es-CL', {
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            timeZone: 'UTC'
+                                                        }) : 'Fecha no disponible';
+                                                    })()}
+                                                </strong>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Admin Actions Logic */}
                             {needsAdminReview && (
                                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
@@ -541,8 +570,9 @@ export default function TicketDetailPage() {
                                 transactionId={ticket.id}
                                 deliveryStatus={ticket.ticketDeliveryStatus || 'pending'}
                                 deliveryMode={ticket.ticketDeliveryMode || 'automatic'}
-                                downloadAvailableDate={ticket.ticketDownloadAvailableDate} // This comes from event data merged in fetch
+                                downloadAvailableDate={ticket.ticketsDownloadAvailableDate || ticket.ticketDownloadAvailableDate}
                                 ticketsFiles={ticket.ticketsFiles}
+                                ticketsUploadedFiles={ticket.ticketsUploadedFiles}
                                 onDownload={(id: string) => {
                                     if (ticket.ticketsFiles && ticket.ticketsFiles.length > 0) {
                                         ticket.ticketsFiles.forEach((file: string) => window.open(file, '_blank'));
