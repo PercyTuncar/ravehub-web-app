@@ -13,7 +13,9 @@
       "PowerShell(git commit -m \"Add missing bioLinkEventsCollection to admin-collections\")",
       "Read(//c/Users/tunca/OneDrive/Desktop/Github/components/admin/**)",
       "Bash(grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")",
-      "Bash(python3)"
+      "Bash(python3)",
+      "Bash(git rm *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
