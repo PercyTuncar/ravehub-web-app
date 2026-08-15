@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { BlogCardSkeleton, BlogFiltersSkeleton, BlogStatSkeleton } from '@/components/admin/BlogLoadingSkeletons';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -161,8 +162,12 @@ export default function BlogAdminPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {loading ? (
+              [1, 2, 3, 4].map((index) => <BlogStatSkeleton key={index} />)
+            ) : (
+              <>
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-6">
+              <CardContent className="p-6 !pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/60">Total Posts</p>
@@ -176,7 +181,7 @@ export default function BlogAdminPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-6">
+              <CardContent className="p-6 !pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/60">Publicados</p>
@@ -190,7 +195,7 @@ export default function BlogAdminPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-6">
+              <CardContent className="p-6 !pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/60">Borradores</p>
@@ -204,7 +209,7 @@ export default function BlogAdminPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-6">
+              <CardContent className="p-6 !pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/60">Vistas Totales</p>
@@ -218,11 +223,16 @@ export default function BlogAdminPage() {
                 </div>
               </CardContent>
             </Card>
+              </>
+            )}
           </div>
 
           {/* Filters Bar */}
+          {loading ? (
+            <BlogFiltersSkeleton />
+          ) : (
           <Card className="bg-white/5 backdrop-blur-xl border-white/10 mb-6">
-            <CardContent className="p-6">
+            <CardContent className="p-6 !pt-6">
               <div className="flex flex-col lg:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -264,14 +274,12 @@ export default function BlogAdminPage() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Posts Grid */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-white/60">Cargando posts...</p>
-              </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }, (_, index) => <BlogCardSkeleton key={index} />)}
             </div>
           ) : filteredPosts.length === 0 ? (
             <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
@@ -290,8 +298,8 @@ export default function BlogAdminPage() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredPosts.map((post) => (
-                <Card key={post.id} className="bg-white/5 backdrop-blur-xl border-white/10 hover:border-white/20 transition-all duration-300 group">
-                  <CardContent className="p-0">
+                <Card key={post.id} className="group overflow-hidden border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:border-white/20">
+                  <div>
                     <div className="h-32 bg-gradient-to-br from-blue-900/50 to-indigo-900/50 relative overflow-hidden rounded-t-xl">
                       {post.featuredImageUrl && (
                          <img src={post.featuredImageUrl} alt={post.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
@@ -365,7 +373,7 @@ export default function BlogAdminPage() {
                         </DropdownMenu>
                       </div>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               ))}
             </div>

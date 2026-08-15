@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { OrderFiltersSkeleton, OrderRowSkeleton, OrderStatSkeleton } from '@/components/admin/OrderLoadingSkeletons';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -123,40 +124,51 @@ function OrdersAdminContent() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        {loading ? (
+          [1, 2, 3, 4, 5].map((index) => <OrderStatSkeleton key={index} />)
+        ) : (
+          <>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-6 !pt-6">
             <div className="text-2xl font-bold">{stats.total}</div>
             <p className="text-xs text-muted-foreground">Total</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-6 !pt-6">
             <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
             <p className="text-xs text-muted-foreground">Pendientes</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-6 !pt-6">
             <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
             <p className="text-xs text-muted-foreground">Aprobados</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-6 !pt-6">
             <div className="text-2xl font-bold text-purple-600">{stats.shipped}</div>
             <p className="text-xs text-muted-foreground">Enviados</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-6 !pt-6">
             <div className="text-2xl font-bold text-green-600">{stats.delivered}</div>
             <p className="text-xs text-muted-foreground">Entregados</p>
           </CardContent>
         </Card>
+          </>
+        )}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      {loading ? (
+        <OrderFiltersSkeleton />
+      ) : (
+      <Card className="mb-6">
+        <CardContent className="p-6 !pt-6">
+      <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
@@ -193,15 +205,18 @@ function OrdersAdminContent() {
           </SelectContent>
         </Select>
       </div>
+        </CardContent>
+      </Card>
+      )}
 
       {/* Orders Table */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="space-y-4">
+          {Array.from({ length: 5 }, (_, index) => <OrderRowSkeleton key={index} />)}
         </div>
       ) : filteredOrders.length === 0 ? (
         <Card>
-          <CardContent className="p-12 text-center">
+          <CardContent className="p-12 !pt-12 text-center">
             <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-2xl font-semibold mb-2">No hay pedidos</h2>
             <p className="text-muted-foreground">
@@ -215,7 +230,7 @@ function OrdersAdminContent() {
         <div className="space-y-4">
           {filteredOrders.map((order) => (
             <Card key={order.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
+              <CardContent className="p-6 !pt-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-3">

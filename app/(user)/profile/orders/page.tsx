@@ -1,216 +1,168 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, CheckCircle, Clock, Package, Truck, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, Truck, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ConvertedPrice } from '@/components/common/ConvertedPrice';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { ordersCollection } from '@/lib/firebase/collections';
+import { getValidDate } from '@/lib/utils/date';
+import type { Order } from '@/lib/types';
+import { OrderCardSkeleton } from '@/components/profile/ProfileSkeletons';
+
+function getStatusBadge(status: Order['status']) {
+  switch (status) {
+    case 'pending':
+      return <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20"><Clock className="mr-1 h-3 w-3" />Pendiente</Badge>;
+    case 'payment_approved':
+      return <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20"><CheckCircle className="mr-1 h-3 w-3" />Pago aprobado</Badge>;
+    case 'preparing':
+      return <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20"><Package className="mr-1 h-3 w-3" />Preparando</Badge>;
+    case 'shipped':
+      return <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20"><Truck className="mr-1 h-3 w-3" />Enviado</Badge>;
+    case 'delivered':
+      return <Badge className="bg-green-500/10 text-green-400 border-green-500/20"><CheckCircle className="mr-1 h-3 w-3" />Entregado</Badge>;
+    case 'cancelled':
+      return <Badge className="bg-red-500/10 text-red-400 border-red-500/20"><XCircle className="mr-1 h-3 w-3" />Cancelado</Badge>;
+  }
+}
 
 export default function OrdersPage() {
   const { user } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - in a real implementation, this would come from an API
-  const orders = [
-    {
-      id: '1',
-      orderDate: '2024-12-15',
-      totalAmount: 75000,
-      currency: 'CLP',
-      paymentMethod: 'online',
-      paymentStatus: 'approved',
-      status: 'shipped',
-      shippingAddress: {
-        fullName: 'Juan Pérez',
-        address: 'Av. Providencia 123',
-        city: 'Santiago',
-        region: 'RM',
-      },
-      orderItems: [
-        {
-          name: 'Camiseta Ultra Festival 2026',
-          quantity: 2,
-          price: 25000,
-          currency: 'CLP',
-        },
-        {
-          name: 'Gorra Ravehub',
-          quantity: 1,
-          price: 15000,
-          currency: 'CLP',
-        }
-      ]
-    },
-    {
-      id: '2',
-      orderDate: '2024-12-10',
-      totalAmount: 120000,
-      currency: 'CLP',
-      paymentMethod: 'offline',
-      paymentStatus: 'pending',
-      status: 'processing',
-      shippingAddress: {
-        fullName: 'Juan Pérez',
-        address: 'Av. Providencia 123',
-        city: 'Santiago',
-        region: 'RM',
-      },
-      orderItems: [
-        {
-          name: 'Camiseta Ultra Festival 2026',
-          quantity: 1,
-          price: 25000,
-          currency: 'CLP',
-        }
-      ]
-    }
-  ];
+  useEffect(() => {
+    async function loadOrders() {
+      if (!user?.id) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'processing':
-        return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />Procesando</Badge>;
-      case 'shipped':
-        return <Badge className="bg-blue-100 text-blue-800"><Truck className="w-3 h-3 mr-1" />Enviado</Badge>;
-      case 'delivered':
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Entregado</Badge>;
-      case 'cancelled':
-        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Cancelado</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
+      try {
+        const userOrders = await ordersCollection.query(
+          [{ field: 'userId', operator: '==', value: user.id }],
+          'createdAt',
+          'desc',
+        );
+        setOrders(userOrders as Order[]);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
     }
-  };
 
-  const getPaymentStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-green-100 text-green-800">Pagado</Badge>;
-      case 'pending':
-        return <Badge variant="secondary">Pendiente</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rechazado</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+    loadOrders();
+  }, [user?.id]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/profile">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver al perfil
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Mis Pedidos</h1>
-          <p className="text-muted-foreground">Gestiona tus órdenes de compra</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#141618] pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Gradient */}
+      <div className="absolute inset-0 pointer-events-none opacity-20"
+        style={{ backgroundImage: 'radial-gradient(circle at top right, rgba(0,203,255,0.15), transparent 40%), radial-gradient(circle at bottom left, rgba(251,169,5,0.1), transparent 40%)' }}
+      />
 
-      {/* Orders List */}
-      <div className="space-y-6">
-        {orders.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-2xl font-semibold mb-2">No tienes pedidos</h2>
-              <p className="text-muted-foreground mb-6">
-                Aún no has realizado ninguna compra.
-              </p>
-              <Link href="/tienda">
-                <Button>Ir a la tienda</Button>
-              </Link>
-            </CardContent>
-          </Card>
+      <div className="max-w-5xl mx-auto z-10 relative">
+        <div className="flex items-center gap-4 mb-10">
+          <Link href="/profile">
+            <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-white">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-white">Mis Órdenes</h1>
+            <p className="text-white/60 text-sm mt-1">Compras realizadas en la tienda</p>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="grid gap-6">
+            {[1, 2, 3].map((index) => <OrderCardSkeleton key={index} />)}
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">
+            <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Package className="w-10 h-10 text-white/20" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">No tienes órdenes aún</h2>
+            <p className="text-white/40 mb-8">Explora la tienda para descubrir productos disponibles.</p>
+            <Link href="/tienda">
+              <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
+                Explorar tienda
+              </Button>
+            </Link>
+          </div>
         ) : (
-          orders.map((order) => (
-            <Card key={order.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl">Pedido #{order.id}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(order.orderDate).toLocaleDateString('es-CL', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {getStatusBadge(order.status)}
-                    <div className="mt-2">
-                      {getPaymentStatusBadge(order.paymentStatus)}
+          <div className="space-y-6">
+            {orders.map((order) => {
+              const createdAt = getValidDate(order.createdAt || new Date()) || new Date();
+              return (
+                <div key={order.id} className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+                  {/* Header */}
+                  <div className="p-6 border-b border-white/10">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-bold text-white">Orden #{order.id.slice(-8).toUpperCase()}</h3>
+                          {getStatusBadge(order.status)}
+                        </div>
+                        <p className="text-sm text-white/60">
+                          Realizada el {createdAt.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Order Items */}
-                  <div className="space-y-2">
+
+                  {/* Items */}
+                  <div className="p-6 space-y-4">
                     {order.orderItems.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <div>
-                          <span className="font-medium">{item.name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">
-                            {item.quantity}x ${item.price.toLocaleString()} {item.currency}
-                          </span>
+                      <div key={`${item.productId}-${item.variantId || index}`} className="flex items-center justify-between gap-4 pb-4 border-b border-white/5 last:border-0 last:pb-0">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-white mb-1">{item.name}</h4>
+                          <p className="text-sm text-white/60">Cantidad: {item.quantity}</p>
                         </div>
-                        <span className="font-medium">
-                          ${(item.quantity * item.price).toLocaleString()} {item.currency}
-                        </span>
+                        <div className="text-right">
+                          <ConvertedPrice
+                            amount={Number(item.price || 0) * Number(item.quantity || 0)}
+                            currency={item.currency || order.currency || 'USD'}
+                            showOriginal
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Shipping Address */}
-                  <div className="p-3 border rounded-lg">
-                    <h4 className="font-medium mb-2">Dirección de envío</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {order.shippingAddress.fullName}<br />
-                      {order.shippingAddress.address}<br />
-                      {order.shippingAddress.city}, {order.shippingAddress.region}
-                    </p>
-                  </div>
-
-                  {/* Order Summary */}
-                  <div className="flex justify-between items-center p-3 border rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        Pago {order.paymentMethod === 'online' ? 'en línea' : 'offline'}
-                      </span>
+                  {/* Footer */}
+                  <div className="p-6 bg-black/20 border-t border-white/10">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="text-sm text-white/60">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
+                          Pago: {order.paymentMethod === 'online' ? 'Online' : 'Offline'}
+                        </span>
+                        <span className="mx-2">•</span>
+                        <span>{order.paymentStatus === 'approved' ? 'Aprobado' : order.paymentStatus === 'pending' ? 'Pendiente' : 'Rechazado'}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Total</p>
+                        <ConvertedPrice
+                          amount={Number(order.totalAmount || 0)}
+                          currency={order.currency || 'USD'}
+                          showOriginal
+                          className="text-lg font-bold"
+                        />
+                      </div>
                     </div>
-                    <span className="font-semibold text-lg">
-                      Total: ${order.totalAmount.toLocaleString()} {order.currency}
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3 pt-4">
-                    {order.status === 'shipped' && (
-                      <Button>
-                        Rastrear envío
-                      </Button>
-                    )}
-                    {order.paymentMethod === 'offline' && order.paymentStatus === 'pending' && (
-                      <Button variant="outline">
-                        Subir comprobante
-                      </Button>
-                    )}
-                    <Button variant="outline">
-                      Ver detalles
-                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

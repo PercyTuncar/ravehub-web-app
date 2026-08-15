@@ -84,7 +84,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#141618_100%)] opacity-40" />
             </div>
 
-            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 md:pt-32 md:pb-32 animate-in fade-in duration-1000 slide-in-from-bottom-8">
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 md:pt-32 md:pb-32 lg:translate-y-8 animate-in fade-in duration-1000 slide-in-from-bottom-8">
                 <div className="max-w-4xl flex flex-col items-start text-left w-full">
 
                     {/* Top Badges - Animated */}
@@ -124,42 +124,48 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                         {event.name}
                     </h1>
 
-                    {/* Meta Info Grid - Clean & Modern */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-3 sm:gap-6 mb-4 sm:mb-8 w-full animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                        {/* Date - Col 1 */}
-                        <div className="flex items-center justify-start gap-2 sm:gap-3 group col-span-1">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
-                                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-primary transition-colors" />
+                    {/* Meta Info */}
+                    <div className="mb-4 flex w-full flex-wrap items-stretch gap-2.5 sm:mb-8 sm:gap-3 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                        <div className="group flex min-w-[10rem] items-center gap-2.5 rounded-2xl border border-white/15 bg-white/[0.08] px-3 py-2.5 shadow-lg shadow-black/15 backdrop-blur-xl transition-all duration-300 hover:border-white/30 hover:bg-white/[0.13] sm:min-w-[12rem] sm:px-3.5 sm:py-3">
+                            <div
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm sm:h-9 sm:w-9"
+                                style={{ backgroundColor: `${colorPalette.dominant}24`, color: colorPalette.dominant }}
+                            >
+                                <Calendar className="h-4 w-4 sm:h-[1.125rem] sm:w-[1.125rem]" />
                             </div>
-                            <div className="text-left">
-                                <div className="hidden sm:block text-xs text-gray-400 uppercase tracking-wider font-medium">Fecha</div>
-                                <div className="text-sm sm:text-base font-bold text-white capitalize leading-none">
+                            <div className="min-w-0 text-left">
+                                <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Fecha</div>
+                                <div className="truncate text-sm font-bold capitalize leading-tight text-white sm:text-base">
                                     {format(startDate, "d MMM yyyy", { locale: es })}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Time - Col 2 (Moved up for mobile grid) */}
-                        <div className="flex items-center justify-start gap-2 sm:gap-3 group col-span-1">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
-                                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-primary transition-colors" />
+                        <div className="group flex min-w-[8.5rem] items-center gap-2.5 rounded-2xl border border-white/15 bg-white/[0.08] px-3 py-2.5 shadow-lg shadow-black/15 backdrop-blur-xl transition-all duration-300 hover:border-white/30 hover:bg-white/[0.13] sm:min-w-[10rem] sm:px-3.5 sm:py-3">
+                            <div
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm sm:h-9 sm:w-9"
+                                style={{ backgroundColor: `${colorPalette.accent}24`, color: colorPalette.accent }}
+                            >
+                                <Clock className="h-4 w-4 sm:h-[1.125rem] sm:w-[1.125rem]" />
                             </div>
-                            <div className="text-left">
-                                <div className="hidden sm:block text-xs text-gray-400 uppercase tracking-wider font-medium">Hora</div>
-                                <div className="text-sm sm:text-base font-bold text-white leading-none">
+                            <div className="min-w-0 text-left">
+                                <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Hora</div>
+                                <div className="truncate text-sm font-bold leading-tight text-white sm:text-base">
                                     {event.startTime || format(startDate, "HH:mm")}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Location - Col Span 2 on mobile (Full width bottom row) */}
-                        <div className="flex items-center justify-start gap-2 sm:gap-3 group col-span-2 sm:col-span-1">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:border-primary/50 group-hover:bg-primary/20 transition-all duration-300">
-                                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-primary transition-colors" />
+                        <div className="group flex min-w-[min(100%,15rem)] max-w-full items-center gap-2.5 rounded-2xl border border-white/15 bg-white/[0.08] px-3 py-2.5 shadow-lg shadow-black/15 backdrop-blur-xl transition-all duration-300 hover:border-white/30 hover:bg-white/[0.13] sm:min-w-[13rem] sm:max-w-[18rem] sm:px-3.5 sm:py-3">
+                            <div
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm sm:h-9 sm:w-9"
+                                style={{ backgroundColor: `${colorPalette.dominant}24`, color: colorPalette.dominant }}
+                            >
+                                <MapPin className="h-4 w-4 sm:h-[1.125rem] sm:w-[1.125rem]" />
                             </div>
-                            <div className="text-left">
-                                <div className="hidden sm:block text-xs text-gray-400 uppercase tracking-wider font-medium">Ubicación</div>
-                                <div className="text-sm sm:text-base font-bold text-white leading-none truncate max-w-[250px] sm:max-w-[150px]">
+                            <div className="min-w-0 text-left">
+                                <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Ubicación</div>
+                                <div className="truncate text-sm font-bold leading-tight text-white sm:text-base">
                                     {event.location.venue}
                                 </div>
                             </div>
@@ -167,8 +173,11 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                     </div>
 
                     {/* Description / Summary - Hidden on Mobile */}
-                    <div className="hidden sm:block p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md mb-6 sm:mb-8 max-w-2xl w-full animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                        <p className="text-base text-gray-200 leading-relaxed text-center sm:text-left">
+                    <div className="relative mb-6 hidden w-full max-w-2xl overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.07] p-4 shadow-xl shadow-black/20 backdrop-blur-2xl sm:mb-8 sm:block sm:p-5 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                        <div className="pointer-events-none absolute -left-12 -top-16 h-32 w-32 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: colorPalette.dominant }} />
+                        <div className="pointer-events-none absolute -bottom-16 right-4 h-28 w-28 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: colorPalette.accent }} />
+                        <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-white/10" />
+                        <p className="relative text-center text-base leading-relaxed text-white/90 sm:text-left">
                             {event.shortDescription || `Prepárate para vivir la experiencia de ${event.name}. Una producción de primer nivel en ${event.location.venue}.`}
                         </p>
                         {minPrice > 0 && !isSoldOut && (

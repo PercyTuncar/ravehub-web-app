@@ -428,7 +428,20 @@ export default function SettingsPage() {
                         await linkGoogleAccount();
                         toast.success('Cuenta vinculada correctamente', { id: toastId });
                       } catch (error: any) {
-                        toast.error(error.message || 'Error al vincular cuenta', { id: toastId });
+                        console.error('Error linking Google account:', error);
+                        let errorMessage = 'Error al vincular cuenta';
+
+                        if (error.code === 'auth/credential-already-in-use') {
+                          errorMessage = 'Esta cuenta de Google ya está vinculada a otro usuario de Ravehub';
+                        } else if (error.code === 'auth/popup-closed-by-user') {
+                          errorMessage = 'Vinculación cancelada';
+                        } else if (error.code === 'auth/popup-blocked') {
+                          errorMessage = 'Por favor, permite ventanas emergentes para vincular tu cuenta';
+                        } else if (error.message) {
+                          errorMessage = error.message;
+                        }
+
+                        toast.error(errorMessage, { id: toastId });
                       }
                     }}
                     className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10 bg-transparent h-9 text-xs"

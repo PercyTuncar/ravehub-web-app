@@ -13,6 +13,7 @@ import { convertCurrency, formatPrice } from '@/lib/utils/currency-converter';
 import { getTicketInstallments } from '@/lib/actions';
 import { TicketCard } from '@/components/tickets/TicketCard';
 import { getValidDate } from '@/lib/utils/date';
+import { TicketCardSkeleton } from '@/components/profile/ProfileSkeletons';
 
 export default function TicketsPage() {
   const { user } = useAuth();
@@ -140,8 +141,8 @@ export default function TicketsPage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <div className="grid grid-cols-1 gap-6">
+            {[1, 2, 3].map((i) => <TicketCardSkeleton key={i} />)}
           </div>
         ) : tickets.length === 0 ? (
           <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">

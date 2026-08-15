@@ -21,7 +21,6 @@ import {
   CheckCircle2,
   MessageCircle,
   CreditCard,
-  Smartphone,
   Copy,
   ArrowLeft,
   Ticket,
@@ -29,6 +28,7 @@ import {
   ExternalLink,
   LogIn,
 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -60,6 +60,11 @@ export interface CheckoutPaymentModalProps {
   totalAmount: number;
   totalReservation: number;
   monthlyInstallment: number;
+  colorPalette?: {
+    dominant: string;
+    accent: string;
+    primary: string;
+  };
 }
 
 type Step = 'choice' | 'pagar-ahora' | 'success';
@@ -82,12 +87,13 @@ function OrderSummary({
   totalAmount,
   totalReservation,
   monthlyInstallment,
-}: Omit<CheckoutPaymentModalProps, 'isOpen' | 'onClose'>) {
+  dominantColor,
+}: Omit<CheckoutPaymentModalProps, 'isOpen' | 'onClose' | 'colorPalette'> & { dominantColor: string }) {
   const symbol = event.currency === 'USD' ? '$' : event.currency === 'CLP' ? '$' : 'S/';
   return (
-    <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3 text-sm">
+    <div className="bg-white/[0.045] rounded-xl border border-white/[0.10] p-4 space-y-3 text-sm backdrop-blur-md">
       <p className="font-bold text-white flex items-center gap-2">
-        <Ticket className="w-4 h-4 text-primary" />
+        <Ticket className="w-4 h-4" style={{ color: dominantColor }} />
         {event.name}
       </p>
       <div className="space-y-1">
@@ -138,10 +144,15 @@ export function CheckoutPaymentModal({
   totalAmount,
   totalReservation,
   monthlyInstallment,
+  colorPalette,
 }: CheckoutPaymentModalProps) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  const dominantColor = colorPalette?.dominant || '#FBA905';
+  const accentColor = colorPalette?.accent || '#FBA905';
+  const primaryColor = colorPalette?.primary || dominantColor;
 
   const [step, setStep] = useState<Step>('choice');
   const [proofUrl, setProofUrl] = useState<string | null>(null);
@@ -301,16 +312,21 @@ export function CheckoutPaymentModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !submitting && onClose()}>
       <DialogContent
-        className="bg-[#141618] border-white/10 text-white sm:max-w-lg max-h-[90vh] overflow-y-auto"
+        className="border border-white/[0.15] text-white sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl shadow-black/40"
+        style={{
+          backgroundColor: 'rgba(18, 20, 22, 0.65)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+        }}
       >
         {/* ── STEP: CHOICE ─────────────────────────────────────────── */}
         {step === 'choice' && (
           <>
-            <DialogHeader>
-              <DialogTitle className="text-xl font-black text-white">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-lg font-bold text-[#FAFDFF]">
                 ¿Cómo quieres continuar?
               </DialogTitle>
-              <DialogDescription className="text-white/50">
+              <DialogDescription className="text-xs text-white/60">
                 Elige cómo deseas gestionar tu pedido para {event.name}.
               </DialogDescription>
             </DialogHeader>
@@ -324,57 +340,53 @@ export function CheckoutPaymentModal({
               totalAmount={totalAmount}
               totalReservation={totalReservation}
               monthlyInstallment={monthlyInstallment}
+              dominantColor={dominantColor}
             />
 
             {/* Options */}
-            <div className="grid gap-3 mt-2">
-              {/* Option A — Pagar Ahora */}
+            <div className="grid gap-3 mt-4">
+              {/* Option A — WhatsApp (destacado arriba) */}
+              <button
+                type="button"
+                onClick={handleWhatsAppOrder}
+                className="w-full text-left p-6 rounded-2xl border border-[#25D366]/30 bg-[#25D366]/[0.09] hover:bg-[#25D366]/[0.14] hover:border-[#25D366]/50 transition-all group shadow-lg shadow-[#25D366]/10"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-[#25D366]/20 border border-[#25D366]/30 flex items-center justify-center shrink-0 group-hover:bg-[#25D366]/30 transition-colors shadow-sm">
+                    <FaWhatsapp className="w-7 h-7 text-[#25D366]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-white text-lg mb-2">Pedir por WhatsApp</p>
+                    <p className="text-sm text-white/70 leading-relaxed">
+                      Coordina el pago directamente con nuestro equipo. Rápido, fácil y sin complicaciones.
+                    </p>
+                  </div>
+                  <ExternalLink className="w-5 h-5 text-[#25D366]/60 mt-1 shrink-0" />
+                </div>
+              </button>
+
+              {/* Option B — Pagar Ahora */}
               <button
                 type="button"
                 onClick={handlePayAhora}
-                className="w-full text-left p-5 rounded-2xl border border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 transition-all group"
+                className="w-full text-left p-5 rounded-2xl border bg-white/[0.045] hover:bg-white/[0.08] transition-all group border-white/[0.12] hover:border-white/25"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0 group-hover:bg-primary/30 transition-colors">
-                    <CreditCard className="w-6 h-6 text-primary" />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:opacity-90 transition-colors" style={{ backgroundColor: `${dominantColor}20` }}>
+                    <CreditCard className="w-6 h-6" style={{ color: dominantColor }} />
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-bold text-white text-base">Pagar Ahora</p>
-                      <Badge className="bg-primary/20 text-primary border-0 text-[10px] px-1.5">
-                        Recomendado
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-white/50 leading-relaxed">
-                      Sube tu comprobante directamente en la plataforma. Seguimiento automático de tu pedido.
+                    <p className="font-bold text-white text-base mb-1.5">Pagar Ahora</p>
+                    <p className="text-sm text-white/60 leading-relaxed">
+                      Sube tu comprobante en la plataforma y recibe seguimiento automático.
                     </p>
                     {!user && (
-                      <p className="text-xs text-yellow-400/80 mt-2 flex items-center gap-1.5">
+                      <p className="text-xs text-yellow-400/80 mt-2.5 flex items-center gap-1.5">
                         <LogIn className="w-3 h-3" />
                         Requiere iniciar sesión
                       </p>
                     )}
                   </div>
-                </div>
-              </button>
-
-              {/* Option B — WhatsApp */}
-              <button
-                type="button"
-                onClick={handleWhatsAppOrder}
-                className="w-full text-left p-5 rounded-2xl border border-[#25D366]/20 bg-[#25D366]/5 hover:bg-[#25D366]/10 hover:border-[#25D366]/50 transition-all group"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#25D366]/15 flex items-center justify-center shrink-0 group-hover:bg-[#25D366]/25 transition-colors">
-                    <MessageCircle className="w-6 h-6 text-[#25D366]" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-white text-base mb-1">Pedir por WhatsApp</p>
-                    <p className="text-sm text-white/50 leading-relaxed">
-                      Coordina el pago directamente con nuestro equipo. No requiere cuenta.
-                    </p>
-                  </div>
-                  <ExternalLink className="w-4 h-4 text-[#25D366]/50 mt-1 shrink-0" />
                 </div>
               </button>
             </div>
@@ -383,99 +395,120 @@ export function CheckoutPaymentModal({
 
         {/* ── STEP: PAGAR AHORA ────────────────────────────────────── */}
         {step === 'pagar-ahora' && (
-          <>
-            <DialogHeader>
+          <div className="space-y-6">
+            <DialogHeader className="space-y-0">
               <button
                 type="button"
                 onClick={() => setStep('choice')}
-                className="flex items-center gap-2 text-white/50 hover:text-white text-sm mb-1 transition-colors w-fit"
+                className="flex items-center gap-2 text-white/50 hover:text-white text-sm transition-colors w-fit mb-4"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Volver
               </button>
-              <DialogTitle className="text-xl font-black text-white">
+              <DialogTitle className="text-lg font-bold text-[#FAFDFF]">
                 Realiza el pago
               </DialogTitle>
-              <DialogDescription className="text-white/50">
-                Transfiere el monto y adjunta el comprobante.
+              <DialogDescription className="mt-1.5 text-xs text-white/60">
+                Transfiere el monto y adjunta el comprobante para confirmar tu pedido.
               </DialogDescription>
             </DialogHeader>
 
-            {/* Amount to pay today */}
-            <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-center">
-              <p className="text-xs text-white/50 uppercase tracking-wider mb-1">
+            {/* Amount to pay - Highlighted section */}
+            <div className="rounded-2xl border p-5 text-center backdrop-blur-md" style={{
+              backgroundColor: `${dominantColor}15`,
+              borderColor: `${dominantColor}30`
+            }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: `${dominantColor}` }}>
                 {isInstallmentMode ? 'A pagar hoy (reserva)' : 'Total a pagar'}
               </p>
-              <p className="text-3xl font-black text-primary">
+              <p className="text-4xl font-black mb-1" style={{ color: dominantColor }}>
                 {symbol} {amountToPay.toLocaleString()}
               </p>
               {isInstallmentMode && (
-                <p className="text-xs text-white/40 mt-1">
-                  Saldo restante: {installments} cuotas de {symbol} {monthlyInstallment.toFixed(2)}
+                <p className="text-xs text-white/50 mt-3">
+                  Luego {installments} cuotas de {symbol} {monthlyInstallment.toFixed(2)}
                 </p>
               )}
             </div>
 
-            {/* Bank details */}
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-white/40 uppercase tracking-wider">
-                Datos de pago
-              </p>
+            {/* Bank details - Grouped section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-white/[0.08]" />
+                <p className="text-xs font-bold text-white/50 uppercase tracking-wider">
+                  Datos de pago
+                </p>
+                <div className="h-px flex-1 bg-white/[0.08]" />
+              </div>
 
               {/* PLIN */}
-              <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#6B3FA0]/20 flex items-center justify-center">
-                    <Smartphone className="w-5 h-5 text-[#A78BFA]" />
+              <div className="rounded-xl border border-white/[0.10] bg-white/[0.045] p-4 backdrop-blur-md">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-white/95 border border-[#6B3FA0]/30 flex items-center justify-center overflow-hidden shadow-sm shadow-[#6B3FA0]/20">
+                      <img
+                        src="https://res.cloudinary.com/amadodedios/image/upload/v1786821754/03_Landing_Interoperabilidad_Marzo24_Icono02_uw03wp.png"
+                        alt="Plin"
+                        className="w-8 h-8 object-contain"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-xs text-white/45">PLIN / Yape</p>
+                        <span className="rounded-full border border-[#A78BFA]/30 bg-[#6B3FA0]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#C4B5FD]">
+                          Seleccionar Plin
+                        </span>
+                      </div>
+                      <p className="font-bold text-white font-mono text-lg tracking-wider">
+                        944 784 488
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-white/40 mb-0.5">PLIN</p>
-                    <p className="font-bold text-white font-mono text-lg tracking-widest">
-                      944 784 488
-                    </p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard('944784488', 'Número PLIN')}
+                    className="px-3 py-2 rounded-lg border border-white/[0.10] bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
+                  >
+                    <Copy className="w-4 h-4 text-white/60" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard('944784488', 'Número PLIN')}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                >
-                  <Copy className="w-4 h-4 text-white/50" />
-                </button>
               </div>
 
               {/* Interbank */}
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <div className="rounded-xl border border-white/[0.10] bg-white/[0.045] p-4 backdrop-blur-md">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-11 h-11 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
                     <CreditCard className="w-5 h-5 text-blue-400" />
                   </div>
-                  <p className="font-bold text-white/80">Interbank — Soles</p>
+                  <div>
+                    <p className="font-bold text-white/90 text-base">Interbank</p>
+                    <p className="text-xs text-white/45">Cuenta en Soles</p>
+                  </div>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/40">Cuenta</span>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+                    <span className="text-xs text-white/45 uppercase tracking-wide">Cuenta</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-white">076 3129312815</span>
+                      <span className="font-mono text-white font-medium">076 3129312815</span>
                       <button
                         type="button"
                         onClick={() => copyToClipboard('0763129312815', 'Número de cuenta')}
-                        className="p-1 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                        className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
                       >
-                        <Copy className="w-3 h-3 text-white/40" />
+                        <Copy className="w-3.5 h-3.5 text-white/50" />
                       </button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/40">CCI</span>
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+                    <span className="text-xs text-white/45 uppercase tracking-wide">CCI</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-white/70 text-xs">00307601312931281576</span>
+                      <span className="font-mono text-white/80 text-xs">00307601312931281576</span>
                       <button
                         type="button"
                         onClick={() => copyToClipboard('00307601312931281576', 'CCI')}
-                        className="p-1 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                        className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
                       >
-                        <Copy className="w-3 h-3 text-white/40" />
+                        <Copy className="w-3.5 h-3.5 text-white/50" />
                       </button>
                     </div>
                   </div>
@@ -483,21 +516,27 @@ export function CheckoutPaymentModal({
               </div>
             </div>
 
-            {/* File upload */}
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-white/40 uppercase tracking-wider">
-                Adjunta tu comprobante <span className="text-red-400">*</span>
-              </p>
-              <p className="text-xs text-white/40">
-                Captura de pantalla o foto de la transferencia (JPG, PNG, PDF — máx. 5 MB)
+            {/* File upload - Clear section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-white/[0.08]" />
+                <p className="text-xs font-bold text-white/50 uppercase tracking-wider">
+                  Comprobante <span className="text-red-400">*</span>
+                </p>
+                <div className="h-px flex-1 bg-white/[0.08]" />
+              </div>
+              <p className="text-xs text-white/50 text-center leading-relaxed">
+                Sube una captura de pantalla o foto de la transferencia<br/>
+                (JPG, PNG o PDF — máximo 5 MB)
               </p>
               {proofUrl ? (
-                <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-xl p-3 overflow-hidden">
-                  <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
-                  <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/25 rounded-xl p-4">
+                  <div className="w-10 h-10 rounded-lg bg-green-500/15 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-green-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-green-400">Comprobante adjunto</p>
-                    {/* Strip query params (?alt=media&token=...) and decode URI before truncating */}
-                    <p className="text-xs text-green-400/60 truncate">
+                    <p className="text-xs text-green-400/60 truncate mt-0.5">
                       {decodeURIComponent(
                         (proofUrl.split('?')[0].split('/').pop() ?? '').replace(/%2F/g, '/')
                       )}
@@ -506,7 +545,7 @@ export function CheckoutPaymentModal({
                   <button
                     type="button"
                     onClick={() => setProofUrl(null)}
-                    className="text-xs text-white/40 hover:text-white transition-colors shrink-0 whitespace-nowrap"
+                    className="px-3 py-1.5 text-xs font-medium text-white/60 hover:text-white rounded-lg border border-white/[0.10] bg-white/[0.05] hover:bg-white/[0.10] transition-colors shrink-0"
                   >
                     Cambiar
                   </button>
@@ -522,10 +561,15 @@ export function CheckoutPaymentModal({
               )}
             </div>
 
-            {/* Submit */}
+            {/* Submit button - Primary action */}
             <Button
               size="lg"
-              className="w-full h-14 text-base font-bold bg-primary hover:bg-primary/90 text-black shadow-lg shadow-primary/30 disabled:opacity-50"
+              className="w-full h-14 text-base font-bold shadow-xl hover:opacity-90 disabled:opacity-50 transition-all"
+              style={{
+                backgroundColor: dominantColor,
+                color: '#000',
+                boxShadow: `0 4px 24px ${dominantColor}40`
+              }}
               disabled={!proofUrl || submitting}
               onClick={handleSubmitOrder}
             >
@@ -541,7 +585,7 @@ export function CheckoutPaymentModal({
                 </span>
               )}
             </Button>
-          </>
+          </div>
         )}
 
         {/* ── STEP: SUCCESS ────────────────────────────────────────── */}

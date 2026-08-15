@@ -6,8 +6,10 @@ import {
     usersCollection
 } from '@/lib/firebase/admin-collections';
 import { requireAdmin, getCurrentUser } from '@/lib/auth-admin';
+import { getExchangeRates } from '@/lib/utils/currency-converter';
 
 export type TimeRange = '24h' | '7d' | '30d' | '90d' | 'year' | 'all';
+export type CountryFilter = 'all' | 'PE' | 'CL' | 'CO' | 'EC' | 'MX' | 'AR';
 
 interface DashboardStats {
     totalEvents: number;
@@ -16,6 +18,8 @@ interface DashboardStats {
     totalUsers: number;
     pendingPayments: number;
     totalRevenue: number;
+    currency: string;
+    currencySymbol: string;
     salesData: Array<{ name: string; sales: number }>;
     recentActivity: Array<{
         id: string;
@@ -37,7 +41,7 @@ function getDateFromRange(range: TimeRange): Date {
     }
 }
 
-export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ success: boolean; data?: any; error?: string }> {
+export async function getAdminDashboardStats(timeRange: TimeRange, countryFilter: CountryFilter = 'all'): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
         // Check auth but don't redirect
         const currentUser = await getCurrentUser();
@@ -55,20 +59,55 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
         const startDate = getDateFromRange(timeRange);
         const startDateIso = startDate.toISOString();
 
+        // Determine currency based on country filter
+        const currencyMap: Record<CountryFilter, { code: string; symbol: string }> = {
+            'all': { code: 'USD', symbol: '$' },
+            'PE': { code: 'PEN', symbol: 'S/' },
+            'CL': { code: 'CLP', symbol: '$' },
+            'CO': { code: 'COP', symbol: '$' },
+            'EC': { code: 'USD', symbol: '$' },
+            'MX': { code: 'MXN', symbol: '$' },
+            'AR': { code: 'ARS', symbol: '$' },
+        };
+
+        const { code: currency, symbol: currencySymbol } = currencyMap[countryFilter];
+
+        // Get exchange rates for multi-currency conversion (when countryFilter is 'all')
+        let exchangeRates: any = null;
+        if (countryFilter === 'all') {
+            try {
+                exchangeRates = await getExchangeRates();
+            } catch (error) {
+                console.error('Failed to get exchange rates:', error);
+                // Continue without conversion
+            }
+        }
+
         // OPTIMIZED: Use count() and filtered queries instead of getAll()
         // Get counts efficiently without fetching all documents
         const [
-            totalEventsCount,
-            activeEventsCount,
-            totalUsersCount,
-            // For tickets we need to fetch with date filter for calculations
+            allEvents,
+            allUsers,
         ] = await Promise.all([
-            eventsCollection.count([]),
-            eventsCollection.count([
-                { field: 'eventStatus', operator: '==', value: 'published' }
-            ]),
-            usersCollection.count([]),
+            // Fetch all events to filter by country in memory (nested field queries need composite indexes)
+            eventsCollection.query([], 'createdAt', 'desc', 1000),
+            // Fetch all users to filter by country
+            usersCollection.query([], 'createdAt', 'desc', 2000),
         ]);
+
+        // Filter events by country in memory
+        const filteredEvents = countryFilter === 'all'
+            ? allEvents
+            : allEvents.filter((e: any) => e.location?.countryCode === countryFilter);
+
+        // Filter users by country in memory
+        const filteredUsers = countryFilter === 'all'
+            ? allUsers
+            : allUsers.filter((u: any) => u.country === countryFilter);
+
+        const totalEventsCount = filteredEvents.length;
+        const activeEventsCount = filteredEvents.filter((e: any) => e.eventStatus === 'published').length;
+        const totalUsersCount = filteredUsers.length;
 
         // Fetch only tickets within the time range for calculations
         const ticketsInRange = await ticketTransactionsCollection.query(
@@ -79,6 +118,9 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
             'desc',
             1000 // Limit to last 1000 transactions for dashboard
         );
+
+        // Create set of event IDs from filtered events for country filtering
+        const countryEventIds = new Set(filteredEvents.map((e: any) => e.id));
 
         // Calculate stats from filtered tickets
         let totalTickets = 0;
@@ -94,6 +136,16 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
         }
 
         ticketsInRange.forEach((t: any) => {
+            // Filter by country - check if transaction's event is in our filtered events
+            if (countryFilter !== 'all' && !countryEventIds.has(t.eventId)) {
+                return; // Skip this transaction
+            }
+
+            // Filter by currency if country-specific
+            if (countryFilter !== 'all' && t.currency !== currency) {
+                return; // Skip transactions with different currency
+            }
+
             const isPaid = t.status === 'approved' || t.paymentStatus === 'approved';
             const isPending = t.status === 'pending' || t.paymentStatus === 'pending';
 
@@ -105,8 +157,18 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
                     totalTickets += (Number(t.quantity) || 0);
                 }
 
-                // Revenue
-                const amount = Number(t.totalAmount || t.amount) || 0;
+                // Revenue with currency conversion for 'all' countries
+                let amount = Number(t.totalAmount || t.amount) || 0;
+
+                // Convert to USD if showing all countries and we have exchange rates
+                if (countryFilter === 'all' && exchangeRates && t.currency && t.currency !== 'USD') {
+                    const rate = exchangeRates.rates[t.currency];
+                    if (rate) {
+                        // Convert from transaction currency to USD
+                        amount = amount / rate;
+                    }
+                }
+
                 totalRevenue += amount;
 
                 // Chart Data (Last 7 days)
@@ -190,6 +252,8 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
                 totalUsers: totalUsersCount,
                 pendingPayments,
                 totalRevenue,
+                currency,
+                currencySymbol,
                 salesData,
                 recentActivity
             }

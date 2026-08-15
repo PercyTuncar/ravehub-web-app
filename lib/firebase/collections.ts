@@ -276,12 +276,13 @@ export class FirestoreCollection<T extends DocumentData> {
       const querySnapshot = await getDocs(q);
       const docs = querySnapshot.docs;
       const hasMore = docs.length > pageSize;
-      const data = docs.slice(0, pageSize).map(doc => {
+      const pageDocs = docs.slice(0, pageSize);
+      const data = pageDocs.map(doc => {
         const docData = doc.data();
         const serializedData = this.serializeTimestamps(docData);
         return { id: doc.id, ...serializedData } as unknown as T;
       });
-      const lastDoc = docs.length > 0 ? docs[docs.length - 1] : undefined;
+      const lastDoc = pageDocs.at(-1);
 
       return { data, hasMore, lastDoc };
     } catch (error) {

@@ -32,6 +32,7 @@ import { updateTicketPaymentStatus, deleteTicketTransaction } from '@/lib/action
 import { ManualTicketAssignmentModal } from '@/components/admin/tickets/ManualTicketAssignmentModal';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { TicketFiltersSkeleton, TicketRowSkeleton, TicketStatSkeleton } from '@/components/admin/TicketLoadingSkeletons';
 
 // Helper to parse dates
 const parseDate = (date: any) => {
@@ -282,8 +283,12 @@ function TicketsAdminContent() {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {loading ? (
+                        [1, 2, 3, 4].map((index) => <TicketStatSkeleton key={index} />)
+                    ) : (
+                        <>
                     <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 !pt-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-white/60">Total Tickets</p>
@@ -297,7 +302,7 @@ function TicketsAdminContent() {
                     </Card>
 
                     <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 !pt-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-white/60">Pendientes (Offline)</p>
@@ -311,7 +316,7 @@ function TicketsAdminContent() {
                     </Card>
 
                     <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 !pt-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-white/60">Aprobados</p>
@@ -325,7 +330,7 @@ function TicketsAdminContent() {
                     </Card>
 
                     <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 !pt-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-white/60">Ventas Totales</p>
@@ -337,11 +342,16 @@ function TicketsAdminContent() {
                             </div>
                         </CardContent>
                     </Card>
+                        </>
+                    )}
                 </div>
 
                 {/* Actions Bar */}
+                {loading ? (
+                    <TicketFiltersSkeleton />
+                ) : (
                 <Card className="bg-white/5 backdrop-blur-xl border-white/10 mb-6">
-                    <CardContent className="p-6">
+                    <CardContent className="p-6 !pt-6">
                         <div className="flex flex-col lg:flex-row gap-4">
                             {/* Search */}
                             <div className="relative flex-1">
@@ -399,18 +409,16 @@ function TicketsAdminContent() {
                         </div>
                     </CardContent>
                 </Card>
+                )}
 
                 {/* Tickets Grid */}
                 {loading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                            <p className="text-white/60">Cargando tickets...</p>
-                        </div>
+                    <div className="grid grid-cols-1 gap-4 mb-6">
+                        {Array.from({ length: 5 }, (_, index) => <TicketRowSkeleton key={index} />)}
                     </div>
                 ) : paginatedTickets.length === 0 ? (
                     <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                        <CardContent className="p-12 text-center">
+                        <CardContent className="p-12 !pt-12 text-center">
                             <Ticket className="w-16 h-16 text-white/20 mx-auto mb-4" />
                             <h3 className="text-xl font-bold text-white mb-2">No se encontraron tickets</h3>
                             <p className="text-white/60">
@@ -428,7 +436,7 @@ function TicketsAdminContent() {
                                     key={ticket.id}
                                     className="bg-white/5 backdrop-blur-xl border-white/10 hover:border-white/20 transition-all"
                                 >
-                                    <CardContent className="p-6">
+                                    <CardContent className="p-6 !pt-6">
                                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                                             {/* Left: Event & User Info */}
                                             <div className="flex-1 min-w-0">
@@ -529,7 +537,7 @@ function TicketsAdminContent() {
                         {/* Pagination */}
                         {totalPages > 1 && (
                             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                                <CardContent className="p-4">
+                                <CardContent className="p-4 !pt-4">
                                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                         <p className="text-sm text-white/60">
                                             Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-

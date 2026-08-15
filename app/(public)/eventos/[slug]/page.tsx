@@ -195,18 +195,50 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24 pb-24 sm:pb-28 lg:pb-24 w-full">
               <div className="grid gap-8 sm:gap-10 lg:gap-12 lg:grid-cols-3 w-full">
                 {/* Main Content */}
-                <div className="lg:col-span-2 space-y-8 sm:space-y-10 lg:space-y-12 min-w-0 w-full max-w-full">
+                <div className="relative z-20 min-w-0 w-full max-w-full space-y-8 sm:space-y-10 lg:col-span-2 lg:space-y-12">
+                  {/* Entradas */}
+                  {event.salesPhases && event.salesPhases.length > 0 && (
+                    <div className="relative z-30 w-full max-w-full overflow-visible">
+                      <EventPricingTable event={event} />
+                    </div>
+                  )}
+
+                  {event.externalTicketUrl && (
+                    <Card className="w-full max-w-full overflow-hidden border-white/10 bg-white/5 backdrop-blur-sm">
+                      <CardHeader>
+                        <CardTitle className="text-[#FAFDFF]">Entradas Externas</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="mb-4 text-sm text-white/70">
+                          Las entradas para este evento se venden en una plataforma externa.
+                        </p>
+                        <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer">
+                          <Button
+                            variant="outline"
+                            className="w-full border-white/20 text-white hover:bg-white/10"
+                          >
+                            Comprar en Plataforma Externa
+                          </Button>
+                        </a>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Event Details */}
+                  <div className="w-full max-w-full overflow-hidden">
+                    <EventDetails
+                      description={event.description}
+                      specifications={event.specifications}
+                      faqSection={event.faqSection}
+                      tags={event.tags}
+                      categories={event.categories}
+                    />
+                  </div>
+
                   {/* Lineup */}
                   <div className="w-full max-w-full overflow-hidden">
                     <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
                   </div>
-
-                  {/* Pricing Table */}
-                  {event.salesPhases && event.salesPhases.length > 0 && (
-                    <div className="w-full max-w-full overflow-hidden">
-                      <EventPricingTable event={event} />
-                    </div>
-                  )}
 
                   {/* Stage Map */}
                   <div className="w-full max-w-full overflow-hidden">
@@ -226,21 +258,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                       imageAltTexts={event.imageAltTexts}
                     />
                   </div>
-
-                  {/* Event Details */}
-                  <div className="w-full max-w-full overflow-hidden">
-                    <EventDetails
-                      description={event.description}
-                      specifications={event.specifications}
-                      faqSection={event.faqSection}
-                      tags={event.tags}
-                      categories={event.categories}
-                    />
-                  </div>
                 </div>
 
                 {/* Sidebar */}
-                <div className="space-y-4 sm:space-y-6 min-w-0 w-full max-w-full">
+                <div className="relative z-10 min-w-0 w-full max-w-full space-y-4 sm:space-y-6">
                   {/* Event Info Card */}
                   <EventInfoSidebar event={event} />
 
@@ -264,28 +285,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
                   {/* Organizer */}
                   <EventOrganizer organizer={event.organizer} />
-
-                  {/* External Tickets */}
-                  {event.externalTicketUrl && (
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm w-full max-w-full overflow-hidden">
-                      <CardHeader>
-                        <CardTitle className="text-[#FAFDFF]">Entradas Externas</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-white/70 mb-4">
-                          Las entradas para este evento se venden en una plataforma externa.
-                        </p>
-                        <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer">
-                          <Button
-                            variant="outline"
-                            className="w-full border-white/20 text-white hover:bg-white/10"
-                          >
-                            Comprar en Plataforma Externa
-                          </Button>
-                        </a>
-                      </CardContent>
-                    </Card>
-                  )}
                 </div>
               </div>
             </div>

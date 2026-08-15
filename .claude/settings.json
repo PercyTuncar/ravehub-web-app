@@ -2,7 +2,18 @@
   "permissions": {
     "allow": [
       "Bash(git commit *)",
-      "Bash(git commit -m 'Refactor admin-collections to use async getAdminDb\\(\\) instead of deprecated adminDb export *)"
+      "Bash(git commit -m 'Refactor admin-collections to use async getAdminDb\\(\\) instead of deprecated adminDb export *)",
+      "PowerShell(git add -A)",
+      "PowerShell(git checkout -- .claude/settings.json)",
+      "PowerShell(git reset .claude/settings.json)",
+      "PowerShell(git add FIREBASE_ADMIN_FIX.md)",
+      "PowerShell(git commit -m \"Add technical documentation for Firebase Admin fix\")",
+      "PowerShell(git push)",
+      "PowerShell(git add lib/firebase/admin-collections.ts)",
+      "PowerShell(git commit -m \"Add missing bioLinkEventsCollection to admin-collections\")",
+      "Read(//c/Users/tunca/OneDrive/Desktop/Github/components/admin/**)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts|jsx|js\\)$\")",
+      "Bash(python3)"
     ]
   }
 }

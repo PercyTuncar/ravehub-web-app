@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Map } from 'lucide-react';
 import { useEventColors } from './EventColorContext';
 import Image from 'next/image';
@@ -14,11 +14,11 @@ interface EventStageMapProps {
 export function EventStageMap({ stageMapUrl, specifications }: EventStageMapProps) {
   const { colorPalette } = useEventColors();
   const dominantColor = colorPalette?.dominant || '#FBA905';
+  const accentColor = colorPalette?.accent || '#FBA905';
   const [imageError, setImageError] = useState(false);
 
-  // Try to get stageMapUrl from specifications if not provided directly
-  // specifications can be an array with objects containing stageMapUrl
-  const mapUrl = stageMapUrl ||
+  const mapUrl =
+    stageMapUrl ||
     (specifications?.find((spec: any) => spec.stageMapUrl) as any)?.stageMapUrl ||
     (specifications?.[0] as any)?.stageMapUrl;
 
@@ -27,57 +27,47 @@ export function EventStageMap({ stageMapUrl, specifications }: EventStageMapProp
   }
 
   return (
-    <Card className="bg-white/5 border-white/10 backdrop-blur-sm overflow-hidden">
-      <CardHeader>
-        <div className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-3 text-[#FAFDFF]">
+    <Card className="relative overflow-hidden rounded-2xl border border-white/[0.10] bg-white/[0.045] shadow-xl shadow-black/15 backdrop-blur-2xl">
+      <div
+        className="pointer-events-none absolute -right-16 -top-20 z-0 h-44 w-44 rounded-full opacity-[0.15] blur-3xl"
+        style={{ backgroundColor: dominantColor }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-24 -left-16 z-0 h-40 w-40 rounded-full opacity-[0.12] blur-3xl"
+        style={{ backgroundColor: accentColor }}
+      />
+      <div className="pointer-events-none absolute inset-x-8 top-0 z-0 h-px bg-white/15" />
+
+      <CardContent className="relative z-10 p-5 sm:p-6">
+        <div className="mb-4 flex items-start gap-3">
           <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{
-              background: `linear-gradient(135deg, ${dominantColor}20, ${dominantColor}20)`,
-              border: `2px solid ${dominantColor}40`,
-            }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/15 shadow-sm"
+            style={{ backgroundColor: `${dominantColor}20`, borderColor: `${dominantColor}30` }}
           >
-            <Map
-              className="h-5 w-5"
-              style={{
-                color: dominantColor,
-                transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            />
+            <Map className="h-5 w-5" style={{ color: dominantColor }} />
           </div>
-          <div>
-            <h2 className="text-xl font-bold">Mapa del Escenario</h2>
-            <p className="text-sm text-white/60 font-normal mt-0.5">
-              Ubicación de zonas y áreas del evento
-            </p>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h2 className="text-lg font-bold text-[#FAFDFF]">Mapa del Escenario</h2>
+            <p className="mt-0.5 text-xs text-white/60">Ubicación de zonas y áreas del evento</p>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="relative w-full aspect-video bg-white/5 rounded-lg overflow-hidden group">
+
+        <div className="group relative aspect-video w-full overflow-hidden rounded-xl border border-white/[0.10] bg-black/20 shadow-lg shadow-black/15">
           <Image
             src={mapUrl}
             alt="Mapa del escenario del evento"
             fill
-            className="object-contain transition-transform duration-300 group-hover:scale-105"
+            className="object-contain p-2 transition-transform duration-500 group-hover:scale-[1.03]"
             onError={() => setImageError(true)}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-          {/* Overlay gradient for better visibility */}
           <div
-            className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{
-              background: `linear-gradient(to bottom, transparent 0%, ${dominantColor}10 100%)`,
-            }}
+            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            style={{ background: `linear-gradient(to top, ${dominantColor}18, transparent 60%)` }}
           />
         </div>
-        <div className="p-4 text-center">
-          <p className="text-xs text-white/60">
-            Haz clic y arrastra para ver el mapa en detalle
-          </p>
-        </div>
+        <p className="mt-3 text-center text-xs text-white/50">Haz clic y arrastra para ver el mapa en detalle</p>
       </CardContent>
     </Card>
   );
 }
-

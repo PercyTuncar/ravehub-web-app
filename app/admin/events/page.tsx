@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import Link from 'next/link';
 import { Plus, Edit, Eye, Calendar, MapPin, Users, Trash2, Search, Filter, RefreshCw, MoreHorizontal, CheckCircle, XCircle, AlertCircle, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,9 @@ import { es } from 'date-fns/locale';
 import { parseLocalDate } from '@/lib/utils/date-timezone';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { EventCardSkeleton, EventFiltersSkeleton, EventStatSkeleton } from '@/components/admin/EventLoadingSkeletons';
+
+const PAGE_SIZE = 12;
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -39,29 +43,95 @@ async function revalidateSitemap() {
 export default function EventsAdminPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingStats, setLoadingStats] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | undefined>();
+  const [hasMore, setHasMore] = useState(false);
+  const [stats, setStats] = useState({ total: 0, published: 0, draft: 0 });
 
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [duplicateEvent, setDuplicateEvent] = useState<Partial<Event> | null>(null);
   const [duplicateData, setDuplicateData] = useState<Partial<Event>>({});
   const [duplicating, setDuplicating] = useState(false);
 
-  useEffect(() => {
-    loadEvents();
-  }, []);
-
-  const loadEvents = async () => {
-    setLoading(true);
+  const loadStats = async () => {
+    setLoadingStats(true);
     try {
-      const allEvents = await eventsCollection.getAll();
-      setEvents(allEvents as Event[]);
+      const [total, published, draft] = await Promise.all([
+        eventsCollection.count(),
+        eventsCollection.count([{ field: 'eventStatus', operator: '==', value: 'published' }]),
+        eventsCollection.count([{ field: 'eventStatus', operator: '==', value: 'draft' }]),
+      ]);
+      setStats({ total, published, draft });
+    } catch (error) {
+      console.error('Error loading event statistics:', error);
+      toast.error('Error al cargar estadísticas de eventos');
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  const loadEvents = async (cursor?: QueryDocumentSnapshot, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+
+    try {
+      const normalizedSearch = searchTerm.trim().toLocaleUpperCase('es');
+      const conditions: Array<{ field: string; operator: any; value: any }> = [];
+
+      if (statusFilter !== 'all') {
+        conditions.push({ field: 'eventStatus', operator: '==', value: statusFilter });
+      }
+      if (typeFilter !== 'all') {
+        conditions.push({ field: 'eventType', operator: '==', value: typeFilter });
+      }
+      if (normalizedSearch) {
+        conditions.push({ field: 'name', operator: '>=', value: normalizedSearch });
+        conditions.push({ field: 'name', operator: '<=', value: `${normalizedSearch}` });
+      }
+
+      const result = await eventsCollection.paginate(
+        conditions,
+        normalizedSearch ? 'name' : 'createdAt',
+        normalizedSearch ? 'asc' : 'desc',
+        PAGE_SIZE,
+        cursor,
+      );
+
+      setEvents(previous => append ? [...previous, ...(result.data as Event[])] : result.data as Event[]);
+      setLastDoc(result.lastDoc);
+      setHasMore(result.hasMore);
     } catch (error) {
       console.error('Error loading events:', error);
       toast.error('Error al cargar eventos');
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
+    }
+  };
+
+  const refreshEvents = async () => {
+    await Promise.all([loadEvents(), loadStats()]);
+  };
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadEvents();
+    }, searchTerm ? 350 : 0);
+
+    return () => window.clearTimeout(timer);
+  }, [searchTerm, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    void loadStats();
+  }, []);
+
+  const handleLoadMore = () => {
+    if (lastDoc && hasMore && !loadingMore) {
+      void loadEvents(lastDoc, true);
     }
   };
 
@@ -73,9 +143,9 @@ export default function EventsAdminPage() {
     try {
       await eventsCollection.delete(eventId);
       setEvents(prev => prev.filter(event => event.id !== eventId));
+      void loadStats();
       toast.success('Evento eliminado exitosamente');
 
-      // Revalidate sitemap when event is deleted
       await revalidateSitemap();
     } catch (error) {
       console.error('Error deleting event:', error);
@@ -87,13 +157,12 @@ export default function EventsAdminPage() {
     try {
       await eventsCollection.update(eventId, { eventStatus: newStatus });
 
-      // Revalidate sitemap when event status changes (affects visibility in sitemap)
       await revalidateSitemap();
       setEvents(prev => prev.map(event =>
         event.id === eventId ? { ...event, eventStatus: newStatus } : event
       ));
+      void loadStats();
 
-      // Revalidate pages when status changes to published
       if (newStatus === 'published') {
         const event = events.find(e => e.id === eventId);
         if (event) {
@@ -162,6 +231,7 @@ export default function EventsAdminPage() {
 
       const createdEvent = { id: newId, ...payload } as Event;
       setEvents(prev => [createdEvent, ...prev]);
+      void loadStats();
 
       toast.success('Evento duplicado correctamente');
 
@@ -180,20 +250,6 @@ export default function EventsAdminPage() {
       setDuplicating(false);
     }
   };
-
-  const filteredEvents = events.filter(event => {
-    const name = event.name || '';
-    const shortDescription = event.shortDescription || '';
-    const slug = event.slug || '';
-
-    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shortDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      slug.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || event.eventStatus === statusFilter;
-    const matchesType = typeFilter === 'all' || event.eventType === typeFilter;
-
-    return matchesSearch && matchesStatus && matchesType;
-  });
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -218,13 +274,6 @@ export default function EventsAdminPage() {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
-  };
-
-  // Stats
-  const stats = {
-    total: events.length,
-    published: events.filter(e => e.eventStatus === 'published').length,
-    draft: events.filter(e => e.eventStatus === 'draft').length,
   };
 
   return (
@@ -268,128 +317,136 @@ export default function EventsAdminPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card className="bg-white/5 backdrop-blur-xl border-white/10 h-full">
-              <CardContent className="p-6 h-full flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-white/60">Total Eventos</p>
-                    <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {loadingStats ? (
+              [1, 2, 3, 4].map((index) => <EventStatSkeleton key={index} />)
+            ) : (
+              <>
+                <Card className="bg-white/5 backdrop-blur-xl border-white/10 h-full">
+                  <CardContent className="p-6 !pt-6 h-full flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-white/60">Total Eventos</p>
+                        <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card className="bg-white/5 backdrop-blur-xl border-white/10 h-full">
-              <CardContent className="p-6 h-full flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-white/60">Publicados</p>
-                    <p className="text-3xl font-bold text-green-400 mt-1">{stats.published}</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-green-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                <Card className="bg-white/5 backdrop-blur-xl border-white/10 h-full">
+                  <CardContent className="p-6 !pt-6 h-full flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-white/60">Publicados</p>
+                        <p className="text-3xl font-bold text-green-400 mt-1">{stats.published}</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-green-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card className="bg-white/5 backdrop-blur-xl border-white/10 h-full">
-              <CardContent className="p-6 h-full flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-white/60">Borradores</p>
-                    <p className="text-3xl font-bold text-yellow-400 mt-1">{stats.draft}</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                    <Edit className="w-6 h-6 text-yellow-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                <Card className="bg-white/5 backdrop-blur-xl border-white/10 h-full">
+                  <CardContent className="p-6 !pt-6 h-full flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-white/60">Borradores</p>
+                        <p className="text-3xl font-bold text-yellow-400 mt-1">{stats.draft}</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                        <Edit className="w-6 h-6 text-yellow-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card className="bg-white/5 backdrop-blur-xl border-white/10 h-full overflow-hidden relative">
-              <CardContent className="p-6 h-full flex flex-col justify-between relative z-10">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0 pr-2">
-                    <p className="text-sm text-white/60">Tipo Principal</p>
-                    <p className="text-xl font-bold text-primary mt-1 truncate">
-                      {events.length > 0 ? 'Música Electrónica' : '-'}
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-                    <Users className="w-6 h-6 text-primary" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                <Card className="bg-white/5 backdrop-blur-xl border-white/10 h-full overflow-hidden relative">
+                  <CardContent className="p-6 !pt-6 h-full flex flex-col justify-between relative z-10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <p className="text-sm text-white/60">Carga progresiva</p>
+                        <p className="text-xl font-bold text-primary mt-1 truncate">{events.length} visibles</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                        <Users className="w-6 h-6 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
 
           {/* Filters Bar */}
-          <Card className="bg-white/5 backdrop-blur-xl border-white/10 mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-col lg:flex-row gap-4 items-center">
-                <div className="relative flex-1 w-full">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <Input
-                    placeholder="Buscar eventos..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-10 bg-black/20 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 w-full"
-                  />
-                </div>
-                <div className="flex gap-4 w-full lg:w-auto">
+          {loading ? (
+            <EventFiltersSkeleton />
+          ) : (
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10 mb-6">
+              <CardContent className="p-4 !pt-4">
+                <div className="flex flex-col lg:flex-row gap-4 items-center">
+                  <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <Input
+                      placeholder="Buscar por nombre de evento..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 h-10 bg-black/20 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 w-full"
+                    />
+                  </div>
+                  <div className="flex gap-4 w-full lg:w-auto">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full lg:w-[200px] h-10 bg-black/20 border-white/10 text-white">
+                      <SelectTrigger className="w-full lg:w-[200px] h-10 bg-black/20 border-white/10 text-white">
                         <SelectValue placeholder="Estado" />
-                    </SelectTrigger>
-                    <SelectContent>
+                      </SelectTrigger>
+                      <SelectContent>
                         <SelectItem value="all">Todos los estados</SelectItem>
                         <SelectItem value="published">Publicado</SelectItem>
                         <SelectItem value="draft">Borrador</SelectItem>
                         <SelectItem value="cancelled">Cancelado</SelectItem>
                         <SelectItem value="finished">Finalizado</SelectItem>
-                    </SelectContent>
+                      </SelectContent>
                     </Select>
                     <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-full lg:w-[200px] h-10 bg-black/20 border-white/10 text-white">
+                      <SelectTrigger className="w-full lg:w-[200px] h-10 bg-black/20 border-white/10 text-white">
                         <SelectValue placeholder="Tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
+                      </SelectTrigger>
+                      <SelectContent>
                         <SelectItem value="all">Todos los tipos</SelectItem>
                         <SelectItem value="festival">Festival</SelectItem>
                         <SelectItem value="concert">Concierto</SelectItem>
                         <SelectItem value="club">Club</SelectItem>
-                    </SelectContent>
+                      </SelectContent>
                     </Select>
                     <Button
-                    onClick={loadEvents}
-                    variant="outline"
-                    className="h-10 w-10 p-0 shrink-0 border-white/10 text-white hover:bg-white/5"
+                      onClick={() => void refreshEvents()}
+                      variant="outline"
+                      className="h-10 w-10 p-0 shrink-0 border-white/10 text-white hover:bg-white/5"
+                      aria-label="Actualizar eventos"
                     >
-                    <RefreshCw className="w-4 h-4" />
+                      <RefreshCw className="w-4 h-4" />
                     </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Events Grid */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-white/60">Cargando eventos...</p>
-              </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }, (_, index) => <EventCardSkeleton key={index} />)}
             </div>
-          ) : filteredEvents.length === 0 ? (
+          ) : events.length === 0 ? (
             <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
               <div className="text-muted-foreground mb-4">
-                {events.length === 0 ? 'No hay eventos creados aún.' : 'No se encontraron eventos con los filtros aplicados.'}
+                {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
+                  ? 'No se encontraron eventos con los filtros aplicados.'
+                  : 'No hay eventos creados aún.'}
               </div>
-              {events.length === 0 && (
+              {!searchTerm && statusFilter === 'all' && typeFilter === 'all' && (
                 <Link href="/admin/events/new" className="inline-block">
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
@@ -400,9 +457,9 @@ export default function EventsAdminPage() {
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredEvents.map((event) => (
+              {events.map((event) => (
                 <Card key={event.id} className="bg-white/5 backdrop-blur-xl border-white/10 hover:border-white/20 transition-all duration-300 group overflow-hidden">
-                  <CardContent className="p-0">
+                  <div>
                     {/* Event Image Placeholder or Gradient */}
                     <div className="h-48 relative overflow-hidden bg-neutral-900">
                         {event.mainImageUrl ? (
@@ -511,9 +568,27 @@ export default function EventsAdminPage() {
                         </DropdownMenu>
                       </div>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               ))}
+              {loadingMore && Array.from({ length: 3 }, (_, index) => <EventCardSkeleton key={`loading-${index}`} />)}
+            </div>
+          )}
+
+          {!loading && events.length > 0 && (
+            <div className="mt-8 flex flex-col items-center gap-3">
+              {hasMore ? (
+                <Button
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  variant="outline"
+                  className="min-w-48 border-white/10 bg-white/5 text-white hover:bg-white/10"
+                >
+                  {loadingMore ? 'Cargando eventos...' : 'Cargar más eventos'}
+                </Button>
+              ) : (
+                <p className="text-sm text-white/40">Has llegado al final de los eventos.</p>
+              )}
             </div>
           )}
             {/* Duplicate Event Dialog */}

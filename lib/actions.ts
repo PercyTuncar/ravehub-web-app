@@ -861,7 +861,7 @@ export async function getUserProfileData(userId: string) {
       let eventName = 'Evento desconocido';
       let eventDate = '';
       let eventImage = '/images/placeholder-event.jpg';
-      let currency = ticket.currency || 'CLP';
+      let currency = ticket.currency;
 
       try {
         if (ticket.eventId) {
@@ -870,8 +870,7 @@ export async function getUserProfileData(userId: string) {
             eventName = event.name;
             eventDate = event.startDate;
             eventImage = event.mainImageUrl || eventImage;
-            // Prefer event currency if ticket doesn't specify (though ticket usually should)
-            if (!ticket.currency && event.currency) {
+            if (!currency && event.currency) {
               currency = event.currency;
             }
           }

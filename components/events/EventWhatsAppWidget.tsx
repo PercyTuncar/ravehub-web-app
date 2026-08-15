@@ -2,7 +2,8 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Users, HelpCircle, Sparkles } from 'lucide-react';
+import { Users, HelpCircle } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 import { Event } from '@/lib/types';
 import { useEventColors } from './EventColorContext';
 import { useMemo } from 'react';
@@ -31,66 +32,50 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
   }, []);
 
   return (
-    <Card className="bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md overflow-hidden relative group">
-      {/* Animated gradient background */}
+    <Card className="group relative overflow-hidden rounded-2xl border border-white/[0.10] bg-white/[0.045] shadow-xl shadow-black/15 backdrop-blur-2xl">
       <div
-        className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-500"
-        style={{
-          background: `radial-gradient(circle at top right, ${dominantColor}40, transparent 50%), 
-                       radial-gradient(circle at bottom left, ${accentColor}30, transparent 50%)`,
-        }}
+        className="pointer-events-none absolute -right-16 -top-20 z-0 h-44 w-44 rounded-full opacity-18 blur-3xl"
+        style={{ backgroundColor: dominantColor }}
       />
-
-      {/* Shine effect on hover */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500"
-        style={{
-          background: `linear-gradient(135deg, transparent 0%, ${dominantColor}40 50%, transparent 100%)`,
-          transform: 'translateX(-100%) group-hover:translateX(100%)',
-          transition: 'transform 0.6s ease-in-out',
-        }}
+        className="pointer-events-none absolute -bottom-24 -left-16 z-0 h-40 w-40 rounded-full opacity-15 blur-3xl"
+        style={{ backgroundColor: accentColor }}
       />
+      <div className="pointer-events-none absolute inset-x-8 top-0 z-0 h-px bg-white/15" />
 
-      <CardContent className="relative z-10 p-6 space-y-5">
+      <CardContent className="relative z-10 space-y-4 p-5 sm:p-6">
         {/* Header with icon and title */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="mb-1 flex items-start gap-3">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/15 shadow-sm"
             style={{
-              background: `linear-gradient(135deg, ${dominantColor}20, ${accentColor}20)`,
-              border: `2px solid ${dominantColor}40`,
+              backgroundColor: `${dominantColor}20`,
+              borderColor: `${dominantColor}30`,
             }}
           >
-            <MessageCircle
-              className="h-6 w-6"
+            <FaWhatsapp
+              className="h-5 w-5"
               style={{
-                color: dominantColor,
+                color: '#25D366',
                 transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             />
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-[#FAFDFF] flex items-center gap-2">
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h3 className="text-lg font-bold text-[#FAFDFF]">
               Comunidad y Soporte
-              <Sparkles
-                className="h-4 w-4"
-                style={{
-                  color: accentColor,
-                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
-              />
             </h3>
-            <p className="text-xs text-white/60 mt-0.5">
+            <p className="mt-0.5 text-xs text-white/60">
               Conecta y compra fácilmente
             </p>
           </div>
         </div>
 
         {/* Event preview image (optional, if available) */}
-        {event.mainImageUrl && (
-          <div className="relative h-32 rounded-lg overflow-hidden border border-white/10">
+        {(event.bannerImageUrl || event.mainImageUrl) && (
+          <div className="relative h-28 overflow-hidden rounded-xl border border-white/[0.10] shadow-lg shadow-black/15">
             <Image
-              src={event.mainImageUrl}
+              src={event.bannerImageUrl || event.mainImageUrl}
               alt={event.name}
               fill
               className="object-cover"
@@ -105,11 +90,11 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
         )}
 
         {/* Buttons with enhanced design */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {/* Join WhatsApp Group Button */}
           <Button
             asChild
-            className="w-full h-auto py-4 px-6 rounded-xl font-semibold text-base transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl group/button relative overflow-hidden"
+            className="relative h-auto w-full overflow-hidden rounded-xl px-5 py-3.5 text-sm font-semibold shadow-lg shadow-black/15 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/80 group/button"
             style={{
               backgroundColor: '#25D366',
               color: '#FFFFFF',
@@ -133,7 +118,7 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
           {/* Contact Support WhatsApp Button */}
           <Button
             asChild
-            className="w-full h-auto py-4 px-6 rounded-xl font-semibold text-base transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl group/button relative overflow-hidden border-2 backdrop-blur-md"
+            className="relative h-auto w-full overflow-hidden rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3.5 text-sm font-semibold shadow-lg shadow-black/10 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/[0.12] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/80 group/button"
             style={{
               backgroundColor: `${dominantColor}20`,
               color: '#FFFFFF',
@@ -167,7 +152,7 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
         </div>
 
         {/* Feature highlights */}
-        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
+        <div className="grid grid-cols-2 gap-2.5 border-t border-white/[0.10] pt-3.5">
           <div className="flex items-center gap-2 text-xs text-white/70">
             <div
               className="w-2 h-2 rounded-full"

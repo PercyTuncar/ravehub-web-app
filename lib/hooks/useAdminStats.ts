@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export type TimeRange = '24h' | '7d' | '30d' | '90d' | 'year' | 'all';
+export type CountryFilter = 'all' | 'PE' | 'CL' | 'CO' | 'EC' | 'MX' | 'AR';
 
 // ... imports
 interface AdminStats {
@@ -10,6 +11,8 @@ interface AdminStats {
   totalUsers: number;
   pendingPayments: number;
   totalRevenue: number;
+  currency: string;
+  currencySymbol: string;
   salesData: Array<{ name: string; sales: number }>;
   recentActivity: Array<{
     id: string;
@@ -21,7 +24,7 @@ interface AdminStats {
   error: string | null;
 }
 
-export function useAdminStats(timeRange: TimeRange = 'all'): AdminStats {
+export function useAdminStats(timeRange: TimeRange = 'all', countryFilter: CountryFilter = 'all'): AdminStats {
   const [stats, setStats] = useState<AdminStats>({
     totalEvents: 0,
     activeEvents: 0,
@@ -29,6 +32,8 @@ export function useAdminStats(timeRange: TimeRange = 'all'): AdminStats {
     totalUsers: 0,
     pendingPayments: 0,
     totalRevenue: 0,
+    currency: 'USD',
+    currencySymbol: '$',
     salesData: [],
     recentActivity: [],
     loading: true,
@@ -37,18 +42,18 @@ export function useAdminStats(timeRange: TimeRange = 'all'): AdminStats {
 
   useEffect(() => {
     fetchStats();
-  }, [timeRange]);
+  }, [timeRange, countryFilter]);
 
   const fetchStats = async () => {
     try {
       setStats(prev => ({ ...prev, loading: true, error: null }));
 
-      // Import server action dynamically to avoid build issues if mixed components? 
+      // Import server action dynamically to avoid build issues if mixed components?
       // Should be fine to import at top but let's be safe or just use standard import.
       // Standard import at top is better.
       const { getAdminDashboardStats } = await import('@/lib/admin-actions');
 
-      const response = await getAdminDashboardStats(timeRange);
+      const response = await getAdminDashboardStats(timeRange, countryFilter);
 
       if (response.success && response.data) {
         setStats({

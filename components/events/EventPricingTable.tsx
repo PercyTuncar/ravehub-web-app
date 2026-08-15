@@ -373,6 +373,7 @@ function getPhaseStatus(phase: any) {
 export function EventPricingTable({ event }: EventPricingTableProps) {
   const { colorPalette } = useEventColors();
   const dominantColor = colorPalette?.dominant || "#FBA905";
+  const accentColor = colorPalette?.accent || dominantColor;
   const currency = event.currency || "USD";
 
   // Organize pricing data
@@ -463,29 +464,47 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
   if (pricingData.length === 0) return null;
 
   return (
-    <Card className="border-0 bg-zinc-900/40 backdrop-blur-xl overflow-hidden shadow-2xl ring-1 ring-white/10 rounded-3xl mt-12">
-      <div className="p-6 md:p-8 border-b border-white/5">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-          <Ticket className="w-6 h-6" style={{ color: dominantColor }} />
-          Entradas
-        </h2>
+    <Card className="relative z-20 mt-8 overflow-hidden rounded-3xl border border-white/15 bg-white/[0.045] shadow-2xl shadow-black/30 backdrop-blur-2xl lg:-mt-24">
+      <div className="pointer-events-none absolute -left-20 -top-28 z-0 h-72 w-72 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: dominantColor }} />
+      <div className="pointer-events-none absolute -bottom-36 -right-20 z-0 h-80 w-80 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: accentColor }} />
+      <div className="relative z-10">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, ${dominantColor}, ${accentColor}, transparent)` }}
+        />
+        <div className="relative flex flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-7 md:px-8">
+          <div className="flex items-start gap-3">
+            <div
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 shadow-lg"
+              style={{ backgroundColor: `${dominantColor}24`, color: dominantColor }}
+            >
+              <Ticket className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-white">Entradas</h2>
+              <p className="mt-1 text-sm text-white/60">Elige una fase y continúa a la compra segura.</p>
+            </div>
+          </div>
+          {event.allowInstallmentPayments && (
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1.5 text-xs font-medium text-sky-300">
+              <CreditCard className="h-3.5 w-3.5" />
+              Pagos en cuotas disponibles
+            </span>
+          )}
+        </div>
       </div>
 
       <CardContent className="p-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Tabs List */}
-          <div className="border-b border-white/5 bg-black/20">
-            <TabsList className="bg-transparent h-auto p-0 w-full overflow-x-auto no-scrollbar justify-start">
+          <div className="border-b border-white/10 bg-black/10 px-3 py-3 backdrop-blur-xl sm:px-5">
+            <div className="overflow-x-auto pb-1">
+              <TabsList className="flex h-auto w-max min-w-full justify-start gap-2 bg-transparent p-0">
               {pricingData.map(({ phase, status }, index) => (
                 <TabsTrigger
                   key={phase.id}
                   value={`phase-${index}`}
-                  className={`
-                                relative h-14 px-6 rounded-none border-b-2 border-transparent 
-                                data-[state=active]:border-primary data-[state=active]:bg-white/5
-                                text-zinc-400 data-[state=active]:text-white transition-all
-                                hover:text-white hover:bg-white/5
-                            `}
+                  className="relative h-auto min-w-[10rem] shrink-0 rounded-xl border border-white/10 bg-white/[0.045] px-4 py-3 text-left text-white/60 shadow-sm shadow-black/10 backdrop-blur-md transition-all hover:border-white/25 hover:bg-white/[0.10] hover:text-white data-[state=active]:bg-white/[0.13] data-[state=active]:text-white data-[state=active]:shadow-lg"
                   style={{
                     borderColor:
                       activeTab === `phase-${index}`
@@ -493,13 +512,14 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                         : "transparent",
                   }}
                 >
-                  <span className="flex items-center gap-2">
-                    {phase.name}
+                  <span className="flex min-w-0 flex-col items-start gap-1">
+                    <span className="max-w-full truncate text-sm font-semibold">{phase.name}</span>
                     {getPhaseStatusBadge(status, null, "sm")}
                   </span>
                 </TabsTrigger>
               ))}
             </TabsList>
+            </div>
           </div>
 
           {/* Content */}
@@ -511,7 +531,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                 <TabsContent
                   key={phase.id}
                   value={`phase-${index}`}
-                  className="p-6 md:p-8 space-y-4 focus:outline-none"
+                  className="space-y-5 p-5 focus:outline-none sm:p-7 md:p-8"
                 >
                   {/* Status Message */}
                   {isExpired && (
@@ -543,14 +563,13 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                           href={!isDisabled ? buyUrl : "#"}
                           onClick={(e) => isDisabled && e.preventDefault()}
                           className={`
-                                            group flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 
-                                            p-4 rounded-xl border transition-all duration-200
-                                            ${
-                                              isDisabled
-                                                ? "bg-zinc-900/30 border-white/5 opacity-50 grayscale cursor-not-allowed"
-                                                : "bg-zinc-900/50 border-white/10 hover:bg-white/5 hover:border-white/20 hover:shadow-lg hover:scale-[1.01] cursor-pointer"
-                                            }
-                                        `}
+                            group flex flex-col justify-between gap-4 rounded-2xl border p-4 transition-all duration-200 sm:flex-row sm:items-center sm:p-5
+                            ${
+                              isDisabled
+                                ? "cursor-not-allowed border-white/5 bg-black/10 opacity-55 grayscale"
+                                : "cursor-pointer border-white/15 bg-white/[0.055] shadow-lg shadow-black/10 backdrop-blur-xl hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/[0.11] hover:shadow-xl hover:shadow-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                            }
+                          `}
                         >
                           {/* Left: Info */}
                           <div className="flex-1 min-w-0">
@@ -623,14 +642,6 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                           Comprar Entradas
                         </Button>
                       </Link>
-                      {event.allowInstallmentPayments && (
-                        <div className="mt-3 text-center">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20">
-                            <CreditCard className="w-3 h-3" />
-                            Pagos en cuotas disponibles
-                          </span>
-                        </div>
-                      )}
                     </div>
                   )}
                 </TabsContent>

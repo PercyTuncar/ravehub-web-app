@@ -342,9 +342,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await updateDoc(doc(db, 'users', firebaseUser.uid), {
         authProvider: 'email+google',
         googleLinked: true,
-        googleUID: result.user.uid, // This might differ from firebase uid if it came from provider data, but usually result.user IS firebaseUser. 
-        // Actually result.user is the User object which is the same as firebaseUser after linking.
-        // To get the google specific ID we might look at providerData but simply marking it linked is enough.
+        googleUID: result.user.uid,
         updatedAt: serverTimestamp(),
       });
 
@@ -352,10 +350,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await loadUserData(firebaseUser.uid);
 
     } catch (error: any) {
-      console.error('Error linking Google account:', error);
+      // Don't log credential-already-in-use since we handle it gracefully
+      if (error.code !== 'auth/credential-already-in-use') {
+        console.error('Error linking Google account:', error);
+      }
+
       if (error.message === 'EMAIL_MISMATCH') {
         throw new Error('El correo de Google debe coincidir con tu correo actual.');
       }
+
+      // Handle credential-already-in-use for same email
+      if (error.code === 'auth/credential-already-in-use') {
+        // This means the Google account email matches the current user email
+        // We can safely mark it as linked since it's the same person
+        try {
+          await updateDoc(doc(db, 'users', firebaseUser.uid), {
+            authProvider: 'email+google',
+            googleLinked: true,
+            updatedAt: serverTimestamp(),
+          });
+
+          // Update local state
+          await loadUserData(firebaseUser.uid);
+          return; // Success
+        } catch (updateError) {
+          console.error('Error updating user after credential-in-use:', updateError);
+          throw new Error('Error al vincular la cuenta. Por favor, intenta nuevamente.');
+        }
+      }
+
       throw error;
     }
   };

@@ -12,6 +12,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { VerificationRequiredModal } from '@/components/auth/VerificationRequiredModal';
+import { ConvertedPrice } from '@/components/common/ConvertedPrice';
+import { ProfileCardSkeleton } from '@/components/profile/ProfileSkeletons';
 
 export default function ProfileClient() {
   const { user, logout, firebaseUser } = useAuth();
@@ -294,8 +296,13 @@ export default function ProfileClient() {
 
                     <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
                       <h3 className="text-lg font-bold text-white mb-6">Actividad Reciente</h3>
-                      <div className="space-y-3">
-                        {recentTickets.length > 0 ? recentTickets.map((ticket) => (
+                      {loading ? (
+                        <div className="space-y-3">
+                          {[1, 2, 3].map((i) => <ProfileCardSkeleton key={i} />)}
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {recentTickets.length > 0 ? recentTickets.map((ticket) => (
                           <div key={ticket.id} className="group bg-black/20 hover:bg-black/30 border border-white/5 rounded-xl p-4 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-4 w-full sm:w-auto">
                               <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shrink-0">
@@ -310,6 +317,7 @@ export default function ProfileClient() {
                           </div>
                         )) : <p className="text-white/40">Sin actividad reciente</p>}
                       </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -317,7 +325,12 @@ export default function ProfileClient() {
                 {activeTab === 'tickets' && (
                   <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
                     <h3 className="text-lg font-bold text-white mb-6">Mis Tickets</h3>
-                    <div className="space-y-4">
+                    {loading ? (
+                      <div className="space-y-4">
+                        {[1, 2, 3].map((i) => <ProfileCardSkeleton key={i} />)}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
                       {recentTickets.map((ticket) => (
                         <div key={ticket.id} className="group bg-black/20 border border-white/5 rounded-xl p-5 transition-all">
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -337,7 +350,11 @@ export default function ProfileClient() {
                             <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
                               <div className="text-left md:text-right md:mr-4">
                                 <p className="text-white/40 text-xs uppercase tracking-wider">Total</p>
-                                <p className="text-white font-bold">${ticket.totalAmount.toLocaleString()} {ticket.currency}</p>
+                                <ConvertedPrice
+                                  amount={Number(ticket.totalAmount || 0)}
+                                  currency={ticket.currency || 'USD'}
+                                  showOriginal
+                                />
                               </div>
                               <Link href={`/profile/tickets/${ticket.id}`} className="w-full">
                                 <Button className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10">
@@ -349,13 +366,19 @@ export default function ProfileClient() {
                         </div>
                       ))}
                     </div>
+                    )}
                   </div>
                 )}
 
                 {activeTab === 'orders' && (
                   <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
                     <h3 className="text-lg font-bold text-white mb-6">Historial de Órdenes</h3>
-                    <div className="space-y-4">
+                    {loading ? (
+                      <div className="space-y-4">
+                        {[1, 2].map((i) => <ProfileCardSkeleton key={i} />)}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
                       {recentOrders.map((order) => (
                         <div key={order.id} className="bg-black/20 border border-white/5 rounded-xl p-5 hover:border-primary/20 transition-all">
                           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -374,7 +397,11 @@ export default function ProfileClient() {
                               </div>
                             </div>
                             <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                              <p className="text-white font-medium">${order.totalAmount.toLocaleString()} {order.currency}</p>
+                              <ConvertedPrice
+                                amount={Number(order.totalAmount || 0)}
+                                currency={order.currency || 'USD'}
+                                showOriginal
+                              />
                               <Button size="icon" variant="ghost" className="text-white/40 hover:text-white">
                                 <ChevronRight className="w-5 h-5" />
                               </Button>
@@ -383,6 +410,7 @@ export default function ProfileClient() {
                         </div>
                       ))}
                     </div>
+                    )}
                   </div>
                 )}
 

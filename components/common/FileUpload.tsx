@@ -178,7 +178,7 @@ export function FileUpload({
   if (currentUrl) {
     return (
       <Card className={className}>
-        <CardContent className="p-6">
+        <CardContent className="p-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -245,7 +245,7 @@ export function FileUpload({
 
   return (
     <Card className={`${className} ${dragOver ? 'ring-2 ring-primary/50' : ''} transition-all duration-200`}>
-      <CardContent className="p-8">
+      <CardContent className="p-0">
         <input
           ref={fileInputRef}
           type="file"
@@ -318,12 +318,6 @@ export function FileUpload({
                 <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
                 Máximo {maxSize}MB
               </span>
-            </div>
-            <div className="p-4 bg-gradient-to-r from-orange-500/10 to-primary/10 rounded-xl border border-orange-500/20">
-              <div className="flex items-center justify-center gap-2 text-sm text-orange-600 font-medium">
-                <Sparkles className="w-4 h-4" />
-                <span>Optimización automática con ImageKit incluida</span>
-              </div>
             </div>
           </div>
         )}

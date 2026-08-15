@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ProductCardSkeleton, ProductFiltersSkeleton, ProductStatSkeleton } from '@/components/admin/ProductLoadingSkeletons';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -314,8 +315,12 @@ export default function ProductsAdminPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {loading ? (
+              [1, 2, 3, 4].map((index) => <ProductStatSkeleton key={index} />)
+            ) : (
+              <>
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-6">
+              <CardContent className="p-6 !pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/60">Total Productos</p>
@@ -329,7 +334,7 @@ export default function ProductsAdminPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-6">
+              <CardContent className="p-6 !pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/60">Activos</p>
@@ -343,7 +348,7 @@ export default function ProductsAdminPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-6">
+              <CardContent className="p-6 !pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/60">Borradores</p>
@@ -357,7 +362,7 @@ export default function ProductsAdminPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-              <CardContent className="p-6">
+              <CardContent className="p-6 !pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/60">Stock Bajo</p>
@@ -369,11 +374,16 @@ export default function ProductsAdminPage() {
                 </div>
               </CardContent>
             </Card>
+              </>
+            )}
           </div>
 
           {/* Filters Bar */}
+          {loading ? (
+            <ProductFiltersSkeleton />
+          ) : (
           <Card className="bg-white/5 backdrop-blur-xl border-white/10 mb-6">
-            <CardContent className="p-6">
+            <CardContent className="p-6 !pt-6">
               <div className="flex flex-col lg:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -394,14 +404,12 @@ export default function ProductsAdminPage() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Products Grid */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-white/60">Cargando productos...</p>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }, (_, index) => <ProductCardSkeleton key={index} />)}
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12 bg-white/5 rounded-xl border border-white/10">
@@ -443,7 +451,7 @@ export default function ProductsAdminPage() {
                     )}
                   </div>
 
-                  <CardContent className="p-4">
+                  <CardContent className="p-4 !pt-4">
                     <h3 className="font-bold text-white mb-1 line-clamp-1">{product.name}</h3>
                     <p className="text-xs text-white/60 mb-3 line-clamp-2 min-h-[2.5em]">
                       {product.shortDescription}

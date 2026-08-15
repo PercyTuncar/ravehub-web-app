@@ -1,9 +1,6 @@
 'use client';
 
-import { Calendar, MapPin, Clock } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Calendar, MapPin, Clock, Info } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -17,165 +14,133 @@ interface EventInfoSidebarProps {
 export function EventInfoSidebar({ event }: EventInfoSidebarProps) {
   const { colorPalette } = useEventColors();
   const dominantColor = colorPalette?.dominant || '#FBA905';
+  const accentColor = colorPalette?.accent || '#FBA905';
+
+  const hasScheduleDetails = Boolean(event.endDate || event.doorTime || event.endTime || event.timezone);
+  const hasLocationDetails = Boolean(event.location.city || event.location.region || event.location.address);
+  const hasAttributes = Boolean(
+    event.eventType ||
+      event.eventAttendanceMode ||
+      event.categories?.length ||
+      event.typicalAgeRange ||
+      event.audienceType,
+  );
 
   return (
-    <div className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl p-6 space-y-6">
-      <div className="flex items-center gap-2 mb-2">
-         <h2 className="text-xl font-bold leading-none tracking-tight text-[#FAFDFF]">Información</h2>
-      </div>
+    <section className="relative overflow-hidden rounded-2xl border border-white/[0.10] bg-white/[0.045] shadow-xl shadow-black/15 backdrop-blur-2xl">
+      <div
+        className="pointer-events-none absolute -right-16 -top-20 z-0 h-44 w-44 rounded-full opacity-[0.15] blur-3xl"
+        style={{ backgroundColor: dominantColor }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-24 -left-16 z-0 h-40 w-40 rounded-full opacity-[0.12] blur-3xl"
+        style={{ backgroundColor: accentColor }}
+      />
+      <div className="pointer-events-none absolute inset-x-8 top-0 z-0 h-px bg-white/15" />
 
-        <div className="flex items-start gap-4 text-sm group">
-          <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
-              <Calendar
-                className="h-5 w-5"
-                style={{
-                  color: dominantColor,
-                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
-              />
+      <div className="relative z-10 space-y-5 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/15 shadow-sm"
+            style={{ backgroundColor: `${dominantColor}20`, borderColor: `${dominantColor}30` }}
+          >
+            <Info className="h-5 w-5" style={{ color: dominantColor }} />
           </div>
-          <div className="space-y-0.5">
-            <div className="text-[#FAFDFF] font-bold text-base">
-              {format(parseLocalDate(event.startDate), 'PPP', { locale: es })}
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h2 className="text-lg font-bold text-[#FAFDFF]">Información</h2>
+            <p className="mt-0.5 text-xs text-white/60">Detalles adicionales del evento</p>
+          </div>
+        </div>
+
+        {hasScheduleDetails && (
+          <section className="space-y-2.5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/90">
+              <Clock className="h-4 w-4" style={{ color: dominantColor }} />
+              Horarios
             </div>
-            {event.endDate && (
-              <div className="text-white/60 text-xs font-medium uppercase tracking-wide">
-                Hasta {format(parseLocalDate(event.endDate), 'PPP', { locale: es })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <Separator className="bg-white/10" />
-
-        <div className="flex items-start gap-4 text-sm group">
-           <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
-              <Clock
-                className="h-5 w-5"
-                style={{
-                  color: dominantColor,
-                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
-              />
-           </div>
-          <div className="space-y-1">
-            {event.startTime && (
-              <div className="text-[#FAFDFF] font-medium">
-                <span className="text-white/60 font-normal">Inicio:</span> {event.startTime}
-              </div>
-            )}
-            {event.doorTime && (
-              <div className="text-[#FAFDFF] font-medium">
-                <span className="text-white/60 font-normal">Puertas:</span> {event.doorTime}
-              </div>
-            )}
-            {event.endTime && (
-              <div className="text-[#FAFDFF] font-medium">
-                <span className="text-white/60 font-normal">Fin:</span> {event.endTime}
-              </div>
-            )}
-            {event.timezone && (
-              <div className="text-white/40 text-xs mt-0.5">{event.timezone}</div>
-            )}
-          </div>
-        </div>
-
-        <Separator className="bg-white/10" />
-
-        <div className="flex items-start gap-4 text-sm group">
-           <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
-              <MapPin
-                className="h-5 w-5"
-                style={{
-                  color: dominantColor,
-                  transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
-              />
-           </div>
-          <div className="space-y-0.5">
-            <div className="text-[#FAFDFF] font-bold text-base">{event.location.venue}</div>
-            <div className="text-white/60 text-xs font-medium uppercase tracking-wide">
-              {event.location.city}, {event.location.region}
+            <div className="space-y-2">
+              {event.endDate && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 backdrop-blur-md">
+                  <span className="text-sm font-medium text-white/85">Finaliza</span>
+                  <span className="text-right text-xs font-semibold text-white/70">
+                    {format(parseLocalDate(event.endDate), 'PPP', { locale: es })}
+                  </span>
+                </div>
+              )}
+              {(event.doorTime || event.endTime || event.timezone) && (
+                <div className="rounded-xl border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 backdrop-blur-md">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                    {event.doorTime && (
+                      <span className="text-white/75">
+                        <span className="text-white/45">Puertas:</span> {event.doorTime}
+                      </span>
+                    )}
+                    {event.endTime && (
+                      <span className="text-white/75">
+                        <span className="text-white/45">Fin:</span> {event.endTime}
+                      </span>
+                    )}
+                  </div>
+                  {event.timezone && <p className="mt-1.5 text-xs text-white/45">{event.timezone}</p>}
+                </div>
+              )}
             </div>
-            {event.location.address && (
-              <div className="text-white/50 text-xs mt-1 leading-relaxed">{event.location.address}</div>
-            )}
-          </div>
-        </div>
+          </section>
+        )}
 
-        {/* Event Type & Status */}
-        <Separator className="bg-white/10" />
-        <div className="flex flex-wrap gap-2">
-          {event.eventType && (
-            <Badge variant="outline" className="border-white/20 text-white/90 bg-white/5 px-3 py-1">
-              {event.eventType}
-            </Badge>
-          )}
-          {event.eventStatus && event.eventStatus === 'published' && (
-            <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1">
-              Confirmado
-            </Badge>
-          )}
-          {event.eventAttendanceMode && (
-            <Badge variant="outline" className="border-white/20 text-white/90 bg-white/5 px-3 py-1">
-              {event.eventAttendanceMode === 'offline' ? 'Presencial' : event.eventAttendanceMode}
-            </Badge>
-          )}
-          {event.isAccessibleForFree && (
-            <Badge
-              className="text-[#141618] font-bold px-3 py-1"
-              style={{
-                backgroundColor: dominantColor,
-                transition: 'background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            >
-              Gratis
-            </Badge>
-          )}
-        </div>
+        {hasLocationDetails && (
+          <section className={`space-y-2.5 ${hasScheduleDetails ? 'border-t border-white/[0.10] pt-4' : ''}`}>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/90">
+              <MapPin className="h-4 w-4" style={{ color: dominantColor }} />
+              Ubicación
+            </div>
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 backdrop-blur-md">
+              {(event.location.city || event.location.region) && (
+                <p className="text-sm font-medium text-white/85">
+                  {[event.location.city, event.location.region].filter(Boolean).join(', ')}
+                </p>
+              )}
+              {event.location.address && <p className="mt-1.5 text-xs leading-relaxed text-white/55">{event.location.address}</p>}
+            </div>
+          </section>
+        )}
 
-        {/* Categories */}
-        {event.categories && event.categories.length > 0 && (
-          <>
-            <Separator className="bg-white/10" />
-            <div>
-              <div className="text-xs text-white/50 font-bold mb-3 uppercase tracking-widest">Categorías</div>
+        {hasAttributes && (
+          <section className={`space-y-3 ${hasScheduleDetails || hasLocationDetails ? 'border-t border-white/[0.10] pt-4' : ''}`}>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/90">
+              <Calendar className="h-4 w-4" style={{ color: dominantColor }} />
+              Detalles del evento
+            </div>
+
+            {(event.eventType || event.eventAttendanceMode || event.categories?.length) && (
               <div className="flex flex-wrap gap-2">
-                {event.categories.map((cat, index) => (
-                  <Badge
-                    key={`cat-${index}-${cat}`}
-                    variant="outline"
-                    className="text-xs border-white/10 text-white/70 bg-white/5 hover:bg-white/10 transition-colors cursor-default"
-                  >
-                    {cat}
-                  </Badge>
+                {event.eventType && <span className="rounded-full border border-white/[0.10] bg-white/[0.045] px-2.5 py-1 text-xs text-white/70">{event.eventType}</span>}
+                {event.eventAttendanceMode && (
+                  <span className="rounded-full border border-white/[0.10] bg-white/[0.045] px-2.5 py-1 text-xs text-white/70">
+                    {event.eventAttendanceMode === 'offline' ? 'Presencial' : event.eventAttendanceMode}
+                  </span>
+                )}
+                {event.categories?.map((category, index) => (
+                  <span key={`${category}-${index}`} className="rounded-full border border-white/[0.10] bg-white/[0.045] px-2.5 py-1 text-xs text-white/70">
+                    {category}
+                  </span>
                 ))}
               </div>
-            </div>
-          </>
-        )}
+            )}
 
-        {/* Age Range & Audience */}
-        {(event.typicalAgeRange || event.audienceType) && (
-          <>
-            <Separator className="bg-white/10" />
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              {event.typicalAgeRange && (
-                <div>
-                  <div className="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">Edad</div>
-                  <div className="text-[#FAFDFF] font-bold text-lg">{event.typicalAgeRange}</div>
+            {(event.typicalAgeRange || event.audienceType) && (
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 backdrop-blur-md">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-white/85">Audiencia</p>
+                  <p className="text-sm font-semibold text-white/90">
+                    {event.typicalAgeRange?.replace(/^(\d+)\+$/, '+$1') || event.audienceType}
+                  </p>
                 </div>
-              )}
-              {event.audienceType && (
-                <div>
-                  <div className="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">Audiencia</div>
-                  <div className="text-[#FAFDFF] font-medium">{event.audienceType}</div>
-                </div>
-              )}
-            </div>
-          </>
+              </div>
+            )}
+          </section>
         )}
-    </div>
+      </div>
+    </section>
   );
 }
-

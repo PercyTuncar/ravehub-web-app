@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getValidDate } from '@/lib/utils/date';
 import { extractColorsFromImageEnhanced, ColorPalette, getDefaultPalette } from '@/lib/utils/enhanced-color-extraction';
 import { CountdownTimer } from '@/components/ui/countdown-timer';
+import { ConvertedPrice } from '@/components/common/ConvertedPrice';
 
 interface TicketCardProps {
     ticket: any;
@@ -206,6 +207,14 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                                     <MapPin className="w-4 h-4" style={{ color: palette?.brand }} />
                                     <span>{ticket.eventLocation}</span>
                                 </div>
+                            </div>
+                            <div className="mt-4 flex items-center gap-2 text-sm text-white/70">
+                                <span>Total:</span>
+                                <ConvertedPrice
+                                    amount={Number(ticket.totalAmount || 0)}
+                                    currency={ticket.currency || ticket.eventCurrency || 'USD'}
+                                    showOriginal
+                                />
                             </div>
                         </div>
                     </div>

@@ -21,6 +21,7 @@ import {
   Info,
   MessageCircle,
   ExternalLink,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -564,15 +565,23 @@ function TicketCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        group relative overflow-hidden rounded-2xl border bg-zinc-900/40 backdrop-blur-md transition-all duration-300
+        group relative overflow-hidden rounded-2xl transition-all duration-300
         ${
           selection.quantity > 0
-            ? "border-orange-500/50 bg-orange-500/5 shadow-[0_0_20px_rgba(249,115,22,0.1)]"
-            : "border-white/10 hover:border-white/20"
+            ? "border-orange-500/40 bg-gradient-to-br from-orange-500/10 via-zinc-900/50 to-zinc-900/40 shadow-[0_0_30px_rgba(249,115,22,0.15)]"
+            : "border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.04] to-zinc-900/40 hover:from-white/[0.12] hover:via-white/[0.08] hover:to-zinc-900/50 hover:border-white/20 hover:shadow-[0_0_20px_rgba(255,255,255,0.08)]"
         }
-      `}
+        border backdrop-blur-2xl`}
     >
-      <div className="p-5 sm:p-6 flex flex-col sm:flex-row gap-6">
+      {/* Liquid Glass border glow */}
+      <div className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 via-transparent to-white/5 opacity-50 blur-sm" />
+      </div>
+
+      {/* Top shine effect (iPhone liquid glass) */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full blur-sm opacity-60" />
+
+      <div className="relative z-10 p-5 sm:p-6 flex flex-col sm:flex-row gap-6">
         {/* Info */}
         <div className="flex-1 space-y-3">
           <div className="flex justify-between items-start">
@@ -1059,70 +1068,96 @@ function BuyTicketsContent({
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-4 sm:pt-6 flex flex-col gap-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-6 lg:pt-28 flex flex-col gap-8">
         {/* Navigation - Order 1 */}
         <Link
           href={`/eventos/${event.slug}`}
           className="order-1 inline-flex items-center text-zinc-400 hover:text-white transition-colors w-fit group"
         >
-          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center mr-3 group-hover:bg-white/10 transition-colors">
+          <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mr-3 group-hover:bg-white/10 group-hover:border-white/20 transition-all backdrop-blur-sm">
             <ArrowLeft className="w-4 h-4" />
           </div>
           <span className="text-sm font-medium">Volver al evento</span>
         </Link>
 
-        {/* Header - Order 2 */}
+        {/* Header - Order 2 - MEJORADO CON LIQUID GLASS */}
         <div className="order-2">
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-4">
-                Entradas Oficiales para {event.name}
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+            <div className="flex-1">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white mb-6">
+                <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r" style={{
+                  backgroundImage: `linear-gradient(to right, white, ${colorPalette.dominant})`
+                }}>
+                  Entradas Oficiales
+                </span>
+                <br />
+                <span className="text-3xl md:text-4xl text-zinc-300 font-bold mt-2 block">
+                  {event.name}
+                </span>
               </h1>
-              <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
-                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                  <Calendar
-                    className="w-4 h-4"
-                    style={{ color: colorPalette.accent }}
-                  />
-                  <span>
-                    {format(
-                      getEventDate(event.startDate),
-                      "EEEE d MMMM, yyyy",
-                      { locale: es },
-                    )}
-                  </span>
+              <div className="flex flex-wrap gap-3 text-sm mt-6">
+                <div className="group relative overflow-hidden flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 shadow-lg shadow-black/10">
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 shadow-sm"
+                    style={{ backgroundColor: `${colorPalette.dominant}20`, color: colorPalette.dominant }}
+                  >
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Fecha</div>
+                    <div className="text-sm font-bold text-white">
+                      {format(
+                        getEventDate(event.startDate),
+                        "d MMM yyyy",
+                        { locale: es },
+                      )}
+                    </div>
+                  </div>
                 </div>
                 {event.startTime && (
-                  <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                    <Clock
-                      className="w-4 h-4"
-                      style={{ color: colorPalette.accent }}
-                    />
-                    <span>{event.startTime}</span>
+                  <div className="group relative overflow-hidden flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 shadow-lg shadow-black/10">
+                    <div
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 shadow-sm"
+                      style={{ backgroundColor: `${colorPalette.accent}20`, color: colorPalette.accent }}
+                    >
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Hora</div>
+                      <div className="text-sm font-bold text-white">{event.startTime}</div>
+                    </div>
                   </div>
                 )}
-                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                  <MapPin
-                    className="w-4 h-4"
-                    style={{ color: colorPalette.accent }}
-                  />
-                  <span>{event.location.venue}</span>
+                <div className="group relative overflow-hidden flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 shadow-lg shadow-black/10">
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 shadow-sm"
+                    style={{ backgroundColor: `${colorPalette.secondary}20`, color: colorPalette.secondary }}
+                  >
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Lugar</div>
+                    <div className="text-sm font-bold text-white">{event.location.venue}</div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE */}
-            <div className="lg:hidden w-full md:w-auto mt-4 md:mt-0">
+            <div className="lg:hidden w-full md:w-auto mt-6 md:mt-0">
               <button
                 onClick={() => setShowWhatsAppDrawer(true)}
-                className="flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 active:scale-[0.98] transition-all group"
+                className="relative overflow-hidden flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-gradient-to-br from-[#25D366]/20 via-[#25D366]/10 to-[#128C7E]/10 border border-[#25D366]/30 hover:border-[#25D366]/50 active:scale-[0.98] transition-all group backdrop-blur-sm shadow-lg shadow-[#25D366]/10"
               >
+                {/* Shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
                   alt="WhatsApp"
-                  className="w-5 h-5"
+                  className="w-5 h-5 relative z-10"
                 />
-                <span className="font-bold text-[#25D366]">
+                <span className="font-bold text-[#25D366] relative z-10">
                   Unirme al Grupo WhatsApp
                 </span>
               </button>
@@ -1134,16 +1169,168 @@ function BuyTicketsContent({
         <div className="order-3 grid lg:grid-cols-[1fr_380px] gap-8 relative items-start">
           {/* Left Column: Selection */}
           <div className="space-y-8">
-            {/* Phase Timeline */}
+            {/* 1. TICKETS GRID - PRIORIDAD #1 según UX best practices */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
+                  style={{ backgroundColor: `${colorPalette.primary}20`, color: colorPalette.primary }}
+                >
+                  <Ticket className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-black text-white">
+                  Selecciona tus entradas
+                </h2>
+              </div>
+              {(event.slug === "bts-en-lima-2026" || event.slug === "bts-lima-2026") && (
+                <p className="text-xs text-zinc-400 mt-1 mb-4 italic">
+                  <span className="font-bold text-orange-500 not-italic">
+                    Nota importante:
+                  </span>{" "}
+                  Si la fase está agotada o aún no inicia, puedes realizar una
+                  reserva con anticipación y te contactaremos por WhatsApp.
+                </p>
+              )}
+              <div className="space-y-4">
+                {ticketSelections.map((selection) => (
+                  <TicketCard
+                    key={selection.zoneId}
+                    selection={selection}
+                    onUpdateQuantity={(q) =>
+                      updateTicketQuantity(selection.zoneId, q)
+                    }
+                    isInstallmentMode={isInstallmentMode}
+                    installments={installments}
+                    currency={event.currency}
+                    totalTickets={totalTickets}
+                    phaseStartDate={activePhaseData?.startDate || ""}
+                    phaseEndDate={activePhaseData?.endDate || ""}
+                    phaseStatus={activePhaseStatus}
+                    reservationPerTicket={
+                      event.reservationAmount ?? DEFAULT_RESERVATION_FEE
+                    }
+                    extraPercentageInstallments={
+                      event.extraPercentageInstallments ?? 0
+                    }
+                    extraPercentageFullPayment={
+                      event.extraPercentageFullPayment ?? 0
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* 2. INSTALLMENT PLAN TOGGLE - Después de ver precios */}
+            {event.allowInstallmentPayments && (
+              <div
+                className={`
+                transition-all duration-300 border rounded-2xl p-6 relative overflow-hidden
+                ${
+                  isInstallmentMode
+                    ? "bg-gradient-to-br from-blue-900/20 via-blue-900/10 to-indigo-900/20 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.15)]"
+                    : "bg-gradient-to-br from-white/[0.08] via-white/[0.04] to-zinc-900/40 border-white/10 hover:border-white/20"
+                }
+              `}
+              >
+                {/* Shine effect */}
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent blur-sm opacity-30" />
+
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all border border-white/10 ${isInstallmentMode ? "bg-blue-500 shadow-lg shadow-blue-500/30 border-blue-400/30" : "bg-white/10"}`}
+                      >
+                        <CreditCard
+                          className={`w-6 h-6 ${isInstallmentMode ? "text-white" : "text-zinc-500"}`}
+                        />
+                      </div>
+                      <div>
+                        <h3
+                          className={`text-lg font-black flex items-center gap-2 ${isInstallmentMode ? "text-white" : "text-zinc-300"}`}
+                        >
+                          Comprar en cuotas
+                          {isInstallmentMode && (
+                            <Badge className="bg-blue-500 text-white border-0 text-[10px] px-1.5 py-0">
+                              ACTIVADO
+                            </Badge>
+                          )}
+                        </h3>
+                        <p className="text-sm text-zinc-500 mt-0.5">
+                          Paga en partes sin tarjeta de crédito
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={isInstallmentMode}
+                      onCheckedChange={setIsInstallmentMode}
+                      className="data-[state=checked]:bg-blue-500 scale-125"
+                    />
+                  </div>
+
+                  {/* Dynamic Installment Selector */}
+                  <AnimatePresence>
+                    {isInstallmentMode && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-4 border-t border-blue-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-blue-200">
+                              Selecciona tu plan:
+                            </span>
+                            <span className="text-[10px] text-blue-400/70">
+                              (Reserva + Cuotas Restantes)
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            {Array.from(
+                              {
+                                length: Math.max(0, availableInstallments - 1),
+                              },
+                              (_, i) => i + 2,
+                            ).map((num) => (
+                              <button
+                                key={num}
+                                onClick={() => setInstallments(num)}
+                                className={`
+                                                px-4 py-2 rounded-lg text-sm font-bold transition-all border
+                                                ${
+                                                  installments === num
+                                                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/25 scale-105 border-blue-400/50"
+                                                    : "bg-blue-950/40 text-blue-400 hover:bg-blue-900/60 border-blue-500/20"
+                                                }
+                                            `}
+                              >
+                                {num} Cuotas
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+
+            {/* 3. PHASE TIMELINE - Contexto secundario */}
             {event.salesPhases && (
               <div className="space-y-4">
-                <h2 className="text-lg font-bold flex items-center gap-2">
-                  <Clock
-                    className="w-5 h-5"
-                    style={{ color: colorPalette.primary }}
-                  />
-                  Fases de Venta
-                </h2>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
+                    style={{ backgroundColor: `${colorPalette.primary}20`, color: colorPalette.primary }}
+                  >
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-black text-white">
+                    Fases de Venta
+                  </h2>
+                </div>
                 <PhaseTimeline
                   phases={resolvedPhases}
                   activePhaseId={selectedPhase}
@@ -1153,21 +1340,7 @@ function BuyTicketsContent({
               </div>
             )}
 
-            {/* Stage Map */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <MapPin
-                  className="w-5 h-5"
-                  style={{ color: colorPalette.primary }}
-                />
-                Mapa del Escenario
-              </h2>
-              <EventStageMap
-                stageMapUrl={event.stageMapUrl}
-                specifications={event.specifications}
-              />
-            </div>
-
+            {/* Alertas de fase - Después del timeline */}
             {activePhaseData && activePhaseStatus === "sold_out" && (
               <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 space-y-3">
                 <p className="text-sm text-red-300 font-semibold">
@@ -1215,158 +1388,41 @@ function BuyTicketsContent({
               </div>
             )}
 
-            {/* Installment Plan Toggle */}
-            {event.allowInstallmentPayments && (
-              <div
-                className={`
-                transition-all duration-300 border rounded-2xl p-5 relative overflow-hidden
-                ${
-                  isInstallmentMode
-                    ? "bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-500/40 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
-                    : "bg-zinc-900/40 border-white/5"
-                }
-              `}
-              >
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between gap-4 mb-4">
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isInstallmentMode ? "bg-blue-500 shadow-lg shadow-blue-500/30" : "bg-zinc-800"}`}
-                      >
-                        <CreditCard
-                          className={`w-6 h-6 ${isInstallmentMode ? "text-white" : "text-zinc-500"}`}
-                        />
-                      </div>
-                      <div>
-                        <h3
-                          className={`text-lg font-bold flex items-center gap-2 ${isInstallmentMode ? "text-white" : "text-zinc-400"}`}
-                        >
-                          Comprar en cuotas
-                          {isInstallmentMode && (
-                            <Badge className="bg-blue-500 text-white border-0 text-[10px] px-1.5 py-0">
-                              ACTIVADO
-                            </Badge>
-                          )}
-                        </h3>
-                        <p className="text-sm text-zinc-500">
-                          Paga en partes sin tarjeta de crédito
-                        </p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={isInstallmentMode}
-                      onCheckedChange={setIsInstallmentMode}
-                      className="data-[state=checked]:bg-blue-500 scale-125"
-                    />
-                  </div>
-
-                  {/* Dynamic Installment Selector */}
-                  <AnimatePresence>
-                    {isInstallmentMode && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="pt-4 border-t border-blue-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-blue-200">
-                              Selecciona tu plan:
-                            </span>
-                            <span className="text-[10px] text-blue-400/70">
-                              (Reserva + Cuotas Restantes)
-                            </span>
-                          </div>
-                          <div className="flex gap-2">
-                            {Array.from(
-                              {
-                                length: Math.max(0, availableInstallments - 1),
-                              },
-                              (_, i) => i + 2,
-                            ).map((num) => (
-                              <button
-                                key={num}
-                                onClick={() => setInstallments(num)}
-                                className={`
-                                                px-4 py-2 rounded-lg text-sm font-bold transition-all
-                                                ${
-                                                  installments === num
-                                                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/25 scale-105"
-                                                    : "bg-blue-950/40 text-blue-400 hover:bg-blue-900/60"
-                                                }
-                                            `}
-                              >
-                                {num} Cuotas
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+            {/* 4. STAGE MAP - Información de apoyo para decisión */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
+                  style={{ backgroundColor: `${colorPalette.primary}20`, color: colorPalette.primary }}
+                >
+                  <MapPin className="w-5 h-5" />
                 </div>
+                <h2 className="text-xl font-black text-white">
+                  Mapa del Escenario
+                </h2>
               </div>
-            )}
-
-            {/* Tickets Grid */}
-            <div className="space-y-6">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <Ticket
-                  className="w-5 h-5"
-                  style={{ color: colorPalette.primary }}
-                />
-                Selecciona tus entradas
-              </h2>
-              {(event.slug === "bts-en-lima-2026" || event.slug === "bts-lima-2026") && (
-                <p className="text-xs text-zinc-400 mt-1 mb-4 italic">
-                  <span className="font-bold text-orange-500 not-italic">
-                    Nota importante:
-                  </span>{" "}
-                  Si la fase está agotada o aún no inicia, puedes realizar una
-                  reserva con anticipación y te contactaremos por WhatsApp.
-                </p>
-              )}
-              <div className="space-y-4">
-                {ticketSelections.map((selection) => (
-                  <TicketCard
-                    key={selection.zoneId}
-                    selection={selection}
-                    onUpdateQuantity={(q) =>
-                      updateTicketQuantity(selection.zoneId, q)
-                    }
-                    isInstallmentMode={isInstallmentMode}
-                    installments={installments}
-                    currency={event.currency}
-                    totalTickets={totalTickets}
-                    phaseStartDate={activePhaseData?.startDate || ""}
-                    phaseEndDate={activePhaseData?.endDate || ""}
-                    phaseStatus={activePhaseStatus}
-                    reservationPerTicket={
-                      event.reservationAmount ?? DEFAULT_RESERVATION_FEE
-                    }
-                    extraPercentageInstallments={
-                      event.extraPercentageInstallments ?? 0
-                    }
-                    extraPercentageFullPayment={
-                      event.extraPercentageFullPayment ?? 0
-                    }
-                  />
-                ))}
-              </div>
+              <EventStageMap
+                stageMapUrl={event.stageMapUrl}
+                specifications={event.specifications}
+              />
             </div>
 
-            {/* Payment Method (Inline for Desktop context) */}
+            {/* 5. PAYMENT METHOD - Cuando ya decidieron comprar */}
             {totalTickets > 0 && !isAdvanceReservationMode && (
-              <Card className="bg-zinc-900/40 border-white/10 backdrop-blur-md overflow-hidden">
-                <CardContent className="p-6 space-y-4">
-                  <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                    <CreditCard
-                      className="w-5 h-5"
-                      style={{ color: colorPalette.primary }}
-                    />
-                    Método de Pago
-                  </h3>
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.04] to-zinc-900/40 backdrop-blur-2xl shadow-lg shadow-black/10 group">
+                {/* Shine effect */}
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent blur-sm opacity-50" />
+
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
+                      style={{ backgroundColor: `${colorPalette.primary}20`, color: colorPalette.primary }}
+                    >
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-black text-white text-lg">Método de Pago</h3>
+                  </div>
 
                   <RadioGroup
                     value={paymentMethod}
@@ -1379,11 +1435,11 @@ function BuyTicketsContent({
                         <Label
                           htmlFor="offline"
                           className={`
-                                            flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all
+                                            flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all relative overflow-hidden group/payment
                                             ${
                                               paymentMethod === "offline"
-                                                ? "bg-orange-500/10 border-orange-500/50"
-                                                : "bg-white/5 border-white/5 hover:bg-white/10"
+                                                ? "bg-orange-500/10 border-orange-500/50 shadow-lg shadow-orange-500/10"
+                                                : "bg-white/[0.05] border-white/10 hover:bg-white/[0.08] hover:border-white/20"
                                             }
                                         `}
                           style={
@@ -1391,16 +1447,20 @@ function BuyTicketsContent({
                               ? {
                                   backgroundColor: `${colorPalette.dominant}10`,
                                   borderColor: `${colorPalette.dominant}50`,
+                                  boxShadow: `0 0 20px ${colorPalette.dominant}20`
                                 }
                               : undefined
                           }
                         >
+                          {/* Shine effect on hover */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover/payment:opacity-100 transition-opacity duration-300 -translate-x-full group-hover/payment:translate-x-full" />
+
                           <RadioGroupItem
                             value="offline"
                             id="offline"
-                            className="mt-1"
+                            className="mt-1 relative z-10"
                           />
-                          <div>
+                          <div className="relative z-10">
                             <div className="font-bold text-white mb-1">
                               Pago Offline
                             </div>
@@ -1414,7 +1474,7 @@ function BuyTicketsContent({
 
                       <div className="relative opacity-60">
                         <div className="absolute inset-0 z-10 cursor-not-allowed" />
-                        <Label className="flex items-start gap-3 p-4 rounded-xl border border-white/5 bg-white/5">
+                        <Label className="flex items-start gap-3 p-4 rounded-xl border border-white/10 bg-white/[0.05] relative z-0">
                           <RadioGroupItem
                             value="online"
                             id="online"
@@ -1435,7 +1495,7 @@ function BuyTicketsContent({
                   </RadioGroup>
 
                   {/* Terms */}
-                  <div className="flex items-start gap-3 mt-6 pt-6 border-t border-white/5">
+                  <div className="flex items-start gap-3 mt-6 pt-6 border-t border-white/10">
                     <Checkbox
                       id="terms"
                       checked={acceptTerms}
@@ -1491,30 +1551,46 @@ function BuyTicketsContent({
                     onOpenChange={setShowPrivacyModal}
                     onAccept={() => setAcceptTerms(true)}
                   />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
           </div>
 
           {/* Right Column: Sticky Summary (Desktop) */}
           <div className="hidden lg:block sticky top-24">
-            <div className="bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative">
+            <div className="relative overflow-hidden rounded-3xl shadow-2xl backdrop-blur-3xl border border-white/10 group">
+              {/* Multi-layer Liquid Glass Effect */}
+              <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.08] via-white/[0.04] to-white/[0.02] opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-zinc-900/80 via-zinc-900/60 to-zinc-900/80" />
+              </div>
+
+              {/* Shine effect top */}
+              <div className="absolute inset-x-0 top-0 z-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent blur-sm" />
+
               {/* Background Image Blur */}
               {event.bannerImageUrl && (
                 <div className="absolute inset-0 z-0">
                   <img
                     src={event.bannerImageUrl}
                     alt=""
-                    className="w-full h-full object-cover opacity-20 blur-xl"
+                    className="w-full h-full object-cover opacity-10 blur-2xl"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/80 to-zinc-900" />
                 </div>
               )}
 
               <div className="relative z-10 p-6 space-y-6">
-                <h3 className="text-xl font-black text-white">
-                  Resumen de Compra
-                </h3>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
+                    style={{ backgroundColor: `${colorPalette.dominant}20`, color: colorPalette.dominant }}
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xl font-black text-white">
+                    Resumen
+                  </h3>
+                </div>
 
                 {/* Items */}
                 <div className="space-y-3 min-h-[100px]">
@@ -1611,7 +1687,14 @@ function BuyTicketsContent({
                 {/* Action Button */}
                 <Button
                   size="lg"
-                  className="w-full h-14 text-lg font-bold rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+                  className="w-full h-16 text-lg font-bold rounded-2xl shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] border border-white/20"
+                  style={{
+                    backgroundColor: totalTickets > 0 ? colorPalette.primary : '#3f3f46',
+                    boxShadow: totalTickets > 0
+                      ? `0 0 30px ${colorPalette.primary}50, 0 10px 25px ${colorPalette.primary}30`
+                      : '0 4px 6px rgba(0,0,0,0.3)',
+                    color: totalTickets > 0 ? '#000' : '#999'
+                  }}
                   disabled={
                     !canCreateOrder ||
                     (canPurchaseNow
@@ -1626,14 +1709,6 @@ function BuyTicketsContent({
                         ? openAdvanceReservationFlow
                         : undefined
                   }
-                  style={{
-                    backgroundColor:
-                      totalTickets > 0 ? colorPalette.primary : undefined,
-                    boxShadow:
-                      totalTickets > 0
-                        ? `0 0 20px ${colorPalette.primary}50`
-                        : undefined,
-                  }}
                 >
                   {processing ? (
                     <span className="flex items-center gap-2">
@@ -1663,19 +1738,22 @@ function BuyTicketsContent({
                 </p>
 
                 {/* WhatsApp Community CTA - ALWAYS VISIBLE */}
-                <div className="pt-4 border-t border-white/5">
+                <div className="pt-4 border-t border-white/10">
                   <button
                     onClick={() => setShowWhatsAppDrawer(true)}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-all group w-full text-left"
+                    className="relative overflow-hidden flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-[#25D366]/15 via-[#25D366]/10 to-[#128C7E]/10 border border-[#25D366]/30 hover:border-[#25D366]/50 transition-all group w-full text-left shadow-lg shadow-[#25D366]/5"
                   >
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-[#25D366]/20 group-hover:scale-110 transition-transform">
+                    {/* Shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-lg shadow-[#25D366]/20 group-hover:scale-110 transition-transform relative z-10 bg-gradient-to-br from-[#25D366] to-[#128C7E]">
                       <img
                         src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
                         alt="WhatsApp"
-                        className="w-full h-full"
+                        className="w-full h-full p-2"
                       />
                     </div>
-                    <div className="flex-1 text-left">
+                    <div className="flex-1 text-left relative z-10">
                       <p className="text-xs font-bold text-[#25D366] uppercase tracking-wide mb-0.5">
                         Grupo Oficial
                       </p>
@@ -1683,7 +1761,7 @@ function BuyTicketsContent({
                         Únete al grupo de WhatsApp
                       </p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                    <ExternalLink className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors relative z-10" />
                   </button>
                 </div>
               </div>
@@ -1692,38 +1770,78 @@ function BuyTicketsContent({
         </div>
 
         {/* SEO / Descriptive Content - Order 4 (Visually Bottom) */}
-        <div className="order-4 mt-8 pt-8 border-t border-white/5 opacity-80 hover:opacity-100 transition-opacity">
-          <div className="bg-zinc-900/50 backdrop-blur-sm rounded-3xl p-6 sm:p-10 border border-white/5 shadow-inner">
-            <div className="text-zinc-300 max-w-4xl mx-auto">{children}</div>
+        <div className="order-4 mt-12 pt-8 border-t border-white/10">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.04] to-zinc-900/40 backdrop-blur-2xl shadow-2xl shadow-black/10 group">
+            {/* Shine effect top */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent blur-sm opacity-50" />
+
+            {/* Background accent glow */}
+            <div
+              className="absolute -right-20 -top-20 w-64 h-64 rounded-full opacity-5 blur-3xl pointer-events-none"
+              style={{ backgroundColor: colorPalette.dominant }}
+            />
+            <div
+              className="absolute -left-20 -bottom-20 w-64 h-64 rounded-full opacity-5 blur-3xl pointer-events-none"
+              style={{ backgroundColor: colorPalette.accent }}
+            />
+
+            <div className="relative z-10 p-8 sm:p-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
+                  style={{ backgroundColor: `${colorPalette.dominant}20`, color: colorPalette.dominant }}
+                >
+                  <Info className="w-5 h-5" />
+                </div>
+                <h2 className="text-2xl font-black text-white">
+                  Todo sobre {event.name}
+                </h2>
+              </div>
+
+              <div className="prose prose-invert prose-zinc max-w-none">
+                <div className="text-zinc-300 leading-relaxed space-y-4">
+                  {children}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Autonomy Notice Footer */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pb-8 text-center border-t border-white/5 pt-8">
-        <p className="text-xs text-zinc-500 max-w-3xl mx-auto leading-relaxed">
-          <span className="font-bold text-zinc-400">Aviso de Autonomía:</span>{" "}
-          Operamos como una plataforma independiente de Personal Shopper para la
-          adquisición de entradas y membresias, funcionando como una entidad
-          ajena a las redes de ticketeras y organizadores oficiales.
-        </p>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pb-8">
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] via-white/[0.02] to-zinc-900/40 backdrop-blur-xl p-6 text-center">
+          {/* Shine effect */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent blur-sm opacity-30" />
+
+          <p className="text-xs text-zinc-400 max-w-3xl mx-auto leading-relaxed">
+            <span className="font-bold text-zinc-300">Aviso de Autonomía:</span>{" "}
+            Operamos como una plataforma independiente de Personal Shopper para la
+            adquisición de entradas y membresias, funcionando como una entidad
+            ajena a las redes de ticketeras y organizadores oficiales.
+          </p>
+        </div>
       </div>
 
       {/* Mobile Sticky Footer - positioned above bottom navbar */}
       <div className="lg:hidden fixed bottom-24 left-0 w-full z-40 px-3">
-        {/* Main Purchase CTA - Premium Glass Effect */}
-        <div className="relative overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-          {/* Glass background layers */}
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/90 via-zinc-900/95 to-black/90" />
-          <div className="absolute inset-0 backdrop-blur-xl" />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/[0.08] via-transparent to-white/[0.04]" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+        {/* Main Purchase CTA - Premium Liquid Glass Effect */}
+        <div className="relative overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          {/* Multi-layer glass background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800/80 via-zinc-900/90 to-black/95" />
+          <div className="absolute inset-0 backdrop-blur-2xl" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/[0.12] via-white/[0.05] to-white/[0.08]" />
+
+          {/* Border glow */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent blur-sm" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent blur-sm" />
+          <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent" />
 
           {/* Content */}
           <div className="relative z-10 p-4 flex items-center justify-between gap-4">
             <div className="flex flex-col">
-              <span className="text-[11px] text-zinc-400 font-medium uppercase tracking-wider">
+              <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider">
                 {isInstallmentMode ? "A Pagar Hoy" : "Total"}
               </span>
               <div className="text-2xl font-black text-white drop-shadow-sm">
@@ -1747,7 +1865,13 @@ function BuyTicketsContent({
             </div>
             <Button
               size="lg"
-              className="rounded-xl px-6 py-3 font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/30 border border-orange-400/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="rounded-xl px-6 py-3 font-bold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] border border-white/20"
+              style={{
+                backgroundColor: totalTickets > 0 ? colorPalette.primary : '#3f3f46',
+                boxShadow: totalTickets > 0
+                  ? `0 0 20px ${colorPalette.primary}40, 0 8px 16px ${colorPalette.primary}20`
+                  : '0 4px 6px rgba(0,0,0,0.3)',
+              }}
               disabled={
                 !canCreateOrder ||
                 (canPurchaseNow
@@ -1783,10 +1907,10 @@ function BuyTicketsContent({
       >
         <SheetContent
           side="bottom"
-          className="h-[80vh] rounded-t-[2rem] border-t border-orange-500/20 p-0 flex flex-col overflow-hidden"
+          className="h-[80vh] rounded-t-3xl border-t border-orange-500/30 p-0 flex flex-col overflow-hidden backdrop-blur-2xl"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(10,10,10,0.98), rgba(5,5,5,0.99))",
+              "linear-gradient(to bottom, rgba(10,10,10,0.95), rgba(5,5,5,0.98))",
           }}
         >
           <SheetHeader className="px-6 pt-6 pb-4 text-left shrink-0">
@@ -2002,10 +2126,10 @@ function BuyTicketsContent({
       <Sheet open={showWhatsAppDrawer} onOpenChange={setShowWhatsAppDrawer}>
         <SheetContent
           side="bottom"
-          className="h-[75vh] rounded-t-[2rem] border-t border-[#25D366]/20 p-0 flex flex-col overflow-hidden"
+          className="h-[75vh] rounded-t-3xl border-t border-[#25D366]/30 p-0 flex flex-col overflow-hidden backdrop-blur-2xl"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(10,10,10,0.98), rgba(5,5,5,0.99))",
+              "linear-gradient(to bottom, rgba(10,10,10,0.95), rgba(5,5,5,0.98))",
           }}
           onPointerDown={(e) => {
             const startY = e.clientY;

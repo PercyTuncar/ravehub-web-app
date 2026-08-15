@@ -1,7 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { CreditCard, Wallet, Download, Calendar, CheckCircle2, XCircle } from 'lucide-react';
 import { Event } from '@/lib/types';
 import { useEventColors } from './EventColorContext';
@@ -11,6 +10,27 @@ import { parseLocalDate } from '@/lib/utils/date-timezone';
 
 interface EventPaymentInfoProps {
   event: Event;
+}
+
+interface PaymentMethodRowProps {
+  label: string;
+  available: boolean;
+}
+
+function PaymentMethodRow({ label, available }: PaymentMethodRowProps) {
+  return (
+    <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 backdrop-blur-md">
+      <span className="text-sm font-medium text-white/85">{label}</span>
+      <span
+        className={`inline-flex shrink-0 items-center gap-1.5 text-xs font-medium ${
+          available ? 'text-emerald-300' : 'text-white/45'
+        }`}
+      >
+        {available ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+        {available ? 'Disponible' : 'No disponible'}
+      </span>
+    </div>
+  );
 }
 
 export function EventPaymentInfo({ event }: EventPaymentInfoProps) {
@@ -29,106 +49,68 @@ export function EventPaymentInfo({ event }: EventPaymentInfoProps) {
   }
 
   return (
-    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-3 text-[#FAFDFF]">
-          <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{
-              background: `linear-gradient(135deg, ${dominantColor}20, ${accentColor}20)`,
-              border: `2px solid ${dominantColor}40`,
-            }}
-          >
-            <CreditCard
-              className="h-5 w-5"
-              style={{
-                color: dominantColor,
-                transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold">Información de Pago y Entradas</h3>
-            <p className="text-sm text-white/60 font-normal mt-0.5">
-              Métodos de pago y entrega de tickets
-            </p>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Payment Methods */}
-        <div className="space-y-3">
-          <h4 className="font-semibold text-[#FAFDFF] flex items-center gap-2">
-            <Wallet className="h-4 w-4" style={{ color: dominantColor }} />
-            Métodos de Pago
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Installment Payments */}
-            {event.allowInstallmentPayments !== undefined && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-white/80">Pagos en cuotas</span>
-                </div>
-                {event.allowInstallmentPayments ? (
-                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Disponible
-                  </Badge>
-                ) : (
-                  <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    No disponible
-                  </Badge>
-                )}
-              </div>
-            )}
+    <Card className="relative overflow-hidden rounded-2xl border border-white/[0.10] bg-white/[0.045] shadow-xl shadow-black/15 backdrop-blur-2xl">
+      <div
+        className="pointer-events-none absolute -right-16 -top-20 z-0 h-44 w-44 rounded-full opacity-[0.15] blur-3xl"
+        style={{ backgroundColor: dominantColor }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-24 -left-16 z-0 h-40 w-40 rounded-full opacity-[0.12] blur-3xl"
+        style={{ backgroundColor: accentColor }}
+      />
+      <div className="pointer-events-none absolute inset-x-8 top-0 z-0 h-px bg-white/15" />
 
-            {/* Offline Payments */}
-            {event.allowOfflinePayments !== undefined && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-white/80">Pagos offline</span>
-                </div>
-                {event.allowOfflinePayments ? (
-                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Disponible
-                  </Badge>
-                ) : (
-                  <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    No disponible
-                  </Badge>
-                )}
-              </div>
-            )}
+      <CardContent className="relative z-10 space-y-5 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/15 shadow-sm"
+            style={{ backgroundColor: `${dominantColor}20`, borderColor: `${dominantColor}30` }}
+          >
+            <CreditCard className="h-5 w-5" style={{ color: dominantColor }} />
+          </div>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h3 className="text-lg font-bold text-[#FAFDFF]">Información de Pago y Entradas</h3>
+            <p className="mt-0.5 text-xs text-white/60">Métodos de pago y entrega de tickets</p>
           </div>
         </div>
 
-        {/* Ticket Delivery */}
+        {(event.allowInstallmentPayments !== undefined || event.allowOfflinePayments !== undefined) && (
+          <section className="space-y-2.5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/90">
+              <Wallet className="h-4 w-4" style={{ color: dominantColor }} />
+              Métodos de pago
+            </div>
+            <div className="space-y-2">
+              {event.allowInstallmentPayments !== undefined && (
+                <PaymentMethodRow label="Pagos en cuotas" available={event.allowInstallmentPayments} />
+              )}
+              {event.allowOfflinePayments !== undefined && (
+                <PaymentMethodRow label="Pagos offline" available={event.allowOfflinePayments} />
+              )}
+            </div>
+          </section>
+        )}
+
         {(event.ticketDeliveryMode || event.ticketDownloadAvailableDate) && (
-          <div className="space-y-3 pt-4 border-t border-white/10">
-            <h4 className="font-semibold text-[#FAFDFF] flex items-center gap-2">
+          <section className="space-y-2.5 border-t border-white/[0.10] pt-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/90">
               <Download className="h-4 w-4" style={{ color: dominantColor }} />
-              Entrega de Entradas
-            </h4>
-            <div className="space-y-3">
+              Entrega de entradas
+            </div>
+
+            <div className="space-y-2">
               {event.ticketDeliveryMode && (
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/80">Modo de entrega</span>
-                    <Badge
-                      className="text-xs"
-                      style={{
-                        backgroundColor: `${dominantColor}20`,
-                        color: dominantColor,
-                        borderColor: `${dominantColor}40`,
-                      }}
+                <div className="rounded-xl border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 backdrop-blur-md">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-white/85">Modo de entrega</span>
+                    <span
+                      className="shrink-0 text-xs font-semibold"
+                      style={{ color: dominantColor }}
                     >
                       {event.ticketDeliveryMode === 'automatic' ? 'Automático' : 'Manual'}
-                    </Badge>
+                    </span>
                   </div>
-                  <p className="text-xs text-white/60 mt-2">
+                  <p className="mt-1.5 text-xs leading-relaxed text-white/55">
                     {event.ticketDeliveryMode === 'automatic'
                       ? 'Las entradas se enviarán automáticamente después de la compra.'
                       : 'Las entradas se cargarán manualmente después de la compra.'}
@@ -137,21 +119,25 @@ export function EventPaymentInfo({ event }: EventPaymentInfoProps) {
               )}
 
               {event.ticketDownloadAvailableDate && (
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" style={{ color: dominantColor }} />
-                    <span className="text-sm text-white/80">Disponible para descarga desde:</span>
+                <div className="flex items-start gap-3 rounded-xl border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 backdrop-blur-md">
+                  <div
+                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                    style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
+                  >
+                    <Calendar className="h-3.5 w-3.5" />
                   </div>
-                  <p className="text-sm font-semibold text-[#FAFDFF] mt-2">
-                    {format(parseLocalDate(event.ticketDownloadAvailableDate), 'PPP', { locale: es })}
-                  </p>
+                  <div className="min-w-0">
+                    <p className="text-xs text-white/55">Disponible para descarga desde</p>
+                    <p className="mt-0.5 text-sm font-semibold text-white">
+                      {format(parseLocalDate(event.ticketDownloadAvailableDate), 'PPP', { locale: es })}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
-          </div>
+          </section>
         )}
       </CardContent>
     </Card>
   );
 }
-
