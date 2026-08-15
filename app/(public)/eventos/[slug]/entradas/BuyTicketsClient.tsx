@@ -13,6 +13,7 @@ import {
   Ticket,
   Lock,
   CheckCircle2,
+  XCircle,
   Flame,
   TrendingUp,
   ShieldCheck,
@@ -327,21 +328,21 @@ function PhaseButton({
     sold_out:
       "bg-red-600/10 border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.08)]",
     upcoming:
-      "bg-amber-500/10 border-amber-400/30 shadow-[0_0_12px_rgba(245,158,11,0.08)]",
+      "bg-zinc-800/30 border-zinc-700/30",
     expired: "bg-zinc-800/20 border-zinc-700/20",
   };
 
   const circleSelectedMap: Record<string, string> = {
     active: "bg-emerald-500 text-white",
     sold_out: "bg-red-500 text-white",
-    upcoming: "bg-amber-500 text-white",
+    upcoming: "bg-zinc-700 text-zinc-300",
     expired: "bg-zinc-600 text-white",
   };
 
   const labelSelectedMap: Record<string, string> = {
     active: "text-emerald-400",
     sold_out: "text-red-400",
-    upcoming: "text-amber-400",
+    upcoming: "text-zinc-500",
     expired: "text-zinc-500",
   };
 
@@ -357,18 +358,14 @@ function PhaseButton({
     ? labelSelectedMap[status] || "text-zinc-300"
     : status === "sold_out"
       ? "text-red-400"
-      : status === "upcoming"
-        ? "text-amber-400"
-        : "text-zinc-500";
+      : "text-zinc-500";
 
   const underlineClass = isSelected
     ? status === "active"
       ? "bg-emerald-500"
       : status === "sold_out"
         ? "bg-red-500"
-        : status === "upcoming"
-          ? "bg-amber-500"
-          : "bg-zinc-500"
+        : "bg-zinc-600"
     : "bg-orange-500";
 
   // Mobile-specific classes
@@ -550,6 +547,8 @@ function TicketCard({
     ),
   );
   const isLowStock = selection.available < 20 || stockPercent > 90;
+  const isPhasePurchasable = phaseStatus === "active";
+  const isExpiredPhase = phaseStatus === "expired" || phaseStatus === "sold_out";
 
   // Installment Price Calculation (apply event-level extra percentage)
   const reservationPrice = reservationPerTicket ?? DEFAULT_RESERVATION_FEE;
@@ -567,9 +566,11 @@ function TicketCard({
       className={`
         group relative overflow-hidden rounded-2xl transition-all duration-300
         ${
-          selection.quantity > 0
-            ? "border-orange-500/40 bg-gradient-to-br from-orange-500/10 via-zinc-900/50 to-zinc-900/40 shadow-[0_0_30px_rgba(249,115,22,0.15)]"
-            : "border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.04] to-zinc-900/40 hover:from-white/[0.12] hover:via-white/[0.08] hover:to-zinc-900/50 hover:border-white/20 hover:shadow-[0_0_20px_rgba(255,255,255,0.08)]"
+          isExpiredPhase
+            ? "border-red-500/35 bg-gradient-to-br from-red-500/10 via-zinc-900/60 to-zinc-900/50 opacity-80"
+            : selection.quantity > 0
+              ? "border-orange-500/40 bg-gradient-to-br from-orange-500/10 via-zinc-900/50 to-zinc-900/40 shadow-[0_0_30px_rgba(249,115,22,0.15)]"
+              : "border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.04] to-zinc-900/40 hover:from-white/[0.12] hover:via-white/[0.08] hover:to-zinc-900/50 hover:border-white/20 hover:shadow-[0_0_20px_rgba(255,255,255,0.08)]"
         }
         border backdrop-blur-2xl`}
     >
@@ -588,11 +589,15 @@ function TicketCard({
             <h3 className="text-xl font-bold text-white group-hover:text-orange-400 transition-colors">
               {selection.zoneName}
             </h3>
-            {isLowStock && (
+            {isExpiredPhase ? (
+              <Badge className="bg-red-600 text-white border-red-500/70 hover:bg-red-600 shadow-sm shadow-red-950/40">
+                <XCircle className="w-3 h-3 mr-1" /> Agotada
+              </Badge>
+            ) : isLowStock ? (
               <Badge className="bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30">
                 <Flame className="w-3 h-3 mr-1" /> Últimas
               </Badge>
-            )}
+            ) : null}
           </div>
 
           <p className="text-sm text-zinc-400 leading-relaxed max-w-md">
@@ -662,7 +667,7 @@ function TicketCard({
               <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">
                 Precio
               </span>
-              <div className="text-2xl font-black text-white">
+              <div className={`text-2xl font-black ${isExpiredPhase ? "text-zinc-500 line-through decoration-red-500/80" : "text-white"}`}>
                 <ConvertedPrice
                   amount={selection.price}
                   currency={currency}
@@ -675,7 +680,7 @@ function TicketCard({
           <div className="flex items-center gap-3 bg-zinc-950/50 p-1.5 rounded-xl border border-white/10">
             <button
               onClick={() => onUpdateQuantity(selection.quantity - 1)}
-              disabled={selection.quantity <= 0}
+              disabled={!isPhasePurchasable || selection.quantity <= 0}
               className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors"
             >
               <Minus className="w-4 h-4" />
@@ -686,6 +691,7 @@ function TicketCard({
             <button
               onClick={() => onUpdateQuantity(selection.quantity + 1)}
               disabled={
+                !isPhasePurchasable ||
                 selection.quantity >= selection.maxPerTransaction ||
                 totalTickets >= 10
               }
@@ -755,10 +761,19 @@ function BuyTicketsContent({
   const [selectedPhase, setSelectedPhase] = useState<string>("");
 
   useEffect(() => {
-    const desiredId =
+    const defaultPhaseId =
       primaryResolvedPhase?.phase.id || firstResolvedPhase?.phase.id || "";
-    if (desiredId && desiredId !== selectedPhase) setSelectedPhase(desiredId);
-  }, [primaryResolvedPhase, firstResolvedPhase, selectedPhase]);
+
+    if (!defaultPhaseId) return;
+
+    setSelectedPhase((currentPhaseId) => {
+      const isCurrentPhaseValid = resolvedPhases.some(
+        ({ phase }) => phase.id === currentPhaseId,
+      );
+
+      return isCurrentPhaseValid ? currentPhaseId : defaultPhaseId;
+    });
+  }, [primaryResolvedPhase, firstResolvedPhase, resolvedPhases]);
 
   const allExpired =
     resolvedPhases.length > 0 &&
@@ -864,19 +879,7 @@ function BuyTicketsContent({
   }, [firstResolvedPhase]);
 
   useEffect(() => {
-    setTicketSelections((prev) => {
-      const next = buildTicketSelections(activePhaseData, activePhaseStatus);
-      return next.map((selection) => {
-        const existing = prev.find(
-          (prevSelection) => prevSelection.zoneId === selection.zoneId,
-        );
-        if (!existing) return selection;
-        return {
-          ...selection,
-          quantity: Math.min(existing.quantity, selection.maxPerTransaction),
-        };
-      });
-    });
+    setTicketSelections(buildTicketSelections(activePhaseData, activePhaseStatus));
   }, [activePhaseData, activePhaseStatus]);
 
   useEffect(() => {
@@ -886,6 +889,8 @@ function BuyTicketsContent({
   }, [canAdvanceReservation]);
 
   const updateTicketQuantity = (zoneId: string, quantity: number) => {
+    if (activePhaseStatus !== "active") return;
+
     setTicketSelections((prev) =>
       prev.map((selection) =>
         selection.zoneId === zoneId
@@ -1194,7 +1199,7 @@ function BuyTicketsContent({
               <div className="space-y-4">
                 {ticketSelections.map((selection) => (
                   <TicketCard
-                    key={selection.zoneId}
+                    key={`${activePhaseData?.id ?? "no-phase"}-${selection.zoneId}`}
                     selection={selection}
                     onUpdateQuantity={(q) =>
                       updateTicketQuantity(selection.zoneId, q)

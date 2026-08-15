@@ -46,7 +46,7 @@ function getPhaseStatusBadge(
         <Badge
           className={`${sizeClasses} border-transparent font-bold shadow-[0_0_10px_rgba(16,185,129,0.4)] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30`}
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse" />
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse" />
           En Venta
         </Badge>
       );
@@ -61,9 +61,9 @@ function getPhaseStatusBadge(
     case "upcoming":
       return (
         <Badge
-          className={`${sizeClasses} bg-amber-500/10 text-amber-400 border-amber-500/20 border`}
+          className={`${sizeClasses} bg-zinc-800/60 text-zinc-400 border-zinc-700/50 border shadow-none`}
         >
-          <Clock className="w-3 h-3 mr-1" />
+          <Clock className="w-3 h-3 mr-1 text-zinc-500" />
           Próximamente
         </Badge>
       );
@@ -508,7 +508,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                   style={{
                     borderColor:
                       activeTab === `phase-${index}`
-                        ? dominantColor
+                        ? "rgb(16 185 129 / 0.7)"
                         : "transparent",
                   }}
                 >
@@ -542,7 +542,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                   )}
 
                   {isUpcoming && (
-                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center text-amber-400 text-sm mb-4">
+                    <div className="p-3 bg-zinc-900/70 border border-zinc-700/40 rounded-xl text-center text-zinc-400 text-sm mb-4">
                       Esta fase iniciará el{" "}
                       {format(new Date(phase.startDate), "d 'de' MMMM", {
                         locale: es,
