@@ -1,5 +1,6 @@
+import 'server-only';
 import { BlogPost, Event, EventDj } from '@/lib/types';
-import { blogCollection, eventDjsCollection, eventsCollection } from '@/lib/firebase/collections';
+import { blogCollection, eventDjsCollection, eventsCollection } from '@/lib/firebase/admin-collections';
 
 export async function getBlogPosts(filters?: {
   category?: string;
@@ -9,7 +10,7 @@ export async function getBlogPosts(filters?: {
   offset?: number;
 }): Promise<{ posts: BlogPost[]; total: number }> {
   try {
-    let conditions: Array<{ field: string; operator: any; value: any }> = [];
+    const conditions: Array<{ field: string; operator: any; value: any }> = [];
 
     if (filters?.status) {
       conditions.push({ field: 'status', operator: '==', value: filters.status });
@@ -26,19 +27,18 @@ export async function getBlogPosts(filters?: {
     const limit = filters?.limit || 12;
     const offset = filters?.offset || 0;
 
-    // OPTIMIZED: Use count() for total instead of fetching all documents
     const total = await blogCollection.count(conditions);
 
-    // Fetch only the needed documents with pagination
-    // Note: Firestore doesn't support offset directly, so we fetch limit + offset and slice
-    // For better performance with large offsets, consider cursor-based pagination
-    const fetchLimit = Math.min(offset + limit, 100); // Cap at 100 to prevent excessive reads
+    // Firestore Admin SDK does not support offset in this wrapper, so fetch offset + limit and slice.
+    // Keep the cap to prevent excessive reads on server-rendered pages.
+    const fetchLimit = Math.min(offset + limit, 100);
     const allMatchingPosts = await blogCollection.query(conditions, 'publishDate', 'desc', fetchLimit);
     const fetchedPosts = allMatchingPosts.slice(offset, offset + limit);
 
     return { posts: fetchedPosts as BlogPost[], total };
   } catch (err) {
-    throw new Error(err instanceof Error ? err.message : 'Error fetching posts');
+    console.error('Error fetching blog posts:', err);
+    return { posts: [], total: 0 };
   }
 }
 
@@ -48,50 +48,39 @@ export async function getEventsByCountry(countryCode: string, filters?: {
   offset?: number;
 }): Promise<{ events: Event[]; total: number }> {
   try {
-    let conditions: Array<{ field: string; operator: any; value: any }> = [];
-
-    // Always filter by published status
-    conditions.push({ field: 'eventStatus', operator: '==', value: 'published' });
-
-    // Filter by country in location
-    conditions.push({ field: 'location.countryCode', operator: '==', value: countryCode.toUpperCase() });
+    const conditions: Array<{ field: string; operator: any; value: any }> = [
+      { field: 'eventStatus', operator: '==', value: filters?.status || 'published' },
+      { field: 'location.countryCode', operator: '==', value: countryCode.toUpperCase() },
+    ];
 
     const limit = filters?.limit || 50;
     const offset = filters?.offset || 0;
 
-    // OPTIMIZED: Use count() for total instead of fetching all documents
     const total = await eventsCollection.count(conditions);
-
-    // Fetch only what we need with proper limit
-    // For offset > 0, we need to fetch offset + limit, then slice
     const fetchLimit = Math.min(offset + limit, 100);
     const allEvents = await eventsCollection.query(conditions, 'startDate', 'asc', fetchLimit);
     const fetchedEvents = allEvents.slice(offset, offset + limit);
 
     return { events: fetchedEvents as Event[], total };
   } catch (err) {
-    throw new Error(err instanceof Error ? err.message : 'Error fetching events by country');
+    console.error(`Error fetching ${countryCode} events:`, err);
+    return { events: [], total: 0 };
   }
 }
 
 export async function getUpcomingEvents(limit: number = 3): Promise<Event[]> {
   try {
-    // Get current date in ISO format for comparison
-    const now = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-
-    // OPTIMIZED: Query with date filter directly in Firestore
-    // Filter events starting from today onwards using >= operator
+    const now = new Date().toISOString().split('T')[0];
     const conditions: Array<{ field: string; operator: any; value: any }> = [
       { field: 'eventStatus', operator: '==', value: 'published' },
-      { field: 'startDate', operator: '>=', value: now }
+      { field: 'startDate', operator: '>=', value: now },
     ];
 
-    // Fetch only the limited number we need, ordered by startDate
     const upcomingEvents = await eventsCollection.query(conditions, 'startDate', 'asc', limit);
-
     return upcomingEvents as Event[];
   } catch (err) {
-    throw new Error(err instanceof Error ? err.message : 'Error fetching upcoming events');
+    console.error('Error fetching upcoming events:', err);
+    return [];
   }
 }
 
@@ -106,6 +95,7 @@ export async function getFeaturedEventDjs(limit: number = 12): Promise<EventDj[]
 
     return featuredDjs as EventDj[];
   } catch (err) {
-    throw new Error(err instanceof Error ? err.message : 'Error fetching featured DJs');
+    console.error('Error fetching featured DJs:', err);
+    return [];
   }
 }

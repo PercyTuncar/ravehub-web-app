@@ -8,12 +8,17 @@ import { User } from '@/lib/types';
 const SESSION_COOKIE_NAME = 'session';
 
 export async function verifySession() {
-    const adminAuth = await getAdminAuth();
+    let adminAuth: any = null;
+
+    try {
+        adminAuth = await getAdminAuth();
+    } catch (error) {
+        console.error('Firebase Admin Auth initialization failed:', error);
+        return null;
+    }
 
     if (!adminAuth) {
-        console.error('Firebase Admin not initialized - check environment variables');
-        console.error('Required: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
-        // Return null instead of throwing to prevent 500 errors
+        console.error('Firebase Admin Auth not initialized - check environment variables');
         return null;
     }
 
@@ -35,7 +40,14 @@ export async function verifySession() {
 
 export async function getCurrentUser(): Promise<User | null> {
     const claims = await verifySession();
-    const adminDb = await getAdminDb();
+    let adminDb: any = null;
+
+    try {
+        adminDb = await getAdminDb();
+    } catch (error) {
+        console.error('Firebase Admin Firestore initialization failed while getting current user:', error);
+        return null;
+    }
 
     if (!claims || !adminDb) {
         return null;
@@ -71,16 +83,6 @@ export async function requireAuth() {
 }
 
 export async function requireAdmin() {
-    const adminAuth = await getAdminAuth();
-    const adminDb = await getAdminDb();
-
-    if (!adminAuth || !adminDb) {
-        console.error('Firebase Admin not initialized - check environment variables');
-        console.error('Required: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
-        // Redirect to login with error message instead of throwing 500
-        redirect('/login?error=server_config&redirect=/admin');
-    }
-
     const user = await getCurrentUser();
 
     if (!user) {
@@ -88,7 +90,6 @@ export async function requireAdmin() {
     }
 
     if (user.role !== 'admin' && user.role !== 'moderator') {
-        // Redirect to home or unauthorized page
         redirect('/');
     }
 
@@ -96,9 +97,18 @@ export async function requireAdmin() {
 }
 
 export async function createSessionCookie(idToken: string) {
-    const adminAuth = await getAdminAuth();
+    let adminAuth: any = null;
 
-    if (!adminAuth) throw new Error('Firebase Admin not initialized');
+    try {
+        adminAuth = await getAdminAuth();
+    } catch (error) {
+        console.error('Firebase Admin Auth initialization failed while creating session:', error);
+        return { success: false, error: 'Failed to initialize auth session' };
+    }
+
+    if (!adminAuth) {
+        return { success: false, error: 'Firebase Admin Auth not initialized' };
+    }
 
     // Set session expiration to 5 days
     const expiresIn = 60 * 60 * 24 * 5 * 1000;

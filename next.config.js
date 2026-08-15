@@ -13,27 +13,11 @@ const nextConfig = {
       },
     ],
   },
-  // Fix firebase-admin ESM issues in production
-  serverExternalPackages: [
-    'firebase-admin',
-    '@firebase/app',
-    '@firebase/auth',
-    'firebase-admin/app',
-    'firebase-admin/auth',
-    'firebase-admin/firestore',
-  ],
+  // Keep Firebase Admin externalized for the Node.js server runtime.
+  serverExternalPackages: ['firebase-admin'],
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000'],
-    },
-    // Disable turbopack in production to avoid ESM issues
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
     },
   },
   env: {
