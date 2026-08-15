@@ -42,19 +42,15 @@ export async function getAdminDashboardStats(timeRange: TimeRange): Promise<{ su
         // Check auth but don't redirect
         const currentUser = await getCurrentUser();
 
-        console.log('[getAdminDashboardStats] Current user:', currentUser?.email, 'role:', currentUser?.role);
-
         // WARNING: Temporarily allowing without server-side auth check
         // The AuthGuard on the client already verified the user
         // This is a workaround for session cookie sync issues
         if (currentUser && !['admin', 'moderator'].includes(currentUser.role)) {
-            console.log('[getAdminDashboardStats] User not admin/moderator:', currentUser.role);
             return { success: false, error: 'No autorizado' };
         }
 
         // If no currentUser, it means session cookie failed but client auth passed
         // We proceed because AuthGuard already checked on client
-        console.log('[getAdminDashboardStats] Fetching stats for timeRange:', timeRange);
 
         const startDate = getDateFromRange(timeRange);
         const startDateIso = startDate.toISOString();

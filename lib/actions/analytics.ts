@@ -1,8 +1,8 @@
 'use server';
 
-import { bioLinkEventsCollection } from '@/lib/firebase/collections';
+import { bioLinkEventsCollection } from '@/lib/firebase/admin-collections';
 import { BioLinkEvent } from '@/lib/types';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import { headers } from 'next/headers';
 
 export async function logBioEvent(

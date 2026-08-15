@@ -55,7 +55,6 @@ async function getAdminApp() {
                 });
             }
 
-            console.log('[Firebase Admin] App initialized:', !!adminAppInstance);
             return adminAppInstance;
         } catch (error) {
             console.error('[Firebase Admin] App initialization failed:', error);
@@ -90,7 +89,6 @@ export async function getAdminDb() {
             // under Vercel/Turbopack CommonJS externals. Firestore does not need Auth.
             const { getFirestore } = await import('firebase-admin/firestore');
             adminDbInstance = getFirestore(app);
-            console.log('[Firebase Admin] Firestore initialized:', !!adminDbInstance);
             return adminDbInstance;
         } catch (error) {
             console.error('[Firebase Admin] Firestore initialization failed:', error);
@@ -122,7 +120,6 @@ export async function getAdminAuth() {
         try {
             const { getAuth } = await import('firebase-admin/auth');
             adminAuthInstance = getAuth(app);
-            console.log('[Firebase Admin] Auth initialized:', !!adminAuthInstance);
             return adminAuthInstance;
         } catch (error) {
             console.error('[Firebase Admin] Auth initialization failed:', error);

@@ -1,6 +1,6 @@
 'use server';
 
-import { eventsCollection } from '@/lib/firebase/collections';
+import { eventsCollection } from '@/lib/firebase/admin-collections';
 import { Event } from '@/lib/types';
 
 export async function getEventsList() {

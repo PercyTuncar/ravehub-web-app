@@ -47,14 +47,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('[AuthContext] Auth state changed:', firebaseUser?.email);
       if (firebaseUser) {
         setFirebaseUser(firebaseUser);
         await loadUserData(firebaseUser.uid);
         // Sync session with server
         await syncSession(firebaseUser);
       } else {
-        console.log('[AuthContext] No firebase user, clearing session');
         setFirebaseUser(null);
         setUser(null);
         // Clear server session
@@ -68,14 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserData = async (uid: string) => {
     try {
-      console.log('[AuthContext] Loading user data for uid:', uid);
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
         const userData = userDoc.data() as User;
-        console.log('[AuthContext] User data loaded:', userData.email, 'role:', userData.role);
         setUser({ ...userData, id: uid });
-      } else {
-        console.log('[AuthContext] User document does not exist in Firestore');
       }
     } catch (error) {
       console.error('[AuthContext] Error loading user data:', error);
