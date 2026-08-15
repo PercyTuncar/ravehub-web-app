@@ -568,7 +568,15 @@ export interface TicketTransaction {
   ticketDeliveryMode?: 'automatic' | 'manualUpload';
   ticketDeliveryStatus?: 'pending' | 'scheduled' | 'available' | 'delivered';
   ticketsDownloadAvailableDate?: string;
-  ticketsFiles?: string[];
+  ticketsFiles?: string[]; // Legacy: simple URLs
+  ticketsUploadedFiles?: Array<{
+    fileUrl: string;
+    fileName: string;
+    uploadedBy: string;
+    uploadedAt: string;
+    availableDate?: string;
+    mimeType?: string;
+  }>;
   deliveredAt?: Date;
   reviewedBy?: string;
   reviewedAt?: Date | string;

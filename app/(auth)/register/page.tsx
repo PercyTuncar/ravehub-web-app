@@ -7,7 +7,15 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Loader2, Mail, Lock, User, Phone, FileText, Check, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import Image from 'next/image';
+import { validatePassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase/config';
+
+const getPasswordRequirements = (password: string) => ({
+  length: password.length >= 8,
+  uppercase: /[A-Z]/.test(password),
+  lowercase: /[a-z]/.test(password),
+  special: /[0-9\W_]/.test(password),
+});
 
 // Component that uses useSearchParams - wrapped in Suspense
 function RegisterContent() {
@@ -79,7 +87,12 @@ function RegisterContent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'password') {
+      setPasswordRequirements(getPasswordRequirements(value));
+    }
   };
 
   const handleEmailRegister = async (e: React.FormEvent) => {
@@ -95,8 +108,9 @@ function RegisterContent() {
       return;
     }
 
-    // Client-side validation check
-    if (!Object.values(passwordRequirements).every(Boolean)) {
+    const currentPasswordRequirements = getPasswordRequirements(formData.password);
+
+    if (!Object.values(currentPasswordRequirements).every(Boolean)) {
       setError('Por favor cumple con todos los requisitos de la contraseña antes de continuar.');
       setLoading(false);
       setIsRegistering(false);
@@ -104,6 +118,14 @@ function RegisterContent() {
     }
 
     try {
+      const passwordValidation = await validatePassword(auth, formData.password);
+
+      if (!passwordValidation.isValid) {
+        setError('La contraseña no cumple con la política de seguridad configurada.');
+        setIsRegistering(false);
+        return;
+      }
+
       await signUpWithEmail(formData.email, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName,
