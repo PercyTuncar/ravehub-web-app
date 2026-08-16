@@ -766,6 +766,7 @@ function TicketsAdminContent() {
                 transactionId={selectedTicket?.id || ''}
                 eventId={selectedTicket?.eventId || ''}
                 currentDownloadDate={selectedTicket?.ticketsDownloadAvailableDate}
+                ticketQuantity={selectedTicket?.ticketItems?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 1}
                 onSuccess={() => {
                     setUploadModalOpen(false);
                     loadTickets();

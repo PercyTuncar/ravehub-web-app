@@ -81,7 +81,27 @@ export async function POST(request: NextRequest) {
     // Validate ticket availability and pricing
     // TODO: Implement stock validation and pricing checks
 
-    // Create ticket transaction
+    // For installment transactions, prepare plan metadata BEFORE creating transaction
+    let installmentPlanMetadata: any = null;
+    if (paymentType === 'installment' && installments) {
+      const { calculateInstallmentPlan } = await import('@/lib/utils/admin-ticket-calculator');
+
+      // Determine reservation amount: prefer client-provided, otherwise fallback to event config
+      let reservationAmount: number;
+      if (reservationFee !== undefined && reservationFee !== null) {
+        reservationAmount = reservationFee;
+      } else {
+        const ticketCount = Array.isArray(tickets) ? tickets.reduce((acc, t: any) => acc + (t.quantity || 1), 0) : 0;
+        reservationAmount = (event.reservationAmount ?? 50) * ticketCount;
+      }
+
+      installmentPlanMetadata = {
+        installments: installments,
+        reservationAmount: reservationAmount,
+      };
+    }
+
+    // Create ticket transaction with complete metadata
     const transactionData: Omit<TicketTransaction, 'id'> = {
       userId: finalUserId,
       eventId,
@@ -99,22 +119,15 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h expiry
       ...(proofUrl ? { paymentProofUrl: proofUrl } : {}),     // Store proof if uploaded at checkout
+      ...(installmentPlanMetadata || {}), // Include installment metadata if applicable
     };
 
     const transactionId = await ticketTransactionsCollection.create(transactionData);
 
     // Create payment installments if applicable
-    if (paymentType === 'installment' && installments) {
+    if (paymentType === 'installment' && installments && installmentPlanMetadata) {
       const { calculateInstallmentPlan } = await import('@/lib/utils/admin-ticket-calculator');
-
-      // Determine reservation amount: prefer client-provided, otherwise fallback to event config
-      let reservationAmount: number;
-      if (reservationFee !== undefined && reservationFee !== null) {
-        reservationAmount = reservationFee;
-      } else {
-        const ticketCount = Array.isArray(tickets) ? tickets.reduce((acc, t: any) => acc + (t.quantity || 1), 0) : 0;
-        reservationAmount = (event.reservationAmount ?? 50) * ticketCount;
-      }
+      const reservationAmount = installmentPlanMetadata.reservationAmount;
 
       // Note: calculateInstallmentPlan expects totalAmount to be the FULL price.
       // The logic: (Total - Reservation) / Installments
@@ -128,7 +141,7 @@ export async function POST(request: NextRequest) {
       if (plan.success && plan.installments) {
         const batchPromises: Promise<any>[] = [];
 
-        // 1. Create Reservation Installment (Installment 0)
+        // 1. Create Reservation Installment (Installment 0) if reservation > 0
         if (reservationAmount > 0) {
           const reservationData: Omit<PaymentInstallment, 'id'> = {
             transactionId,
@@ -164,6 +177,14 @@ export async function POST(request: NextRequest) {
 
         batchPromises.push(...futureInstallments);
         await Promise.all(batchPromises);
+      } else {
+        // Plan calculation failed - transaction was created but without schedule
+        console.error('Failed to calculate installment plan:', plan.error);
+        // Mark transaction for reconciliation so it doesn't silently fail
+        await ticketTransactionsCollection.update(transactionId, {
+          reconciliationRequired: true,
+          reconciliationReason: 'installment_plan_calculation_failed',
+        });
       }
     }
 

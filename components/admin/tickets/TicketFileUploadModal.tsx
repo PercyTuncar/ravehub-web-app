@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Upload, Calendar, CheckCircle, AlertCircle, X, Info } from 'lucide-react';
+import { Upload, Calendar, CheckCircle, AlertCircle, X, Info, Image as ImageIcon, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { FileUpload } from '@/components/common/FileUpload';
 import { eventsCollection } from '@/lib/firebase/collections';
 import { toast } from 'sonner';
@@ -17,6 +18,7 @@ interface TicketFileUploadModalProps {
   transactionId: string;
   eventId: string;
   currentDownloadDate?: string;
+  ticketQuantity?: number; // Nueva prop para cantidad de tickets
   onSuccess: () => void;
 }
 
@@ -26,9 +28,11 @@ export function TicketFileUploadModal({
   transactionId,
   eventId,
   currentDownloadDate,
+  ticketQuantity = 1,
   onSuccess
 }: TicketFileUploadModalProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{url: string, type: 'qr' | 'file'}>>([]);
+  const [currentFileType, setCurrentFileType] = useState<'qr' | 'file'>('file');
   const [availableDate, setAvailableDate] = useState<string>(
     currentDownloadDate || new Date().toISOString().split('T')[0]
   );
@@ -61,7 +65,7 @@ export function TicketFileUploadModal({
   };
 
   const handleFileUpload = (url: string) => {
-    setUploadedFiles(prev => [...prev, url]);
+    setUploadedFiles(prev => [...prev, { url, type: currentFileType }]);
   };
 
   const handleRemoveFile = (index: number) => {
@@ -71,6 +75,12 @@ export function TicketFileUploadModal({
   const handleSubmit = async () => {
     if (uploadedFiles.length === 0) {
       toast.error('Debes subir al menos un archivo');
+      return;
+    }
+
+    // Validar que se hayan subido tantos archivos como tickets comprados
+    if (uploadedFiles.length !== ticketQuantity) {
+      toast.error(`Debes subir exactamente ${ticketQuantity} archivo${ticketQuantity > 1 ? 's' : ''} (uno por cada ticket comprado)`);
       return;
     }
 
@@ -88,15 +98,16 @@ export function TicketFileUploadModal({
 
       // Download each uploaded file and append to FormData
       for (let i = 0; i < uploadedFiles.length; i++) {
-        const fileUrl = uploadedFiles[i];
-        const response = await fetch(fileUrl);
+        const fileData = uploadedFiles[i];
+        const response = await fetch(fileData.url);
         const blob = await response.blob();
 
         // Extract filename from URL
-        const fileName = fileUrl.split('/').pop()?.split('?')[0] || `ticket-${i}.pdf`;
+        const fileName = fileData.url.split('/').pop()?.split('?')[0] || `ticket-${i}.pdf`;
         const file = new File([blob], fileName, { type: blob.type });
 
         formData.append('files', file);
+        formData.append('fileTypes', fileData.type); // Agregar tipo de cada archivo
       }
 
       const res = await fetch('/api/tickets/upload-manual', {
@@ -140,28 +151,81 @@ export function TicketFileUploadModal({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Ticket Quantity Info */}
+          <div className="flex items-start gap-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <Info className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-primary">
+              <p className="font-bold">Cantidad de tickets: {ticketQuantity}</p>
+              <p className="text-primary/80 mt-1">
+                Debes subir exactamente {ticketQuantity} archivo{ticketQuantity > 1 ? 's' : ''} (uno por cada ticket comprado)
+              </p>
+            </div>
+          </div>
+
+          {/* File Type Selection */}
+          <div className="space-y-3">
+            <Label>Tipo de archivo a subir</Label>
+            <RadioGroup value={currentFileType} onValueChange={(value) => setCurrentFileType(value as 'qr' | 'file')}>
+              <div className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                <RadioGroupItem value="qr" id="qr" />
+                <Label htmlFor="qr" className="flex items-center gap-2 cursor-pointer flex-1">
+                  <ImageIcon className="w-4 h-4 text-primary" />
+                  <div>
+                    <p className="font-semibold">Código QR</p>
+                    <p className="text-xs text-white/60">Imagen cuadrada (1:1) que se mostrará en el ticket</p>
+                  </div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                <RadioGroupItem value="file" id="file" />
+                <Label htmlFor="file" className="flex items-center gap-2 cursor-pointer flex-1">
+                  <FileText className="w-4 h-4 text-blue-400" />
+                  <div>
+                    <p className="font-semibold">Archivo completo</p>
+                    <p className="text-xs text-white/60">PDF o imagen del ticket completo para descargar</p>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           {/* File Upload Section */}
           <div className="space-y-3">
-            <Label>Archivos (PDF o imágenes)</Label>
+            <Label>
+              {currentFileType === 'qr' ? 'Subir imagen QR (Recomendado: 500x500px o mayor)' : 'Archivos (PDF o imágenes)'}
+            </Label>
             <FileUpload
               onUploadComplete={handleFileUpload}
               folder={`tickets/${transactionId}`}
-              accept="image/*,application/pdf"
+              accept={currentFileType === 'qr' ? 'image/*' : 'image/*,application/pdf'}
               maxSize={10}
               variant="default"
+              compact={true}
             />
 
             {uploadedFiles.length > 0 && (
               <div className="space-y-2 mt-4">
-                <p className="text-sm text-white/60">Archivos subidos ({uploadedFiles.length}):</p>
-                {uploadedFiles.map((url, index) => (
+                <p className="text-sm text-white/60">
+                  Archivos subidos ({uploadedFiles.length} de {ticketQuantity}):
+                </p>
+                {uploadedFiles.map((fileData, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-2 bg-white/5 rounded border border-white/10"
                   >
-                    <span className="text-sm truncate flex-1">
-                      {url.split('/').pop()?.split('?')[0]}
-                    </span>
+                    <div className="flex items-center gap-2 flex-1 truncate">
+                      {fileData.type === 'qr' ? (
+                        <ImageIcon className="w-4 h-4 text-primary flex-shrink-0" />
+                      ) : (
+                        <FileText className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                      )}
+                      <span className="text-sm truncate">
+                        {fileData.url.split('/').pop()?.split('?')[0]}
+                      </span>
+                      <span className="text-xs text-white/40 ml-2">
+                        ({fileData.type === 'qr' ? 'QR' : 'Archivo'})
+                      </span>
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
@@ -297,7 +361,7 @@ export function TicketFileUploadModal({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={uploadedFiles.length === 0 || isUploading}
+            disabled={uploadedFiles.length !== ticketQuantity || isUploading}
             className="bg-primary hover:bg-primary/90"
           >
             {isUploading ? (
@@ -305,7 +369,7 @@ export function TicketFileUploadModal({
             ) : (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Subir {uploadedFiles.length} archivo(s)
+                Subir {uploadedFiles.length} archivo(s) {uploadedFiles.length !== ticketQuantity && `(Faltan ${ticketQuantity - uploadedFiles.length})`}
               </>
             )}
           </Button>

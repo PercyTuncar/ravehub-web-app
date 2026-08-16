@@ -236,6 +236,17 @@ export async function uploadTicketProof(ticketId: string, proofUrl: string) {
       return { success: false, error: 'No autenticado' };
     }
 
+    // Verify ownership
+    const ticket = await ticketTransactionsCollection.get(ticketId);
+    if (!ticket) {
+      return { success: false, error: 'Transacción no encontrada' };
+    }
+
+    if (ticket.userId !== currentUser.id) {
+      return { success: false, error: 'No autorizado: este ticket pertenece a otro usuario' };
+    }
+
+    // User can only update proof, not approval/status/amounts/delivery
     await ticketTransactionsCollection.update(ticketId, {
       paymentProofUrl: proofUrl,
       paymentStatus: 'pending', // Reset to pending for review
@@ -429,7 +440,7 @@ export async function createManualTicketTransaction(data: {
       paymentType: data.paymentType,
       paymentStatus: data.paymentStatus,
       ticketDeliveryMode: 'manualUpload', // Default for now
-      ticketDeliveryStatus: data.paymentStatus === 'approved' ? 'available' : 'pending',
+      ticketDeliveryStatus: 'pending', // Will be recalculated from aggregate after installments
       ticketsDownloadAvailableDate: data.ticketsDownloadAvailableDate,
       isCourtesy: data.paymentMethod === 'courtesy',
       createdAt: new Date().toISOString()
@@ -503,10 +514,28 @@ export async function createManualTicketTransaction(data: {
         batchPromises.push(...futureInstallments);
 
         await Promise.all(batchPromises);
+
+        // Recalculate parent transaction status from the installment schedule we just created
+        const { syncTransactionFromSchedule } = await import('@/lib/payments/ticket-payment-state');
+        await syncTransactionFromSchedule(ticketId);
       }
     }
 
-    // 3. Create notification for user
+    // 3. If payment is full and approved, recalculate delivery eligibility
+    if (data.paymentType === 'full' && data.paymentStatus === 'approved') {
+      const { canDeliverTickets } = await import('@/lib/payments/ticket-payment-state');
+      const transaction = await ticketTransactionsCollection.get(ticketId);
+      if (transaction) {
+        const deliveryEligible = await canDeliverTickets({ ...transaction, id: ticketId } as any);
+        if (deliveryEligible) {
+          await ticketTransactionsCollection.update(ticketId, {
+            ticketDeliveryStatus: 'pending', // Admin still needs to upload files for manualUpload mode
+          });
+        }
+      }
+    }
+
+    // 4. Create notification for user
     const selectedEvent = await eventsCollection.get(data.eventId);
     await createNotification({
       userId: data.userId,
@@ -738,6 +767,17 @@ export async function uploadUserInstallmentProof(
       return { success: false, error: 'Cuota no encontrada' };
     }
 
+    // Verify ownership: user must own the parent transaction
+    const ticket = await ticketTransactionsCollection.get(installment.transactionId);
+    if (!ticket) {
+      return { success: false, error: 'Transacción padre no encontrada' };
+    }
+
+    if (ticket.userId !== currentUser.id) {
+      return { success: false, error: 'No autorizado: esta cuota pertenece a otro usuario' };
+    }
+
+    // User can only update proof fields, not status/approval/amounts
     await paymentInstallmentsCollection.update(installmentId, {
       userUploadedProofUrl: downloadURL,
       userUploadedAt: new Date().toISOString(),
@@ -782,48 +822,47 @@ export async function approveInstallmentProof(
       return { success: false, error: 'Cuota no encontrada' };
     }
 
+    // Verify parent transaction exists
+    const ticket = await ticketTransactionsCollection.get(installment.transactionId);
+    if (!ticket) {
+      return { success: false, error: 'Transacción padre no encontrada - requiere reconciliación' };
+    }
+
     // 1. Update the Installment
     await paymentInstallmentsCollection.update(installmentId, {
       status: 'paid',
       adminApproved: true,
       paidAt: new Date().toISOString(),
-      // Move user proof to official proof
+      approvedAt: new Date().toISOString(),
+      // Preserve user-uploaded proof as approved proof
       proofUrl: installment.userUploadedProofUrl || installment.proofUrl,
       paymentProofUrl: installment.userUploadedProofUrl || installment.proofUrl,
     });
 
-    // Fetch ticket to get userId for notification
-    const ticket = await ticketTransactionsCollection.get(installment.transactionId);
-    if (ticket) {
+    // 2. Recalculate parent transaction status from complete schedule
+    const { syncTransactionFromSchedule } = await import('@/lib/payments/ticket-payment-state');
+    const syncResult = await syncTransactionFromSchedule(installment.transactionId);
+
+    if (!syncResult.success) {
+      console.error('Failed to sync transaction after installment approval:', syncResult.error);
+    }
+
+    // 3. Notify user
+    await createNotification({
+      userId: ticket.userId,
+      ...InstallmentNotifications.paymentApproved(ticket.id, installment.installmentNumber)
+    });
+
+    // 4. If all installments are now approved, notify completion
+    if (syncResult.aggregate?.paymentStatus === 'approved') {
       await createNotification({
         userId: ticket.userId,
-        ...InstallmentNotifications.paymentApproved(ticket.id, installment.installmentNumber)
+        title: '✅ Pago Completo',
+        body: `Todas las cuotas de tu pedido han sido aprobadas.`,
+        type: 'payment',
+        orderId: ticket.id
       });
     }
-
-    // 2. Check if ALL installments for this ticket are now paid
-    const allInstallments = await paymentInstallmentsCollection.query([
-      { field: 'transactionId', operator: '==', value: installment.transactionId }
-    ]);
-
-    // We verify against the just-updated status? 
-    // The query might return the old status if not strongly consistent or if we don't manually patch the result.
-    // Safe bet: Check if every OTHER installment is paid.
-
-    const areOthersPaid = allInstallments
-      .filter(i => i.id !== installmentId)
-      .every(i => i.status === 'paid' && i.adminApproved);
-
-    if (areOthersPaid) {
-      // All paid! Update Ticket Status
-      await ticketTransactionsCollection.update(installment.transactionId, {
-        paymentStatus: 'approved',
-        ticketDeliveryStatus: 'available', // Ready for download (subject to date check)
-        updatedAt: new Date().toISOString()
-      });
-    }
-
-    // Optional: Notify user (implement later)
 
     return { success: true };
   } catch (error: any) {
@@ -846,23 +885,30 @@ export async function rejectInstallmentProof(
       return { success: false, error: 'Cuota no encontrada' };
     }
 
+    // Verify parent transaction exists
+    const ticket = await ticketTransactionsCollection.get(installment.transactionId);
+    if (!ticket) {
+      return { success: false, error: 'Transacción padre no encontrada - requiere reconciliación' };
+    }
+
+    // Preserve rejected proof in history; clear uploaded URL so user can retry
     await paymentInstallmentsCollection.update(installmentId, {
       status: 'rejected',
       adminApproved: false,
-      userUploadedProofUrl: null, // Clear it so they can re-upload? Or keep it for history?
-      // Keeping it null forces them to upload again logic-wise in many cases, or we can add a 'rejectionReason' field.
-      // Let's clear the proof URL to reset the state to "pending upload" visually but maybe we should keep a history.
-      // Ideally reset to allows re-upload.
+      rejectedAt: new Date().toISOString(),
+      rejectionReason: reason,
+      // Keep userUploadedProofUrl as audit trail; UI checks status='rejected' for re-upload flow
     });
 
-    // Fetch ticket to get userId for notification
-    const ticket = await ticketTransactionsCollection.get(installment.transactionId);
-    if (ticket) {
-      await createNotification({
-        userId: ticket.userId,
-        ...InstallmentNotifications.paymentRejected(ticket.id, installment.installmentNumber, reason)
-      });
-    }
+    // Recalculate parent status - rejection may change aggregate
+    const { syncTransactionFromSchedule } = await import('@/lib/payments/ticket-payment-state');
+    await syncTransactionFromSchedule(installment.transactionId);
+
+    // Notify user
+    await createNotification({
+      userId: ticket.userId,
+      ...InstallmentNotifications.paymentRejected(ticket.id, installment.installmentNumber, reason)
+    });
 
     return { success: true };
   } catch (error: any) {
@@ -883,40 +929,33 @@ export async function revertInstallmentPayment(
       return { success: false, error: 'Cuota no encontrada' };
     }
 
-    // Reset to rejected so user has to upload again
-    // We clear paidAt and adminApproved.
+    // Verify parent transaction exists
+    const ticket = await ticketTransactionsCollection.get(installment.transactionId);
+    if (!ticket) {
+      return { success: false, error: 'Transacción padre no encontrada - requiere reconciliación' };
+    }
+
+    // Preserve reverted payment in audit trail
     await paymentInstallmentsCollection.update(installmentId, {
       status: 'rejected',
       adminApproved: false,
       paidAt: null,
-      // We keep the old proof url (userUploadedProofUrl) or clearing it?
-      // If we want them to upload NEW one, keeping it might be confusing if they just re-submit same one.
-      // But keeping it allows admin to see "previous" attempt if we had history. 
-      // Current logic: status 'rejected' allows upload.
-      // Important: We should probably NOT clear the proofUrl field instantly if we want to show "Old proof" but
-      // the InstallmentCard logic for 'rejected' shows "Subir Nuevo".
+      revertedAt: new Date().toISOString(),
+      // Keep proof history for audit
     });
 
-    // Also update parent ticket if it was fully approved, now it's not.
-    const ticket = await ticketTransactionsCollection.get(installment.transactionId);
-    if (ticket && ticket.paymentStatus === 'approved') {
-      await ticketTransactionsCollection.update(installment.transactionId, {
-        paymentStatus: 'pending', // Revert to pending
-        ticketDeliveryStatus: 'pending' // Revoke delivery
-      });
-    }
+    // Recalculate parent - revoking an approved installment changes aggregate
+    const { syncTransactionFromSchedule } = await import('@/lib/payments/ticket-payment-state');
+    await syncTransactionFromSchedule(installment.transactionId);
 
-    // Notification?
-    if (ticket) {
-      await createNotification({
-        userId: ticket.userId,
-        // Using generic message for now or create a new notification type "payment_reverted"
-        title: '⚠️ Pago Anulado',
-        body: `El pago de la cuota #${installment.installmentNumber} ha sido anulado por un administrador. Por favor revisa y sube el comprobante nuevamente.`,
-        type: 'payment',
-        orderId: ticket.id
-      });
-    }
+    // Notify user
+    await createNotification({
+      userId: ticket.userId,
+      title: '⚠️ Pago Anulado',
+      body: `El pago de la cuota #${installment.installmentNumber} ha sido anulado por un administrador. Por favor revisa y sube el comprobante nuevamente.`,
+      type: 'payment',
+      orderId: ticket.id
+    });
 
     return { success: true };
   } catch (error: any) {

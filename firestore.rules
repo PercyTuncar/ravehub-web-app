@@ -136,17 +136,56 @@ service cloud.firestore {
     }
 
     match /ticketTransactions/{transactionId} {
-      allow read, write: if request.auth != null && request.auth.uid ==
-        resource.data.userId;
+      // Users can read their own transactions
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+
+      // Users can create their own transactions (checkout flow)
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId
+        && request.resource.data.paymentStatus == 'pending'
+        && request.resource.data.ticketDeliveryStatus == 'pending';
+
+      // Users can only update proof-related fields on their own transactions
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId // Cannot change owner
+        && request.resource.data.paymentStatus == resource.data.paymentStatus // Cannot approve self
+        && request.resource.data.ticketDeliveryStatus == resource.data.ticketDeliveryStatus // Cannot deliver self
+        && request.resource.data.totalAmount == resource.data.totalAmount // Cannot change amounts
+        && (!('ticketsUploadedFiles' in request.resource.data) || request.resource.data.ticketsUploadedFiles == resource.data.ticketsUploadedFiles) // Cannot add ticket files
+        && (!('ticketsFiles' in request.resource.data) || request.resource.data.ticketsFiles == resource.data.ticketsFiles);
+
+      // Admins can read all transactions
       allow read: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+
+      // Admin writes go through Admin SDK only (no client-side admin writes)
     }
 
     match /paymentInstallments/{installmentId} {
-      allow read, write: if request.auth != null && request.auth.uid ==
+      // Users can read installments for their own transactions
+      allow read: if request.auth != null && request.auth.uid ==
         get(/databases/$(database)/documents/ticketTransactions/$(resource.data.transactionId)).data.userId;
+
+      // Users can create installments only via purchase flow (transactionId must exist and be theirs)
+      allow create: if request.auth != null
+        && exists(/databases/$(database)/documents/ticketTransactions/$(request.resource.data.transactionId))
+        && request.auth.uid == get(/databases/$(database)/documents/ticketTransactions/$(request.resource.data.transactionId)).data.userId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.adminApproved == false;
+
+      // Users can only update proof fields on their own installments
+      allow update: if request.auth != null
+        && request.auth.uid == get(/databases/$(database)/documents/ticketTransactions/$(resource.data.transactionId)).data.userId
+        && request.resource.data.transactionId == resource.data.transactionId // Cannot reassign
+        && request.resource.data.installmentNumber == resource.data.installmentNumber // Cannot renumber
+        && request.resource.data.amount == resource.data.amount // Cannot change amount
+        && request.resource.data.adminApproved == resource.data.adminApproved // Cannot approve self
+        && (!('paidAt' in request.resource.data) || request.resource.data.paidAt == resource.data.paidAt); // Cannot set paidAt
+
+      // Admins can read all installments
       allow read: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+
+      // Admin writes go through Admin SDK only
     }
 
     // Gallery collections - read for all, write for admins

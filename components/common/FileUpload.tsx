@@ -18,6 +18,7 @@ interface FileUploadProps {
   folder?: string;
   className?: string;
   variant?: 'default' | 'banner';
+  compact?: boolean; // New compact mode
 }
 
 export function FileUpload({
@@ -28,7 +29,8 @@ export function FileUpload({
   maxSize = 10, // 10MB default
   folder = 'djs',
   className = '',
-  variant = 'default'
+  variant = 'default',
+  compact = false
 }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
@@ -262,22 +264,22 @@ export function FileUpload({
         )}
 
         {uploading || optimizing ? (
-          <div className="space-y-4">
+          <div className={compact ? "space-y-2" : "space-y-4"}>
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm font-semibold text-foreground">
-                {optimizing ? 'Optimizando imagen...' : 'Subiendo archivo...'}
+              <div className={`${compact ? 'w-4 h-4' : 'w-6 h-6'} border-2 border-primary border-t-transparent rounded-full animate-spin`} />
+              <span className={`${compact ? 'text-xs' : 'text-sm'} font-semibold text-foreground`}>
+                {optimizing ? 'Optimizando...' : 'Subiendo...'}
               </span>
-              {optimizing && (
+              {optimizing && !compact && (
                 <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 border-orange-500/20">
                   <Zap className="w-3 h-3 mr-1" />
                   SEO+Performance
                 </Badge>
               )}
             </div>
-            <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+            <div className={`w-full bg-muted rounded-full ${compact ? 'h-2' : 'h-3'} overflow-hidden`}>
               <div
-                className="bg-gradient-to-r from-primary to-orange-500 h-3 rounded-full transition-all duration-300 relative"
+                className={`bg-gradient-to-r from-primary to-orange-500 ${compact ? 'h-2' : 'h-3'} rounded-full transition-all duration-300 relative`}
                 style={{ width: `${progress}%` }}
               >
                 <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
@@ -285,40 +287,73 @@ export function FileUpload({
             </div>
             <div className="text-xs text-muted-foreground">
               <p className="font-medium">{progress}% completado</p>
-              {optimizing && (
-                <p className="text-orange-600 mt-2 font-medium">
-                  ⚡ Optimizando para SEO y reduciendo peso automáticamente...
-                </p>
-              )}
             </div>
           </div>
         ) : (
           <div
-            className="text-center cursor-pointer transition-all duration-200 hover:bg-muted/30 rounded-xl p-8 border-2 border-dashed border-border hover:border-primary/50 hover:shadow-lg"
+            className={`text-center cursor-pointer transition-all duration-200 hover:bg-muted/30 rounded-xl ${
+              compact
+                ? 'p-4 border border-dashed border-border hover:border-primary/50'
+                : 'p-8 border-2 border-dashed border-border hover:border-primary/50 hover:shadow-lg'
+            }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={triggerFileInput}
           >
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/10 to-orange-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-200">
-              <Upload className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-xl font-bold mb-3 text-foreground">
-              {dragOver ? '🎯 Suelta el archivo aquí' : '📁 Subir archivo'}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              Arrastra y suelta un archivo aquí, o haz clic para seleccionar
-            </p>
-            <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground mb-6">
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                JPG, PNG, WEBP
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                Máximo {maxSize}MB
-              </span>
-            </div>
+            {compact ? (
+              // Compact version - single line
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary/10 to-orange-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Upload className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-foreground">
+                      {dragOver ? 'Suelta aquí' : 'Subir archivo'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PDF o imagen • Max {maxSize}MB
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerFileInput();
+                  }}
+                >
+                  Seleccionar
+                </Button>
+              </div>
+            ) : (
+              // Default version - full card
+              <>
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/10 to-orange-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-200">
+                  <Upload className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-foreground">
+                  {dragOver ? '🎯 Suelta el archivo aquí' : '📁 Subir archivo'}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Arrastra y suelta un archivo aquí, o haz clic para seleccionar
+                </p>
+                <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground mb-6">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    JPG, PNG, WEBP
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    Máximo {maxSize}MB
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         )}
       </CardContent>

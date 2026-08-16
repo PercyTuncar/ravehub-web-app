@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     const transactionId = formData.get('transactionId') as string;
     const eventId = formData.get('eventId') as string;
     const files = formData.getAll('files') as File[];
+    const fileTypes = formData.getAll('fileTypes') as string[]; // 'qr' o 'file'
     const availableDate = formData.get('availableDate') as string | null;
     const makeAvailableImmediately = formData.get('makeAvailableImmediately') === 'true';
     const updateEventDate = formData.get('updateEventDate') === 'true';
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify transaction exists and is approved
+    // Verify transaction exists and payment is fully approved
     const transaction = await ticketTransactionsCollection.get(transactionId);
     if (!transaction) {
       return NextResponse.json(
@@ -34,16 +35,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (transaction.paymentStatus !== 'approved') {
+    if (transaction.ticketDeliveryMode !== 'manualUpload') {
       return NextResponse.json(
-        { error: 'Transaction not approved yet' },
+        { error: 'Transaction does not require manual upload' },
         { status: 400 }
       );
     }
 
-    if (transaction.ticketDeliveryMode !== 'manualUpload') {
+    // Validate payment is completely approved before allowing upload
+    const { calculatePaymentAggregate } = await import('@/lib/payments/ticket-payment-state');
+    const aggregate = await calculatePaymentAggregate({ ...transaction, id: transactionId } as any);
+
+    if (!aggregate.canDeliverTickets) {
       return NextResponse.json(
-        { error: 'Transaction does not require manual upload' },
+        {
+          error: 'Payment not fully approved',
+          details: {
+            paymentStatus: aggregate.paymentStatus,
+            approvedCount: aggregate.approvedCount,
+            pendingCount: aggregate.pendingCount,
+            requiresReconciliation: aggregate.requiresReconciliation,
+          }
+        },
         { status: 400 }
       );
     }
@@ -56,17 +69,31 @@ export async function POST(request: NextRequest) {
       uploadedAt: string;
       availableDate?: string;
       mimeType?: string;
+      fileType: 'qr' | 'file'; // Nuevo campo
     }> = [];
 
     const adminUser = await requireAdmin();
 
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileType = fileTypes[i] || 'file'; // Por defecto 'file' si no se especifica
       // Validate file type
-      if (!file.type.includes('pdf') && !file.type.includes('image')) {
-        return NextResponse.json(
-          { error: 'Only PDF and image files are allowed' },
-          { status: 400 }
-        );
+      if (fileType === 'qr') {
+        // Para QR, solo imágenes
+        if (!file.type.includes('image')) {
+          return NextResponse.json(
+            { error: 'QR files must be images' },
+            { status: 400 }
+          );
+        }
+      } else {
+        // Para archivos completos, PDF o imágenes
+        if (!file.type.includes('pdf') && !file.type.includes('image')) {
+          return NextResponse.json(
+            { error: 'Only PDF and image files are allowed' },
+            { status: 400 }
+          );
+        }
       }
 
       // Validate file size (max 10MB)
@@ -98,6 +125,7 @@ export async function POST(request: NextRequest) {
         uploadedAt: new Date().toISOString(),
         availableDate: makeAvailableImmediately ? undefined : (availableDate || transaction.ticketsDownloadAvailableDate),
         mimeType: file.type,
+        fileType: fileType as 'qr' | 'file', // Agregar tipo
       });
     }
 
