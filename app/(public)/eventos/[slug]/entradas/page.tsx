@@ -144,12 +144,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     // Force specific symbols if not found in map, or default to currency code
     const currencySymbol = event.currencySymbol || getCurrencySymbol(currency);
 
+    const priceLabel = lowestPrice > 0 ? formatCurrencyForSeo(lowestPrice, currency, currencySymbol) : '';
+
     // Only include price in title if we actually found a valid price > 0
-    const priceText = lowestPrice > 0 ? ` | Desde ${currencySymbol} ${lowestPrice}` : '';
+    const priceText = priceLabel ? ` | Desde ${priceLabel}` : '';
     const seoTitle = `Entradas ${event.name}${priceText}`;
 
     // Generate description using the template
-    const seoDescription = `Compra tus entradas oficiales para ${event.name} en ${event.location.city}. Disfruta el mejor festival de ${event.musicGenre || 'música electrónica'} este ${format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })} en ${event.location.venue}. Tickets desde ${currency} ${lowestPrice}. ¡Paga en cuotas sin intereses exclusivo en Ravehub!`;
+    const seoDescription = `Compra tus entradas oficiales para ${event.name} en ${event.location.city}. Disfruta el mejor festival de ${event.musicGenre || 'música electrónica'} este ${format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })} en ${event.location.venue}.${priceLabel ? ` Tickets desde ${priceLabel}.` : ''} ¡Paga en cuotas sin intereses exclusivo en Ravehub!`;
 
     return {
       title: seoTitle,
@@ -180,6 +182,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: 'Compra tus entradas para el evento',
     };
   }
+}
+
+// Helper function to format event prices for SEO using the event's configured currency
+function formatCurrencyForSeo(amount: number, currency: string, symbol: string): string {
+  const zeroDecimalCurrencies = new Set(['CLP', 'COP', 'PYG']);
+  const decimals = zeroDecimalCurrencies.has(currency) ? 0 : 2;
+  const formattedAmount = amount.toLocaleString('es-ES', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+
+  return `${symbol} ${formattedAmount} ${currency}`;
 }
 
 // Helper function to get currency symbol (kept for other uses if needed, though not used in metadata now)

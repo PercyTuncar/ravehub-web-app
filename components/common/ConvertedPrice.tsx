@@ -32,7 +32,7 @@ export function ConvertedPrice({
   const isConverted = convertedPrice.isConverted;
 
   return (
-    <span className={`inline-flex flex-col ${className}`}>
+    <span className={`inline-flex flex-col ${className}`} data-nosnippet>
       <span className={`font-bold transition-all duration-300 ${isConverted ? 'text-[#FBA905]' : 'text-[#FAFDFF]'}`}>
         {convertedPrice.formatted}
       </span>
@@ -53,22 +53,24 @@ interface SimplePriceProps {
   amount: number;
   currency: string;
   className?: string;
+  showOriginal?: boolean;
+  showCurrency?: boolean;
 }
 
 /**
  * Componente simplificado para mostrar precios sin conversión
  * Útil para casos donde no se necesita conversión automática
  */
-export function SimplePrice({ amount, currency, className = '' }: SimplePriceProps) {
+export function SimplePrice({ amount, currency, className = '', showCurrency = true }: SimplePriceProps) {
   const symbol = getCurrencySymbol(currency);
   const decimals = getCurrencyDecimals(currency);
-  
+
   return (
     <span className={className}>
       {symbol}{amount.toLocaleString('es-ES', {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
-      })} {currency}
+      })}{showCurrency ? ` ${currency}` : ''}
     </span>
   );
 }
