@@ -400,6 +400,8 @@ export async function createManualTicketTransaction(data: {
   quantity: number;
   totalAmount: number;
   unitPrice: number;
+  reservationAmountPerTicket?: number;
+  reservationSubtotal?: number;
   paymentType: 'full' | 'installment';
   paymentMethod: string;
   reservationAmount?: number;
@@ -431,7 +433,9 @@ export async function createManualTicketTransaction(data: {
           phaseName: data.phaseName,
           quantity: data.quantity,
           pricePerTicket: data.unitPrice,
-          totalAmount: data.unitPrice * data.quantity
+          totalAmount: data.unitPrice * data.quantity,
+          reservationAmountPerTicket: data.reservationAmountPerTicket,
+          reservationSubtotal: data.reservationSubtotal,
         }
       ],
       totalAmount: data.totalAmount,

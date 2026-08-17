@@ -37,6 +37,7 @@ import { parseLocalDate } from '@/lib/utils/date';
 import { eventsCollection, usersCollection } from '@/lib/firebase/collections';
 import { createManualTicketTransaction } from '@/lib/actions';
 import { calculateInstallmentPlan, CalculationResult } from '@/lib/utils/admin-ticket-calculator';
+import { getZoneReservationAmount } from '@/lib/utils/reservation-calculator';
 
 interface ManualTicketAssignmentModalProps {
     isOpen: boolean;
@@ -96,6 +97,10 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
     const selectedZone = selectedEvent?.zones?.find((z: any) => z.id === selectedZoneId);
 
     const unitPrice = selectedZonePrice?.price || 0;
+    const configuredReservationPerTicket = selectedEvent && selectedZonePrice
+        ? getZoneReservationAmount(selectedEvent as any, selectedZonePrice as any)
+        : (selectedEvent?.reservationAmount ?? 50);
+    const configuredReservationTotal = configuredReservationPerTicket * quantity;
     const baseTotalAmount = unitPrice * quantity;
 
     // Effective Total Amount based on Assignment Type
@@ -126,22 +131,10 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
     }, [selectedPhaseId]);
 
     useEffect(() => {
-        // Recalculate installments when relevant fields change
-        if (paymentType === 'installment' && baseTotalAmount > 0) {
-            const result = calculateInstallmentPlan(
-                baseTotalAmount,
-                reservationAmount,
-                installmentsCount,
-                // Parse as local midnight so the preview matches the persisted due dates
-                parseLocalDate(firstPaymentDate)
-            );
-            setInstallmentPlan(result);
-            // Reset paid installments selection on recalcc
-            setPaidInstallments([]);
-        } else {
-            setInstallmentPlan(null);
+        if (selectedEvent && selectedZonePrice && paymentType === 'installment') {
+            setReservationAmount(configuredReservationTotal);
         }
-    }, [paymentType, baseTotalAmount, reservationAmount, installmentsCount, firstPaymentDate]);
+    }, [selectedEventId, selectedPhaseId, selectedZoneId, quantity, paymentType, configuredReservationTotal]);
 
     const loadInitialData = async () => {
         setLoadingUsers(true);
@@ -226,6 +219,8 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 paymentType: assignmentType === 'courtesy' ? 'full' : paymentType, // Courtesy is technically a full "payment" of 0
                 paymentMethod: finalPaymentMethod,
                 reservationAmount: (assignmentType === 'sale' && paymentType === 'installment') ? reservationAmount : undefined,
+                reservationAmountPerTicket: (assignmentType === 'sale' && paymentType === 'installment') ? configuredReservationPerTicket : undefined,
+                reservationSubtotal: (assignmentType === 'sale' && paymentType === 'installment') ? reservationAmount : undefined,
                 installmentsCount: (assignmentType === 'sale' && paymentType === 'installment') ? installmentsCount : undefined,
                 firstInstallmentDate: (assignmentType === 'sale' && paymentType === 'installment') ? firstPaymentDate : undefined,
                 paymentStatus: finalStatus,
@@ -536,12 +531,17 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
 
                                                 <div className="grid grid-cols-3 gap-4">
                                                     <div className="space-y-1">
-                                                        <Label className="text-xs">Monto Reserva</Label>
+                                                        <Label className="text-xs">Adelanto inicial total</Label>
                                                         <Input
                                                             type="number"
                                                             value={reservationAmount}
                                                             onChange={(e) => setReservationAmount(Number(e.target.value))}
                                                         />
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            {selectedZone?.name
+                                                                ? `${selectedZone.name}: ${selectedEvent.currency} ${configuredReservationPerTicket.toFixed(2)} por entrada`
+                                                                : 'Selecciona una zona para cargar el adelanto configurado'}
+                                                        </p>
                                                     </div>
                                                     <div className="space-y-1">
                                                         <Label className="text-xs">N° Cuotas</Label>
@@ -575,7 +575,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                             </TableHeader>
                                                             <TableBody>
                                                                 <TableRow>
-                                                                    <TableCell className="py-2 text-xs font-medium">Reserva</TableCell>
+                                                                    <TableCell className="py-2 text-xs font-medium">Adelanto inicial</TableCell>
                                                                     <TableCell className="py-2 text-xs">Hoy</TableCell>
                                                                     <TableCell className="py-2 text-xs text-right font-medium">
                                                                         {selectedEvent.currency} {Number(installmentPlan.reservationAmount).toFixed(2)}
@@ -785,7 +785,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                         <DialogTitle>Subir Comprobante de Pago</DialogTitle>
                         <DialogDescription>
                             {uploadingForInstallment === -1
-                                ? 'Comprobante para la Reserva'
+                                ? 'Comprobante para el adelanto inicial'
                                 : `Comprobante para la Cuota #${uploadingForInstallment !== null ? uploadingForInstallment + 1 : ''}`}
                         </DialogDescription>
                     </DialogHeader>

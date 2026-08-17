@@ -9,6 +9,7 @@ import {
 } from '@/lib/firebase/admin-collections';
 import { TicketTransaction, PaymentInstallment } from '@/lib/types';
 import { createNotification } from '@/lib/utils/notifications';
+import { calculateReservationBreakdown, buildTicketItemsWithReservation } from '@/lib/utils/reservation-calculator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,8 +69,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate event exists and is published
-
-    // Validate event exists and is published
     const event = await eventsCollection.get(eventId);
     if (!event || event.eventStatus !== 'published') {
       return NextResponse.json(
@@ -79,34 +78,47 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate ticket availability and pricing
-    // TODO: Implement stock validation and pricing checks
-
-    // For installment transactions, prepare plan metadata BEFORE creating transaction
-    let installmentPlanMetadata: any = null;
-    if (paymentType === 'installment' && installments) {
-      const { calculateInstallmentPlan } = await import('@/lib/utils/admin-ticket-calculator');
-
-      // Determine reservation amount: prefer client-provided, otherwise fallback to event config
-      let reservationAmount: number;
-      if (reservationFee !== undefined && reservationFee !== null) {
-        reservationAmount = reservationFee;
-      } else {
-        const ticketCount = Array.isArray(tickets) ? tickets.reduce((acc, t: any) => acc + (t.quantity || 1), 0) : 0;
-        reservationAmount = (event.reservationAmount ?? 50) * ticketCount;
-      }
-
-      installmentPlanMetadata = {
-        installments: installments,
-        reservationAmount: reservationAmount,
-      };
+    // Recalculate pricing and reservation amounts on the server from the stored event
+    const selectedPhaseId = tickets?.[0]?.phaseId;
+    const selectedPhase = event.salesPhases?.find((phase: any) => phase.id === selectedPhaseId) || null;
+    if (!selectedPhase) {
+      return NextResponse.json({ error: 'Sales phase not found' }, { status: 400 });
     }
+
+    const selectedTickets = (Array.isArray(tickets) ? tickets : []).map((ticket: any) => {
+      const zonePricing = selectedPhase.zonesPricing?.find((zp: any) => zp.zoneId === ticket.zoneId);
+      if (!zonePricing) {
+        throw new Error(`Zone pricing not found for zone ${ticket.zoneId}`);
+      }
+      return {
+        zoneId: ticket.zoneId,
+        zoneName: ticket.zoneName,
+        quantity: Number(ticket.quantity || 0),
+        price: Number(zonePricing.price || 0),
+        phaseId: selectedPhaseId,
+      };
+    });
+
+    const reservationDetails = calculateReservationBreakdown(event, selectedTickets as any, selectedPhase as any);
+    const calculatedTotal = selectedTickets.reduce((sum, ticket) => sum + ticket.quantity * ticket.price, 0);
+    const extraPercentage = paymentType === 'installment'
+      ? Number(event.extraPercentageInstallments ?? 0)
+      : Number(event.extraPercentageFullPayment ?? 0);
+    const calculatedAdjustedTotal = calculatedTotal * (1 + extraPercentage / 100);
+    const calculatedReservationAmount = reservationDetails.totalReservationAmount;
+    const installmentPlanMetadata = paymentType === 'installment' && installments
+      ? {
+          installments,
+          reservationAmount: calculatedReservationAmount,
+        }
+      : null;
 
     // Create ticket transaction with complete metadata
     const transactionData: Omit<TicketTransaction, 'id'> = {
       userId: finalUserId,
       eventId,
-      ticketItems: tickets,
-      totalAmount,
+      ticketItems: buildTicketItemsWithReservation(selectedTickets as any, event as any, selectedPhase as any) as any,
+      totalAmount: calculatedAdjustedTotal,
       currency,
       paymentMethod,
       paymentType,
@@ -118,8 +130,9 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
       updatedAt: new Date(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h expiry
-      ...(proofUrl ? { paymentProofUrl: proofUrl } : {}),     // Store proof if uploaded at checkout
-      ...(installmentPlanMetadata || {}), // Include installment metadata if applicable
+      ...(proofUrl ? { paymentProofUrl: proofUrl } : {}),
+      ...(paymentType === 'installment' ? { installments } : {}),
+      ...(paymentType === 'installment' ? { reservationAmount: calculatedReservationAmount } : {}),
     };
 
     const transactionId = await ticketTransactionsCollection.create(transactionData);
@@ -132,7 +145,7 @@ export async function POST(request: NextRequest) {
       // Note: calculateInstallmentPlan expects totalAmount to be the FULL price.
       // The logic: (Total - Reservation) / Installments
       const plan = calculateInstallmentPlan(
-        totalAmount,
+        calculatedAdjustedTotal,
         reservationAmount,
         installments,
         new Date(new Date().setMonth(new Date().getMonth() + 1)) // First installment next month
@@ -212,7 +225,7 @@ export async function POST(request: NextRequest) {
           await createNotification({
             userId: admin.id,
             title: '🎫 Nuevo Ticket Offline',
-            body: `Nueva solicitud de ticket #${transactionId.slice(0, 8)} por el monto de ${currency} ${totalAmount}. Revisar en panel admin.`,
+            body: `Nueva solicitud de ticket #${transactionId.slice(0, 8)} por el monto de ${currency} ${calculatedAdjustedTotal}. Revisar en panel admin.`,
             type: 'payment', // or generic
             orderId: transactionId
           });

@@ -715,7 +715,11 @@ import {
 import { TermsModal } from "@/components/events/TermsModal";
 import { PrivacyModal } from "@/components/events/PrivacyModal";
 import { EventStageMap } from "@/components/events/EventStageMap";
-
+import {
+  calculateReservationBreakdown,
+  buildTicketItemsWithReservation,
+  getZoneReservationAmount,
+} from '@/lib/utils/reservation-calculator';
 // Internal Wrapper component to use the context
 function BuyTicketsContent({
   event,
@@ -912,8 +916,11 @@ function BuyTicketsContent({
     ticketSelections.reduce((acc, s) => acc + s.quantity * s.price, 0);
   const totalTickets = getTotalTickets();
   const totalAmountBase = getTotalAmount();
-  const reservationPerTicket =
-    event.reservationAmount ?? DEFAULT_RESERVATION_FEE;
+  const reservationBreakdown = useMemo(
+    () => calculateReservationBreakdown(event, ticketSelections, activePhaseData),
+    [event, ticketSelections, activePhaseData],
+  );
+  const totalReservationAmount = reservationBreakdown.totalReservationAmount;
   const extraPercentInstallments = event.extraPercentageInstallments ?? 0;
   const extraPercentFull = event.extraPercentageFullPayment ?? 0;
   const extraPercentForInstall = isInstallmentMode
@@ -921,7 +928,7 @@ function BuyTicketsContent({
     : extraPercentFull;
   const totalAmount = totalAmountBase * (1 + extraPercentForInstall / 100);
 
-  const advanceReservationAmount = totalTickets * reservationPerTicket;
+  const advanceReservationAmount = totalReservationAmount;
   const advanceRemainingAmount = Math.max(
     0,
     totalAmount - advanceReservationAmount,
@@ -930,7 +937,7 @@ function BuyTicketsContent({
     advanceInstallments > 0 ? advanceRemainingAmount / advanceInstallments : 0;
 
   // Calculate totals for installment mode (after extra percent)
-  const totalReservation = totalTickets * reservationPerTicket;
+  const totalReservation = totalReservationAmount;
   const totalRemaining = Math.max(0, totalAmount - totalReservation);
   const monthlyInstallment =
     installments > 0 ? totalRemaining / installments : 0;
@@ -998,18 +1005,24 @@ function BuyTicketsContent({
       0,
     );
 
-    const reservationPerTicket =
-      event.reservationAmount ?? DEFAULT_RESERVATION_FEE;
+    const reservationDetails = calculateReservationBreakdown(
+      event,
+      selectedTickets,
+      activePhaseData,
+    );
+    const reservationLines = reservationDetails.breakdown
+      .map(
+        (item) =>
+          `• ${item.quantity}x ${item.zoneName}: ${symbol} ${item.unitReservationAmount} c/u = ${symbol} ${item.subtotalReservationAmount}`,
+      )
+      .join("\n");
     const extraPercentAdvance =
       advancePaymentMode === "installments"
         ? (event.extraPercentageInstallments ?? 0)
         : (event.extraPercentageFullPayment ?? 0);
     const totalAdjusted = total * (1 + extraPercentAdvance / 100);
 
-    const reservationAmount = selectedTickets.reduce(
-      (sum, ticket) => sum + ticket.quantity * reservationPerTicket,
-      0,
-    );
+    const reservationAmount = reservationDetails.totalReservationAmount;
     const remainingAmount = Math.max(0, totalAdjusted - reservationAmount);
     const installmentAmount =
       advanceInstallments > 0 ? remainingAmount / advanceInstallments : 0;
@@ -1019,6 +1032,7 @@ function BuyTicketsContent({
       paymentDetails =
         `💳 *Modalidad:* Reserva + cuotas\n` +
         `💵 *Pago inicial (reserva):* ${symbol} ${reservationAmount}\n` +
+        `📋 *Detalle de adelanto por zona:*\n${reservationLines}\n` +
         `📉 *Saldo restante:* ${symbol} ${remainingAmount}\n` +
         `🧾 *Plan:* ${advanceInstallments} cuotas de ${symbol} ${installmentAmount.toFixed(2)}`;
     }
@@ -1211,9 +1225,10 @@ function BuyTicketsContent({
                     phaseStartDate={activePhaseData?.startDate || ""}
                     phaseEndDate={activePhaseData?.endDate || ""}
                     phaseStatus={activePhaseStatus}
-                    reservationPerTicket={
-                      event.reservationAmount ?? DEFAULT_RESERVATION_FEE
-                    }
+                    reservationPerTicket={getZoneReservationAmount(
+                      event,
+                      activePhaseData?.zonesPricing?.find((zp) => zp.zoneId === selection.zoneId),
+                    )}
                     extraPercentageInstallments={
                       event.extraPercentageInstallments ?? 0
                     }

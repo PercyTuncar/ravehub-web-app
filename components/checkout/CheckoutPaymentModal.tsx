@@ -40,6 +40,8 @@ export interface CheckoutTicketItem {
   price: number;
   phaseId?: string;
   phaseName?: string;
+  reservationAmountPerTicket?: number;
+  reservationSubtotal?: number;
 }
 
 export interface CheckoutPaymentModalProps {
@@ -114,7 +116,7 @@ function OrderSummary({
             <span>{symbol} {totalAmount.toLocaleString()}</span>
           </div>
           <div className="flex justify-between font-bold text-white">
-            <span>Reserva hoy</span>
+            <span>Adelanto inicial hoy</span>
             <span className="text-primary">{symbol} {totalReservation.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-white/50 text-xs">
@@ -190,7 +192,7 @@ export function CheckoutPaymentModal({
     if (isInstallmentMode) {
       paymentDetails +=
         `\n📉 *Modalidad:* Reserva + ${installments} cuotas` +
-        `\n🔹 *Pago hoy (reserva):* ${symbol} ${totalReservation}` +
+        `\n🔹 *Adelanto inicial hoy:* ${symbol} ${totalReservation}` +
         `\n🔹 *Saldo:* ${installments} × ${symbol} ${monthlyInstallment.toFixed(2)}`;
     }
 

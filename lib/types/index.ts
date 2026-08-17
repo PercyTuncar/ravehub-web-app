@@ -76,6 +76,7 @@ export interface SalesPhase {
     available: number;
     sold: number;
     phaseId: string;
+    reservationAmount?: number;
   }>;
 }
 
@@ -109,6 +110,7 @@ export interface Event {
   sellTicketsOnPlatform: boolean;
   allowOfflinePayments: boolean;
   allowInstallmentPayments: boolean;
+  installmentReservationMode?: 'global' | 'perZone';
   maxInstallments?: number;
   reservationAmount?: number;
   extraPercentageInstallments?: number;
@@ -553,6 +555,8 @@ export interface TicketTransaction {
     phaseName?: string;
     quantity: number;
     pricePerTicket: number;
+    reservationAmountPerTicket?: number;
+    reservationSubtotal?: number;
   }>;
   totalAmount: number;
   currency: string;

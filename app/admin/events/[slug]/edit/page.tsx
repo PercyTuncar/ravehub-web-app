@@ -2342,27 +2342,126 @@ export default function EditEventPage() {
               </div>
 
               {eventData.allowInstallmentPayments && (
-                <div>
-                  <Label className="block text-sm font-medium mb-2">Máximo de cuotas</Label>
-                  <Select
-                    value={eventData.maxInstallments?.toString() || '3'}
-                    onValueChange={(value) => updateEventData('maxInstallments', parseInt(value))}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
-                        <SelectItem key={`mi-${n}`} value={String(n)}>{n} cuotas</SelectItem>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="block text-sm font-medium mb-2">Máximo de cuotas</Label>
+                    <Select
+                      value={eventData.maxInstallments?.toString() || '3'}
+                      onValueChange={(value) => updateEventData('maxInstallments', parseInt(value))}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
+                          <SelectItem key={`mi-${n}`} value={String(n)}>{n} cuotas</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="block text-sm font-medium mb-2">Tipo de adelanto de reserva</Label>
+                    <Select
+                      value={eventData.installmentReservationMode || 'global'}
+                      onValueChange={(value) => updateEventData('installmentReservationMode', value)}
+                    >
+                      <SelectTrigger className="max-w-md">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="global">Mismo adelanto para todas las zonas</SelectItem>
+                        <SelectItem value="perZone">Adelanto diferente por zona</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Selecciona “Adelanto diferente por zona” para activar el campo de reserva en cada zona de cada fase.
+                    </p>
+                  </div>
+
+                  {eventData.installmentReservationMode === 'perZone' && (
+                    <div className="space-y-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4">
+                      <div>
+                        <Label className="block text-sm font-semibold mb-1">Adelanto por zona</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Estas son las zonas creadas en el paso “Zonas y Capacidad”. Define aquí el adelanto inicial de cada zona.
+                        </p>
+                      </div>
+
+                      {(eventData.salesPhases || []).length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          Primero crea al menos una fase de venta en “Zonas y Capacidad”.
+                        </p>
+                      ) : (eventData.salesPhases || []).map((phase, phaseIndex) => (
+                        <div key={phase.id} className="space-y-2 rounded-md border border-white/10 bg-background/60 p-3">
+                          <div className="text-sm font-medium">{phase.name || `Fase ${phaseIndex + 1}`}</div>
+                          {(eventData.zones || []).length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              Primero agrega zonas en “Zonas y Capacidad”.
+                            </p>
+                          ) : (
+                            <div className="grid gap-3 md:grid-cols-2">
+                              {(eventData.zones || []).map((zone) => {
+                                const existingPricing = phase.zonesPricing?.find((p) => p.zoneId === zone.id);
+                                return (
+                                  <div key={`${phase.id}-${zone.id}`} className="flex items-center justify-between gap-3 rounded-md border border-border bg-card p-3">
+                                    <div className="min-w-0">
+                                      <div className="font-medium truncate">{zone.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        Precio: {getCurrencySymbol(eventData.currency || 'CLP')} {existingPricing?.price ?? 0}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={existingPricing?.reservationAmount ?? eventData.reservationAmount ?? 50}
+                                        onChange={(e) => {
+                                          const newPhases = [...(eventData.salesPhases || [])];
+                                          const currentPhase = newPhases[phaseIndex];
+                                          const currentPricing = [...(currentPhase.zonesPricing || [])];
+                                          const existingIndex = currentPricing.findIndex((p) => p.zoneId === zone.id);
+                                          const reservationAmount = parseFloat(e.target.value) || 0;
+
+                                          if (existingIndex >= 0) {
+                                            currentPricing[existingIndex] = {
+                                              ...currentPricing[existingIndex],
+                                              reservationAmount,
+                                            };
+                                          } else {
+                                            currentPricing.push({
+                                              zoneId: zone.id,
+                                              price: 0,
+                                              available: zone.capacity,
+                                              sold: 0,
+                                              phaseId: phase.id,
+                                              reservationAmount,
+                                            });
+                                          }
+
+                                          newPhases[phaseIndex] = { ...currentPhase, zonesPricing: currentPricing };
+                                          updateEventData('salesPhases', newPhases);
+                                        }}
+                                        className="w-28"
+                                      />
+                                      <span className="text-xs text-muted-foreground">{getCurrencySymbol(eventData.currency || 'CLP')}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  )}
                 </div>
               )}
 
               <div className="grid md:grid-cols-3 gap-4 mt-4">
                 <div className="space-y-1">
-                  <Label className="text-sm font-semibold text-foreground">Monto Reserva (por entrada)</Label>
+                  <Label className="text-sm font-semibold text-foreground">Adelanto inicial global (por entrada)</Label>
                   <Input
                     type="number"
                     value={eventData.reservationAmount ?? 50}

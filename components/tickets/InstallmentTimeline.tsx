@@ -201,7 +201,7 @@ export function InstallmentTimeline({
                         <DialogDescription className="text-white/60">
                             {selectedInstallment
                                 ? (selectedInstallment.installmentNumber === 0
-                                    ? 'Comprobante para la Reserva'
+                                    ? 'Comprobante para el adelanto inicial'
                                     : `Comprobante para la Cuota #${selectedInstallment.installmentNumber}`)
                                 : ''}
                         </DialogDescription>
