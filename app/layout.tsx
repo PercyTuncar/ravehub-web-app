@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { Inter } from 'next/font/google'
 import { ThemeProvider } from '@/lib/contexts/ThemeContext'
 import { AuthProvider } from '@/lib/contexts/AuthContext'
@@ -128,7 +129,9 @@ export default function RootLayout({
         <SonnerToaster richColors position="top-center" closeButton />
         <SpeedInsights />
         <Analytics />
-        <MarketingTracking />
+        <Suspense fallback={null}>
+          <MarketingTracking />
+        </Suspense>
       </body>
     </html>
   )
