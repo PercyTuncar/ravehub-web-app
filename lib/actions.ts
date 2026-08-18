@@ -4,7 +4,7 @@
 
 'use server';
 
-import { blogCollection, eventsCollection, productsCollection, blogCommentsCollection, ticketTransactionsCollection, paymentInstallmentsCollection, usersCollection, ordersCollection } from '@/lib/firebase/admin-collections';
+import { blogCollection, eventsCollection, productsCollection, blogCommentsCollection, ticketTransactionsCollection, paymentInstallmentsCollection, usersCollection, ordersCollection, commitAdminBatch, createAdminDocumentId } from '@/lib/firebase/admin-collections';
 import { createNotification, InstallmentNotifications, OrderNotifications } from '@/lib/utils/notifications';
 import { revalidateBlogPost, revalidateBlogListing, revalidateEvent, revalidateEventsListing, revalidateProduct, revalidateShopListing, revalidateCommentApproval, revalidateProductStock, revalidateEventCapacity } from '@/lib/revalidate';
 import { BlogPost, Event, Product, BlogComment } from '@/lib/types';
@@ -458,77 +458,80 @@ export async function createManualTicketTransaction(data: {
     };
 
     if (data.paymentType === 'installment') {
+      if (!data.installmentsCount || !data.firstInstallmentDate) {
+        throw new Error('Las compras en cuotas requieren cantidad y fecha de cuotas');
+      }
+
       ticketData.installments = data.installmentsCount;
       ticketData.reservationAmount = data.reservationAmount;
     }
 
-    const ticketId = await ticketTransactionsCollection.create(ticketData);
+    const ticketId = await createAdminDocumentId('ticketTransactions');
+    const operations: Array<{ collection: string; id?: string; data: Record<string, any> }> = [
+      { collection: 'ticketTransactions', id: ticketId, data: ticketData },
+    ];
 
-    // 2. Create Payment Installments (if applicable)
-    if (data.paymentType === 'installment' && data.installmentsCount && data.firstInstallmentDate) {
+    if (data.paymentType === 'installment') {
       const { calculateInstallmentPlan } = await import('@/lib/utils/admin-ticket-calculator');
       const { parseLocalDate } = await import('@/lib/utils/date');
-
-      // Parse the ISO date string as LOCAL midnight to avoid timezone-shift bugs
-      // where `new Date('YYYY-MM-DD')` returns UTC midnight (wrong day in negative-offset zones).
       const plan = calculateInstallmentPlan(
         data.unitPrice * data.quantity,
         data.reservationAmount || 0,
-        data.installmentsCount,
-        parseLocalDate(data.firstInstallmentDate)
+        data.installmentsCount!,
+        parseLocalDate(data.firstInstallmentDate!)
       );
 
-      if (plan.success && plan.installments) {
-        // Create a document for each installment
-        const batchPromises: Promise<any>[] = [];
+      if (!plan.success || !plan.installments) {
+        throw new Error(plan.error || 'No se pudo calcular el plan de cuotas');
+      }
 
-        // 1. Create Reservation Installment (Installment 0)
-        // We create this even if amount is 0? Generally reservation > 0 for installments.
-        if (data.reservationAmount && data.reservationAmount > 0) {
-          const isReservationPaid = data.paidInstallmentsIndices?.includes(-1);
-          const reservationProof = data.installmentProofs?.[-1] || null;
-          batchPromises.push(
-            paymentInstallmentsCollection.create({
-              transactionId: ticketId,
-              installmentNumber: 0, // 0 for Reservation
-              amount: data.reservationAmount,
-              currency: eventCurrency,
-              dueDate: new Date().toISOString(), // Due immediately
-              status: isReservationPaid ? 'paid' : 'pending',
-              adminApproved: isReservationPaid ? true : false,
-              ...(isReservationPaid && { paidAt: new Date().toISOString() }),
-              ...(reservationProof && { proofUrl: reservationProof })
-            })
-          );
-        }
-
-        // 2. Create Future Installments
-        const futureInstallments = plan.installments.map((inst, index) => {
-          // Check if this installment was marked as paid
-          // Note: index matches the order in plan.installments array (0, 1, 2...)
-          const isPaid = data.paidInstallmentsIndices?.includes(index);
-          const proof = data.installmentProofs?.[index] || null;
-
-          return paymentInstallmentsCollection.create({
+      const now = new Date().toISOString();
+      if (data.reservationAmount && data.reservationAmount > 0) {
+        const isReservationPaid = data.paidInstallmentsIndices?.includes(-1) ?? false;
+        const reservationProof = data.installmentProofs?.[-1];
+        operations.push({
+          collection: 'paymentInstallments',
+          data: {
             transactionId: ticketId,
-            installmentNumber: inst.installmentNumber,
-            amount: inst.amount,
+            installmentNumber: 0,
+            amount: data.reservationAmount,
             currency: eventCurrency,
-            dueDate: inst.dueDate.toISOString(),
-            status: isPaid ? 'paid' : 'pending',
-            adminApproved: isPaid ? true : false,
-            ...(isPaid && { paidAt: new Date().toISOString() }),
-            ...(proof && { proofUrl: proof })
-          });
+            dueDate: now,
+            status: isReservationPaid ? 'paid' : 'pending',
+            adminApproved: isReservationPaid,
+            ...(isReservationPaid ? { paidAt: now, approvedAt: now } : {}),
+            ...(reservationProof ? { proofUrl: reservationProof } : {}),
+          },
         });
+      }
 
-        batchPromises.push(...futureInstallments);
+      for (const [index, installment] of plan.installments.entries()) {
+        const isPaid = data.paidInstallmentsIndices?.includes(index) ?? false;
+        const proof = data.installmentProofs?.[index];
+        operations.push({
+          collection: 'paymentInstallments',
+          data: {
+            transactionId: ticketId,
+            installmentNumber: installment.installmentNumber,
+            amount: installment.amount,
+            currency: eventCurrency,
+            dueDate: installment.dueDate.toISOString(),
+            status: isPaid ? 'paid' : 'pending',
+            adminApproved: isPaid,
+            ...(isPaid ? { paidAt: now, approvedAt: now } : {}),
+            ...(proof ? { proofUrl: proof } : {}),
+          },
+        });
+      }
+    }
 
-        await Promise.all(batchPromises);
+    await commitAdminBatch(operations);
 
-        // Recalculate parent transaction status from the installment schedule we just created
-        const { syncTransactionFromSchedule } = await import('@/lib/payments/ticket-payment-state');
-        await syncTransactionFromSchedule(ticketId);
+    if (data.paymentType === 'installment') {
+      const { syncTransactionFromSchedule } = await import('@/lib/payments/ticket-payment-state');
+      const syncResult = await syncTransactionFromSchedule(ticketId);
+      if (!syncResult.success) {
+        throw new Error(syncResult.error || 'No se pudo sincronizar el estado de pago');
       }
     }
 

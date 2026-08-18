@@ -10,7 +10,99 @@ interface DocumentData {
     [key: string]: any;
 }
 
-// Generic collection operations using Admin SDK
+export async function createAdminDocumentId(collection: string): Promise<string> {
+    const db = await getAdminDb();
+    if (!db) throw new Error('Firebase Admin DB not initialized');
+    return db.collection(collection).doc().id;
+}
+
+export async function commitAdminBatch(
+    operations: Array<{ collection: string; data: DocumentData; id?: string }>
+): Promise<string[]> {
+    const db = await getAdminDb();
+    if (!db) throw new Error('Firebase Admin DB not initialized');
+
+    const batch = db.batch();
+    const ids: string[] = [];
+
+    for (const operation of operations) {
+        const ref = operation.id
+            ? db.collection(operation.collection).doc(operation.id)
+            : db.collection(operation.collection).doc();
+        ids.push(ref.id);
+        batch.set(ref, operation.data);
+    }
+
+    await batch.commit();
+    return ids;
+}
+export async function commitTicketPurchaseWithInventory({
+    eventId,
+    phaseId,
+    tickets,
+    transactionId,
+    transactionData,
+    installments = [],
+}: {
+    eventId: string;
+    phaseId: string;
+    tickets: Array<{ zoneId: string; quantity: number }>;
+    transactionId: string;
+    transactionData: DocumentData;
+    installments?: DocumentData[];
+}): Promise<void> {
+    const db = await getAdminDb();
+    if (!db) throw new Error('Firebase Admin DB not initialized');
+
+    await db.runTransaction(async (transaction: any) => {
+        const eventRef = db.collection('events').doc(eventId);
+        const eventSnapshot = await transaction.get(eventRef);
+        if (!eventSnapshot.exists) throw new Error('Event not found or not available');
+
+        const event = eventSnapshot.data() as DocumentData;
+        if (event.eventStatus !== 'published') throw new Error('Event not found or not available');
+
+        const phases = Array.isArray(event.salesPhases) ? event.salesPhases : [];
+        const phaseIndex = phases.findIndex((phase: DocumentData) => phase.id === phaseId);
+        if (phaseIndex === -1) throw new Error('Sales phase not found');
+
+        const phase = phases[phaseIndex];
+        const zonesPricing = Array.isArray(phase.zonesPricing) ? [...phase.zonesPricing] : [];
+        const zones = Array.isArray(event.zones) ? event.zones : [];
+
+        for (const ticket of tickets) {
+            if (!Number.isInteger(ticket.quantity) || ticket.quantity <= 0) {
+                throw new Error('Invalid ticket quantity');
+            }
+
+            const zoneIndex = zonesPricing.findIndex((zone: DocumentData) => zone.zoneId === ticket.zoneId);
+            if (zoneIndex === -1) throw new Error(`Zone pricing not found for zone ${ticket.zoneId}`);
+
+            const zonePricing = zonesPricing[zoneIndex];
+            const zone = zones.find((item: DocumentData) => item.id === ticket.zoneId);
+            const available = Number(zonePricing.available ?? zone?.capacity ?? 0);
+            if (!Number.isFinite(available) || available < ticket.quantity) {
+                throw new Error(`Insufficient availability for zone ${ticket.zoneId}`);
+            }
+
+            zonesPricing[zoneIndex] = {
+                ...zonePricing,
+                available: available - ticket.quantity,
+                sold: Number(zonePricing.sold || 0) + ticket.quantity,
+            };
+        }
+
+        const updatedPhases = [...phases];
+        updatedPhases[phaseIndex] = { ...phase, zonesPricing };
+        transaction.update(eventRef, { salesPhases: updatedPhases, updatedAt: new Date().toISOString() });
+
+        transaction.set(db.collection('ticketTransactions').doc(transactionId), transactionData);
+        for (const installment of installments) {
+            transaction.set(db.collection('paymentInstallments').doc(), installment);
+        }
+    });
+}
+
 export class AdminFirestoreCollection<T extends DocumentData> {
     constructor(private collectionName: string) { }
 
