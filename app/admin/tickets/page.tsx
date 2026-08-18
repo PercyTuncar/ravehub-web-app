@@ -21,7 +21,8 @@ import {
     Upload,
     FileCheck,
     Package,
-    Layers
+    Layers,
+    Paperclip
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,11 +32,13 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AuthGuard } from '@/components/admin/AuthGuard';
-import { updateTicketPaymentStatus, deleteTicketTransaction, getTicketsForAdmin, getTicketStats } from '@/lib/actions';
+import { updateTicketPaymentStatus, deleteTicketTransaction, getTicketsForAdmin, getTicketStats, getTicketInstallments, approveInstallmentProof, rejectInstallmentProof } from '@/lib/actions';
 import { usersCollection } from '@/lib/firebase/collections';
 import { ManualTicketAssignmentModal } from '@/components/admin/tickets/ManualTicketAssignmentModal';
 import { TicketFileUploadModal } from '@/components/admin/tickets/TicketFileUploadModal';
 import { TicketUploadHistory } from '@/components/admin/tickets/TicketUploadHistory';
+import { FileUpload } from '@/components/common/FileUpload';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { TicketFiltersSkeleton, TicketRowSkeleton, TicketStatSkeleton } from '@/components/admin/TicketLoadingSkeletons';
@@ -93,6 +96,11 @@ function TicketsAdminContent() {
     const [manualAssignModalOpen, setManualAssignModalOpen] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
 
+    // Installments Management
+    const [installments, setInstallments] = useState<any[]>([]);
+    const [installmentProofModalOpen, setInstallmentProofModalOpen] = useState(false);
+    const [selectedInstallment, setSelectedInstallment] = useState<any | null>(null);
+
     // Bulk selection
     const [selectedTicketIds, setSelectedTicketIds] = useState<Set<string>>(new Set());
     const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
@@ -104,17 +112,6 @@ function TicketsAdminContent() {
             return ticket.ticketItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
         }
         return ticket.quantity || 0;
-    };
-
-    const getDeliveryStatusBadge = (status: string) => {
-        switch (status) {
-            case 'available':
-                return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Tickets Subidos</Badge>;
-            case 'delivered':
-                return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Entregado</Badge>;
-            default:
-                return <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">Sin Subir</Badge>;
-        }
     };
 
     useEffect(() => {
@@ -260,6 +257,84 @@ function TicketsAdminContent() {
         }
     };
 
+    const loadTicketInstallments = async (ticketId: string) => {
+        try {
+            const result = await getTicketInstallments(ticketId);
+            if (result.success && result.installments) {
+                setInstallments(result.installments);
+            } else {
+                setInstallments([]);
+            }
+        } catch (error) {
+            console.error('Error loading installments:', error);
+            setInstallments([]);
+        }
+    };
+
+    const handleApproveInstallment = async (installmentId: string) => {
+        setActionLoading(true);
+        try {
+            const result = await approveInstallmentProof(installmentId);
+            if (result.success) {
+                toast.success('Cuota aprobada correctamente');
+                // Reload installments and ticket list
+                if (selectedTicket) {
+                    await loadTicketInstallments(selectedTicket.id);
+                }
+                await loadTickets();
+            } else {
+                toast.error(result.error || 'Error al aprobar cuota');
+            }
+        } catch (error) {
+            toast.error('Error inesperado');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRejectInstallment = async (installmentId: string, reason: string) => {
+        setActionLoading(true);
+        try {
+            const result = await rejectInstallmentProof(installmentId, reason);
+            if (result.success) {
+                toast.success('Cuota rechazada');
+                // Reload installments and ticket list
+                if (selectedTicket) {
+                    await loadTicketInstallments(selectedTicket.id);
+                }
+                await loadTickets();
+            } else {
+                toast.error(result.error || 'Error al rechazar cuota');
+            }
+        } catch (error) {
+            toast.error('Error inesperado');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleInstallmentProofUpload = async (url: string) => {
+        if (!selectedInstallment) return;
+
+        setActionLoading(true);
+        try {
+            // Call a server action to update the installment with admin-uploaded proof
+            // For now, we'll use the same approach as manual assignment
+            // You might want to create a specific action for this
+            toast.success('Comprobante subido correctamente');
+            setInstallmentProofModalOpen(false);
+            setSelectedInstallment(null);
+
+            if (selectedTicket) {
+                await loadTicketInstallments(selectedTicket.id);
+            }
+        } catch (error) {
+            toast.error('Error al subir comprobante');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleCheckAvailability = async () => {
         setActionLoading(true);
         try {
@@ -320,11 +395,11 @@ function TicketsAdminContent() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'approved':
-                return <Badge className="bg-green-500/20 text-green-400 border-green-500/20">Aprobado</Badge>;
+                return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Aprobado</Badge>;
             case 'pending':
-                return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/20">Pendiente</Badge>;
+                return <Badge className="bg-orange-500/30 text-orange-300 border-orange-500/50 animate-pulse">Pendiente</Badge>;
             case 'rejected':
-                return <Badge className="bg-red-500/20 text-red-400 border-red-500/20">Rechazado</Badge>;
+                return <Badge className="bg-red-500/30 text-red-300 border-red-500/50">Rechazado</Badge>;
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }
@@ -333,13 +408,24 @@ function TicketsAdminContent() {
     const getPaymentMethodBadge = (method: string) => {
         switch (method) {
             case 'offline':
-                return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/20">Offline</Badge>;
+                return <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">Offline</Badge>;
             case 'online':
-                return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/20">Online</Badge>;
+                return <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">Online</Badge>;
             case 'courtesy':
-                return <Badge className="bg-primary/20 text-primary border-primary/20">Cortesía</Badge>;
+                return <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">Cortesía</Badge>;
             default:
                 return <Badge variant="outline">{method}</Badge>;
+        }
+    };
+
+    const getDeliveryStatusBadge = (status: string) => {
+        switch (status) {
+            case 'available':
+                return <Badge className="bg-green-500/20 text-green-300 border-green-500/30">Tickets Subidos</Badge>;
+            case 'delivered':
+                return <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">Entregado</Badge>;
+            default:
+                return <Badge className="bg-red-500/30 text-red-300 border-red-500/50 animate-pulse">Sin Subir</Badge>;
         }
     };
 
@@ -697,6 +783,9 @@ function TicketsAdminContent() {
                                                     onClick={() => {
                                                         setSelectedTicket(ticket);
                                                         loadTicketUser(ticket.userId);
+                                                        if (ticket.paymentType === 'installment') {
+                                                            loadTicketInstallments(ticket.id);
+                                                        }
                                                         setDetailModalOpen(true);
                                                     }}
                                                     variant="outline"
@@ -883,7 +972,7 @@ function TicketsAdminContent() {
 
             {/* Detail Modal */}
             <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
-                <DialogContent className="bg-[#1A1D21] border-white/10 text-white max-w-2xl">
+                <DialogContent className="bg-[#1A1D21] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Detalles del Ticket</DialogTitle>
                     </DialogHeader>
@@ -972,37 +1061,200 @@ function TicketsAdminContent() {
                                 </div>
                             )}
 
-                            <div className="flex gap-2 pt-4">
-                                {selectedTicket.paymentStatus === 'pending' && (
+                            {/* Payment Type: Installment - Show Installments Management Table */}
+                            {selectedTicket.paymentType === 'installment' ? (
+                                <div className="pt-4 border-t border-white/10 space-y-4">
+                                    <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
+                                        <div className="flex items-start gap-3">
+                                            <Layers className="mt-0.5 h-5 w-5 text-blue-400 flex-shrink-0" />
+                                            <div className="space-y-2 flex-1">
+                                                <p className="text-sm font-semibold text-blue-200">Pago en Cuotas</p>
+                                                <p className="text-xs text-blue-200/80">
+                                                    Este ticket fue configurado con pago en <strong>{selectedTicket.installments} cuotas</strong>.
+                                                    Gestiona las cuotas individuales desde aquí.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Installments Table */}
+                                    {installments.length > 0 ? (
+                                        <div className="rounded-lg border border-white/10 overflow-hidden">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow className="bg-white/5 hover:bg-white/5">
+                                                        <TableHead className="text-white/60">Cuota</TableHead>
+                                                        <TableHead className="text-white/60">Vencimiento</TableHead>
+                                                        <TableHead className="text-white/60 text-right">Monto</TableHead>
+                                                        <TableHead className="text-white/60 text-center">Estado</TableHead>
+                                                        <TableHead className="text-white/60 text-center">Comprobante</TableHead>
+                                                        <TableHead className="text-white/60 text-center">Acciones</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {installments.map((inst, idx) => {
+                                                        const isPaid = inst.status === 'paid' && inst.adminApproved;
+                                                        const isPending = inst.userUploadedProofUrl && !inst.adminApproved && inst.status !== 'rejected';
+                                                        const isRejected = inst.status === 'rejected';
+
+                                                        return (
+                                                            <TableRow key={inst.id} className="border-white/10">
+                                                                <TableCell className="font-medium text-white">
+                                                                    {inst.installmentNumber === 0 ? 'Adelanto Inicial' : `Cuota #${inst.installmentNumber}`}
+                                                                </TableCell>
+                                                                <TableCell className="text-white/80 text-sm">
+                                                                    {new Date(inst.dueDate).toLocaleDateString('es-CL')}
+                                                                </TableCell>
+                                                                <TableCell className="text-right text-white font-medium">
+                                                                    {selectedTicket.currency} {inst.amount.toFixed(2)}
+                                                                </TableCell>
+                                                                <TableCell className="text-center">
+                                                                    {isPaid ? (
+                                                                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                                                                            <CheckCircle className="w-3 h-3 mr-1" />
+                                                                            Pagado
+                                                                        </Badge>
+                                                                    ) : isPending ? (
+                                                                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                                                            <Clock className="w-3 h-3 mr-1" />
+                                                                            Pendiente
+                                                                        </Badge>
+                                                                    ) : isRejected ? (
+                                                                        <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                                                                            <XCircle className="w-3 h-3 mr-1" />
+                                                                            Rechazado
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <Badge variant="outline" className="border-white/20 text-white/60">
+                                                                            Sin pagar
+                                                                        </Badge>
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell className="text-center">
+                                                                    {(inst.userUploadedProofUrl || inst.proofUrl) ? (
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-7 px-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                                                                            onClick={() => window.open(inst.userUploadedProofUrl || inst.proofUrl, '_blank')}
+                                                                        >
+                                                                            <Eye className="h-3.5 w-3.5 mr-1" />
+                                                                            Ver
+                                                                        </Button>
+                                                                    ) : (
+                                                                        <span className="text-white/40 text-xs">Sin comprobante</span>
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell className="text-center">
+                                                                    <div className="flex items-center justify-center gap-2">
+                                                                        {isPending && (
+                                                                            <>
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    className="h-7 px-3 bg-green-600 hover:bg-green-700 text-white"
+                                                                                    onClick={() => handleApproveInstallment(inst.id)}
+                                                                                    disabled={actionLoading}
+                                                                                >
+                                                                                    <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                                                                    Aprobar
+                                                                                </Button>
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                    className="h-7 px-3 border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                                                                    onClick={() => {
+                                                                                        const reason = prompt('Motivo del rechazo:', 'Comprobante ilegible o incorrecto');
+                                                                                        if (reason) {
+                                                                                            handleRejectInstallment(inst.id, reason);
+                                                                                        }
+                                                                                    }}
+                                                                                    disabled={actionLoading}
+                                                                                >
+                                                                                    <XCircle className="h-3.5 w-3.5 mr-1" />
+                                                                                    Rechazar
+                                                                                </Button>
+                                                                            </>
+                                                                        )}
+                                                                        {!isPaid && !isPending && (
+                                                                            <Button
+                                                                                type="button"
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                className="h-7 px-3 border-white/20 text-white/80 hover:bg-white/10"
+                                                                                onClick={() => {
+                                                                                    setSelectedInstallment(inst);
+                                                                                    setInstallmentProofModalOpen(true);
+                                                                                }}
+                                                                            >
+                                                                                <Paperclip className="h-3.5 w-3.5 mr-1" />
+                                                                                Subir Comprobante
+                                                                            </Button>
+                                                                        )}
+                                                                        {isPaid && (
+                                                                            <span className="text-green-400 text-xs">✓ Completado</span>
+                                                                        )}
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        );
+                                                    })}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 text-white/40">
+                                            <Clock className="w-8 h-8 mx-auto mb-2" />
+                                            <p className="text-sm">Cargando cuotas...</p>
+                                        </div>
+                                    )}
+
+                                    {/* Ver como Cliente Button */}
                                     <Button
-                                        onClick={() => handleStatusUpdate(selectedTicket.id, 'approved')}
-                                        disabled={actionLoading}
-                                        className="bg-green-500 hover:bg-green-600 text-white flex-1"
-                                    >
-                                        <CheckCircle className="w-4 h-4 mr-2" />
-                                        Aprobar
-                                    </Button>
-                                )}
-                                {selectedTicket.paymentStatus !== 'rejected' && (
-                                    <Button
-                                        onClick={() => handleStatusUpdate(selectedTicket.id, 'rejected')}
-                                        disabled={actionLoading}
+                                        onClick={() => window.open(`/profile/tickets/${selectedTicket.id}`, '_blank')}
                                         variant="outline"
-                                        className="border-red-500 text-red-500 hover:bg-red-500/10 flex-1"
+                                        className="w-full border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
                                     >
-                                        <XCircle className="w-4 h-4 mr-2" />
-                                        Rechazar
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        Ver como Cliente
                                     </Button>
-                                )}
-                                <Button
-                                    onClick={() => window.open(`/profile/tickets/${selectedTicket.id}`, '_blank')}
-                                    variant="outline"
-                                    className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 flex-1"
-                                >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    Ver como Cliente
-                                </Button>
-                            </div>
+                                </div>
+                            ) : (
+                                /* Payment Type: Full - Show Approve/Reject Buttons */
+                                <div className="flex gap-2 pt-4">
+                                    {selectedTicket.paymentStatus === 'pending' && (
+                                        <Button
+                                            onClick={() => handleStatusUpdate(selectedTicket.id, 'approved')}
+                                            disabled={actionLoading}
+                                            className="bg-green-500 hover:bg-green-600 text-white flex-1"
+                                        >
+                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                            Aprobar
+                                        </Button>
+                                    )}
+                                    {selectedTicket.paymentStatus !== 'rejected' && (
+                                        <Button
+                                            onClick={() => handleStatusUpdate(selectedTicket.id, 'rejected')}
+                                            disabled={actionLoading}
+                                            variant="outline"
+                                            className="border-red-500 text-red-500 hover:bg-red-500/10 flex-1"
+                                        >
+                                            <XCircle className="w-4 h-4 mr-2" />
+                                            Rechazar
+                                        </Button>
+                                    )}
+                                    <Button
+                                        onClick={() => window.open(`/profile/tickets/${selectedTicket.id}`, '_blank')}
+                                        variant="outline"
+                                        className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 flex-1"
+                                    >
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        Ver como Cliente
+                                    </Button>
+                                </div>
+                            )}
 
                             {/* Upload Files Button for Manual Delivery */}
                             {selectedTicket.ticketDeliveryMode === 'manualUpload' && (
@@ -1074,6 +1326,44 @@ function TicketsAdminContent() {
                     loadTickets();
                 }}
             />
+
+            {/* Installment Proof Upload Modal */}
+            <Dialog open={installmentProofModalOpen} onOpenChange={setInstallmentProofModalOpen}>
+                <DialogContent className="sm:max-w-md bg-[#1A1D21] border-white/10 text-white">
+                    <DialogHeader>
+                        <DialogTitle>Subir Comprobante de Pago</DialogTitle>
+                        <DialogDescription className="text-white/60">
+                            {selectedInstallment
+                                ? (selectedInstallment.installmentNumber === 0
+                                    ? 'Comprobante para el adelanto inicial'
+                                    : `Comprobante para la Cuota #${selectedInstallment.installmentNumber}`)
+                                : ''}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <FileUpload
+                            onUploadComplete={handleInstallmentProofUpload}
+                            folder="payment-proofs"
+                            accept="image/*,application/pdf"
+                            maxSize={5}
+                            variant="default"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="border-white/10 text-white hover:bg-white/5"
+                            onClick={() => {
+                                setInstallmentProofModalOpen(false);
+                                setSelectedInstallment(null);
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -75,8 +75,8 @@ export function calculateInstallmentPlan(
         const dueDate = new Date(startDate);
         const originalDay = startDate.getDate();
 
-        // Add (i-1) months
-        dueDate.setMonth(startDate.getMonth() + (i - 1));
+        // Add i months (not i-1, so first installment is +1 month from startDate)
+        dueDate.setMonth(startDate.getMonth() + i);
 
         // Check for month overflow (e.g. Jan 31 + 1 month -> Feb 28/29, not March)
         // If the day changed, it means we overflowed into the next month

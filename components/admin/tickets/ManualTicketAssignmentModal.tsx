@@ -138,6 +138,27 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
         }
     }, [selectedEventId, selectedPhaseId, selectedZoneId, quantity, paymentType, configuredReservationTotal]);
 
+    // Calcular plan de cuotas automáticamente cuando cambian los parámetros
+    useEffect(() => {
+        if (paymentType === 'installment' && totalAmount > 0 && reservationAmount > 0 && installmentsCount > 0 && firstPaymentDate) {
+            try {
+                const plan = calculateInstallmentPlan(
+                    totalAmount,
+                    reservationAmount,
+                    installmentsCount,
+                    parseLocalDate(firstPaymentDate)
+                );
+                setInstallmentPlan(plan);
+            } catch (error) {
+                console.error('Error calculating installment plan:', error);
+                setInstallmentPlan({ success: false, error: 'Error al calcular las cuotas' });
+            }
+        } else {
+            // Reset plan si cambia a pago completo o faltan datos
+            setInstallmentPlan(null);
+        }
+    }, [paymentType, totalAmount, reservationAmount, installmentsCount, firstPaymentDate]);
+
     const loadInitialData = async () => {
         setLoadingUsers(true);
         try {
@@ -196,17 +217,16 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
         setIsSubmitting(true);
         try {
             // Determine Status and Payment Method
-            let finalStatus: 'pending' | 'approved' = 'pending';
+            // IMPORTANT: All manual ticket assignments by admin are automatically approved
+            // because the admin is explicitly creating/assigning them
+            let finalStatus: 'pending' | 'approved' = 'approved';
             let finalPaymentMethod = 'offline';
 
             if (assignmentType === 'courtesy') {
-                finalStatus = 'approved';
                 finalPaymentMethod = 'courtesy';
-            } else if (paymentType === 'full' && isPaid) {
-                finalStatus = 'approved';
-                finalPaymentMethod = 'offline'; // Or 'cash' if we add that option
             }
-            // For installments, main status is pending unless all paid? No, usually active/pending.
+            // Note: For all manual assignments (sale with full/installment payment, or courtesy),
+            // the status is 'approved' since the admin is consciously creating the assignment
 
             const result = await createManualTicketTransaction({
                 userId: selectedUserId,
