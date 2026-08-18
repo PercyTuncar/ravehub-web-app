@@ -107,6 +107,12 @@ export function trackMarketingEvent(payload: MarketingEventPayload): void {
     ...payload.metadata,
   };
 
+  // TikTok requires content_type to be "product" or "product_group" only
+  const tiktokValue = {
+    ...value,
+    content_type: 'product',
+  };
+
   window.gtag?.('event', payload.name, {
     ...value,
     event_label: payload.title,
@@ -121,7 +127,7 @@ export function trackMarketingEvent(payload: MarketingEventPayload): void {
 
   if (window.ttq) {
     const eventName = payload.name === 'view_content' ? 'ViewContent' : payload.name === 'complete_registration' ? 'CompleteRegistration' : payload.name === 'begin_checkout' ? 'InitiateCheckout' : payload.name === 'add_to_cart' ? 'AddToCart' : payload.name === 'purchase' ? 'CompletePayment' : payload.name === 'lead' ? 'SubmitForm' : 'PageView';
-    window.ttq.track(eventName, { ...value, event_id: payload.eventId });
+    window.ttq.track(eventName, { ...tiktokValue, event_id: payload.eventId });
   }
 
   const attribution = captureAttribution();
