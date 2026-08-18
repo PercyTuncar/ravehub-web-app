@@ -18,7 +18,10 @@ import {
     Plus,
     RefreshCw,
     AlertCircle,
-    Upload
+    Upload,
+    FileCheck,
+    Package,
+    Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -64,6 +67,8 @@ function TicketsAdminContent() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [paymentFilter, setPaymentFilter] = useState<string>('all');
+    const [deliveryFilter, setDeliveryFilter] = useState<string>('all');
+    const [proofFilter, setProofFilter] = useState<string>('all');
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -76,6 +81,25 @@ function TicketsAdminContent() {
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
     const [manualAssignModalOpen, setManualAssignModalOpen] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
+
+    // Helper functions for ticket information
+    const getTicketQuantity = (ticket: any) => {
+        if (ticket.ticketItems && Array.isArray(ticket.ticketItems)) {
+            return ticket.ticketItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+        }
+        return ticket.quantity || 0;
+    };
+
+    const getDeliveryStatusBadge = (status: string) => {
+        switch (status) {
+            case 'available':
+                return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Tickets Subidos</Badge>;
+            case 'delivered':
+                return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Entregado</Badge>;
+            default:
+                return <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">Sin Subir</Badge>;
+        }
+    };
 
     useEffect(() => {
         loadTickets();
@@ -217,7 +241,15 @@ function TicketsAdminContent() {
         const matchesStatus = statusFilter === 'all' || ticket.paymentStatus === statusFilter;
         const matchesPayment = paymentFilter === 'all' || ticket.paymentMethod === paymentFilter;
 
-        return matchesSearch && matchesStatus && matchesPayment;
+        const matchesDelivery = deliveryFilter === 'all' ||
+            (deliveryFilter === 'pending' && (!ticket.ticketDeliveryStatus || ticket.ticketDeliveryStatus === 'pending')) ||
+            (deliveryFilter === 'available' && (ticket.ticketDeliveryStatus === 'available' || ticket.ticketDeliveryStatus === 'delivered'));
+
+        const matchesProof = proofFilter === 'all' ||
+            (proofFilter === 'hasProof' && ticket.paymentProofUrl) ||
+            (proofFilter === 'noProof' && !ticket.paymentProofUrl);
+
+        return matchesSearch && matchesStatus && matchesPayment && matchesDelivery && matchesProof;
     });
 
     // Pagination
@@ -418,6 +450,28 @@ function TicketsAdminContent() {
                                 </SelectContent>
                             </Select>
 
+                            <Select value={deliveryFilter} onValueChange={setDeliveryFilter}>
+                                <SelectTrigger className="w-full lg:w-[200px] bg-black/20 border-white/10 text-white">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Estado entrega</SelectItem>
+                                    <SelectItem value="pending">Sin archivos</SelectItem>
+                                    <SelectItem value="available">Archivos subidos</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Select value={proofFilter} onValueChange={setProofFilter}>
+                                <SelectTrigger className="w-full lg:w-[200px] bg-black/20 border-white/10 text-white">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Comprobante</SelectItem>
+                                    <SelectItem value="hasProof">Con comprobante</SelectItem>
+                                    <SelectItem value="noProof">Sin comprobante</SelectItem>
+                                </SelectContent>
+                            </Select>
+
                             {/* Action Buttons */}
                             <Button
                                 onClick={loadTickets}
@@ -509,6 +563,38 @@ function TicketsAdminContent() {
                                                 <div className="flex flex-wrap gap-2">
                                                     {getStatusBadge(ticket.paymentStatus)}
                                                     {getPaymentMethodBadge(ticket.paymentMethod)}
+
+                                                    {/* Tipo de pago */}
+                                                    {ticket.paymentType === 'installment' && (
+                                                        <Badge variant="outline" className="border-blue-500/30 text-blue-400">
+                                                            <Layers className="w-3 h-3 mr-1" />
+                                                            {ticket.installments} Cuotas
+                                                        </Badge>
+                                                    )}
+
+                                                    {/* Comprobante subido */}
+                                                    {ticket.paymentProofUrl && (
+                                                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                                            <FileCheck className="w-3 h-3 mr-1" />
+                                                            Con comprobante
+                                                        </Badge>
+                                                    )}
+
+                                                    {/* Estado de entrega */}
+                                                    {getDeliveryStatusBadge(ticket.ticketDeliveryStatus)}
+
+                                                    {/* Cantidad de tickets */}
+                                                    <Badge variant="outline" className="border-white/20 text-white/80">
+                                                        <Package className="w-3 h-3 mr-1" />
+                                                        {getTicketQuantity(ticket)} ticket{getTicketQuantity(ticket) !== 1 ? 's' : ''}
+                                                    </Badge>
+
+                                                    {/* Fase y zona si disponible */}
+                                                    {ticket.ticketItems?.[0] && (
+                                                        <Badge variant="outline" className="border-white/10 text-white/60">
+                                                            {ticket.ticketItems[0].phaseName} - {ticket.ticketItems[0].zoneName}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             </div>
 
