@@ -33,9 +33,7 @@ export function TicketFileUploadModal({
 }: TicketFileUploadModalProps) {
   const [uploadedFiles, setUploadedFiles] = useState<Array<{url: string, type: 'qr' | 'file'}>>([]);
   const [currentFileType, setCurrentFileType] = useState<'qr' | 'file'>('file');
-  const [availableDate, setAvailableDate] = useState<string>(
-    currentDownloadDate || new Date().toISOString().split('T')[0]
-  );
+  const [availableDate, setAvailableDate] = useState<string>(currentDownloadDate || '');
   const [eventDownloadDate, setEventDownloadDate] = useState<string | null>(null);
   const [makeAvailableImmediately, setMakeAvailableImmediately] = useState(false);
   const [updateEventDate, setUpdateEventDate] = useState(true);
@@ -44,10 +42,14 @@ export function TicketFileUploadModal({
 
   // Load event data when modal opens
   useEffect(() => {
-    if (isOpen && eventId) {
-      loadEventData();
+    if (isOpen) {
+      setAvailableDate(currentDownloadDate || '');
+      setMakeAvailableImmediately(false);
+      if (eventId) {
+        loadEventData();
+      }
     }
-  }, [isOpen, eventId]);
+  }, [isOpen, eventId, currentDownloadDate]);
 
   const loadEventData = async () => {
     setLoadingEventData(true);
@@ -55,7 +57,9 @@ export function TicketFileUploadModal({
       const event = await eventsCollection.get(eventId);
       if (event?.ticketDownloadAvailableDate) {
         setEventDownloadDate(event.ticketDownloadAvailableDate);
-        setAvailableDate(event.ticketDownloadAvailableDate);
+        setAvailableDate(prev => prev || event.ticketDownloadAvailableDate || '');
+      } else {
+        setEventDownloadDate(null);
       }
     } catch (error) {
       console.error('Error loading event data:', error);

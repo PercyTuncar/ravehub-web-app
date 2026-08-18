@@ -738,6 +738,29 @@ function TicketsAdminContent() {
                             {/* Upload Files Button for Manual Delivery */}
                             {selectedTicket.ticketDeliveryMode === 'manualUpload' && (
                                 <div className="pt-4 border-t border-white/10 space-y-4">
+                                    <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3">
+                                        <div className="flex items-start gap-2">
+                                            <Upload className="mt-0.5 h-4 w-4 text-blue-400" />
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-semibold text-blue-200">Entrega manual</p>
+                                                <p className="text-xs text-blue-200/80">
+                                                    La asignación ya está creada. Puedes cargar los archivos del ticket ahora o más adelante.
+                                                </p>
+                                                <p className="text-xs text-blue-200/80">
+                                                    Fecha disponible:{' '}
+                                                    {selectedTicket.ticketsDownloadAvailableDate
+                                                        ? parseDate(selectedTicket.ticketsDownloadAvailableDate).toLocaleDateString('es-CL', {
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            timeZone: 'UTC',
+                                                        })
+                                                        : 'No configurada; se definirá al cargar los archivos'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {/* Upload History */}
                                     <TicketUploadHistory uploadedFiles={selectedTicket.ticketsUploadedFiles} />
 
@@ -750,7 +773,7 @@ function TicketsAdminContent() {
                                         className="w-full bg-blue-600 hover:bg-blue-700"
                                     >
                                         <Upload className="w-4 h-4 mr-2" />
-                                        {selectedTicket.ticketsUploadedFiles?.length > 0 ? 'Subir Más Archivos' : 'Subir Archivos de Tickets'}
+                                        {selectedTicket.ticketsUploadedFiles?.length > 0 ? 'Subir Más Archivos' : 'Cargar Tickets Ahora o Después'}
                                     </Button>
                                 </div>
                             )}

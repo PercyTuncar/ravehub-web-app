@@ -420,6 +420,7 @@ export async function createManualTicketTransaction(data: {
     const event = await eventsCollection.get(data.eventId);
     if (!event) throw new Error(`Event ${data.eventId} not found`);
     const eventCurrency = event.currency || 'PEN';
+    const effectiveDownloadDate = data.ticketsDownloadAvailableDate || event.ticketDownloadAvailableDate || undefined;
 
     // 1. Create Ticket Transaction
     const ticketData: any = {
@@ -445,7 +446,7 @@ export async function createManualTicketTransaction(data: {
       paymentStatus: data.paymentStatus,
       ticketDeliveryMode: 'manualUpload', // Default for now
       ticketDeliveryStatus: 'pending', // Will be recalculated from aggregate after installments
-      ticketsDownloadAvailableDate: data.ticketsDownloadAvailableDate,
+      ticketsDownloadAvailableDate: effectiveDownloadDate,
       isCourtesy: data.paymentMethod === 'courtesy',
       createdAt: new Date().toISOString()
     };

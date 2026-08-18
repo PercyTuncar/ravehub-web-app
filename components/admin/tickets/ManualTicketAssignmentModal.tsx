@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import {
     Users,
     Calendar,
+    FileText,
     CreditCard,
     CheckCircle,
     AlertCircle,
@@ -78,7 +79,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
     const [installmentPlan, setInstallmentPlan] = useState<CalculationResult | null>(null);
 
     // Ticket Delivery Config
-    const [ticketsDownloadAvailableDate, setTicketsDownloadAvailableDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [ticketsDownloadAvailableDate, setTicketsDownloadAvailableDate] = useState<string>('');
 
     // Status
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,9 +121,10 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
         setAssignmentType('sale');
         setIsPaid(false);
         setPaidInstallments([]);
-        // Default reservation amount from event if available
+        // Default reservation amount and delivery date from event if available
         const ev = events.find(e => e.id === selectedEventId);
         setReservationAmount(ev?.reservationAmount ?? 50);
+        setTicketsDownloadAvailableDate(ev?.ticketDownloadAvailableDate || '');
     }, [selectedEventId]);
 
     useEffect(() => {
@@ -224,7 +226,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 installmentsCount: (assignmentType === 'sale' && paymentType === 'installment') ? installmentsCount : undefined,
                 firstInstallmentDate: (assignmentType === 'sale' && paymentType === 'installment') ? firstPaymentDate : undefined,
                 paymentStatus: finalStatus,
-                ticketsDownloadAvailableDate,
+                ticketsDownloadAvailableDate: ticketsDownloadAvailableDate || undefined,
 
                 // Pass new flags
                 paidInstallmentsIndices: (assignmentType === 'sale' && paymentType === 'installment') ? paidInstallments : undefined,
@@ -718,20 +720,36 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
 
 
                                 {/* Ticket Delivery Date */}
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-semibold flex items-center gap-2">
-                                        <Calendar className="w-4 h-4" />
-                                        Fecha de Disponibilidad de Descarga
-                                    </Label>
-                                    <Input
-                                        type="date"
-                                        value={ticketsDownloadAvailableDate}
-                                        onChange={(e) => setTicketsDownloadAvailableDate(e.target.value)}
-                                        className="w-full"
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Los tickets estarán disponibles para descarga a partir de esta fecha.
-                                    </p>
+                                <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-950">
+                                    <div className="flex items-start gap-3">
+                                        <FileText className="w-5 h-5 mt-0.5 text-blue-600" />
+                                        <div className="space-y-1">
+                                            <Label className="text-sm font-semibold">
+                                                Entrega manual de tickets
+                                            </Label>
+                                            <p className="text-xs text-blue-700">
+                                                Este ticket se asignará ahora, pero el archivo del ticket se podrá cargar después desde el detalle en Admin &gt; Tickets.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-semibold flex items-center gap-2">
+                                            <Calendar className="w-4 h-4" />
+                                            Fecha disponible de descarga
+                                        </Label>
+                                        <Input
+                                            type="date"
+                                            value={ticketsDownloadAvailableDate}
+                                            onChange={(e) => setTicketsDownloadAvailableDate(e.target.value)}
+                                            className="w-full bg-white"
+                                        />
+                                        <p className="text-xs text-blue-700">
+                                            {selectedEvent?.ticketDownloadAvailableDate
+                                                ? 'Precargada desde la configuración del evento. Puedes cambiarla solo para esta asignación.'
+                                                : 'Este evento no tiene fecha configurada. Puedes dejarla vacía y definirla al cargar los archivos.'}
+                                        </p>
+                                    </div>
                                 </div>
 
                                 {/* Final Summary */}
