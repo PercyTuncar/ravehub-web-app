@@ -11,6 +11,7 @@ import { TicketTransaction, PaymentInstallment } from '@/lib/types';
 import { createNotification } from '@/lib/utils/notifications';
 import { calculateReservationBreakdown, buildTicketItemsWithReservation } from '@/lib/utils/reservation-calculator';
 import { getCurrentUser } from '@/lib/auth-admin';
+import { createConversionContext } from '@/lib/analytics/server-events';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       totalAmount,
       reservationFee,
       proofUrl,        // Optional: payment proof URL uploaded client-side before this call
-    } = body;
+      trackingContext,    } = body;
 
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -172,6 +173,31 @@ export async function POST(request: NextRequest) {
       transactionData,
       installments: installmentDocuments,
     });
+
+    if (trackingContext?.consent === 'accepted' && typeof trackingContext.purchaseEventId === 'string') {
+      try {
+        await createConversionContext({
+          entityType: 'ticket',
+          entityId: transactionId,
+          userId: finalUserId,
+          consent: 'accepted',
+          purchaseEventId: trackingContext.purchaseEventId,
+          contentType: 'ticket',
+          contentIds: selectedTickets.map((ticket: any) => ticket.zoneId),
+          quantities: selectedTickets.map((ticket: any) => ticket.quantity),
+          value: calculatedAdjustedTotal,
+          currency: transactionCurrency,
+          eventSourceUrl: trackingContext.landingPage,
+          referrer: trackingContext.referrer,
+          fbBrowserId: trackingContext.fbBrowserId,
+          fbClickId: trackingContext.fbClickId,
+          tiktokBrowserId: trackingContext.tiktokBrowserId,
+          tiktokClickId: trackingContext.tiktokClickId,
+        });
+      } catch (error) {
+        console.error('Failed to record ticket conversion context', error);
+      }
+    }
 
     // For online payments, redirect to payment gateway
     if (paymentMethod === 'online') {

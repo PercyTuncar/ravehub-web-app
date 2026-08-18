@@ -30,6 +30,11 @@ import {
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { toast } from 'sonner';
+import {
+  createConversionTrackingContext,
+  createEventId,
+  trackMarketingEvent,
+} from '@/lib/analytics/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -230,6 +235,17 @@ export function CheckoutPaymentModal({
 
   /** "Pedir por WhatsApp" — no requires auth */
   const handleWhatsAppOrder = () => {
+    trackMarketingEvent({
+      eventId: createEventId(),
+      name: 'lead',
+      title: `Entradas — solicitó pedido por WhatsApp para ${event.name}`,
+      contentType: 'ticket',
+      contentIds: selectedTickets.map((ticket) => ticket.zoneId),
+      contentName: event.name,
+      quantity: selectedTickets.reduce((sum, ticket) => sum + ticket.quantity, 0),
+      value: totalAmount,
+      currency: event.currency,
+    });
     const msg = buildWhatsAppMessage();
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     toast.success('Redirigiendo a WhatsApp…');
@@ -264,6 +280,20 @@ export function CheckoutPaymentModal({
       return;
     }
 
+    const purchaseEventId = createEventId();
+    const trackingContext = createConversionTrackingContext(purchaseEventId);
+    trackMarketingEvent({
+      eventId: createEventId(),
+      name: 'begin_checkout',
+      title: `Entradas — inició checkout de ${event.name}`,
+      contentType: 'ticket',
+      contentIds: selectedTickets.map((ticket) => ticket.zoneId),
+      contentName: event.name,
+      quantity: selectedTickets.reduce((sum, ticket) => sum + ticket.quantity, 0),
+      value: totalAmount,
+      currency: event.currency,
+    });
+
     setSubmitting(true);
     try {
       const body = {
@@ -284,6 +314,7 @@ export function CheckoutPaymentModal({
         currency: event.currency,
         reservationFee: isInstallmentMode ? totalReservation : 0,
         proofUrl,
+        trackingContext,
       };
 
       const resp = await fetch('/api/tickets/purchase', {

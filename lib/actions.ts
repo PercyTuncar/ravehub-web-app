@@ -9,6 +9,7 @@ import { createNotification, InstallmentNotifications, OrderNotifications } from
 import { revalidateBlogPost, revalidateBlogListing, revalidateEvent, revalidateEventsListing, revalidateProduct, revalidateShopListing, revalidateCommentApproval, revalidateProductStock, revalidateEventCapacity } from '@/lib/revalidate';
 import { BlogPost, Event, Product, BlogComment } from '@/lib/types';
 import { requireAdmin, requireAuth, getCurrentUser } from '@/lib/auth-admin';
+import { sendConfirmedPurchaseForEntity } from '@/lib/analytics/server-events';
 
 
 /**
@@ -347,6 +348,7 @@ export async function updateTicketPaymentStatus(ticketId: string, status: 'appro
               paymentStatus: 'approved',
               updatedAt: new Date().toISOString()
             });
+            await sendConfirmedPurchaseForEntity('ticket', ticketId);
             // Notify full order completion?
           } else {
             // If partially paid, we ensure the transaction is NOT rejected/expired, stays pending but active
@@ -360,6 +362,7 @@ export async function updateTicketPaymentStatus(ticketId: string, status: 'appro
             paymentStatus: 'approved',
             updatedAt: new Date().toISOString()
           });
+          await sendConfirmedPurchaseForEntity('ticket', ticketId);
           return { success: true };
         }
 
@@ -369,6 +372,7 @@ export async function updateTicketPaymentStatus(ticketId: string, status: 'appro
           paymentStatus: 'approved',
           updatedAt: new Date().toISOString()
         });
+        await sendConfirmedPurchaseForEntity('ticket', ticketId);
 
         // Notify user
         await createNotification({

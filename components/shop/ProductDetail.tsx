@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Product, ProductCategory, ProductReview } from '@/lib/types';
 import { useCart } from '@/lib/contexts/CartContext';
 import { ConvertedPrice } from '@/components/common/ConvertedPrice';
+import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
 
 interface ProductDetailProps {
   product: Product;
@@ -34,6 +35,17 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
 
   const addToCart = () => {
     addItem(product, quantity, selectedVariant || undefined);
+    trackMarketingEvent({
+      eventId: createEventId(),
+      name: 'add_to_cart',
+      title: `Tienda — añadió ${product.name} al carrito`,
+      contentType: 'product',
+      contentIds: [product.id],
+      contentName: product.name,
+      quantity,
+      value: product.price * quantity,
+      currency: product.currency,
+    });
   };
 
   const averageRating = reviews.length > 0

@@ -1,0 +1,98 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import Script from 'next/script';
+import {
+  getConsentDecision,
+  setConsentDecision,
+  trackMarketingEvent,
+} from '@/lib/analytics/client';
+
+const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+const tiktokPixelId = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
+
+export function MarketingTracking() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [consent, setConsent] = useState<'accepted' | 'rejected' | null>(null);
+  const [showBanner, setShowBanner] = useState(false);
+
+  useEffect(() => {
+    const current = getConsentDecision();
+    setConsent(current);
+    setShowBanner(current === null);
+
+    const handleChange = (event: Event) => {
+      const decision = (event as CustomEvent<'accepted' | 'rejected'>).detail;
+      setConsent(decision);
+      setShowBanner(false);
+    };
+
+    window.addEventListener('ravehub:consent-changed', handleChange);
+    return () => window.removeEventListener('ravehub:consent-changed', handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (consent !== 'accepted') return;
+    trackMarketingEvent({
+      eventId: crypto.randomUUID(),
+      name: 'page_view',
+      title: 'Navegación — visitó página',
+      pagePath: `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ''}`,
+    });
+  }, [consent, pathname, searchParams]);
+
+  const accept = () => setConsentDecision('accepted');
+
+  return (
+    <>
+      {consent === 'accepted' && gaId && (
+        <>
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
+          <Script id="ravehub-google-analytics" strategy="afterInteractive">
+            {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+window.gtag = gtag;
+gtag('js', new Date());
+gtag('config', '${gaId}', { send_page_view: false });`}
+          </Script>
+        </>
+      )}
+
+      {consent === 'accepted' && metaPixelId && (
+        <Script id="ravehub-meta-pixel" strategy="afterInteractive">
+          {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '${metaPixelId}');`}
+        </Script>
+      )}
+
+      {consent === 'accepted' && tiktokPixelId && (
+        <Script id="ravehub-tiktok-pixel" strategy="afterInteractive">
+          {`!function (w,d,t) {w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=['page','track','identify','instances','debug','on','off','once','ready','alias','group','enableCookie','disableCookie'];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq.load=function(e,n){var r='https://analytics.tiktok.com/i18n/pixel/events.js';ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=r;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};n=d.createElement('script');n.type='text/javascript';n.async=!0;n.src=r+'?sdkid='+e+'&lib='+t; e=d.getElementsByTagName('script')[0];e.parentNode.insertBefore(n,e)};ttq.load('${tiktokPixelId}');ttq.page();}(window, document, 'ttq');`}
+        </Script>
+      )}
+
+      {showBanner && (
+        <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-zinc-700 bg-zinc-950 p-4 text-white shadow-2xl">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="font-semibold">Usamos analítica y publicidad personalizada</p>
+              <p className="mt-1 text-sm text-zinc-300">
+                Medimos el uso del sitio y campañas para mejorar Ravehub y mostrarte contenido relevante. Puedes aceptar o rechazar estas tecnologías.
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <button type="button" onClick={accept} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90">Aceptar todo</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

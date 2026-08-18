@@ -3,7 +3,8 @@
 import {
     ticketTransactionsCollection,
     eventsCollection,
-    usersCollection
+    usersCollection,
+    marketingAnalyticsEventsCollection
 } from '@/lib/firebase/admin-collections';
 import { requireAdmin, getCurrentUser } from '@/lib/auth-admin';
 import { getExchangeRates } from '@/lib/utils/currency-converter';
@@ -270,9 +271,7 @@ export async function getDetailedAnalytics(timeRange: TimeRange): Promise<{ succ
         // Check auth but don't redirect
         const currentUser = await getCurrentUser();
 
-        // WARNING: Temporarily allowing without server-side auth check
-        // The AuthGuard on the client already verified the user
-        if (currentUser && !['admin', 'moderator'].includes(currentUser.role)) {
+        if (!currentUser || !['admin', 'moderator'].includes(currentUser.role)) {
             return { success: false, error: 'No autorizado' };
         }
 

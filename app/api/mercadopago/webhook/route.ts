@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
-import { ordersCollection } from '@/lib/firebase/collections';
+import { ordersCollection } from '@/lib/firebase/admin-collections';
 import { notifyOrderStatusChange } from '@/lib/utils/notifications';
+import { sendConfirmedPurchaseForEntity } from '@/lib/analytics/server-events';
 
 // Configurar Mercado Pago
 const client = new MercadoPagoConfig({
@@ -135,6 +136,10 @@ export async function POST(request: NextRequest) {
 
       // Actualizar la orden
       await ordersCollection.update(orderId, updateData);
+
+      if (paymentData.status === 'approved' && order.paymentStatus !== 'approved') {
+        await sendConfirmedPurchaseForEntity('order', orderId);
+      }
 
       console.log(`✅ [WEBHOOK] Orden ${orderId} actualizada: ${newStatus}`);
 

@@ -1,6 +1,7 @@
 import 'server-only';
 import { getAdminDb } from './admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import type { MarketingAnalyticsEvent, MarketingConversionContext } from '@/lib/analytics/types';
 
 // IMPORTANT: FieldValue and Timestamp MUST come from firebase-admin/firestore
 // in v14+ to ensure compatibility with the Admin SDK
@@ -332,5 +333,7 @@ export const configCollection = new AdminFirestoreCollection('config');
 export const countriesCollection = new AdminFirestoreCollection('countries');
 export const slugRedirectsCollection = new AdminFirestoreCollection('slugRedirects');
 export const visitorProfilesCollection = new AdminFirestoreCollection('visitorProfiles');
+export const marketingAnalyticsEventsCollection = new AdminFirestoreCollection<MarketingAnalyticsEvent>('marketingAnalyticsEvents');
+export const marketingConversionContextsCollection = new AdminFirestoreCollection<MarketingConversionContext>('marketingConversionContexts');
 export const djSuggestionsCollection = new AdminFirestoreCollection('djSuggestions');
 export const djsCollection = new AdminFirestoreCollection('djs');

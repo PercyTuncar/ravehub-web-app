@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ordersCollection } from '@/lib/firebase/collections';
+import { ordersCollection } from '@/lib/firebase/admin-collections';
+import { getCurrentUser } from '@/lib/auth-admin';
 import { Order } from '@/lib/types';
 import { createNotification, OrderNotifications } from '@/lib/utils/notifications';
+import { createConversionContext } from '@/lib/analytics/server-events';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +20,7 @@ export async function POST(request: NextRequest) {
       shippingMethod,
       estimatedDeliveryDays,
       notes,
+      trackingContext,
     } = body;
 
     // Validaciones básicas
@@ -26,6 +29,11 @@ export async function POST(request: NextRequest) {
         { error: 'Faltan campos requeridos' },
         { status: 400 }
       );
+    }
+
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.id !== userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     // Crear orden
@@ -54,6 +62,31 @@ export async function POST(request: NextRequest) {
     };
 
     const orderId = await ordersCollection.create(orderData);
+
+    if (trackingContext?.consent === 'accepted' && typeof trackingContext.purchaseEventId === 'string') {
+      try {
+        await createConversionContext({
+          entityType: 'order',
+          entityId: orderId,
+          userId,
+          consent: 'accepted',
+          purchaseEventId: trackingContext.purchaseEventId,
+          contentType: 'product',
+          contentIds: orderItems.map((item: { productId: string }) => item.productId),
+          quantities: orderItems.map((item: { quantity: number }) => item.quantity),
+          value: totalAmount,
+          currency,
+          eventSourceUrl: trackingContext.landingPage,
+          referrer: trackingContext.referrer,
+          fbBrowserId: trackingContext.fbBrowserId,
+          fbClickId: trackingContext.fbClickId,
+          tiktokBrowserId: trackingContext.tiktokBrowserId,
+          tiktokClickId: trackingContext.tiktokClickId,
+        });
+      } catch (error) {
+        console.error('Failed to record order conversion context', error);
+      }
+    }
 
     // Enviar notificación de pedido creado
     await createNotification({

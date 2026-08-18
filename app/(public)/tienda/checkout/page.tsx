@@ -21,6 +21,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usersCollection } from '@/lib/firebase/collections';
 import { Address } from '@/lib/types';
 import { toast } from 'sonner';
+import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
 
 export default function CheckoutPage() {
   const { items, getTotalAmount, clearCart } = useCart();
@@ -144,6 +145,17 @@ export default function CheckoutPage() {
     }
 
     setProcessing(true);
+    trackMarketingEvent({
+      eventId: createEventId(),
+      name: 'lead',
+      title: 'Tienda — solicitó pedido por WhatsApp',
+      contentType: 'product',
+      contentIds: items.map((item) => item.productId),
+      contentName: 'Pedido de tienda',
+      quantity: items.reduce((total, item) => total + item.quantity, 0),
+      value: getTotalAmount(),
+      currency: items[0]?.currency,
+    });
     try {
       const symbol = items[0]?.currency === 'USD' ? '$' : 'S/';
 
