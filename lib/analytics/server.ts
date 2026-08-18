@@ -30,23 +30,32 @@ export async function recordMarketingEvent(
   const requestHeaders = await headers();
   const userAgent = requestHeaders.get('user-agent') || '';
   const currentUser = await getCurrentUser();
-  const event: MarketingAnalyticsEvent = {
+
+  // Build event object, filtering out undefined values for Firestore
+  const event: Record<string, any> = {
     ...payload,
     id: payload.eventId,
-    userId: currentUser?.id,
     occurredAt: new Date().toISOString(),
-    country: requestHeaders.get('x-vercel-ip-country') || requestHeaders.get('cf-ipcountry') || undefined,
-    region: requestHeaders.get('x-vercel-ip-country-region') || undefined,
     deviceType: getDeviceType(userAgent),
     browser: getBrowser(userAgent),
-    landingPage: payload.attribution?.landingPage,
-    referrer: payload.attribution?.referrer,
-    utmSource: payload.attribution?.utmSource,
-    utmMedium: payload.attribution?.utmMedium,
-    utmCampaign: payload.attribution?.utmCampaign,
-    utmContent: payload.attribution?.utmContent,
-    utmTerm: payload.attribution?.utmTerm,
   };
+
+  // Only add optional fields if they have values (avoid undefined in Firestore)
+  if (currentUser?.id) event.userId = currentUser.id;
+
+  const country = requestHeaders.get('x-vercel-ip-country') || requestHeaders.get('cf-ipcountry');
+  if (country) event.country = country;
+
+  const region = requestHeaders.get('x-vercel-ip-country-region');
+  if (region) event.region = region;
+
+  if (payload.attribution?.landingPage) event.landingPage = payload.attribution.landingPage;
+  if (payload.attribution?.referrer) event.referrer = payload.attribution.referrer;
+  if (payload.attribution?.utmSource) event.utmSource = payload.attribution.utmSource;
+  if (payload.attribution?.utmMedium) event.utmMedium = payload.attribution.utmMedium;
+  if (payload.attribution?.utmCampaign) event.utmCampaign = payload.attribution.utmCampaign;
+  if (payload.attribution?.utmContent) event.utmContent = payload.attribution.utmContent;
+  if (payload.attribution?.utmTerm) event.utmTerm = payload.attribution.utmTerm;
 
   await marketingAnalyticsEventsCollection.create(event as never);
   return { success: true, eventId: event.eventId };
