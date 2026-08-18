@@ -67,7 +67,8 @@
       "PowerShell(npx tsc --noEmit 2>&1)",
       "PowerShell(npx tsc --noEmit)",
       "Bash(git commit -m 'Envuelve MarketingTracking en Suspense para SSR *)",
-      "Bash(git commit -m 'Corrige content_type para TikTok Pixel *)"
+      "Bash(git commit -m 'Corrige content_type para TikTok Pixel *)",
+      "Bash(git commit -m 'Añade fbq\\('\\\\''track'\\\\'', '\\\\''PageView'\\\\''\\) inicial en Meta Pixel *)"
     ]
   }
 }
