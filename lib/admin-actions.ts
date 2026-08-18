@@ -277,21 +277,25 @@ export async function getDetailedAnalytics(timeRange: TimeRange): Promise<{ succ
 
         const startDate = getDateFromRange(timeRange);
 
+        // OPTIMIZED: Reduce limits significantly for faster queries
+        const ticketLimit = timeRange === 'all' ? 500 : 300;
+        const userLimit = timeRange === 'all' ? 300 : 200;
+
         // OPTIMIZED: Fetch only filtered data with limits instead of getAll()
         const [tickets, users, events] = await Promise.all([
             ticketTransactionsCollection.query(
                 timeRange === 'all' ? [] : [{ field: 'createdAt', operator: '>=', value: startDate }],
                 'createdAt',
                 'desc',
-                2000 // Limit for analytics
+                ticketLimit
             ),
             usersCollection.query(
                 timeRange === 'all' ? [] : [{ field: 'createdAt', operator: '>=', value: startDate }],
                 'createdAt',
                 'desc',
-                1000
+                userLimit
             ),
-            eventsCollection.query([], 'createdAt', 'desc', 100), // Just for name lookup
+            eventsCollection.query([], 'createdAt', 'desc', 50), // Just for name lookup
         ]);
 
         // Filter approved tickets
