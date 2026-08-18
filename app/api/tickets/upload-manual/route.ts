@@ -145,13 +145,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Update transaction with uploaded files metadata
-    await ticketTransactionsCollection.update(transactionId, {
+    const updateData: any = {
       ticketsUploadedFiles: uploadedFiles,
       ticketsFiles: uploadedFiles.map(f => f.fileUrl), // Keep legacy field for compatibility
       ticketDeliveryStatus: newDeliveryStatus,
-      deliveredAt: newDeliveryStatus === 'available' ? new Date() : undefined,
       updatedAt: new Date(),
-    });
+    };
+
+    // Only set deliveredAt if status is available (avoid undefined in Firestore)
+    if (newDeliveryStatus === 'available') {
+      updateData.deliveredAt = new Date();
+    }
+
+    await ticketTransactionsCollection.update(transactionId, updateData);
 
     // Update event date if requested
     let eventUpdated = false;
