@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bell, X, Check, Package, CreditCard, Truck, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,7 @@ function parseNotificationDate(createdAt: string | Date | any): Date {
 export function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   const getIcon = (type: Notification['type']) => {
     switch (type) {
@@ -69,6 +71,17 @@ export function NotificationBell() {
       await markAsRead(notification.id);
     }
     setOpen(false);
+
+    // Redirect based on notification type and orderId
+    if (notification.orderId) {
+      // Tickets asignados o pedidos de tickets van a /profile/tickets/{id}
+      if (notification.title.includes('Ticket') || notification.type === 'payment') {
+        router.push(`/profile/tickets/${notification.orderId}`);
+      } else if (notification.type === 'order' || notification.type === 'shipping') {
+        // Pedidos de tienda van a /profile/orders
+        router.push('/profile/orders');
+      }
+    }
   };
 
   return (
@@ -137,26 +150,12 @@ export function NotificationBell() {
                       <p className={`text-xs ${notification.read ? 'text-[#53575A]' : 'text-[#FAFDFF]'} line-clamp-2`}>
                         {notification.body}
                       </p>
-                      <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-[#53575A]">
-                          {formatDistanceToNow(parseNotificationDate(notification.createdAt), {
-                            addSuffix: true,
-                            locale: es,
-                          })}
-                        </p>
-                        {notification.orderId && (
-                          <Link
-                            href={notification.type === 'payment'
-                              ? `/profile/tickets/${notification.orderId}`
-                              : `/profile/orders`
-                            }
-                            className="text-xs text-[#FBA905] hover:text-[#F1A000] hover:underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {notification.type === 'payment' ? 'Ver ticket' : 'Ver pedido'}
-                          </Link>
-                        )}
-                      </div>
+                      <p className="text-xs text-[#53575A] mt-1">
+                        {formatDistanceToNow(parseNotificationDate(notification.createdAt), {
+                          addSuffix: true,
+                          locale: es,
+                        })}
+                      </p>
                     </div>
                     <Button
                       variant="ghost"

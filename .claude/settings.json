@@ -69,7 +69,8 @@
       "Bash(git commit -m 'Envuelve MarketingTracking en Suspense para SSR *)",
       "Bash(git commit -m 'Corrige content_type para TikTok Pixel *)",
       "Bash(git commit -m 'Añade fbq\\('\\\\''track'\\\\'', '\\\\''PageView'\\\\''\\) inicial en Meta Pixel *)",
-      "Bash(git commit -m 'Optimiza consultas de analíticas para reducir latencia *)"
+      "Bash(git commit -m 'Optimiza consultas de analíticas para reducir latencia *)",
+      "Bash(git commit -m 'Corrige flujo de notificaciones de tickets asignados *)"
     ]
   }
 }
