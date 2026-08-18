@@ -82,6 +82,11 @@ function TicketsAdminContent() {
     const [manualAssignModalOpen, setManualAssignModalOpen] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
 
+    // Bulk selection
+    const [selectedTicketIds, setSelectedTicketIds] = useState<Set<string>>(new Set());
+    const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+    const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
     // Helper functions for ticket information
     const getTicketQuantity = (ticket: any) => {
         if (ticket.ticketItems && Array.isArray(ticket.ticketItems)) {
@@ -202,6 +207,54 @@ function TicketsAdminContent() {
             toast.error('Error inesperado');
         } finally {
             setActionLoading(false);
+        }
+    };
+
+    // Bulk selection handlers
+    const toggleTicketSelection = (ticketId: string) => {
+        const newSelection = new Set(selectedTicketIds);
+        if (newSelection.has(ticketId)) {
+            newSelection.delete(ticketId);
+        } else {
+            newSelection.add(ticketId);
+        }
+        setSelectedTicketIds(newSelection);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedTicketIds.size === paginatedTickets.length) {
+            setSelectedTicketIds(new Set());
+        } else {
+            setSelectedTicketIds(new Set(paginatedTickets.map(t => t.id)));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        setBulkActionLoading(true);
+        try {
+            const deletePromises = Array.from(selectedTicketIds).map(ticketId =>
+                deleteTicketTransaction(ticketId)
+            );
+
+            const results = await Promise.all(deletePromises);
+            const successCount = results.filter(r => r.success).length;
+            const failCount = results.length - successCount;
+
+            if (successCount > 0) {
+                toast.success(`${successCount} ticket(s) eliminado(s) correctamente`);
+                setTickets(tickets.filter(t => !selectedTicketIds.has(t.id)));
+                setSelectedTicketIds(new Set());
+            }
+
+            if (failCount > 0) {
+                toast.error(`${failCount} ticket(s) no pudieron ser eliminados`);
+            }
+
+            setBulkDeleteModalOpen(false);
+        } catch (error) {
+            toast.error('Error al eliminar tickets');
+        } finally {
+            setBulkActionLoading(false);
         }
     };
 
@@ -499,6 +552,17 @@ function TicketsAdminContent() {
                                 <Plus className="w-4 h-4 mr-2" />
                                 Nueva Asignación
                             </Button>
+
+                            {selectedTicketIds.size > 0 && (
+                                <Button
+                                    onClick={() => setBulkDeleteModalOpen(true)}
+                                    variant="outline"
+                                    className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Eliminar Seleccionados ({selectedTicketIds.size})
+                                </Button>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -523,6 +587,27 @@ function TicketsAdminContent() {
                     </Card>
                 ) : (
                     <>
+                        {/* Bulk selection header */}
+                        {paginatedTickets.length > 0 && (
+                            <Card className="bg-white/5 backdrop-blur-xl border-white/10 mb-4">
+                                <CardContent className="p-4 !pt-4">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedTicketIds.size === paginatedTickets.length && paginatedTickets.length > 0}
+                                            onChange={toggleSelectAll}
+                                            className="w-5 h-5 rounded border-white/20 bg-black/20 text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm text-white/60">
+                                            {selectedTicketIds.size > 0
+                                                ? `${selectedTicketIds.size} ticket(s) seleccionado(s)`
+                                                : 'Seleccionar todos'}
+                                        </span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
                         <div className="grid grid-cols-1 gap-4 mb-6">
                             {paginatedTickets.map((ticket) => (
                                 <Card
@@ -531,24 +616,35 @@ function TicketsAdminContent() {
                                 >
                                     <CardContent className="p-6 !pt-6">
                                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                                            {/* Left: Event & User Info */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                                                        <Ticket className="w-5 h-5 text-primary" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <h3 className="text-lg font-bold text-white truncate">{ticket.eventName}</h3>
-                                                        <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-white/60">
-                                                            <span className="flex items-center gap-1">
-                                                                <User className="w-3 h-3" />
-                                                                {ticket.userEmail}
-                                                            </span>
-                                                            <span>•</span>
-                                                            <span className="flex items-center gap-1">
-                                                                <Calendar className="w-3 h-3" />
-                                                                {parseDate(ticket.createdAt).toLocaleDateString('es-ES')}
-                                                            </span>
+                                            {/* Checkbox for selection */}
+                                            <div className="flex items-start gap-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedTicketIds.has(ticket.id)}
+                                                    onChange={() => toggleTicketSelection(ticket.id)}
+                                                    className="w-5 h-5 mt-1 rounded border-white/20 bg-black/20 text-primary focus:ring-primary cursor-pointer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+
+                                                {/* Left: Event & User Info */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                                            <Ticket className="w-5 h-5 text-primary" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="text-lg font-bold text-white truncate">{ticket.eventName}</h3>
+                                                            <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-white/60">
+                                                                <span className="flex items-center gap-1">
+                                                                    <User className="w-3 h-3" />
+                                                                    {ticket.userEmail}
+                                                                </span>
+                                                                <span>•</span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <Calendar className="w-3 h-3" />
+                                                                    {parseDate(ticket.createdAt).toLocaleDateString('es-ES')}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -740,6 +836,48 @@ function TicketsAdminContent() {
                             className="bg-red-500 hover:bg-red-600 text-white"
                         >
                             {actionLoading ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Bulk Delete Confirmation Modal */}
+            <Dialog open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
+                <DialogContent className="bg-[#1A1D21] border-white/10 text-white">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-red-500">
+                            <AlertCircle className="w-5 h-5" />
+                            Eliminar Tickets Seleccionados
+                        </DialogTitle>
+                        <DialogDescription className="text-white/60">
+                            ¿Estás seguro de que deseas eliminar <strong>{selectedTicketIds.size}</strong> ticket(s)? Esta acción <strong>NO se puede deshacer</strong>.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="bg-white/5 rounded-lg p-4 my-4">
+                        <p className="text-sm text-white/80 mb-2">
+                            <strong>Total a eliminar:</strong> {selectedTicketIds.size} ticket(s)
+                        </p>
+                        <p className="text-xs text-white/60">
+                            Se eliminarán todos los tickets seleccionados de forma permanente.
+                        </p>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            onClick={() => setBulkDeleteModalOpen(false)}
+                            variant="outline"
+                            className="border-white/10 text-white hover:bg-white/5"
+                            disabled={bulkActionLoading}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleBulkDelete}
+                            disabled={bulkActionLoading}
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                        >
+                            {bulkActionLoading ? 'Eliminando...' : `Eliminar ${selectedTicketIds.size} Ticket(s)`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

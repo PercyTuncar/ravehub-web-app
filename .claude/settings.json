@@ -75,7 +75,8 @@
       "Bash(git commit -m 'Corrige error '\\\\''undefined'\\\\'' en deliveredAt al subir tickets manuales *)",
       "Bash(git commit -m 'Corrige error '\\\\''undefined'\\\\'' en eventos de analítica de marketing *)",
       "Bash(git commit -m 'Corrige error '\\\\''Invalid time value'\\\\'' en analíticas del admin *)",
-      "Bash(git commit -m 'Mejora UX en /admin/tickets con información crítica visible *)"
+      "Bash(git commit -m 'Mejora UX en /admin/tickets con información crítica visible *)",
+      "Bash(git commit -m 'Añade selección múltiple y eliminación masiva en /admin/tickets *)"
     ]
   }
 }
