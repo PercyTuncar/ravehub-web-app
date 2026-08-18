@@ -244,7 +244,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 setAssignmentType('sale');
                 setIsPaid(false);
             } else {
-                toast.error('Error al asignar ticket');
+                toast.error(result.error || 'Error al asignar ticket');
             }
         } catch (error) {
             console.error(error);

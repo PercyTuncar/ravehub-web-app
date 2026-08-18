@@ -423,30 +423,36 @@ export async function createManualTicketTransaction(data: {
     const effectiveDownloadDate = data.ticketsDownloadAvailableDate || event.ticketDownloadAvailableDate || undefined;
 
     // 1. Create Ticket Transaction
+    const ticketItem = {
+      zoneId: data.zoneId,
+      zoneName: data.zoneName,
+      phaseId: data.phaseId,
+      phaseName: data.phaseName,
+      quantity: data.quantity,
+      pricePerTicket: data.unitPrice,
+      totalAmount: data.unitPrice * data.quantity,
+      ...(data.reservationAmountPerTicket !== undefined
+        ? { reservationAmountPerTicket: data.reservationAmountPerTicket }
+        : {}),
+      ...(data.reservationSubtotal !== undefined
+        ? { reservationSubtotal: data.reservationSubtotal }
+        : {}),
+    };
+
     const ticketData: any = {
       userId: data.userId,
       eventId: data.eventId,
-      ticketItems: [
-        {
-          zoneId: data.zoneId,
-          zoneName: data.zoneName,
-          phaseId: data.phaseId,
-          phaseName: data.phaseName,
-          quantity: data.quantity,
-          pricePerTicket: data.unitPrice,
-          totalAmount: data.unitPrice * data.quantity,
-          reservationAmountPerTicket: data.reservationAmountPerTicket,
-          reservationSubtotal: data.reservationSubtotal,
-        }
-      ],
+      ticketItems: [ticketItem],
       totalAmount: data.totalAmount,
       currency: eventCurrency,
       paymentMethod: data.paymentMethod,
       paymentType: data.paymentType,
       paymentStatus: data.paymentStatus,
-      ticketDeliveryMode: 'manualUpload', // Default for now
-      ticketDeliveryStatus: 'pending', // Will be recalculated from aggregate after installments
-      ticketsDownloadAvailableDate: effectiveDownloadDate,
+      ticketDeliveryMode: 'manualUpload',
+      ticketDeliveryStatus: 'pending',
+      ...(effectiveDownloadDate
+        ? { ticketsDownloadAvailableDate: effectiveDownloadDate }
+        : {}),
       isCourtesy: data.paymentMethod === 'courtesy',
       createdAt: new Date().toISOString()
     };
