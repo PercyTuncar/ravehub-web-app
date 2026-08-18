@@ -31,8 +31,8 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AuthGuard } from '@/components/admin/AuthGuard';
-import { ticketTransactionsCollection, eventsCollection, usersCollection } from '@/lib/firebase/collections';
-import { updateTicketPaymentStatus, deleteTicketTransaction } from '@/lib/actions';
+import { updateTicketPaymentStatus, deleteTicketTransaction, getTicketsForAdmin, getTicketStats } from '@/lib/actions';
+import { usersCollection } from '@/lib/firebase/collections';
 import { ManualTicketAssignmentModal } from '@/components/admin/tickets/ManualTicketAssignmentModal';
 import { TicketFileUploadModal } from '@/components/admin/tickets/TicketFileUploadModal';
 import { TicketUploadHistory } from '@/components/admin/tickets/TicketUploadHistory';
@@ -70,12 +70,23 @@ function TicketsAdminContent() {
     const [deliveryFilter, setDeliveryFilter] = useState<string>('all');
     const [proofFilter, setProofFilter] = useState<string>('all');
 
+    // Real-time stats from database
+    const [realStats, setRealStats] = useState({
+        total: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        totalSales: 0,
+        currency: 'PEN'
+    });
+
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 20;
 
     // Modals
     const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
+    const [selectedTicketUser, setSelectedTicketUser] = useState<any | null>(null);
     const [detailModalOpen, setDetailModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -113,51 +124,28 @@ function TicketsAdminContent() {
     const loadTickets = async () => {
         setLoading(true);
         try {
-            // OPTIMIZED: Fetch tickets with limit and use batch queries for related data
-            const allTickets = await ticketTransactionsCollection.query(
-                [],
-                'createdAt',
-                'desc',
-                100 // Limit to last 100 tickets for admin view
-            );
-
-            // Collect unique event and user IDs
-            const eventIds = new Set<string>();
-            const userIds = new Set<string>();
-            
-            allTickets.forEach((ticket: any) => {
-                if (ticket.eventId) eventIds.add(ticket.eventId);
-                if (ticket.userId) userIds.add(ticket.userId);
-            });
-
-            // OPTIMIZED: Batch fetch events and users using getByIds
-            const [events, users] = await Promise.all([
-                eventIds.size > 0 ? eventsCollection.getByIds(Array.from(eventIds)) : Promise.resolve([]),
-                userIds.size > 0 ? usersCollection.getByIds(Array.from(userIds)) : Promise.resolve([]),
+            // Load tickets and stats in parallel
+            const [ticketsResult, statsResult] = await Promise.all([
+                getTicketsForAdmin(),
+                getTicketStats()
             ]);
 
-            // Create lookup maps
-            const eventMap = new Map(events.map((e: any) => [e.id, e]));
-            const userMap = new Map(users.map((u: any) => [u.id, u]));
+            if (ticketsResult.success) {
+                // Sort by creation date (newest first)
+                const sortedTickets = ticketsResult.tickets.sort((a: any, b: any) => {
+                    return parseDate(b.createdAt).getTime() - parseDate(a.createdAt).getTime();
+                });
 
-            // Enhance tickets with event and user data
-            const enhancedTickets = allTickets.map((ticket: any) => {
-                const event = eventMap.get(ticket.eventId);
-                const user = userMap.get(ticket.userId);
-                
-                return {
-                    ...ticket,
-                    eventName: event?.name || 'Evento desconocido',
-                    userEmail: user?.email || 'Usuario desconocido',
-                    userName: user?.firstName || user?.displayName || ''
-                };
-            });
+                setTickets(sortedTickets);
+            } else {
+                toast.error(ticketsResult.error || 'Error al cargar tickets');
+            }
 
-            enhancedTickets.sort((a: any, b: any) => {
-                return parseDate(b.createdAt).getTime() - parseDate(a.createdAt).getTime();
-            });
-
-            setTickets(enhancedTickets);
+            if (statsResult.success) {
+                setRealStats(statsResult.stats);
+            } else {
+                toast.error(statsResult.error || 'Error al cargar estadísticas');
+            }
         } catch (error) {
             console.error('Error loading tickets:', error);
             toast.error('Error al cargar tickets');
@@ -258,6 +246,20 @@ function TicketsAdminContent() {
         }
     };
 
+    const loadTicketUser = async (userId: string) => {
+        try {
+            const userDoc = await usersCollection.get(userId);
+            if (userDoc) {
+                setSelectedTicketUser(userDoc);
+            } else {
+                setSelectedTicketUser(null);
+            }
+        } catch (error) {
+            console.error('Error loading user:', error);
+            setSelectedTicketUser(null);
+        }
+    };
+
     const handleCheckAvailability = async () => {
         setActionLoading(true);
         try {
@@ -312,13 +314,8 @@ function TicketsAdminContent() {
         currentPage * ITEMS_PER_PAGE
     );
 
-    // Stats
-    const stats = {
-        total: tickets.length,
-        pending: tickets.filter(t => t.paymentStatus === 'pending').length,
-        approved: tickets.filter(t => t.paymentStatus === 'approved').length,
-        totalSales: tickets.reduce((sum, t) => sum + (t.totalAmount || 0), 0)
-    };
+    // Use real stats from database (loaded via getTicketStats)
+    const stats = realStats;
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -699,6 +696,7 @@ function TicketsAdminContent() {
                                                 <Button
                                                     onClick={() => {
                                                         setSelectedTicket(ticket);
+                                                        loadTicketUser(ticket.userId);
                                                         setDetailModalOpen(true);
                                                     }}
                                                     variant="outline"
@@ -935,6 +933,45 @@ function TicketsAdminContent() {
                                 </div>
                             )}
 
+                            {/* Contact Information Section */}
+                            {selectedTicketUser && (
+                                <div className="mt-4 pt-4 border-t border-white/10">
+                                    <p className="text-xs text-white/60 mb-3 uppercase tracking-wider font-semibold">Información de Contacto</p>
+                                    <div className="grid grid-cols-2 gap-4 bg-white/5 rounded-lg p-4">
+                                        <div>
+                                            <p className="text-xs text-white/40 mb-1">Nombre Completo</p>
+                                            <p className="text-sm text-white font-medium">
+                                                {selectedTicketUser.firstName} {selectedTicketUser.lastName}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-white/40 mb-1">Teléfono</p>
+                                            <p className="text-sm text-white font-medium">
+                                                {selectedTicketUser.phonePrefix && selectedTicketUser.phone
+                                                    ? `${selectedTicketUser.phonePrefix} ${selectedTicketUser.phone}`
+                                                    : 'No registrado'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-white/40 mb-1">Email</p>
+                                            <p className="text-sm text-white font-medium">{selectedTicketUser.email}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-white/40 mb-1">País</p>
+                                            <p className="text-sm text-white font-medium">{selectedTicketUser.country || 'No especificado'}</p>
+                                        </div>
+                                        {selectedTicketUser.documentType && selectedTicketUser.documentNumber && (
+                                            <div>
+                                                <p className="text-xs text-white/40 mb-1">Documento</p>
+                                                <p className="text-sm text-white font-medium">
+                                                    {selectedTicketUser.documentType.toUpperCase()}: {selectedTicketUser.documentNumber}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex gap-2 pt-4">
                                 {selectedTicket.paymentStatus === 'pending' && (
                                     <Button
@@ -957,6 +994,14 @@ function TicketsAdminContent() {
                                         Rechazar
                                     </Button>
                                 )}
+                                <Button
+                                    onClick={() => window.open(`/profile/tickets/${selectedTicket.id}`, '_blank')}
+                                    variant="outline"
+                                    className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 flex-1"
+                                >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    Ver como Cliente
+                                </Button>
                             </div>
 
                             {/* Upload Files Button for Manual Delivery */}

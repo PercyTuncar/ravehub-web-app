@@ -76,7 +76,9 @@
       "Bash(git commit -m 'Corrige error '\\\\''undefined'\\\\'' en eventos de analítica de marketing *)",
       "Bash(git commit -m 'Corrige error '\\\\''Invalid time value'\\\\'' en analíticas del admin *)",
       "Bash(git commit -m 'Mejora UX en /admin/tickets con información crítica visible *)",
-      "Bash(git commit -m 'Añade selección múltiple y eliminación masiva en /admin/tickets *)"
+      "Bash(git commit -m 'Añade selección múltiple y eliminación masiva en /admin/tickets *)",
+      "Bash(find /c/Users/tunca/OneDrive/Desktop/Github/ravehub-web-app/lib -name \"*.ts\" -type f | grep -E \"\\(types|type\\)\" | head -20)",
+      "Bash(git commit -m 'Mejoras completas en sistema de tickets, perfil y configuración *)"
     ]
   }
 }

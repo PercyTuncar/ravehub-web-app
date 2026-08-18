@@ -26,6 +26,8 @@ export default function SettingsPage() {
     phonePrefix: user?.phonePrefix || '+56',
     country: user?.country || 'Chile',
     preferredCurrency: user?.preferredCurrency || 'CLP',
+    documentType: user?.documentType || 'dni',
+    documentNumber: user?.documentNumber || '',
   });
 
   // Image Upload State
@@ -292,6 +294,39 @@ export default function SettingsPage() {
                         ))}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-white/70 ml-1">Tipo de Documento</label>
+                    <div className="relative">
+                      <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <select
+                        name="documentType"
+                        value={formData.documentType}
+                        onChange={handleInputChange}
+                        className="w-full h-11 bg-black/20 border border-white/10 rounded-xl pl-10 pr-8 text-sm text-white appearance-none focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 cursor-pointer"
+                      >
+                        <option value="dni" className="bg-[#1A1D21]">DNI</option>
+                        <option value="passport" className="bg-[#1A1D21]">Pasaporte</option>
+                        <option value="rut" className="bg-[#1A1D21]">RUT</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-white/70 ml-1">Número de Documento</label>
+                    <div className="relative">
+                      <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <input
+                        name="documentNumber"
+                        value={formData.documentNumber}
+                        onChange={handleInputChange}
+                        placeholder="12345678"
+                        className="w-full h-11 bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 text-sm text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-medium"
+                      />
                     </div>
                   </div>
                 </div>

@@ -639,6 +639,127 @@ export async function countTicketsForEvent(eventId: string): Promise<{
 }
 
 /**
+ * Get all tickets for admin with related data (events and users)
+ */
+export async function getTicketsForAdmin(): Promise<{
+  success: boolean;
+  tickets: any[];
+  error?: string;
+}> {
+  'use server';
+
+  try {
+    await requireAdmin();
+
+    // Fetch last 100 tickets
+    const allTickets = await ticketTransactionsCollection.query(
+      [],
+      'createdAt',
+      'desc',
+      100
+    );
+
+    // Collect unique event and user IDs
+    const eventIds = new Set<string>();
+    const userIds = new Set<string>();
+
+    allTickets.forEach(ticket => {
+      if (ticket.eventId) eventIds.add(ticket.eventId);
+      if (ticket.userId) userIds.add(ticket.userId);
+    });
+
+    // Batch fetch events and users
+    const [events, users] = await Promise.all([
+      Promise.all(Array.from(eventIds).map(id => eventsCollection.get(id).catch(() => null))),
+      Promise.all(Array.from(userIds).map(id => usersCollection.get(id).catch(() => null)))
+    ]);
+
+    // Create lookup maps
+    const eventMap = new Map(events.filter(Boolean).map(e => [e!.id, e]));
+    const userMap = new Map(users.filter(Boolean).map(u => [u!.id, u]));
+
+    // Enrich tickets with event and user data
+    const enrichedTickets = allTickets.map(ticket => ({
+      ...ticket,
+      eventName: eventMap.get(ticket.eventId)?.name || 'Evento desconocido',
+      userEmail: userMap.get(ticket.userId)?.email || 'Usuario desconocido',
+      userName: userMap.get(ticket.userId)?.name || 'Sin nombre'
+    }));
+
+    return {
+      success: true,
+      tickets: enrichedTickets
+    };
+  } catch (error: any) {
+    console.error('Error fetching tickets:', error);
+    return {
+      success: false,
+      tickets: [],
+      error: error.message || 'Error al cargar tickets'
+    };
+  }
+}
+
+/**
+ * Get real-time statistics from the database for admin dashboard
+ */
+export async function getTicketStats(): Promise<{
+  success: boolean;
+  stats: {
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    totalSales: number;
+    currency: string;
+  };
+  error?: string;
+}> {
+  'use server';
+
+  try {
+    await requireAdmin();
+
+    // Fetch ALL tickets from database (no limit) to get accurate stats
+    const allTickets = await ticketTransactionsCollection.query([]);
+
+    const stats = {
+      total: allTickets.length,
+      pending: allTickets.filter(t => t.paymentStatus === 'pending').length,
+      approved: allTickets.filter(t => t.paymentStatus === 'approved').length,
+      rejected: allTickets.filter(t => t.paymentStatus === 'rejected').length,
+      totalSales: allTickets.reduce((sum, t) => {
+        // Only count approved tickets for total sales
+        if (t.paymentStatus === 'approved') {
+          return sum + (t.totalAmount || 0);
+        }
+        return sum;
+      }, 0),
+      currency: 'PEN' // Most common currency
+    };
+
+    return {
+      success: true,
+      stats
+    };
+  } catch (error: any) {
+    console.error('Error fetching ticket stats:', error);
+    return {
+      success: false,
+      stats: {
+        total: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        totalSales: 0,
+        currency: 'PEN'
+      },
+      error: error.message || 'Error al cargar estadísticas'
+    };
+  }
+}
+
+/**
  * Sync event download date to all existing tickets
  * Used when admin changes event date and wants to apply it to all tickets
  */

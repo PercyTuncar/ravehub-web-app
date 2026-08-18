@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, MapPin, Download, CheckCircle, Clock, XCircle, Ticket, User, Hash, CreditCard } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Download, CheckCircle, Clock, XCircle, Ticket, User, Hash, CreditCard, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { ticketTransactionsCollection, eventsCollection, usersCollection } from '@/lib/firebase/collections';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
@@ -429,8 +429,40 @@ export default function TicketDetailPage() {
                                                                 <span>Titular</span>
                                                             </div>
                                                             <p className="text-gray-900 font-bold text-sm">
-                                                                {user?.firstName} {user?.lastName}
+                                                                {buyer ? `${buyer.firstName} ${buyer.lastName}` : `${user?.firstName} ${user?.lastName}`}
                                                             </p>
+                                                        </div>
+
+                                                        {/* Document Number */}
+                                                        <div>
+                                                            <div className="flex items-center gap-1.5 text-gray-500 text-xs uppercase tracking-wider mb-1.5">
+                                                                <CreditCard className="w-3.5 h-3.5" />
+                                                                <span>Documento</span>
+                                                            </div>
+                                                            {(() => {
+                                                                const holderData = buyer || user;
+                                                                const hasDocument = holderData?.documentType && holderData?.documentNumber;
+
+                                                                if (hasDocument) {
+                                                                    return (
+                                                                        <p className="text-gray-900 font-bold text-sm">
+                                                                            {holderData.documentType.toUpperCase()}: {holderData.documentNumber}
+                                                                        </p>
+                                                                    );
+                                                                }
+
+                                                                return (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <AlertCircle className="w-4 h-4 text-amber-500" />
+                                                                        <a
+                                                                            href="/profile/settings"
+                                                                            className="text-amber-600 hover:text-amber-700 text-xs font-medium underline"
+                                                                        >
+                                                                            Actualizar perfil
+                                                                        </a>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
 
                                                         {/* Zone/Type */}
@@ -443,17 +475,17 @@ export default function TicketDetailPage() {
                                                                 {ticketData.zone}
                                                             </p>
                                                         </div>
-                                                    </div>
 
-                                                    {/* Order ID */}
-                                                    <div>
-                                                        <div className="flex items-center gap-1.5 text-gray-500 text-xs uppercase tracking-wider mb-1.5">
-                                                            <Hash className="w-3.5 h-3.5" />
-                                                            <span>Número de Orden</span>
+                                                        {/* Order ID */}
+                                                        <div>
+                                                            <div className="flex items-center gap-1.5 text-gray-500 text-xs uppercase tracking-wider mb-1.5">
+                                                                <Hash className="w-3.5 h-3.5" />
+                                                                <span>Número de Orden</span>
+                                                            </div>
+                                                            <p className="text-gray-900 font-mono font-bold text-sm">
+                                                                {ticket.id.slice(0, 12).toUpperCase()}
+                                                            </p>
                                                         </div>
-                                                        <p className="text-gray-900 font-mono font-bold text-sm">
-                                                            {ticket.id.slice(0, 12).toUpperCase()}
-                                                        </p>
                                                     </div>
                                                 </div>
 

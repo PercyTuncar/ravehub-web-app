@@ -201,7 +201,7 @@ export default function ProfileClient() {
                     {user.phone && (
                       <div className="flex items-center text-sm text-white/70">
                         <Phone className="w-4 h-4 mr-3 text-primary opacity-70" />
-                        +{user.phonePrefix} {user.phone}
+                        {user.phonePrefix} {user.phone}
                       </div>
                     )}
                     <div className="flex items-center text-sm text-white/70">
