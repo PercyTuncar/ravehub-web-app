@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ShoppingCart, Heart, Star, Plus, Minus, Truck, Shield, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,19 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<string>('');
+
+  useEffect(() => {
+    trackMarketingEvent({
+      eventId: createEventId(),
+      name: 'view_content',
+      title: `Tienda — vio ${product.name}`,
+      contentType: 'product',
+      contentIds: [product.id],
+      contentName: product.name,
+      value: product.price,
+      currency: product.currency,
+    });
+  }, [product.id, product.name, product.price, product.currency]);
 
   const updateQuantity = (delta: number) => {
     const newQuantity = quantity + delta;

@@ -65,7 +65,8 @@
       "Bash(git config *)",
       "Bash(git -C \".claude/worktrees/agent-a02bba1f85d25141c\" config --show-origin --get-regexp '^core\\\\.worktree$')",
       "PowerShell(npx tsc --noEmit 2>&1)",
-      "PowerShell(npx tsc --noEmit)"
+      "PowerShell(npx tsc --noEmit)",
+      "Bash(git commit -m 'Envuelve MarketingTracking en Suspense para SSR *)"
     ]
   }
 }

@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import { useEnhancedColorExtraction, useEventColors } from './EventColorContext';
+import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
 
 interface EventDetailHeroProps {
     event: Event;
@@ -21,6 +22,20 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
     // Enable dynamic color extraction
     useEnhancedColorExtraction(event.mainImageUrl || event.bannerImageUrl || '');
     const { colorPalette } = useEventColors();
+
+    // Track ViewContent event on mount
+    useEffect(() => {
+        trackMarketingEvent({
+            eventId: createEventId(),
+            name: 'view_content',
+            title: `Evento — vio ${event.name}`,
+            contentType: 'event',
+            contentIds: [event.id],
+            contentName: event.name,
+            value: event.salesPhases?.[0]?.zonesPricing?.[0]?.price,
+            currency: event.currency,
+        });
+    }, [event.id, event.name, event.currency, event.salesPhases]);
 
     // Countdown Logic - Safe for Hydration
     const calculateTimeLeft = () => {
