@@ -565,7 +565,9 @@ export async function createManualTicketTransaction(data: {
 
     return { success: true, ticketId };
   } catch (error: any) {
-    console.error('Error creating manual ticket:', error);
+    console.error('❌ [CREATE_MANUAL_TICKET] Error creating manual ticket:', error);
+    console.error('❌ [CREATE_MANUAL_TICKET] Error stack:', error.stack);
+    console.error('❌ [CREATE_MANUAL_TICKET] Input data:', JSON.stringify(data, null, 2));
     return { success: false, error: error.message || 'Error al crear el ticket' };
   }
 }
