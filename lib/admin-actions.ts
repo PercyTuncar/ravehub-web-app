@@ -299,7 +299,7 @@ export async function getDetailedAnalytics(timeRange: TimeRange): Promise<{ succ
         ]);
 
         // Filter approved tickets
-        const filteredTickets = tickets.filter((t: any) => 
+        const filteredTickets = tickets.filter((t: any) =>
             t.status === 'approved' || t.paymentStatus === 'approved'
         );
 
@@ -307,7 +307,13 @@ export async function getDetailedAnalytics(timeRange: TimeRange): Promise<{ succ
         const ticketsByDay = new Map<string, number>();
 
         filteredTickets.forEach((t: any) => {
-            const d = new Date(t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt);
+            // Safely parse date, skip if invalid
+            const rawDate = t.createdAt?.toDate ? t.createdAt.toDate() : t.createdAt;
+            if (!rawDate) return; // Skip tickets without createdAt
+
+            const d = new Date(rawDate);
+            if (isNaN(d.getTime())) return; // Skip invalid dates
+
             const key = d.toISOString().split('T')[0]; // YYYY-MM-DD
 
             const amount = Number(t.totalAmount || t.amount) || 0;
@@ -345,7 +351,13 @@ export async function getDetailedAnalytics(timeRange: TimeRange): Promise<{ succ
         // User Growth
         const usersByDay = new Map<string, number>();
         users.forEach((u: any) => {
-            const d = new Date(u.createdAt?.toDate ? u.createdAt.toDate() : u.createdAt || 0);
+            // Safely parse date, skip if invalid
+            const rawDate = u.createdAt?.toDate ? u.createdAt.toDate() : u.createdAt;
+            if (!rawDate) return; // Skip users without createdAt
+
+            const d = new Date(rawDate);
+            if (isNaN(d.getTime())) return; // Skip invalid dates
+
             const key = d.toISOString().split('T')[0];
             usersByDay.set(key, (usersByDay.get(key) || 0) + 1);
         });
