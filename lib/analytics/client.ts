@@ -109,10 +109,16 @@ export function trackMarketingEvent(payload: MarketingEventPayload): void {
   };
 
   // TikTok requires content_type to be "product" or "product_group" only
-  const tiktokValue = {
-    ...value,
-    content_type: 'product',
-  };
+  // But PageView should not have content_type
+  const tiktokValue = payload.name === 'page_view'
+    ? {
+        event_id: payload.eventId,
+        ...payload.metadata,
+      }
+    : {
+        ...value,
+        content_type: 'product',
+      };
 
   window.gtag?.('event', payload.name, {
     ...value,

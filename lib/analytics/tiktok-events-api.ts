@@ -191,6 +191,7 @@ export async function sendTikTokEvent(data: TikTokEventData): Promise<boolean> {
 
 /**
  * Send PageView event
+ * Note: PageView should not include user data (email/phone) per TikTok best practices
  */
 export async function sendTikTokPageView(params: {
   eventId: string;
@@ -201,7 +202,8 @@ export async function sendTikTokPageView(params: {
     eventName: 'PageView',
     eventId: params.eventId,
     timestamp: Math.floor(Date.now() / 1000),
-    userId: params.userId,
+    // Do NOT send userId for PageView - it causes validation errors
+    // userId: params.userId,
     eventSourceUrl: params.eventSourceUrl,
   });
 }
