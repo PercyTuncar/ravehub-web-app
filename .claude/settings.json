@@ -85,7 +85,9 @@
       "WebSearch",
       "WebFetch(domain:developers.facebook.com)",
       "WebFetch(domain:ceaksan.com)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "WebFetch(domain:stackoverflow.com)",
+      "WebFetch(domain:www.trackingplan.com)"
     ]
   }
 }
