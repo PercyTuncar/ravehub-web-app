@@ -3,6 +3,12 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import {
+  trackQuantityChange,
+  trackSelectInstallments,
+  trackSelectPaymentMethod,
+  trackClickWhatsApp,
+} from "@/lib/analytics/ticket-tracking";
+import {
   ArrowLeft,
   Minus,
   Plus,
@@ -895,19 +901,38 @@ function BuyTicketsContent({
   const updateTicketQuantity = (zoneId: string, quantity: number) => {
     if (activePhaseStatus !== "active") return;
 
-    setTicketSelections((prev) =>
-      prev.map((selection) =>
-        selection.zoneId === zoneId
-          ? {
-              ...selection,
-              quantity: Math.max(
-                0,
-                Math.min(quantity, selection.maxPerTransaction),
-              ),
-            }
-          : selection,
-      ),
-    );
+    setTicketSelections((prev) => {
+      const updatedSelections = prev.map((selection) => {
+        if (selection.zoneId === zoneId) {
+          const oldQuantity = selection.quantity;
+          const newQuantity = Math.max(
+            0,
+            Math.min(quantity, selection.maxPerTransaction),
+          );
+
+          // Track quantity change
+          if (oldQuantity !== newQuantity) {
+            trackQuantityChange({
+              eventId: event.id,
+              eventName: event.name,
+              zoneName: selection.zoneName,
+              zoneId: selection.zoneId,
+              newQuantity,
+              oldQuantity,
+              price: selection.price,
+              currency: event.currency || 'CLP',
+            });
+          }
+
+          return {
+            ...selection,
+            quantity: newQuantity,
+          };
+        }
+        return selection;
+      });
+      return updatedSelections;
+    });
   };
 
   const getTotalTickets = () =>
@@ -961,6 +986,27 @@ function BuyTicketsContent({
       });
     }
   }, [isInstallmentMode, availableInstallments]);
+
+  // Track payment method changes
+  useEffect(() => {
+    trackSelectPaymentMethod({
+      eventId: event.id,
+      eventName: event.name,
+      paymentMethod,
+    });
+  }, [paymentMethod, event.id, event.name]);
+
+  // Track installments selection
+  useEffect(() => {
+    if (isInstallmentMode) {
+      trackSelectInstallments({
+        eventId: event.id,
+        eventName: event.name,
+        installments,
+        enabled: true,
+      });
+    }
+  }, [installments, isInstallmentMode, event.id, event.name]);
 
   const getEventDate = (dateString: string) => {
     // Helper to parse date string and prevent timezone shifts
@@ -1165,7 +1211,14 @@ function BuyTicketsContent({
             {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE */}
             <div className="lg:hidden w-full md:w-auto mt-6 md:mt-0">
               <button
-                onClick={() => setShowWhatsAppDrawer(true)}
+                onClick={() => {
+                  trackClickWhatsApp({
+                    eventId: event.id,
+                    eventName: event.name,
+                    action: 'open_groups',
+                  });
+                  setShowWhatsAppDrawer(true);
+                }}
                 className="relative overflow-hidden flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-gradient-to-br from-[#25D366]/20 via-[#25D366]/10 to-[#128C7E]/10 border border-[#25D366]/30 hover:border-[#25D366]/50 active:scale-[0.98] transition-all group backdrop-blur-sm shadow-lg shadow-[#25D366]/10"
               >
                 {/* Shine effect */}
@@ -1760,7 +1813,14 @@ function BuyTicketsContent({
                 {/* WhatsApp Community CTA - ALWAYS VISIBLE */}
                 <div className="pt-4 border-t border-white/10">
                   <button
-                    onClick={() => setShowWhatsAppDrawer(true)}
+                    onClick={() => {
+                      trackClickWhatsApp({
+                        eventId: event.id,
+                        eventName: event.name,
+                        action: 'open_groups',
+                      });
+                      setShowWhatsAppDrawer(true);
+                    }}
                     className="relative overflow-hidden flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-[#25D366]/15 via-[#25D366]/10 to-[#128C7E]/10 border border-[#25D366]/30 hover:border-[#25D366]/50 transition-all group w-full text-left shadow-lg shadow-[#25D366]/5"
                   >
                     {/* Shine effect */}

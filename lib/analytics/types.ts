@@ -10,7 +10,10 @@ export type MarketingEventName =
   | 'complete_registration'
   | 'lead'
   | 'purchase'
-  | 'search';
+  | 'search'
+  | 'select_installments'
+  | 'select_payment_method'
+  | 'click_whatsapp';
 
 export interface AttributionContext {
   sessionId: string;
