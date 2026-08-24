@@ -29,7 +29,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
             eventId: createEventId(),
             name: 'view_content',
             title: `Evento — vio ${event.name}`,
-            contentType: 'event',
+            contentType: 'product', // Changed from 'event' to 'product' to avoid catalog mismatch warning
             contentIds: [event.id],
             contentName: event.name,
             value: event.salesPhases?.[0]?.zonesPricing?.[0]?.price,
