@@ -87,7 +87,8 @@
       "WebFetch(domain:ceaksan.com)",
       "Bash(npm run *)",
       "WebFetch(domain:stackoverflow.com)",
-      "WebFetch(domain:www.trackingplan.com)"
+      "WebFetch(domain:www.trackingplan.com)",
+      "WebFetch(domain:ads.tiktok.com)"
     ]
   }
 }

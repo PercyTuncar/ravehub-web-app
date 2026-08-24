@@ -102,6 +102,22 @@ export function EventTracking({ event, trackingType, children }: EventTrackingPr
         }),
       }).catch(err => console.warn('[CAPI] ViewContent failed:', err));
 
+      // Send to TikTok Events API (server-side backup)
+      fetch('/api/analytics/tiktok-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'ViewContent',
+          eventId,
+          contentId: event.id,
+          contentName: event.name,
+          value: lowestPrice,
+          currency: event.currency || 'CLP',
+          userId: user?.id,
+          eventSourceUrl: window.location.href,
+        }),
+      }).catch(err => console.warn('[TikTok API] ViewContent failed:', err));
+
       console.log('[Analytics] ViewContent tracked:', {
         event: event.name,
         value: lowestPrice,
@@ -144,6 +160,23 @@ export function EventTracking({ event, trackingType, children }: EventTrackingPr
           fbc,
         }),
       }).catch(err => console.warn('[CAPI] InitiateCheckout failed:', err));
+
+      // Send to TikTok Events API (server-side backup)
+      fetch('/api/analytics/tiktok-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'InitiateCheckout',
+          eventId,
+          contentIds: [event.id],
+          contentName: event.name,
+          value: lowestPrice,
+          currency: event.currency || 'CLP',
+          quantity: 1,
+          userId: user?.id,
+          eventSourceUrl: window.location.href,
+        }),
+      }).catch(err => console.warn('[TikTok API] InitiateCheckout failed:', err));
 
       console.log('[Analytics] InitiateCheckout tracked:', {
         event: event.name,

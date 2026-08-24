@@ -173,6 +173,20 @@ function RegisterContent() {
         }),
       }).catch(err => console.warn('[CAPI] CompleteRegistration failed:', err));
 
+      // Send to TikTok Events API (server-side backup)
+      fetch('/api/analytics/tiktok-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'CompleteRegistration',
+          eventId,
+          userId: 'pending',
+          email: formData.email,
+          phone: formData.phonePrefix + formData.phone,
+          eventSourceUrl: window.location.href,
+        }),
+      }).catch(err => console.warn('[TikTok API] CompleteRegistration failed:', err));
+
       // Preserve redirect URL for after email verification
       if (redirect) {
         sessionStorage.setItem('redirectAfterAuth', redirect);
@@ -224,6 +238,18 @@ function RegisterContent() {
           fbc,
         }),
       }).catch(err => console.warn('[CAPI] CompleteRegistration failed:', err));
+
+      // Send to TikTok Events API (server-side backup)
+      fetch('/api/analytics/tiktok-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'CompleteRegistration',
+          eventId,
+          userId: 'pending',
+          eventSourceUrl: window.location.href,
+        }),
+      }).catch(err => console.warn('[TikTok API] CompleteRegistration failed:', err));
 
       // Navigation will be handled by useEffect
     } catch (error: any) {

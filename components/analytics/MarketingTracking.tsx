@@ -80,6 +80,35 @@ export function MarketingTracking() {
     }
   }, [consent, user, pixelInitialized]);
 
+  // Initialize TikTok Pixel with Advanced Matching
+  useEffect(() => {
+    // ALWAYS initialize for testing - no consent check
+    if (!tiktokPixelId || !user) return;
+
+    // Build TikTok Advanced Matching object
+    const advancedMatching: any = {};
+
+    if (user.email) {
+      advancedMatching.email = user.email.trim().toLowerCase();
+    }
+
+    if (user.phone && user.phonePrefix) {
+      // TikTok requires phone in E.164 format: +[country code][number]
+      const phone = (user.phonePrefix + user.phone).replace(/\D/g, '');
+      advancedMatching.phone_number = '+' + phone;
+    }
+
+    if (user.id) {
+      advancedMatching.external_id = user.id;
+    }
+
+    // Re-identify user with Advanced Matching
+    if (Object.keys(advancedMatching).length > 0 && window.ttq) {
+      console.log('[TikTok Pixel] Identifying user with Advanced Matching:', user?.id);
+      window.ttq.identify(advancedMatching);
+    }
+  }, [user, tiktokPixelId]); // Removed consent dependency
+
   const accept = () => setConsentDecision('accepted');
 
   return (

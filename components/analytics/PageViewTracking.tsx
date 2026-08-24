@@ -193,6 +193,17 @@ export function PageViewTracking() {
       }),
     }).catch(err => console.warn('[CAPI] PageView failed:', err));
 
+    // Send to TikTok Events API (server-side backup)
+    fetch('/api/analytics/tiktok-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: 'PageView',
+        eventId,
+        eventSourceUrl: typeof window !== 'undefined' ? window.location.href : fullPath,
+      }),
+    }).catch(err => console.warn('[TikTok API] PageView failed:', err));
+
     console.log('[Analytics] PageView tracked:', {
       page: pageName,
       path: fullPath,
