@@ -99,6 +99,9 @@ export default function RootLayout({
                 </CartProvider>
               </CurrencyProvider>
             </NotificationsProvider>
+            <Suspense fallback={null}>
+              <MarketingTracking />
+            </Suspense>
           </AuthProvider>
         </ThemeProvider>
         <Toaster
@@ -129,9 +132,6 @@ export default function RootLayout({
         <SonnerToaster richColors position="top-center" closeButton />
         <SpeedInsights />
         <Analytics />
-        <Suspense fallback={null}>
-          <MarketingTracking />
-        </Suspense>
       </body>
     </html>
   )
