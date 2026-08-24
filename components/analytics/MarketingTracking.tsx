@@ -89,13 +89,24 @@ export function MarketingTracking() {
     const advancedMatching: any = {};
 
     if (user.email) {
-      advancedMatching.email = user.email.trim().toLowerCase();
+      const cleanEmail = user.email.trim().toLowerCase();
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(cleanEmail) && !cleanEmail.includes('example.com')) {
+        advancedMatching.email = cleanEmail;
+      } else {
+        console.warn('[TikTok Pixel] Invalid email format, skipping:', user.email);
+      }
     }
 
     if (user.phone && user.phonePrefix) {
       // TikTok requires phone in E.164 format: +[country code][number]
       const phone = (user.phonePrefix + user.phone).replace(/\D/g, '');
-      advancedMatching.phone_number = '+' + phone;
+      if (phone.length >= 10) {
+        advancedMatching.phone_number = '+' + phone;
+      } else {
+        console.warn('[TikTok Pixel] Invalid phone format, skipping');
+      }
     }
 
     if (user.id) {
@@ -104,7 +115,11 @@ export function MarketingTracking() {
 
     // Re-identify user with Advanced Matching
     if (Object.keys(advancedMatching).length > 0 && window.ttq) {
-      console.log('[TikTok Pixel] Identifying user with Advanced Matching:', user?.id);
+      console.log('[TikTok Pixel] Identifying user with Advanced Matching:', user?.id, {
+        hasEmail: !!advancedMatching.email,
+        hasPhone: !!advancedMatching.phone_number,
+        hasExternalId: !!advancedMatching.external_id,
+      });
       window.ttq.identify(advancedMatching);
     }
   }, [user, tiktokPixelId]); // Removed consent dependency
