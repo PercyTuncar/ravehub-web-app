@@ -9,14 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ordersCollection } from '@/lib/firebase/collections';
 import { Order } from '@/lib/types';
+import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams.get('orderId');
-  
+
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tracked, setTracked] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -36,6 +38,39 @@ function PaymentSuccessContent() {
       setLoading(false);
     }
   };
+
+  // Track purchase event once order is loaded
+  useEffect(() => {
+    if (order && !tracked) {
+      trackMarketingEvent({
+        eventId: createEventId(),
+        name: 'purchase',
+        title: `Compra Exitosa — Tienda`,
+        transactionId: order.id,
+        value: order.totalAmount,
+        currency: order.currency,
+        contentType: 'product',
+        contentIds: order.orderItems.map(item => item.productId),
+        contentName: order.orderItems.map(item => item.name).join(', '),
+        quantity: order.orderItems.reduce((sum, item) => sum + item.quantity, 0),
+        metadata: {
+          payment_method: 'mercadopago',
+          order_status: order.status,
+          shipping_city: order.shippingAddress?.city,
+          shipping_country: order.shippingAddress?.country,
+        },
+      });
+
+      console.log('[Analytics] Purchase tracked:', {
+        orderId: order.id,
+        value: order.totalAmount,
+        currency: order.currency,
+        items: order.orderItems.length,
+      });
+
+      setTracked(true);
+    }
+  }, [order, tracked]);
 
   if (loading) {
     return (

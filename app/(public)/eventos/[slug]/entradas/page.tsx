@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Sparkles, Music, ShieldCheck, Info } from 'lucide-react';
 import { BTSRegistrationModal } from '@/components/tickets/bts-registration-modal';
+import { EventTracking } from '@/components/analytics/EventTracking';
 
 export const revalidate = 180;
 
@@ -251,6 +252,9 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
     <>
       {/* JSON-LD Schema including Event, Offers, FAQ, Breadcrumb */}
       <StructuredData event={event} />
+
+      {/* Meta Pixel: Track InitiateCheckout event */}
+      <EventTracking event={event} trackingType="initiate_checkout" />
 
       {/* Client Component for Interactive UI */}
       <BuyTicketsClient event={event} eventDjs={eventDjs}>

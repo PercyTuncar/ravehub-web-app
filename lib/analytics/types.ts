@@ -9,7 +9,8 @@ export type MarketingEventName =
   | 'begin_checkout'
   | 'complete_registration'
   | 'lead'
-  | 'purchase';
+  | 'purchase'
+  | 'search';
 
 export interface AttributionContext {
   sessionId: string;

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   getConsentDecision,
   setConsentDecision,
@@ -16,8 +17,10 @@ const tiktokPixelId = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 export function MarketingTracking() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const [consent, setConsent] = useState<'accepted' | 'rejected' | null>(null);
   const [showBanner, setShowBanner] = useState(false);
+  const [pixelInitialized, setPixelInitialized] = useState(false);
 
   useEffect(() => {
     const current = getConsentDecision();
@@ -33,6 +36,46 @@ export function MarketingTracking() {
     window.addEventListener('ravehub:consent-changed', handleChange);
     return () => window.removeEventListener('ravehub:consent-changed', handleChange);
   }, []);
+
+  // Initialize Meta Pixel with Advanced Matching when user is available
+  useEffect(() => {
+    if (consent !== 'accepted' || !window.fbq || pixelInitialized) return;
+
+    // Build Advanced Matching object
+    const advancedMatching: Record<string, string> = {};
+
+    if (user) {
+      if (user.email) {
+        advancedMatching.em = user.email.toLowerCase().trim();
+      }
+      if (user.firstName) {
+        advancedMatching.fn = user.firstName.toLowerCase().replace(/[^a-z]/g, '');
+      }
+      if (user.lastName) {
+        advancedMatching.ln = user.lastName.toLowerCase().replace(/[^a-z]/g, '');
+      }
+      if (user.phone && user.phonePrefix) {
+        // Remove all non-digits and combine with prefix
+        const cleanPhone = (user.phonePrefix + user.phone).replace(/\D/g, '');
+        advancedMatching.ph = cleanPhone;
+      }
+      if (user.country) {
+        advancedMatching.country = user.country.toLowerCase();
+      }
+      if (user.id) {
+        advancedMatching.external_id = user.id;
+      }
+      // Optional: add more fields if available
+      // ge: gender, db: birthdate (YYYYMMDD), ct: city, st: state, zp: postal code
+    }
+
+    // Re-initialize pixel with Advanced Matching
+    if (Object.keys(advancedMatching).length > 0) {
+      console.log('[Meta Pixel] Initializing with Advanced Matching for user:', user?.id);
+      window.fbq('init', metaPixelId!, advancedMatching);
+      setPixelInitialized(true);
+    }
+  }, [consent, user, pixelInitialized]);
 
   useEffect(() => {
     if (consent !== 'accepted') return;

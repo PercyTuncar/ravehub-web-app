@@ -4,11 +4,50 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Ticket, UserPlus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
 
 export default function PurchaseSuccessPage() {
     const searchParams = useSearchParams();
     const email = searchParams?.get('email');
     const ticketId = searchParams?.get('ticketId');
+    const value = searchParams?.get('value');
+    const currency = searchParams?.get('currency');
+    const eventName = searchParams?.get('eventName');
+    const [tracked, setTracked] = useState(false);
+
+    // Track purchase event once
+    useEffect(() => {
+        if (!tracked && ticketId) {
+            const purchaseValue = value ? parseFloat(value) : undefined;
+
+            trackMarketingEvent({
+                eventId: createEventId(),
+                name: 'purchase',
+                title: `Compra Exitosa — ${eventName || 'Entrada'}`,
+                transactionId: ticketId,
+                value: purchaseValue,
+                currency: currency || 'CLP',
+                contentType: 'product',
+                contentIds: [ticketId],
+                contentName: eventName || 'Entrada para evento',
+                quantity: 1,
+                metadata: {
+                    purchase_category: 'ticket',
+                    event_name: eventName,
+                },
+            });
+
+            console.log('[Analytics] Ticket Purchase tracked:', {
+                ticketId,
+                value: purchaseValue,
+                currency,
+                eventName,
+            });
+
+            setTracked(true);
+        }
+    }, [tracked, ticketId, value, currency, eventName]);
 
     return (
         <div className="min-h-screen bg-[#141618] flex items-center justify-center p-6">

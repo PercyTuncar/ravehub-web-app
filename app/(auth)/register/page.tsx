@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Loader2, Mail, Lock, User, Phone, FileText, Check, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { validatePassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
+import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
 
 const getPasswordRequirements = (password: string) => ({
   length: password.length >= 8,
@@ -137,6 +138,18 @@ function RegisterContent() {
         preferredCurrency: 'CLP',
         role: 'user',
       });
+
+      // Track registration completion
+      trackMarketingEvent({
+        eventId: createEventId(),
+        name: 'complete_registration',
+        title: 'Registro Completado — Email',
+        metadata: {
+          registration_method: 'email',
+          country: formData.country,
+        },
+      });
+
       // Preserve redirect URL for after email verification
       if (redirect) {
         sessionStorage.setItem('redirectAfterAuth', redirect);
@@ -159,6 +172,17 @@ function RegisterContent() {
 
     try {
       await signInWithGoogle();
+
+      // Track registration completion
+      trackMarketingEvent({
+        eventId: createEventId(),
+        name: 'complete_registration',
+        title: 'Registro Completado — Google',
+        metadata: {
+          registration_method: 'google',
+        },
+      });
+
       // Navigation will be handled by useEffect
     } catch (error: any) {
       setError('Error al registrarse con Google. Intenta nuevamente.');

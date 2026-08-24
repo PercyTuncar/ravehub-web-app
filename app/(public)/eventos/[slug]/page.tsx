@@ -24,6 +24,7 @@ import { EventPricingTable } from '@/components/events/EventPricingTable';
 import { EventStageMap } from '@/components/events/EventStageMap';
 import { EventPaymentInfo } from '@/components/events/EventPaymentInfo';
 import { PreventAutoScroll } from '@/components/events/PreventAutoScroll';
+import { EventTracking } from '@/components/analytics/EventTracking';
 
 // ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
 export const revalidate = 180;
@@ -180,6 +181,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
     <>
       {/* JSON-LD Schemas - Rendered as separate script tags for better validator compatibility */}
       <JsonLdArray data={schemas} id="event-schema" />
+
+      {/* Meta Pixel: Track ViewContent event */}
+      <EventTracking event={event} trackingType="view" />
+
       <EventColorProvider>
         <ForceDarkMode />
         <PreventAutoScroll />

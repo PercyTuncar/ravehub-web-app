@@ -83,7 +83,16 @@ export function TermsModal({ isOpen, onOpenChange, onAccept }: TermsModalProps) 
                             </div>
 
                             <div className="space-y-2">
-                                <h4 className="font-medium text-zinc-200">Artículo 5: Mora, Actualización de Precio y Abandono (Cláusula Especial)</h4>
+                                <h4 className="font-medium text-zinc-200">Artículo 5: Tarifas Regulares, Cuotas y Beneficios Externos</h4>
+                                <ul className="list-disc pl-5 space-y-1 marker:text-zinc-600">
+                                    <li><span className="text-zinc-300">5.1. Tarifa regular y comisión de ticketera:</span> Ravehub comercializa los tickets tomando como referencia la tarifa regular informada para la fase de venta correspondiente. En algunos eventos, Ravehub puede ofrecer entradas a esa misma tarifa regular sin añadir comisión de ticketera; por esta razón, el precio final publicado en Ravehub puede ser inferior al precio ofrecido en otros canales que sí incorporen dicha comisión. Cuando esta condición aplique, se reflejará en el precio mostrado durante la compra.</li>
+                                    <li><span className="text-zinc-300">5.2. Pago en cuotas sin intereses:</span> El pago en cuotas ofrecido por Ravehub no incorpora intereses financieros sobre el precio regular. Sin perjuicio de lo anterior, los pagos realizados fuera de plazo pueden estar sujetos a las medidas, recargos o penalidades por mora indicados en estos términos y condiciones.</li>
+                                    <li><span className="text-zinc-300">5.3. Descuentos de terceros:</span> Ravehub opera de forma independiente de bancos, emisores de tarjetas y otras entidades. Por ello, los descuentos, promociones, cuotas sin interés o beneficios que dichas entidades ofrezcan no se aplican automáticamente a las compras realizadas en Ravehub, salvo que se anuncien expresamente en la plataforma.</li>
+                                </ul>
+                            </div>
+
+                            <div className="space-y-2">
+                                <h4 className="font-medium text-zinc-200">Artículo 6: Mora, Actualización de Precio y Abandono (Cláusula Especial)</h4>
                                 <p>Para proteger la integridad del inventario de tickets y compensar el bloqueo de stock, se establecen las siguientes consecuencias escalonadas en caso de impago:</p>
 
                                 <div className="mt-2 space-y-4 pl-4 border-l border-zinc-800">
@@ -116,7 +125,7 @@ export function TermsModal({ isOpen, onOpenChange, onAccept }: TermsModalProps) 
                             <h3 className="text-base font-medium text-white/80 border-b border-zinc-800 pb-2">Título III: Política de Cambios, Upgrades y Cancelaciones</h3>
 
                             <div className="space-y-2">
-                                <h4 className="font-medium text-zinc-200">Artículo 6: Regla de "Solo Upgrades"</h4>
+                                <h4 className="font-medium text-zinc-200">Artículo 7: Regla de "Solo Upgrades"</h4>
                                 <ul className="list-disc pl-5 space-y-1 marker:text-zinc-600">
                                     <li><span className="text-zinc-300">6.1. No Cambios:</span> No se permiten cambios de fecha, lugar o asiento a solicitud del Usuario, salvo lo dispuesto en este artículo.</li>
                                     <li><span className="text-zinc-300">6.2. Upgrades (Mejora de Ticket):</span> Ravehub fomenta la mejora de la experiencia. El Usuario podrá solicitar cambiar su ticket a una categoría superior (ej. de General a VIP) sujeto a disponibilidad, pagando la diferencia de precio y el cargo administrativo correspondiente.</li>
@@ -125,7 +134,7 @@ export function TermsModal({ isOpen, onOpenChange, onAccept }: TermsModalProps) 
                             </div>
 
                             <div className="space-y-2">
-                                <h4 className="font-medium text-zinc-200">Artículo 7: Modificaciones Sustanciales y Lineup</h4>
+                                <h4 className="font-medium text-zinc-200">Artículo 8: Modificaciones Sustanciales y Lineup</h4>
                                 <ul className="list-disc pl-5 space-y-1 marker:text-zinc-600">
                                     <li><span className="text-zinc-300">7.1. Concepto de Festival:</span> En eventos masivos, el Usuario adquiere una experiencia integral. La grilla de artistas es referencial y dinámica.</li>
                                     <li><span className="text-zinc-300">7.2.</span> La cancelación, retraso o modificación de artistas no faculta al Usuario para solicitar la devolución, salvo que la cancelación afecte a más del 60% de la programación total.</li>
@@ -133,7 +142,7 @@ export function TermsModal({ isOpen, onOpenChange, onAccept }: TermsModalProps) 
                             </div>
 
                             <div className="space-y-2">
-                                <h4 className="font-medium text-zinc-200">Artículo 8: Cancelación y Fuerza Mayor</h4>
+                                <h4 className="font-medium text-zinc-200">Artículo 9: Cancelación y Fuerza Mayor</h4>
                                 <ul className="list-disc pl-5 space-y-1 marker:text-zinc-600">
                                     <li><span className="text-zinc-300">8.1. Suspensión por Fuerza Mayor:</span> En caso de que el evento no pueda realizarse por fuerza mayor, será reprogramado.</li>
                                     <li><span className="text-zinc-300">8.2. Validez del Ticket:</span> El Ticket será válido para la nueva fecha. Si el Usuario no puede asistir, tendrá un plazo de 7 días desde el anuncio para solicitar devolución.</li>
@@ -143,7 +152,7 @@ export function TermsModal({ isOpen, onOpenChange, onAccept }: TermsModalProps) 
                             </div>
 
                             <div className="space-y-2">
-                                <h4 className="font-medium text-zinc-200">Artículo 9: Limitación de Responsabilidad</h4>
+                                <h4 className="font-medium text-zinc-200">Artículo 10: Limitación de Responsabilidad</h4>
                                 <p>Ravehub no será responsable por daños indirectos, lucro cesante o gastos conexos incurridos por el Usuario derivados de la cancelación o modificación del evento. La responsabilidad máxima se limita al valor nominal del ticket pagado.</p>
                             </div>
                         </section>
