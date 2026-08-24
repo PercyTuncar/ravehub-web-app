@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { createEventId, trackMarketingEvent, getConsentDecision } from '@/lib/analytics/client';
+import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
 import { Event } from '@/lib/types';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface EventTrackingProps {
   event: Event;
@@ -12,8 +13,11 @@ interface EventTrackingProps {
 
 /**
  * Component to automatically track Meta Pixel events for the event detail and ticket pages
+ * Now includes CAPI (server-side) backup to recover events blocked by ad blockers
  */
 export function EventTracking({ event, trackingType, children }: EventTrackingProps) {
+  const { user } = useAuth();
+
   useEffect(() => {
     // Always track - no consent check for testing
     // Calculate lowest price for value
@@ -55,8 +59,12 @@ export function EventTracking({ event, trackingType, children }: EventTrackingPr
 
     const eventId = createEventId();
 
+    // Get fbp and fbc cookies for CAPI
+    const fbp = document.cookie.split('; ').find(row => row.startsWith('_fbp='))?.split('=')[1];
+    const fbc = document.cookie.split('; ').find(row => row.startsWith('_fbc='))?.split('=')[1];
+
     if (trackingType === 'view') {
-      // Track ViewContent event
+      // Track ViewContent event (browser)
       trackMarketingEvent({
         eventId,
         name: 'view_content',
@@ -76,13 +84,31 @@ export function EventTracking({ event, trackingType, children }: EventTrackingPr
         },
       });
 
+      // Send to CAPI (server-side backup to bypass ad blockers)
+      fetch('/api/analytics/capi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'ViewContent',
+          eventId,
+          contentId: event.id,
+          contentName: event.name,
+          value: lowestPrice,
+          currency: event.currency || 'CLP',
+          userId: user?.id,
+          eventSourceUrl: window.location.href,
+          fbp,
+          fbc,
+        }),
+      }).catch(err => console.warn('[CAPI] ViewContent failed:', err));
+
       console.log('[Analytics] ViewContent tracked:', {
         event: event.name,
         value: lowestPrice,
         currency: event.currency,
       });
     } else if (trackingType === 'initiate_checkout') {
-      // Track InitiateCheckout event
+      // Track InitiateCheckout event (browser)
       trackMarketingEvent({
         eventId,
         name: 'begin_checkout',
@@ -100,13 +126,32 @@ export function EventTracking({ event, trackingType, children }: EventTrackingPr
         },
       });
 
+      // Send to CAPI (server-side backup to bypass ad blockers)
+      fetch('/api/analytics/capi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'InitiateCheckout',
+          eventId,
+          contentIds: [event.id],
+          contentName: event.name,
+          value: lowestPrice,
+          currency: event.currency || 'CLP',
+          numItems: 1,
+          userId: user?.id,
+          eventSourceUrl: window.location.href,
+          fbp,
+          fbc,
+        }),
+      }).catch(err => console.warn('[CAPI] InitiateCheckout failed:', err));
+
       console.log('[Analytics] InitiateCheckout tracked:', {
         event: event.name,
         value: lowestPrice,
         currency: event.currency,
       });
     }
-  }, [event, trackingType]);
+  }, [event, trackingType, user]);
 
   return <>{children}</>;
 }

@@ -139,9 +139,10 @@ function RegisterContent() {
         role: 'user',
       });
 
-      // Track registration completion
+      // Track registration completion (browser)
+      const eventId = createEventId();
       trackMarketingEvent({
-        eventId: createEventId(),
+        eventId,
         name: 'complete_registration',
         title: 'Registro Completado — Email',
         metadata: {
@@ -149,6 +150,28 @@ function RegisterContent() {
           country: formData.country,
         },
       });
+
+      // Send to CAPI (server-side backup to bypass ad blockers)
+      const fbp = document.cookie.split('; ').find(row => row.startsWith('_fbp='))?.split('=')[1];
+      const fbc = document.cookie.split('; ').find(row => row.startsWith('_fbc='))?.split('=')[1];
+
+      fetch('/api/analytics/capi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'CompleteRegistration',
+          eventId,
+          userId: 'pending', // Will be set after user is created
+          userEmail: formData.email,
+          userPhone: formData.phonePrefix + formData.phone,
+          userFirstName: formData.firstName,
+          userLastName: formData.lastName,
+          userCountry: formData.country,
+          eventSourceUrl: window.location.href,
+          fbp,
+          fbc,
+        }),
+      }).catch(err => console.warn('[CAPI] CompleteRegistration failed:', err));
 
       // Preserve redirect URL for after email verification
       if (redirect) {
@@ -173,15 +196,34 @@ function RegisterContent() {
     try {
       await signInWithGoogle();
 
-      // Track registration completion
+      // Track registration completion (browser)
+      const eventId = createEventId();
       trackMarketingEvent({
-        eventId: createEventId(),
+        eventId,
         name: 'complete_registration',
         title: 'Registro Completado — Google',
         metadata: {
           registration_method: 'google',
         },
       });
+
+      // Send to CAPI (server-side backup to bypass ad blockers)
+      const fbp = document.cookie.split('; ').find(row => row.startsWith('_fbp='))?.split('=')[1];
+      const fbc = document.cookie.split('; ').find(row => row.startsWith('_fbc='))?.split('=')[1];
+
+      fetch('/api/analytics/capi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'CompleteRegistration',
+          eventId,
+          userId: 'pending',
+          userEmail: 'pending', // Will be available after Google auth
+          eventSourceUrl: window.location.href,
+          fbp,
+          fbc,
+        }),
+      }).catch(err => console.warn('[CAPI] CompleteRegistration failed:', err));
 
       // Navigation will be handled by useEffect
     } catch (error: any) {
