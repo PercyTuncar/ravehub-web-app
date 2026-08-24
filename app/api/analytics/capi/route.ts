@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   sendViewContentCAPI,
   sendInitiateCheckoutCAPI,
-  sendCompleteRegistrationCAPI
+  sendCompleteRegistrationCAPI,
+  sendMetaCAPIEvent
 } from '@/lib/analytics/capi-events';
 
 /**
@@ -31,6 +32,20 @@ export async function POST(request: NextRequest) {
     let success = false;
 
     switch (eventName) {
+      case 'PageView':
+        success = await sendMetaCAPIEvent({
+          eventName: 'PageView',
+          eventId,
+          eventTime: Math.floor(Date.now() / 1000),
+          eventSourceUrl: params.eventSourceUrl,
+          actionSource: 'website',
+          userData: {
+            fbp: params.fbp,
+            fbc: params.fbc,
+          },
+        });
+        break;
+
       case 'ViewContent':
         success = await sendViewContentCAPI({
           eventId,

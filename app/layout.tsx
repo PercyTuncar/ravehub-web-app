@@ -15,6 +15,7 @@ import { Toaster as SonnerToaster } from 'sonner'
 import './globals.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { MarketingTracking } from '@/components/analytics/MarketingTracking'
+import { PageViewTracking } from '@/components/analytics/PageViewTracking'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -101,6 +102,7 @@ export default function RootLayout({
             </NotificationsProvider>
             <Suspense fallback={null}>
               <MarketingTracking />
+              <PageViewTracking />
             </Suspense>
           </AuthProvider>
         </ThemeProvider>

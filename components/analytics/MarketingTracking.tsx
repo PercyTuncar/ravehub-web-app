@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   getConsentDecision,
   setConsentDecision,
-  trackMarketingEvent,
 } from '@/lib/analytics/client';
 
 const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
@@ -15,8 +13,6 @@ const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 const tiktokPixelId = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 
 export function MarketingTracking() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [consent, setConsent] = useState<'accepted' | 'rejected' | null>(null);
   const [showBanner, setShowBanner] = useState(false);
@@ -83,16 +79,6 @@ export function MarketingTracking() {
       setPixelInitialized(true);
     }
   }, [consent, user, pixelInitialized]);
-
-  useEffect(() => {
-    // Always track page view for testing (no consent check)
-    trackMarketingEvent({
-      eventId: crypto.randomUUID(),
-      name: 'page_view',
-      title: 'Navegación — visitó página',
-      pagePath: `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ''}`,
-    });
-  }, [pathname, searchParams]);
 
   const accept = () => setConsentDecision('accepted');
 
