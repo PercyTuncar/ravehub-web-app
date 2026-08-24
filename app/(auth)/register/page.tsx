@@ -10,6 +10,7 @@ import { Loader2, Mail, Lock, User, Phone, FileText, Check, AlertCircle, ArrowRi
 import { validatePassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
 import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
+import { trackGA4SignUp } from '@/lib/analytics/ga4-tracking';
 
 const getPasswordRequirements = (password: string) => ({
   length: password.length >= 8,
@@ -151,6 +152,9 @@ function RegisterContent() {
         },
       });
 
+      // Track to GA4
+      trackGA4SignUp('email');
+
       // Send to CAPI (server-side backup to bypass ad blockers)
       const fbp = document.cookie.split('; ').find(row => row.startsWith('_fbp='))?.split('=')[1];
       const fbc = document.cookie.split('; ').find(row => row.startsWith('_fbc='))?.split('=')[1];
@@ -220,6 +224,9 @@ function RegisterContent() {
           registration_method: 'google',
         },
       });
+
+      // Track to GA4
+      trackGA4SignUp('google');
 
       // Send to CAPI (server-side backup to bypass ad blockers)
       const fbp = document.cookie.split('; ').find(row => row.startsWith('_fbp='))?.split('=')[1];

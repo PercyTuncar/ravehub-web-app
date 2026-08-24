@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, Ticket, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
+import { trackGA4Purchase } from '@/lib/analytics/ga4-tracking';
 
 export default function PurchaseSuccessPage() {
     const searchParams = useSearchParams();
@@ -37,6 +38,22 @@ export default function PurchaseSuccessPage() {
                     event_name: eventName,
                 },
             });
+
+            // Track to GA4 (ecommerce purchase)
+            if (purchaseValue && ticketId) {
+                trackGA4Purchase({
+                    transaction_id: ticketId,
+                    currency: currency || 'CLP',
+                    value: purchaseValue,
+                    items: [{
+                        item_id: ticketId,
+                        item_name: eventName || 'Entrada para evento',
+                        item_category: 'ticket',
+                        price: purchaseValue,
+                        quantity: 1,
+                    }],
+                });
+            }
 
             console.log('[Analytics] Ticket Purchase tracked:', {
                 ticketId,

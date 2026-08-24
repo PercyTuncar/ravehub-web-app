@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
+import { trackGA4ViewItem, trackGA4BeginCheckout } from '@/lib/analytics/ga4-tracking';
 import { Event } from '@/lib/types';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
@@ -84,6 +85,21 @@ export function EventTracking({ event, trackingType, children }: EventTrackingPr
         },
       });
 
+      // Track to GA4 (ecommerce view_item)
+      trackGA4ViewItem({
+        currency: event.currency || 'CLP',
+        value: lowestPrice,
+        items: [{
+          item_id: event.id,
+          item_name: event.name,
+          item_category: event.musicGenre || 'electronic',
+          item_category2: event.location.city,
+          item_category3: event.location.country,
+          price: lowestPrice,
+          quantity: 1,
+        }],
+      });
+
       // Send to CAPI (server-side backup to bypass ad blockers)
       fetch('/api/analytics/capi', {
         method: 'POST',
@@ -140,6 +156,20 @@ export function EventTracking({ event, trackingType, children }: EventTrackingPr
           event_city: event.location.city,
           checkout_step: 1,
         },
+      });
+
+      // Track to GA4 (ecommerce begin_checkout)
+      trackGA4BeginCheckout({
+        currency: event.currency || 'CLP',
+        value: lowestPrice,
+        items: [{
+          item_id: event.id,
+          item_name: event.name,
+          item_category: event.musicGenre || 'electronic',
+          item_category2: event.location.city,
+          price: lowestPrice,
+          quantity: 1,
+        }],
       });
 
       // Send to CAPI (server-side backup to bypass ad blockers)

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
+import { trackGA4PageView } from '@/lib/analytics/ga4-tracking';
 
 /**
  * Get human-readable page name from pathname
@@ -171,6 +172,13 @@ export function PageViewTracking() {
         page_location: typeof window !== 'undefined' ? window.location.href : fullPath,
         page_title: typeof document !== 'undefined' ? document.title : pageName,
       },
+    });
+
+    // Track to GA4 with custom page title
+    trackGA4PageView({
+      pageTitle: pageName,
+      pagePath: fullPath,
+      pageLocation: typeof window !== 'undefined' ? window.location.href : fullPath,
     });
 
     // Send to CAPI (server-side backup)

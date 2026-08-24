@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
+import { trackGA4AddToCart, trackGA4RemoveFromCart } from '@/lib/analytics/ga4-tracking';
 
 /**
  * Track user interactions on ticket purchase flow
@@ -48,6 +49,19 @@ export function trackAddToCart(params: {
     },
   });
 
+  // Track to GA4 (ecommerce add_to_cart)
+  trackGA4AddToCart({
+    currency: params.currency,
+    value: params.price * params.quantity,
+    items: [{
+      item_id: params.eventId,
+      item_name: params.eventName,
+      item_category: params.zoneName,
+      price: params.price,
+      quantity: params.quantity,
+    }],
+  });
+
   console.log('[Analytics] AddToCart tracked:', {
     event: params.eventName,
     zone: params.zoneName,
@@ -80,6 +94,18 @@ export function trackRemoveFromCart(params: {
       quantity: params.quantity,
       unit_price: params.price,
     },
+  });
+
+  // Track to GA4 (ecommerce remove_from_cart)
+  trackGA4RemoveFromCart({
+    currency: params.currency,
+    value: params.price * params.quantity,
+    items: [{
+      item_id: params.eventId,
+      item_name: params.eventName,
+      price: params.price,
+      quantity: params.quantity,
+    }],
   });
 
   console.log('[Analytics] RemoveFromCart tracked:', {

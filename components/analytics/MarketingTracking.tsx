@@ -124,6 +124,24 @@ export function MarketingTracking() {
     }
   }, [user, tiktokPixelId]); // Removed consent dependency
 
+  // Configure GA4 User ID when user is logged in
+  useEffect(() => {
+    if (!gaId || !user || !window.gtag) return;
+
+    // Set User ID for cross-device tracking
+    window.gtag('config', gaId, {
+      user_id: user.id,
+    });
+
+    // Set User Properties
+    window.gtag('set', 'user_properties', {
+      user_type: 'registered',
+      user_country: user.country || 'unknown',
+    });
+
+    console.log('[GA4] User configured:', user.id);
+  }, [user, gaId]);
+
   const accept = () => setConsentDecision('accepted');
 
   return (
@@ -137,7 +155,10 @@ export function MarketingTracking() {
 function gtag(){dataLayer.push(arguments);}
 window.gtag = gtag;
 gtag('js', new Date());
-gtag('config', '${gaId}', { send_page_view: false });`}
+gtag('config', '${gaId}', {
+  send_page_view: false,
+  cookie_flags: 'SameSite=None;Secure'
+});`}
           </Script>
         </>
       )}
