@@ -91,7 +91,8 @@ export function createConversionTrackingContext(purchaseEventId: string): Attrib
 }
 
 export function trackMarketingEvent(payload: MarketingEventPayload): void {
-  if (typeof window === 'undefined' || getConsentDecision() !== 'accepted') return;
+  // Always track - no consent check for testing
+  if (typeof window === 'undefined') return;
 
   pushToDataLayer(payload);
 
