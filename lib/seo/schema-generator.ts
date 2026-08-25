@@ -97,6 +97,55 @@ export function safeJSONStringify(value: unknown): string {
   return JSON.stringify(value).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
 }
 export class SchemaGenerator {
+  private static getOfferAvailability(
+    zonePricing: any,
+    phase: any,
+    eventStatus: string,
+    eventEndDate?: string
+  ): string {
+    // Event cancelled or draft = sold out
+    if (eventStatus === 'cancelled' || eventStatus === 'draft') {
+      return 'https://schema.org/SoldOut';
+    }
+
+    // Check if event has already ended
+    if (eventEndDate) {
+      const now = new Date();
+      const eventEnd = new Date(eventEndDate);
+      if (now > eventEnd) {
+        return 'https://schema.org/SoldOut';
+      }
+    }
+
+    // Check if phase has ended
+    if (phase.endDate) {
+      const now = new Date();
+      const phaseEnd = new Date(phase.endDate);
+      if (now > phaseEnd) {
+        return 'https://schema.org/SoldOut';
+      }
+    }
+
+    // Check available tickets
+    const available = zonePricing.available;
+    if (typeof available === 'number' && available <= 0) {
+      return 'https://schema.org/SoldOut';
+    }
+
+    return 'https://schema.org/InStock';
+  }
+
+  private static mapEventStatus(status: string): string {
+    const statusMap: Record<string, string> = {
+      'published': 'https://schema.org/EventScheduled',
+      'cancelled': 'https://schema.org/EventCancelled',
+      'postponed': 'https://schema.org/EventPostponed',
+      'rescheduled': 'https://schema.org/EventRescheduled',
+      'soldout': 'https://schema.org/EventScheduled', // soldout is not a status, it's availability
+    };
+    return statusMap[status] || 'https://schema.org/EventScheduled';
+  }
+
   private static get BASE_URL() {
     // Always use production URL for schema generation (Google ignores localhost)
     const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -361,13 +410,37 @@ export class SchemaGenerator {
       : undefined;
 
     const performers = Array.isArray(eventData.artistLineup) && eventData.artistLineup.length > 0
-      ? eventData.artistLineup.map((artist: any) => ({
-        '@type': 'Person',
-        name: artist.name,
-        ...(artist.instagram ? {
-          sameAs: [`https://instagram.com/${artist.instagram.replace('@', '')}`]
-        } : {})
-      }))
+      ? eventData.artistLineup.map((artist: any) => {
+        const performer: any = {
+          '@type': artist.type === 'group' || artist.type === 'band' ? 'MusicGroup' : 'Person',
+          name: artist.name,
+        };
+
+        // Add image if available
+        if (artist.imageUrl) {
+          performer.image = artist.imageUrl;
+        }
+
+        // Add social links
+        const sameAs: string[] = [];
+        if (artist.instagram) {
+          sameAs.push(`https://instagram.com/${artist.instagram.replace('@', '')}`);
+        }
+        if (artist.spotify) {
+          sameAs.push(artist.spotify);
+        }
+        if (artist.soundcloud) {
+          sameAs.push(artist.soundcloud);
+        }
+        if (artist.facebook) {
+          sameAs.push(artist.facebook);
+        }
+        if (sameAs.length > 0) {
+          performer.sameAs = sameAs;
+        }
+
+        return performer;
+      })
       : undefined;
 
     const ticketUrl = eventData.externalTicketUrl && eventData.externalTicketUrl.startsWith('http')
@@ -415,7 +488,12 @@ export class SchemaGenerator {
               category: zone.category || zone.name || 'General',
               price: zonePricing.price,
               priceCurrency: eventData.currency || 'PEN',
-              availability: 'https://schema.org/InStock',
+              availability: SchemaGenerator.getOfferAvailability(
+                zonePricing,
+                phase,
+                eventData.eventStatus || 'published',
+                eventData.endDate || eventData.startDate
+              ),
               url: ticketUrl,
               seller: { '@id': `${baseUrl}/#organization` },
             };
@@ -457,10 +535,18 @@ export class SchemaGenerator {
       ...(eventData.organizer.phone ? { telephone: eventData.organizer.phone } : {}),
     } : { '@id': `${baseUrl}/#organization` };
 
-    // Helper para limpiar URLs de Firebase (remover query params completos)
+    // Helper para limpiar URLs de Firebase (mantener token si existe)
     const cleanFirebaseUrl = (url?: string) => {
       if (!url) return undefined;
-      return url.split('?')[0]; // Remover todos los query params
+      // Keep the URL as-is to preserve access tokens
+      return url;
+    };
+
+    const getImageAlt = (key: string) => {
+      if (eventData.imageAltTexts && eventData.imageAltTexts[key]) {
+        return eventData.imageAltTexts[key];
+      }
+      return `${eventData.name} - ${key}`;
     };
 
     const imageObjects = [];
@@ -471,7 +557,7 @@ export class SchemaGenerator {
         url: getReadableFirebaseUrl(cleanFirebaseUrl(eventData.squareImageUrl)),
         width: 1080,
         height: 1080,
-        caption: `${eventData.name} (1:1)`
+        caption: getImageAlt('square')
       });
     }
 
@@ -481,7 +567,7 @@ export class SchemaGenerator {
         url: getReadableFirebaseUrl(cleanFirebaseUrl(eventData.mainImageUrl)),
         width: 1200,
         height: 675,
-        caption: eventData.name
+        caption: getImageAlt('main')
       });
     }
 
@@ -489,9 +575,9 @@ export class SchemaGenerator {
       imageObjects.push({
         '@type': 'ImageObject',
         url: getReadableFirebaseUrl(cleanFirebaseUrl(eventData.bannerImageUrl)),
-        width: 1200,
-        height: 675,
-        caption: `${eventData.name} Banner`
+        width: 1920,
+        height: 1080,
+        caption: getImageAlt('banner')
       });
     }
 
@@ -546,7 +632,7 @@ export class SchemaGenerator {
       url: eventUrl,
       description: eventData.seoDescription || eventData.shortDescription || eventData.description,
       inLanguage: normalizeLanguage(eventData.inLanguage),
-      eventStatus: 'https://schema.org/EventScheduled',
+      eventStatus: SchemaGenerator.mapEventStatus(eventData.eventStatus || 'published'),
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       isAccessibleForFree: eventData.isAccessibleForFree === true || eventData.isAccessibleForFree === 'true', // Boolean dinámico del formulario
       startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
@@ -562,7 +648,10 @@ export class SchemaGenerator {
       ...(performers ? { performer: performers } : {}),
       ...(offers.length > 0 ? { offers } : {}),
       ...(subEvents && subEvents.length > 0 ? { subEvent: subEvents } : {}),
-      ...(capacity ? { maximumAttendeeCapacity: capacity } : {}),
+      ...(capacity ? {
+        maximumAttendeeCapacity: capacity,
+        maximumPhysicalAttendeeCapacity: capacity
+      } : {}),
       audience: {
         '@type': 'PeopleAudience',
         requiredMinAge: minAge,
@@ -971,7 +1060,7 @@ export class SchemaGenerator {
         description: eventData.seoDescription || eventData.shortDescription || eventData.description,
         inLanguage: normalizeLanguage(eventData.inLanguage),
         mainEntityOfPage: { '@id': pageId },
-        eventStatus: 'https://schema.org/EventScheduled',
+        eventStatus: SchemaGenerator.mapEventStatus(eventData.eventStatus || 'published'),
         eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
         isAccessibleForFree: eventData.isAccessibleForFree === true || eventData.isAccessibleForFree === 'true', // Boolean dinámico
         startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime),
@@ -1184,7 +1273,7 @@ export class SchemaGenerator {
       name: eventData.name,
       description: description,
       startDate: formatDateWithTimezone(eventData.startDate, eventData.startTime, eventData.timezone),
-      eventStatus: 'https://schema.org/EventScheduled',
+      eventStatus: SchemaGenerator.mapEventStatus(eventData.eventStatus || 'published'),
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       isAccessibleForFree: eventData.isAccessibleForFree || false,
     };
@@ -1440,7 +1529,7 @@ export class SchemaGenerator {
             width: 1200,
             height: 675,
           })),
-          eventStatus: 'https://schema.org/EventScheduled',
+          eventStatus: SchemaGenerator.mapEventStatus(event.eventStatus || 'published'),
           eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
           startDate: event.startDate,
           endDate: event.endDate,
@@ -1525,7 +1614,7 @@ export class SchemaGenerator {
             width: 1200,
             height: 675,
           })),
-          eventStatus: 'https://schema.org/EventScheduled',
+          eventStatus: SchemaGenerator.mapEventStatus(event.eventStatus || 'published'),
           eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
           startDate: event.startDate,
           endDate: event.endDate,
@@ -1888,7 +1977,7 @@ export class SchemaGenerator {
           name: event.name,
           description: event.description || `Evento ${event.name} en ${addressLocality}`,
           url: eventUrl,
-          eventStatus: 'https://schema.org/EventScheduled',
+          eventStatus: SchemaGenerator.mapEventStatus(event.eventStatus || 'published'),
           eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
           startDate: formatDate(event.startDate),
           endDate: event.endDate ? formatDate(event.endDate) : undefined,

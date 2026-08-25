@@ -88,7 +88,9 @@
       "Bash(npm run *)",
       "WebFetch(domain:stackoverflow.com)",
       "WebFetch(domain:www.trackingplan.com)",
-      "WebFetch(domain:ads.tiktok.com)"
+      "WebFetch(domain:ads.tiktok.com)",
+      "Read(//c/Users/tunca/OneDrive/OneDrive/Desktop/Github/ravehub-web-app/app/\\\\\\(public\\\\\\)/eventos/\\\\[slug\\\\]/**)",
+      "Bash(curl -s http://localhost:3000/eventos/zamna-lima-peru-2026/entradas)"
     ]
   }
 }

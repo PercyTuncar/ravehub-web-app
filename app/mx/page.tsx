@@ -2,78 +2,23 @@ import type { Metadata } from 'next'
 import { getEventsByCountry } from '@/lib/data-fetching'
 import { Event } from '@/lib/types'
 import JsonLd from '@/components/seo/JsonLd'
+import { CountrySchemaGenerator } from '@/lib/seo/country-schema-generator'
+import { generateMetadataForCountry, generateSEOContent } from '@/lib/seo/generate-country-pages'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Calendar, MapPin, Users, Clock, ArrowRight } from 'lucide-react'
+import { Calendar, MapPin, Clock, ArrowRight, Zap, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { CountryFAQ } from '@/components/seo/CountryFAQ'
+import { COUNTRY_FAQS } from '@/lib/seo/country-faqs'
+import { Breadcrumbs } from '@/components/ui/breadcrumbs'
+import { CountryAbout } from '@/components/seo/CountryAbout'
+import { COUNTRY_ABOUT } from '@/lib/seo/country-about'
 
-// ISR: Revalidate every 10 minutes (600 seconds)
 export const revalidate = 600
-
-export const metadata: Metadata = {
-  title: 'Eventos de Música Electrónica en México | Ravehub',
-  description: 'Descubre todos los eventos de música electrónica en México. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más en CDMX, Guadalajara, Monterrey y todo México.',
-  keywords: ['eventos México', 'música electrónica México', 'festivales EDM México', 'conciertos México', 'techno México', 'house México', 'trance México', 'entradas México', 'CDMX', 'Guadalajara', 'Monterrey'],
-  alternates: { canonical: 'https://www.ravehublatam.com/mx/' },
-  robots: { index: true, follow: true },
-  openGraph: {
-    type: 'website',
-    url: 'https://www.ravehublatam.com/mx/',
-    title: 'Eventos de Música Electrónica en México | Ravehub',
-    description: 'Compra entradas oficiales para los mejores eventos de música electrónica en México.',
-    siteName: 'Ravehub',
-    images: [
-      {
-        url: 'https://www.ravehublatam.com/static/og-image-mexico.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Eventos de música electrónica en México - Ravehub'
-      }
-    ]
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Eventos de Música Electrónica en México | Ravehub',
-    description: 'Compra entradas oficiales para los mejores eventos de música electrónica en México.',
-    images: ['https://www.ravehublatam.com/static/og-image-mexico.jpg']
-  }
-}
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "CollectionPage",
-      "@id": "https://www.ravehublatam.com/mx/#webpage",
-      "url": "https://www.ravehublatam.com/mx/",
-      "name": "Eventos de Música Electrónica en México | Ravehub",
-      "description": "Descubre todos los eventos de música electrónica en México. Compra entradas oficiales para festivales, clubes y conciertos de techno, house, trance y más.",
-      "isPartOf": {
-        "@id": "https://www.ravehublatam.com/#website"
-      },
-      "about": {
-        "@type": "Place",
-        "name": "México",
-        "address": {
-          "@type": "PostalAddress",
-          "addressCountry": "MX"
-        }
-      },
-      "mainEntity": {
-        "@type": "ItemList",
-        "name": "Eventos de música electrónica en México",
-        "description": "Lista completa de eventos de música electrónica disponibles en México"
-      },
-      "inLanguage": "es-419",
-      "datePublished": "2023-01-15T00:00:00+00:00",
-      "dateModified": "2025-10-26T01:30:00+00:00"
-    }
-  ]
-}
 
 async function getMexicoEvents(): Promise<Event[]> {
   try {
@@ -85,206 +30,198 @@ async function getMexicoEvents(): Promise<Event[]> {
   }
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  const events = await getMexicoEvents()
+  return generateMetadataForCountry('MX', events) || {
+    title: 'Eventos de Música Electrónica en México | Ravehub',
+    description: 'Descubre eventos de música electrónica en México'
+  }
+}
+
 export default async function MexicoPage() {
   const events = await getMexicoEvents()
+  const schemaGenerator = new CountrySchemaGenerator('MX')
+  const jsonLd = schemaGenerator.generateCountryPageSchema(events)
+  const seoContent = generateSEOContent('MX', events)
+
+  const upcomingEvents = events.filter(e => new Date(e.startDate) >= new Date())
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-black">
       <JsonLd id="mexico-page-jsonld" data={jsonLd} />
 
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-purple-300 bg-clip-text text-transparent">
-            Eventos en México
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 text-gray-200">
-            La potencia electrónica de Norteamérica
-          </p>
+      <Breadcrumbs items={[
+        { label: 'Eventos', href: '/eventos' },
+        { label: 'México', href: '/mx' }
+      ]} />
 
-          {/* Trust Bullets */}
-          <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm md:text-base" role="list" aria-label="Características de confianza">
-            <div className="flex items-center gap-2" role="listitem">
-              <div className="w-2 h-2 bg-success rounded-full" aria-hidden="true"></div>
-              <span>Entradas 100% oficiales</span>
-            </div>
-            <div className="flex items-center gap-2" role="listitem">
-              <div className="w-2 h-2 bg-success rounded-full" aria-hidden="true"></div>
-              <span>Lineups verificados</span>
-            </div>
-            <div className="flex items-center gap-2" role="listitem">
-              <div className="w-2 h-2 bg-success rounded-full" aria-hidden="true"></div>
-              <span>Soporte en español</span>
-            </div>
-          </div>
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover z-0" preload="auto">
+          <source src="/videos/mexico-hero-bg.mp4" type="video/mp4" />
+        </video>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/eventos" className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors text-center" aria-label="Ver todos los eventos en México">
-              Ver todos los eventos
-            </a>
-            <a href="#eventos" className="border-2 border-white text-white hover:bg-white hover:text-purple-900 font-semibold py-3 px-8 rounded-lg transition-colors text-center" aria-label="Explorar eventos destacados">
-              Explorar destacados
-            </a>
-          </div>
+        <div className="absolute inset-0 z-10">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-black/85" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-green-900/25 via-transparent to-black/35" />
         </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="py-12 px-4 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">{events.length}</div>
-              <div className="text-gray-600">Eventos activos</div>
+        <div className="relative z-20 max-w-7xl mx-auto px-4 w-full">
+          <div className="grid grid-rows-3 gap-8 h-[80vh]">
+            <div className="row-span-2 flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+                  <div className="text-white mb-3">Eventos de Música Electrónica en</div>
+                  <div className="text-green-500 text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold">México</div>
+                </h1>
+              </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">12</div>
-              <div className="text-gray-600">Ciudades principales</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">80+</div>
-              <div className="text-gray-600">DJ's internacionales</div>
+
+            <div className="row-span-1 flex items-center justify-center">
+              <div className="max-w-3xl mx-auto text-center">
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 leading-relaxed font-light">
+                  {seoContent?.bodyText}
+                </p>
+                {upcomingEvents.length > 0 && <p className="text-sm text-gray-400 mt-4">{seoContent?.statsText}</p>}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Events Section */}
-      <section id="eventos" className="py-16 px-4 bg-white">
+      <div className="relative z-30 -mt-20">
+        <div className="h-20 bg-gradient-to-b from-transparent to-black" />
+        <div className="bg-black">
+          <section className="py-20 px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-green-400 to-red-600 bg-clip-text text-transparent">
+                  Música Electrónica en Todo México
+                </h2>
+                <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                  Festivales y eventos de techno, house, trance y más géneros en las principales ciudades del país
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8">
+                <div className="text-center group">
+                  <div className="bg-gradient-to-br from-green-500/20 to-red-600/10 rounded-3xl p-8 border border-green-500/20 hover:border-green-500/40 transition-all duration-500 hover:scale-105">
+                    <div className="text-4xl md:text-5xl font-bold text-green-400 mb-3">{upcomingEvents.length}</div>
+                    <div className="text-gray-200 text-lg font-medium">Eventos Próximos</div>
+                    <div className="text-sm text-gray-400 mt-2">En todo México</div>
+                  </div>
+                </div>
+                <div className="text-center group">
+                  <div className="bg-gradient-to-br from-green-500/20 to-red-600/10 rounded-3xl p-8 border border-green-500/20 hover:border-green-500/40 transition-all duration-500 hover:scale-105">
+                    <div className="text-4xl md:text-5xl font-bold text-green-400 mb-3 flex items-center justify-center gap-3">
+                      {[...new Set(events.map(e => e.location.city))].filter(Boolean).length}
+                      <MapPin className="w-8 h-8" />
+                    </div>
+                    <div className="text-gray-200 text-lg font-medium">Ciudades</div>
+                    <div className="text-sm text-gray-400 mt-2">CDMX, Guadalajara y más</div>
+                  </div>
+                </div>
+                <div className="text-center group">
+                  <div className="bg-gradient-to-br from-green-500/20 to-red-600/10 rounded-3xl p-8 border border-green-500/20 hover:border-green-500/40 transition-all duration-500 hover:scale-105">
+                    <div className="text-4xl md:text-5xl font-bold text-green-400 mb-3 flex items-center justify-center gap-3">
+                      {events.reduce((acc, e) => acc + (e.artistLineup?.length || 0), 0)}
+                      <Zap className="w-8 h-8" />
+                    </div>
+                    <div className="text-gray-200 text-lg font-medium">Artistas</div>
+                    <div className="text-sm text-gray-400 mt-2">DJs nacionales e internacionales</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section id="eventos" className="py-20 px-4 bg-gradient-to-b from-green-950/30 via-black to-red-950/30">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Próximos eventos en México</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Desde CDMX hasta Tijuana, descubre los mejores eventos de música electrónica de México.
-          </p>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">{seoContent?.eventsSectionTitle}</h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">{seoContent?.eventsSectionDescription}</p>
+          </div>
 
-          {events.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-500 mb-4">
-                <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">No hay eventos programados actualmente</p>
-                <p className="text-sm text-gray-400 mt-2">¡Vuelve pronto para ver las próximas fechas!</p>
+          {upcomingEvents.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="bg-gray-900/50 rounded-3xl p-12 border border-gray-700/50">
+                <p className="text-2xl text-gray-300 mb-4">Próximamente nuevos eventos</p>
+                <p className="text-gray-500">Mantente atento a las novedades de música electrónica en México</p>
               </div>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {events.slice(0, 9).map((event) => (
-                <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="relative h-48">
-                    <Image
-                      src={event.mainImageUrl || '/placeholder-event.jpg'}
-                      alt={event.name}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <Badge variant="secondary" className="bg-purple-500 text-white">
-                        {event.eventType === 'festival' ? 'Festival' : event.eventType === 'concert' ? 'Concierto' : 'Club'}
-                      </Badge>
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {upcomingEvents.slice(0, 9).map((event) => (
+                  <Card key={event.id} className="group overflow-hidden bg-gray-900/50 border-gray-700/50 hover:border-green-500/50 transition-all duration-500">
+                    <div className="relative h-48 overflow-hidden">
+                      <Image
+                        src={event.mainImageUrl || '/placeholder-event.jpg'}
+                        alt={`${event.name} - Evento de música electrónica en ${event.location.city}, México`}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      <div className="absolute top-4 left-4 flex gap-2">
+                        <Badge className="bg-green-500/90 text-black backdrop-blur-sm border-0">
+                          {event.eventType === 'festival' ? 'Festival' : 'Evento'}
+                        </Badge>
+                        {event.isHighlighted && (
+                          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-1">
+                            <Star className="w-4 h-4 text-black" />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">{event.name}</h3>
-                    <div className="space-y-2 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>{format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        <span>{event.location.city || event.location.venue}, {event.location.region}</span>
-                      </div>
-                      {event.startTime && (
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          <span>{event.startTime}</span>
+
+                    <CardContent className="p-6">
+                      <h3 className="font-bold text-xl mb-3 text-white group-hover:text-green-300 transition-colors line-clamp-2">{event.name}</h3>
+                      <div className="space-y-3 text-sm mb-6">
+                        <div className="flex items-center gap-3 text-gray-400">
+                          <Calendar className="w-4 h-4 text-green-400" />
+                          <span className="font-medium">{format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })}</span>
                         </div>
-                      )}
-                    </div>
-                    <Link href={`/eventos/${event.slug}`}>
-                      <Button className="w-full bg-purple-500 hover:bg-purple-600">
-                        Ver evento
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        <div className="flex items-center gap-3 text-gray-400">
+                          <MapPin className="w-4 h-4 text-green-400" />
+                          <span>{event.location.city || event.location.venue}, {event.location.region}</span>
+                        </div>
+                        {event.startTime && (
+                          <div className="flex items-center gap-3 text-gray-400">
+                            <Clock className="w-4 h-4 text-green-400" />
+                            <span>{event.startTime}</span>
+                          </div>
+                        )}
+                      </div>
+                      <Link href={`/eventos/${event.slug}`} className="block">
+                        <Button className="w-full bg-gradient-to-r from-green-600 to-red-600 hover:from-green-500 hover:to-red-500 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                          <span>Ver Entradas</span>
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {upcomingEvents.length > 9 && (
+                <div className="text-center mt-16">
+                  <Link href="/eventos?country=MX">
+                    <Button variant="outline" size="lg" className="border-green-500/50 text-green-400 hover:bg-green-500/10">
+                      {seoContent?.ctaText}
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </>
           )}
-
-          {events.length > 9 && (
-            <div className="text-center mt-12">
-              <Link href="/eventos">
-                <Button variant="outline" size="lg">
-                  Ver todos los eventos en México
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* Cities Section */}
-      <section className="py-16 px-4 bg-gray-50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ciudades principales</h2>
-          <p className="text-gray-600 mb-8">
-            Explora eventos por ciudad en México
-          </p>
+      <CountryAbout data={COUNTRY_ABOUT.MX} />
 
-          <div className="flex flex-wrap justify-center gap-4" role="list" aria-label="Ciudades principales de México">
-            {[
-              { name: 'CDMX', count: events.filter(e => e.location.city?.toLowerCase().includes('ciudad de méxico') || e.location.city?.toLowerCase().includes('cdmx')).length },
-              { name: 'Guadalajara', count: events.filter(e => e.location.city?.toLowerCase().includes('guadalajara')).length },
-              { name: 'Monterrey', count: events.filter(e => e.location.city?.toLowerCase().includes('monterrey')).length },
-              { name: 'Tijuana', count: events.filter(e => e.location.city?.toLowerCase().includes('tijuana')).length },
-              { name: 'Puebla', count: events.filter(e => e.location.city?.toLowerCase().includes('puebla')).length },
-              { name: 'Mérida', count: events.filter(e => e.location.city?.toLowerCase().includes('mérida')).length },
-              { name: 'León', count: events.filter(e => e.location.city?.toLowerCase().includes('león')).length },
-              { name: 'Cancún', count: events.filter(e => e.location.city?.toLowerCase().includes('cancún')).length }
-            ].map((city) => (
-              <a
-                key={city.name}
-                href={`/eventos?region=${city.name.toLowerCase()}`}
-                className="px-6 py-3 bg-purple-50 hover:bg-purple-100 text-purple-800 hover:text-purple-900 dark:bg-purple-900/20 dark:hover:bg-purple-800/30 dark:text-purple-200 dark:hover:text-purple-100 rounded-full transition-colors"
-                aria-label={`Explorar eventos en ${city.name} (${city.count} eventos)`}
-                role="listitem"
-              >
-                {city.name} {city.count > 0 && `(${city.count})`}
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="py-16 px-4 bg-purple-900 text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">No te pierdas el próximo rave en México</h2>
-          <p className="text-purple-100 mb-8">
-            Recibe preventas exclusivas y lineups de los mejores eventos en México.
-          </p>
-
-          <form className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto" aria-label="Suscripción al newsletter de México">
-            <input
-              type="email"
-              placeholder="Tu email"
-              className="flex-1 px-4 py-3 rounded-lg text-gray-900"
-              aria-label="Dirección de email"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
-              aria-label="Suscribirse al newsletter"
-            >
-              Quiero recibir novedades
-            </button>
-          </form>
-        </div>
-      </section>
+      <CountryFAQ countryName="México" faqs={COUNTRY_FAQS.MX} />
     </main>
   )
 }

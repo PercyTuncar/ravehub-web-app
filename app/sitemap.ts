@@ -19,10 +19,46 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: baseUrl,
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 1,
+      priority: 1.0,
     },
     {
       url: `${baseUrl}/eventos`,
+      lastModified: new Date(),
+      changeFrequency: 'hourly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/pe`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/cl`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/co`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/ec`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/mx`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/ar`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
@@ -31,38 +67,86 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 0.9,
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/djs`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
-      priority: 0.8,
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/tienda`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
-      priority: 0.8,
+      priority: 0.5,
     },
   ];
 
   try {
-    // Add published events
+    // Add published events - include ALL published events (past and future) for historical value
+    // Past events have SEO value as they build domain authority and historical content
     const events = await eventsCollection.query(
       [{ field: 'eventStatus', operator: '==', value: 'published' }],
       'createdAt',
       'desc'
     );
 
+    const now = new Date();
+
     events.forEach((event: any) => {
+      // Skip cancelled, draft, or events with invalid slugs
+      if (!event.slug || typeof event.slug !== 'string' || event.slug.trim() === '') {
+        return;
+      }
+
+      // Skip cancelled events - they shouldn't be indexed
+      if (event.eventStatus === 'cancelled') {
+        return;
+      }
+
       const lastModified = toValidDate(event.updatedAt || event.createdAt);
+      const eventDate = toValidDate(event.startDate);
+      const isPastEvent = eventDate && eventDate < now;
+
+      // Calculate priority based on event timing and country
+      let priority = 0.8;
+      if (!isPastEvent && eventDate) {
+        const daysUntilEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysUntilEvent <= 7) {
+          priority = 0.95; // High priority for events within a week
+        } else if (daysUntilEvent <= 30) {
+          priority = 0.9; // Medium-high for events within a month
+        } else if (daysUntilEvent <= 90) {
+          priority = 0.85; // Good priority for events within 3 months
+        }
+      } else if (isPastEvent) {
+        priority = 0.5; // Lower priority for past events (but still indexed for historical value)
+      }
+
+      // Add event detail page - included for historical/informational value
       sitemap.push({
         url: `${baseUrl}/eventos/${event.slug}`,
         lastModified,
-        changeFrequency: 'weekly',
-        priority: 0.8,
+        changeFrequency: isPastEvent ? 'monthly' : 'daily',
+        priority,
       });
+
+      // Add ticket page ONLY for upcoming events selling on platform and not sold out
+      // Past events, cancelled, or soldout shouldn't have ticket pages indexed
+      if (
+        event.sellTicketsOnPlatform &&
+        !isPastEvent &&
+        event.eventStatus !== 'soldout' &&
+        event.eventStatus !== 'cancelled'
+      ) {
+        sitemap.push({
+          url: `${baseUrl}/eventos/${event.slug}/entradas`,
+          lastModified,
+          changeFrequency: 'daily',
+          priority: 0.7,
+        });
+      }
     });
 
     // Add blog posts
@@ -77,8 +161,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       sitemap.push({
         url: `${baseUrl}/blog/${post.slug}`,
         lastModified,
-        changeFrequency: 'weekly',
-        priority: 0.8,
+        changeFrequency: 'monthly',
+        priority: 0.6,
       });
     });
 
@@ -93,7 +177,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${baseUrl}/blog?category=${category.slug}`,
         lastModified,
         changeFrequency: 'weekly',
-        priority: 0.6,
+        priority: 0.5,
       });
     });
 
@@ -108,7 +192,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${baseUrl}/blog?tag=${tag.slug}`,
         lastModified,
         changeFrequency: 'weekly',
-        priority: 0.5,
+        priority: 0.4,
       });
     });
 
@@ -129,8 +213,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           sitemap.push({
             url: `${baseUrl}/djs/${dj.slug}`,
             lastModified,
-            changeFrequency: 'weekly',
-            priority: 0.7,
+            changeFrequency: 'monthly',
+            priority: 0.5,
           });
           addedCount++;
         } else {
@@ -157,7 +241,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${baseUrl}/tienda/${product.slug}`,
         lastModified,
         changeFrequency: 'weekly',
-        priority: 0.7,
+        priority: 0.5,
       });
     });
 

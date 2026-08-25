@@ -1,0 +1,45 @@
+# Robots.txt for Ravehub - Electronic Music Events Platform
+# https://www.ravehublatam.com
+
+# Allow all bots to crawl the site
+User-agent: *
+Allow: /
+
+# High-priority content - crawl frequently
+Crawl-delay: 0
+
+# Disallow admin and API routes
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /static/
+
+# Disallow search and filter URLs with query parameters to avoid duplicate content
+Disallow: /*?*search=
+Disallow: /*?*sort=
+Disallow: /*?*page=
+
+# Allow country pages - high priority
+Allow: /pe
+Allow: /cl
+Allow: /co
+Allow: /ec
+Allow: /mx
+Allow: /ar
+
+# Allow events pages
+Allow: /eventos
+Allow: /eventos/*
+
+# Allow blog
+Allow: /blog
+Allow: /blog/*
+
+# Allow DJs and store
+Allow: /djs
+Allow: /djs/*
+Allow: /tienda
+Allow: /tienda/*
+
+# Sitemap location
+Sitemap: https://www.ravehublatam.com/sitemap.xml

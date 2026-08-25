@@ -41,7 +41,7 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
     const baseTitle = 'Eventos de Música Electrónica';
     const pageTitle = currentPage === 1 ? baseTitle : `${baseTitle} - Página ${currentPage}`;
     const filterTitle = tipo || region ? `Eventos ${tipo || ''} ${region || ''}`.trim() : '';
-    const title = filterTitle ? `${filterTitle} | Ravehub` : `${pageTitle} | Ravehub`;
+    const title = filterTitle || pageTitle;
 
     const description = filterTitle
       ? `Eventos de música electrónica ${tipo ? `tipo ${tipo}` : ''} ${region ? `en ${region}` : ''} en Latinoamérica.`
@@ -165,6 +165,118 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
     <>
       {/* JSON-LD Schema for Events List - Server Component renders before client hydration */}
       <JsonLd data={eventsListSchema} id="events-list-schema" />
+
+      {/* SEO Content - Server Rendered */}
+      <div className="relative bg-black pt-32 pb-20">
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-950/20 via-black to-black" />
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center mb-16">
+            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-6">
+              Eventos de Música Electrónica
+            </h1>
+            <p className="text-xl text-zinc-300 leading-relaxed">
+              Descubre los mejores festivales y eventos en Latinoamérica
+            </p>
+            <div className="flex items-center justify-center gap-4 mt-6 text-sm text-zinc-400">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                <span>{totalEvents} eventos</span>
+              </div>
+              <div className="w-1 h-1 rounded-full bg-zinc-600" />
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                <span>6 países</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Enlaces internos a páginas de países */}
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+              <h2 className="text-lg font-semibold text-zinc-400 uppercase tracking-wider">
+                Explora por País
+              </h2>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <Link
+                href="/pe"
+                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-red-500/50 rounded-xl p-6 text-center transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-red-500/0 to-red-600/0 group-hover:from-red-500/10 group-hover:to-red-600/5 transition-all duration-300" />
+                <div className="relative">
+                  <MapPin className="w-8 h-8 mx-auto mb-3 text-red-500" />
+                  <h3 className="font-semibold text-white mb-1">Perú</h3>
+                  <p className="text-xs text-zinc-500">Ver eventos</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/cl"
+                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-blue-500/50 rounded-xl p-6 text-center transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-blue-600/0 group-hover:from-blue-500/10 group-hover:to-blue-600/5 transition-all duration-300" />
+                <div className="relative">
+                  <MapPin className="w-8 h-8 mx-auto mb-3 text-blue-500" />
+                  <h3 className="font-semibold text-white mb-1">Chile</h3>
+                  <p className="text-xs text-zinc-500">Ver eventos</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/co"
+                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-yellow-500/50 rounded-xl p-6 text-center transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 to-yellow-600/0 group-hover:from-yellow-500/10 group-hover:to-yellow-600/5 transition-all duration-300" />
+                <div className="relative">
+                  <MapPin className="w-8 h-8 mx-auto mb-3 text-yellow-500" />
+                  <h3 className="font-semibold text-white mb-1">Colombia</h3>
+                  <p className="text-xs text-zinc-500">Ver eventos</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/ec"
+                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-yellow-500/50 rounded-xl p-6 text-center transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 to-blue-600/0 group-hover:from-yellow-500/10 group-hover:to-blue-600/5 transition-all duration-300" />
+                <div className="relative">
+                  <MapPin className="w-8 h-8 mx-auto mb-3 text-yellow-500" />
+                  <h3 className="font-semibold text-white mb-1">Ecuador</h3>
+                  <p className="text-xs text-zinc-500">Ver eventos</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/mx"
+                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-green-500/50 rounded-xl p-6 text-center transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/0 to-red-600/0 group-hover:from-green-500/10 group-hover:to-red-600/5 transition-all duration-300" />
+                <div className="relative">
+                  <MapPin className="w-8 h-8 mx-auto mb-3 text-green-500" />
+                  <h3 className="font-semibold text-white mb-1">México</h3>
+                  <p className="text-xs text-zinc-500">Ver eventos</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/ar"
+                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-sky-500/50 rounded-xl p-6 text-center transition-all duration-300"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-sky-500/0 to-sky-600/0 group-hover:from-sky-500/10 group-hover:to-sky-600/5 transition-all duration-300" />
+                <div className="relative">
+                  <MapPin className="w-8 h-8 mx-auto mb-3 text-sky-500" />
+                  <h3 className="font-semibold text-white mb-1">Argentina</h3>
+                  <p className="text-xs text-zinc-500">Ver eventos</p>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <EventsClient
         initialEvents={allEvents}

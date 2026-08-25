@@ -1,8 +1,10 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { Share2, Heart, ChevronLeft, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections';
 import { Event, EventDj } from '@/lib/types';
 import JsonLd, { JsonLdArray } from '@/components/seo/JsonLd';
@@ -72,13 +74,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
     const event = events[0] as Event;
     const url = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com'}/eventos/${slug}`;
-    const isDraft = event.eventStatus !== 'published';
+
+    // Only draft and cancelled events should not be indexed
+    // Past events (finished, completed, past) should remain indexed for historical value
+    const shouldNotIndex = event.eventStatus === 'draft' || event.eventStatus === 'cancelled';
+    const isPastEvent = event.startDate && new Date(event.startDate) < new Date();
 
     return {
       title: event.seoTitle || event.name,
       description: event.seoDescription || event.shortDescription,
       keywords: (event.seoKeywords as string[] | undefined) || event.tags,
-      robots: isDraft ? { index: false, follow: true } : { index: true, follow: true },
+      robots: shouldNotIndex ? { index: false, follow: true } : { index: true, follow: true },
       alternates: { canonical: url },
       openGraph: {
         title: event.seoTitle || event.name,
@@ -140,32 +146,16 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const data = await getEventData(slug);
 
   if (!data) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Evento no encontrado</h1>
-          <p className="text-muted-foreground mb-6">
-            El evento que buscas no existe o ha sido eliminado.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/eventos">
-              <Button>
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Ver todos los eventos
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button variant="outline">
-                Volver al inicio
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    notFound();
   }
 
   const { event, eventDjs } = data;
+
+  // Generate breadcrumbs
+  const breadcrumbItems = [
+    { label: 'Eventos', href: '/eventos' },
+    { label: event.name, href: '' }
+  ];
 
   // Generate JSON-LD schemas as separate objects for better validator compatibility
   const schemaGenerator = new SchemaGenerator();
@@ -189,6 +179,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
         <ForceDarkMode />
         <PreventAutoScroll />
         <div className="min-h-screen bg-[#141618] text-[#FAFDFF]" suppressHydrationWarning>
+          {/* SEO: Server-rendered H1 */}
+          <h1 className="sr-only">{event.name}</h1>
+
+          {/* Breadcrumbs - SEO visible navigation */}
+          <div className="container mx-auto px-4 pt-6">
+            <Breadcrumbs items={breadcrumbItems} />
+          </div>
+
           {/* Hero Section with Dynamic Colors */}
           <EventDetailHero event={event} />
 
@@ -204,6 +202,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   {/* Entradas */}
                   {event.salesPhases && event.salesPhases.length > 0 && (
                     <div className="relative z-30 w-full max-w-full overflow-visible">
+                      <h2 className="text-2xl font-bold text-white mb-6">Entradas y Precios</h2>
                       <EventPricingTable event={event} />
                     </div>
                   )}
@@ -231,6 +230,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
                   {/* Event Details */}
                   <div className="w-full max-w-full overflow-hidden">
+                    <h2 className="text-2xl font-bold text-white mb-6">Sobre el Evento</h2>
                     <EventDetails
                       description={event.description}
                       specifications={event.specifications}
@@ -241,28 +241,37 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   </div>
 
                   {/* Lineup */}
-                  <div className="w-full max-w-full overflow-hidden">
-                    <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
-                  </div>
+                  {event.artistLineup && event.artistLineup.length > 0 && (
+                    <div className="w-full max-w-full overflow-hidden">
+                      <h2 className="text-2xl font-bold text-white mb-6">Lineup</h2>
+                      <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
+                    </div>
+                  )}
 
                   {/* Stage Map */}
-                  <div className="w-full max-w-full overflow-hidden">
-                    <EventStageMap
-                      stageMapUrl={event.stageMapUrl}
-                      specifications={event.specifications}
-                    />
-                  </div>
+                  {event.stageMapUrl && (
+                    <div className="w-full max-w-full overflow-hidden">
+                      <h2 className="text-2xl font-bold text-white mb-6">Mapa del Lugar</h2>
+                      <EventStageMap
+                        stageMapUrl={event.stageMapUrl}
+                        specifications={event.specifications}
+                      />
+                    </div>
+                  )}
 
                   {/* Gallery */}
-                  <div className="w-full max-w-full overflow-hidden">
-                    <EventGallery
-                      mainImageUrl={event.mainImageUrl}
-                      imageGallery={event.imageGallery}
-                      videoGallery={event.videoGallery}
-                      videoUrl={event.videoUrl}
-                      imageAltTexts={event.imageAltTexts}
-                    />
-                  </div>
+                  {((event.imageGallery && event.imageGallery.length > 0) || (event.videoGallery && event.videoGallery.length > 0)) && (
+                    <div className="w-full max-w-full overflow-hidden">
+                      <h2 className="text-2xl font-bold text-white mb-6">Galería</h2>
+                      <EventGallery
+                        mainImageUrl={event.mainImageUrl}
+                        imageGallery={event.imageGallery}
+                        videoGallery={event.videoGallery}
+                        videoUrl={event.videoUrl}
+                        imageAltTexts={event.imageAltTexts}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Sidebar */}

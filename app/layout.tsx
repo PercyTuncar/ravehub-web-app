@@ -30,15 +30,6 @@ export const metadata: Metadata = {
   description: 'Eventos de música electrónica en LATAM. Entradas, fechas y lineups.',
   alternates: {
     canonical: '/',
-    languages: {
-      'x-default': '/',
-      'es-PE': '/pe/',
-      'es-CL': '/cl/',
-      'es-EC': '/ec/',
-      'es-CO': '/co/',
-      'es-MX': '/mx/',
-      'es-AR': '/ar/',
-    },
   },
   icons: {
     icon: '/icons/favicon.ico',
@@ -84,6 +75,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning className="dark">
+      <head>
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          as="style"
+        />
+      </head>
       <body className={`${inter.variable} ${inter.className} dark`} suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>

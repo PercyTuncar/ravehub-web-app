@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections';
 import { Event, EventDj } from '@/lib/types';
 import StructuredData from '@/components/seo/StructuredData';
@@ -151,8 +152,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const priceText = priceLabel ? ` | Desde ${priceLabel}` : '';
     const seoTitle = `Entradas ${event.name}${priceText}`;
 
+    // Validate venue to avoid undefined in description
+    const venue = event.location?.venue || event.location?.city || 'el lugar del evento';
+    const city = event.location?.city || 'Latinoamérica';
+
     // Generate description using the template
-    const seoDescription = `Compra tus entradas oficiales para ${event.name} en ${event.location.city}. Disfruta el mejor festival de ${event.musicGenre || 'música electrónica'} este ${format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })} en ${event.location.venue}.${priceLabel ? ` Tickets desde ${priceLabel}.` : ''} ¡Paga en cuotas sin intereses exclusivo en Ravehub!`;
+    const seoDescription = `Compra tus entradas oficiales para ${event.name} en ${city}. Disfruta el mejor festival de ${event.musicGenre || 'música electrónica'} este ${format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })} en ${venue}.${priceLabel ? ` Tickets desde ${priceLabel}.` : ''} ¡Paga en cuotas sin intereses exclusivo en Ravehub!`;
 
     return {
       title: seoTitle,
@@ -165,12 +170,26 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         images: event.mainImageUrl ? [{ url: event.mainImageUrl, alt: event.imageAltTexts?.main || event.name }] : [],
         type: 'website', // Better for purchase page
       },
-      other: {
-        'og:price:currency': currency,
-        'og:price:amount': lowestPrice.toString(),
-        'product:price:currency': currency,
-        'product:price:amount': lowestPrice.toString(),
+      twitter: {
+        card: 'summary_large_image',
+        title: seoTitle,
+        description: seoDescription,
+        images: event.mainImageUrl ? [{
+          url: event.mainImageUrl,
+          alt: event.imageAltTexts?.main || event.name
+        }] : [],
       },
+      ...(lowestPrice > 0 ? {
+        other: {
+          'og:price:currency': currency,
+          'og:price:amount': lowestPrice.toString(),
+          'product:price:currency': currency,
+          'product:price:amount': lowestPrice.toString(),
+        }
+      } : {}),
+      // Index ALL ticket pages (upcoming and past events)
+      // Past events show historical data and sold out status - valuable for SEO
+      // Helps Google understand event history and brand authority
       robots: {
         index: event.eventStatus !== 'draft' && event.eventStatus !== 'cancelled',
         follow: true,
@@ -234,16 +253,7 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
   const data = await getEventData(slug);
 
   if (!data || !data.event) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Evento no encontrado</h1>
-          <p className="text-muted-foreground mb-6">
-            El evento que buscas no existe o ha sido eliminado.
-          </p>
-        </div>
-      </div>
-    );
+    notFound();
   }
 
   const { event, eventDjs } = data;
@@ -270,11 +280,11 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
 
           {/* Main Description */}
           <div className="text-center space-y-6 max-w-3xl mx-auto">
-            <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">
-              Todo sobre {event.name}
-            </h2>
+            <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
+              Entradas para {event.name}
+            </h1>
             <p className="text-lg leading-relaxed text-white/60">
-              La espera ha terminado. <strong className="text-white">{event.name}</strong> llega a <strong className="text-white">{event.location.city}</strong> para una edición inolvidable en <strong className="text-white">{event.location.venue}</strong>.
+              La espera ha terminado. <strong className="text-white">{event.name}</strong> llega a <strong className="text-white">{event.location?.city || 'tu ciudad'}</strong> para una edición inolvidable en <strong className="text-white">{event.location?.venue || 'el mejor lugar'}</strong>.
               Prepárate para vivir el mejor festival de <strong className="text-orange-400">{event.musicGenre || 'música electrónica'}</strong> este <strong className="text-white">{format(new Date(event.startDate), 'dd MMMM yyyy', { locale: es })}</strong>.
             </p>
           </div>

@@ -86,7 +86,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                 {event.bannerImageUrl || event.mainImageUrl ? (
                     <Image
                         src={event.bannerImageUrl || event.mainImageUrl}
-                        alt={event.name}
+                        alt={event.imageAltTexts?.banner || event.imageAltTexts?.main || `${event.name} - Festival de música electrónica en ${event.location?.city || 'Latinoamérica'}`}
                         fill
                         className="object-cover opacity-80"
                         priority
