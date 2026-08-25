@@ -39,7 +39,7 @@ NEXT_PUBLIC_IPGEO_KEY=your_ipgeolocation_key_here
 
 # Open Exchange Rates (Primario) - https://openexchangerates.org/
 # Free tier: 1,000 requests/month
-NEXT_PUBLIC_OPENEXCHANGE_APP_ID=your_openexchangerates_app_id_here
+NEXT_OPENEXCHANGE_APP_ID=your_openexchangerates_app_id_here
 
 # ExchangeRate-API (Secundario) - https://www.exchangerate-api.com/
 # Free tier: 1,500 requests/month
@@ -68,7 +68,7 @@ NEXT_PUBLIC_CURRENCYFREAKS_KEY=your_currencyfreaks_key_here
 # 1. Registrarte en Open Exchange Rates: https://openexchangerates.org/signup/free
 # 2. Copiar tu App ID
 # 3. Crear archivo .env.local en la raíz del proyecto
-# 4. Agregar: NEXT_PUBLIC_OPENEXCHANGE_APP_ID=tu_app_id_aqui
+# 4. Agregar: NEXT_OPENEXCHANGE_APP_ID=tu_app_id_aqui
 # 5. Reiniciar el servidor: Ctrl+C y luego npm run dev
 # 6. Limpiar cache: localStorage.removeItem('ravehub_exchange_rates')
 #

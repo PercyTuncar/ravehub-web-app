@@ -75,7 +75,7 @@ Sistema completo de conversión de divisas con detección automática de ubicaci
 1. **Open Exchange Rates** (Primario)
    - Endpoint: `https://openexchangerates.org/api/latest.json?app_id=${APP_ID}`
    - Free tier: 1,000 requests/mes
-   - Requiere: `NEXT_PUBLIC_OPENEXCHANGE_APP_ID`
+   - Requiere: `NEXT_OPENEXCHANGE_APP_ID`
 
 2. **ExchangeRate-API** (Secundario)
    - Endpoint: `https://v6.exchangerate-api.com/v6/${KEY}/latest/${BASE}`
@@ -239,7 +239,7 @@ NEXT_PUBLIC_BDC_KEY=your_key_here
 NEXT_PUBLIC_IPGEO_KEY=your_key_here
 
 # Currency APIs (opcional, con fallback gratuito Frankfurter)
-NEXT_PUBLIC_OPENEXCHANGE_APP_ID=your_app_id_here
+NEXT_OPENEXCHANGE_APP_ID=your_app_id_here
 NEXT_PUBLIC_EXCHANGERATE_KEY=your_key_here
 NEXT_PUBLIC_CURRENCYFREAKS_KEY=your_key_here
 ```

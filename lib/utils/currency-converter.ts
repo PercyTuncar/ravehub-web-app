@@ -74,7 +74,7 @@ async function fetchWithTimeout(url: string, timeoutMs: number = TIMEOUT_MS): Pr
  */
 async function tryOpenExchangeRates(): Promise<ExchangeRates | null> {
   try {
-    const appId = process.env.NEXT_PUBLIC_OPENEXCHANGE_APP_ID;
+    const appId = process.env.NEXT_OPENEXCHANGE_APP_ID;
 
     if (!appId) {
       console.warn('Open Exchange Rates: No API key configured');
