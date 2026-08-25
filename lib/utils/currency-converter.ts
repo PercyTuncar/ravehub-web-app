@@ -70,133 +70,31 @@ async function fetchWithTimeout(url: string, timeoutMs: number = TIMEOUT_MS): Pr
 }
 
 /**
- * 1. Open Exchange Rates (Primario)
+ * 1. Open Exchange Rates (Primario) - Cliente llama a API route
  */
 async function tryOpenExchangeRates(): Promise<ExchangeRates | null> {
-  try {
-    const appId = process.env.NEXT_OPENEXCHANGE_APP_ID;
-
-    if (!appId) {
-      console.warn('Open Exchange Rates: No API key configured');
-      return null;
-    }
-
-    const symbols = Object.keys(SUPPORTED_CURRENCIES).join(',');
-    const url = `https://openexchangerates.org/api/latest.json?app_id=${appId}&symbols=${symbols}`;
-
-    const response = await fetchWithTimeout(url);
-
-    if (!response.ok) {
-      throw new Error(`Open Exchange Rates API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.rates) {
-      throw new Error('Open Exchange Rates: No rates data');
-    }
-
-    return {
-      base: data.base || 'USD',
-      rates: data.rates,
-      timestamp: data.timestamp * 1000 || Date.now(),
-      provider: 'OpenExchangeRates',
-    };
-  } catch (error) {
-    console.warn('Open Exchange Rates API failed:', error);
-    return null;
-  }
+  // Esta función ya no se usa directamente en el cliente
+  // Se mantiene por compatibilidad pero no debería ser llamada
+  console.warn('⚠️ tryOpenExchangeRates called directly - should use API route instead');
+  return null;
 }
 
 /**
- * 2. ExchangeRate-API (Secundario)
+ * 2. ExchangeRate-API (Secundario) - Cliente llama a API route
  */
 async function tryExchangeRateAPI(baseCurrency: string = 'USD'): Promise<ExchangeRates | null> {
-  try {
-    const key = process.env.NEXT_PUBLIC_EXCHANGERATE_KEY;
-
-    if (!key) {
-      console.warn('ExchangeRate-API: No API key configured');
-      return null;
-    }
-
-    const url = `https://v6.exchangerate-api.com/v6/${key}/latest/${baseCurrency}`;
-
-    const response = await fetchWithTimeout(url);
-
-    if (!response.ok) {
-      throw new Error(`ExchangeRate-API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (data.result !== 'success' || !data.conversion_rates) {
-      throw new Error('ExchangeRate-API: Invalid response');
-    }
-
-    // Filtrar solo las monedas soportadas
-    const filteredRates: Record<string, number> = {};
-    Object.keys(SUPPORTED_CURRENCIES).forEach(currency => {
-      if (data.conversion_rates[currency]) {
-        filteredRates[currency] = data.conversion_rates[currency];
-      }
-    });
-
-    return {
-      base: data.base_code,
-      rates: filteredRates,
-      timestamp: data.time_last_update_unix * 1000,
-      provider: 'ExchangeRate-API',
-    };
-  } catch (error) {
-    console.warn('ExchangeRate-API failed:', error);
-    return null;
-  }
+  // Esta función ya no se usa directamente en el cliente
+  console.warn('⚠️ tryExchangeRateAPI called directly - should use API route instead');
+  return null;
 }
 
 /**
- * 3. CurrencyFreaks (Terciario)
+ * 3. CurrencyFreaks (Terciario) - Cliente llama a API route
  */
 async function tryCurrencyFreaks(): Promise<ExchangeRates | null> {
-  try {
-    const apiKey = process.env.NEXT_PUBLIC_CURRENCYFREAKS_KEY;
-
-    if (!apiKey) {
-      console.warn('CurrencyFreaks: No API key configured');
-      return null;
-    }
-
-    const symbols = Object.keys(SUPPORTED_CURRENCIES).join(',');
-    const url = `https://api.currencyfreaks.com/latest?apikey=${apiKey}&symbols=${symbols}`;
-
-    const response = await fetchWithTimeout(url);
-
-    if (!response.ok) {
-      throw new Error(`CurrencyFreaks API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.rates) {
-      throw new Error('CurrencyFreaks: No rates data');
-    }
-
-    // Convertir strings a números
-    const numericRates: Record<string, number> = {};
-    Object.entries(data.rates).forEach(([currency, rate]) => {
-      numericRates[currency] = typeof rate === 'string' ? parseFloat(rate) : rate as number;
-    });
-
-    return {
-      base: data.base || 'USD',
-      rates: numericRates,
-      timestamp: Date.parse(data.date) || Date.now(),
-      provider: 'CurrencyFreaks',
-    };
-  } catch (error) {
-    console.warn('CurrencyFreaks API failed:', error);
-    return null;
-  }
+  // Esta función ya no se usa directamente en el cliente
+  console.warn('⚠️ tryCurrencyFreaks called directly - should use API route instead');
+  return null;
 }
 
 /**
@@ -232,6 +130,7 @@ function validateLatamSupport(rates: ExchangeRates): boolean {
 
 /**
  * Obtener tasas de cambio con fallback automático entre proveedores
+ * Ahora usa API route del servidor para mantener las API keys seguras
  */
 export async function getExchangeRates(baseCurrency: string = 'USD'): Promise<ExchangeRates> {
   // ⚠️ INVALIDAR CACHE DE FRANKFURTER SI EXISTE
@@ -251,17 +150,12 @@ export async function getExchangeRates(baseCurrency: string = 'USD'): Promise<Ex
     }
   }
 
-  // Verificar cache
+  // Verificar cache en memoria
   if (ratesCache) {
     const age = Date.now() - ratesCache.timestamp;
     if (age < CACHE_DURATION_MS && validateLatamSupport(ratesCache.rates)) {
       console.log('💱 [EXCHANGE] Using cached exchange rates:', ratesCache.rates.provider);
-      console.log('💱 [EXCHANGE] Base currency:', ratesCache.rates.base);
-      console.log('💱 [EXCHANGE] Available rates:', Object.keys(ratesCache.rates.rates).join(', '));
       return ratesCache.rates;
-    } else if (age < CACHE_DURATION_MS) {
-      console.warn('⚠️ [EXCHANGE] Cached provider lacks LATAM support, fetching new rates');
-      ratesCache = null;
     }
   }
 
@@ -276,9 +170,6 @@ export async function getExchangeRates(baseCurrency: string = 'USD'): Promise<Ex
           console.log('💱 [EXCHANGE] Using localStorage cached exchange rates:', parsed.rates.provider);
           ratesCache = parsed;
           return parsed.rates;
-        } else if (age < CACHE_DURATION_MS) {
-          console.warn('⚠️ [EXCHANGE] Cached provider lacks LATAM support, clearing cache');
-          localStorage.removeItem('ravehub_exchange_rates');
         }
       } catch (error) {
         console.warn('Failed to parse cached exchange rates');
@@ -286,79 +177,66 @@ export async function getExchangeRates(baseCurrency: string = 'USD'): Promise<Ex
     }
   }
 
-  // ✅ SOLO APIs con soporte completo para LATAM
-  const providers = [
-    { name: 'OpenExchangeRates', fn: () => tryOpenExchangeRates() },
-    { name: 'ExchangeRate-API', fn: () => tryExchangeRateAPI(baseCurrency) },
-    { name: 'CurrencyFreaks', fn: () => tryCurrencyFreaks() },
-  ];
+  // Llamar a la API route del servidor
+  try {
+    console.log('🔍 [EXCHANGE] Fetching rates from server API...');
+    const response = await fetch('/api/currency/exchange-rates');
 
-  // Intentar cada proveedor en secuencia
-  for (const provider of providers) {
-    console.log(`🔍 [EXCHANGE] Trying provider: ${provider.name}`);
-    const result = await provider.fn();
-
-    if (result && Object.keys(result.rates).length > 0) {
-      console.log(`✅ [EXCHANGE] Successfully connected to ${provider.name}`);
-      console.log('💱 [EXCHANGE] Base currency:', result.base);
-      console.log('💱 [EXCHANGE] Rates loaded:', Object.keys(result.rates).length);
-      console.log('💱 [EXCHANGE] Available currencies:', Object.keys(result.rates).join(', '));
-
-      // ⚠️ VALIDAR SOPORTE LATAM ANTES DE ACEPTAR
-      if (!validateLatamSupport(result)) {
-        console.error(`❌ [EXCHANGE] ${provider.name} rejected: Missing critical LATAM currencies`);
-        console.warn(`⚠️ [EXCHANGE] Skipping to next provider...`);
-        continue; // ← IMPORTANTE: Skip al siguiente provider
-      }
-
-      console.log('✅ [EXCHANGE] LATAM support validated ✓');
-      console.log('💱 [EXCHANGE] LATAM rates:', {
-        PEN: result.rates.PEN,
-        CLP: result.rates.CLP,
-        COP: result.rates.COP,
-        ARS: result.rates.ARS,
-        BRL: result.rates.BRL,
-        MXN: result.rates.MXN,
-      });
-
-      // Verificar si faltan monedas adicionales (no críticas)
-      const missingCurrencies = Object.keys(SUPPORTED_CURRENCIES).filter(
-        currency => !result.rates[currency] && currency !== result.base && !CRITICAL_LATAM_CURRENCIES.includes(currency)
-      );
-
-      if (missingCurrencies.length > 0) {
-        console.warn(`⚠️ [EXCHANGE] ${provider.name} is missing optional currencies: ${missingCurrencies.join(', ')}`);
-      }
-
-      // Guardar en cache
-      const cacheData: CachedRates = {
-        rates: result,
-        timestamp: Date.now(),
-      };
-
-      ratesCache = cacheData;
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('ravehub_exchange_rates', JSON.stringify(cacheData));
-      }
-
-      return result;
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
     }
+
+    const apiResponse = await response.json();
+
+    if (!apiResponse.success || !apiResponse.data) {
+      throw new Error('Invalid API response');
+    }
+
+    const result = apiResponse.data;
+
+    console.log(`✅ [EXCHANGE] Successfully got rates from ${result.provider}`);
+    console.log('💱 [EXCHANGE] Base currency:', result.base);
+    console.log('💱 [EXCHANGE] Rates loaded:', Object.keys(result.rates).length);
+
+    // Validar soporte LATAM
+    if (!validateLatamSupport(result)) {
+      console.error(`❌ [EXCHANGE] ${result.provider} rejected: Missing critical LATAM currencies`);
+      throw new Error('Provider lacks LATAM support');
+    }
+
+    console.log('✅ [EXCHANGE] LATAM support validated ✓');
+
+    // Guardar en cache
+    const cacheData: CachedRates = {
+      rates: result,
+      timestamp: Date.now(),
+    };
+
+    ratesCache = cacheData;
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ravehub_exchange_rates', JSON.stringify(cacheData));
+    }
+
+    return result;
+
+  } catch (error) {
+    console.error('❌ [EXCHANGE] API call failed:', error);
+
+    // Si todo falla, devolver tasas por defecto
+    console.warn('⚠️ [EXCHANGE] Using default rates as fallback');
+    const defaultRates: ExchangeRates = {
+      base: 'USD',
+      rates: Object.keys(SUPPORTED_CURRENCIES).reduce((acc, currency) => {
+        acc[currency] = 1;
+        return acc;
+      }, {} as Record<string, number>),
+      timestamp: Date.now(),
+      provider: 'default',
+    };
+
+    return defaultRates;
   }
-
-  // Si todo falla, devolver tasas por defecto (1:1 para todas las monedas)
-  console.warn('All exchange rate providers failed, using default rates');
-  const defaultRates: ExchangeRates = {
-    base: 'USD',
-    rates: Object.keys(SUPPORTED_CURRENCIES).reduce((acc, currency) => {
-      acc[currency] = 1;
-      return acc;
-    }, {} as Record<string, number>),
-    timestamp: Date.now(),
-    provider: 'default',
-  };
-
-  return defaultRates;
 }
 
 /**
