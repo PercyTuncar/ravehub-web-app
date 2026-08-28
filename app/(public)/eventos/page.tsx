@@ -166,39 +166,42 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
       {/* JSON-LD Schema for Events List - Server Component renders before client hydration */}
       <JsonLd data={eventsListSchema} id="events-list-schema" />
 
-      {/* SEO Content - Server Rendered */}
-      <div className="relative bg-black pt-32 pb-20">
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-950/20 via-black to-black" />
+      {/* SEO Content - Server Rendered (Hidden visually, visible to search engines) */}
+      <div className="sr-only">
+        <h1>Eventos de Música Electrónica</h1>
+        <p>Descubre los mejores festivales y eventos en Latinoamérica</p>
+      </div>
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center mb-16">
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-6">
-              Eventos de Música Electrónica
-            </h1>
-            <p className="text-xl text-zinc-300 leading-relaxed">
-              Descubre los mejores festivales y eventos en Latinoamérica
-            </p>
-            <div className="flex items-center justify-center gap-4 mt-6 text-sm text-zinc-400">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                <span>{totalEvents} eventos</span>
-              </div>
-              <div className="w-1 h-1 rounded-full bg-zinc-600" />
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                <span>6 países</span>
-              </div>
+      <EventsClient
+        initialEvents={allEvents}
+        currentPage={currentPage}
+        totalPages={1}
+        totalEvents={totalEvents}
+        searchParams={{ tipo, region }}
+      >
+        {/* Statistics and Country Links - Positioned after filters */}
+        <div className="mt-12 space-y-8">
+          {/* Statistics */}
+          <div className="flex items-center justify-center gap-6 text-sm text-zinc-400 bg-zinc-900/30 backdrop-blur-md border border-white/5 rounded-2xl p-6">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-purple-400" />
+              <span className="font-semibold">{totalEvents} eventos</span>
+            </div>
+            <div className="w-1 h-1 rounded-full bg-zinc-600" />
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-purple-400" />
+              <span className="font-semibold">6 países</span>
             </div>
           </div>
 
-          {/* Enlaces internos a páginas de países */}
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-8">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
-              <h2 className="text-lg font-semibold text-zinc-400 uppercase tracking-wider">
+          {/* Country Links */}
+          <div className="bg-zinc-900/30 backdrop-blur-md border border-white/5 rounded-3xl p-8">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-700 to-zinc-700" />
+              <h2 className="text-base font-semibold text-zinc-300 uppercase tracking-wider">
                 Explora por País
               </h2>
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-zinc-700 to-zinc-700" />
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -209,7 +212,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-red-500/0 to-red-600/0 group-hover:from-red-500/10 group-hover:to-red-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-red-500" />
-                  <h3 className="font-semibold text-white mb-1">Perú</h3>
+                  <h3 className="text-sm font-semibold text-white mb-1">Perú</h3>
                   <p className="text-xs text-zinc-500">Ver eventos</p>
                 </div>
               </Link>
@@ -221,7 +224,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-blue-600/0 group-hover:from-blue-500/10 group-hover:to-blue-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-blue-500" />
-                  <h3 className="font-semibold text-white mb-1">Chile</h3>
+                  <h3 className="text-sm font-semibold text-white mb-1">Chile</h3>
                   <p className="text-xs text-zinc-500">Ver eventos</p>
                 </div>
               </Link>
@@ -233,7 +236,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 to-yellow-600/0 group-hover:from-yellow-500/10 group-hover:to-yellow-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-yellow-500" />
-                  <h3 className="font-semibold text-white mb-1">Colombia</h3>
+                  <h3 className="text-sm font-semibold text-white mb-1">Colombia</h3>
                   <p className="text-xs text-zinc-500">Ver eventos</p>
                 </div>
               </Link>
@@ -245,7 +248,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 to-blue-600/0 group-hover:from-yellow-500/10 group-hover:to-blue-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-yellow-500" />
-                  <h3 className="font-semibold text-white mb-1">Ecuador</h3>
+                  <h3 className="text-sm font-semibold text-white mb-1">Ecuador</h3>
                   <p className="text-xs text-zinc-500">Ver eventos</p>
                 </div>
               </Link>
@@ -257,7 +260,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-green-500/0 to-red-600/0 group-hover:from-green-500/10 group-hover:to-red-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-green-500" />
-                  <h3 className="font-semibold text-white mb-1">México</h3>
+                  <h3 className="text-sm font-semibold text-white mb-1">México</h3>
                   <p className="text-xs text-zinc-500">Ver eventos</p>
                 </div>
               </Link>
@@ -269,22 +272,14 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-sky-500/0 to-sky-600/0 group-hover:from-sky-500/10 group-hover:to-sky-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-sky-500" />
-                  <h3 className="font-semibold text-white mb-1">Argentina</h3>
+                  <h3 className="text-sm font-semibold text-white mb-1">Argentina</h3>
                   <p className="text-xs text-zinc-500">Ver eventos</p>
                 </div>
               </Link>
             </div>
           </div>
         </div>
-      </div>
-
-      <EventsClient
-        initialEvents={allEvents}
-        currentPage={currentPage}
-        totalPages={1}
-        totalEvents={totalEvents}
-        searchParams={{ tipo, region }}
-      />
+      </EventsClient>
     </>
   );
 }

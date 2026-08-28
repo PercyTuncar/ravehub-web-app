@@ -102,7 +102,7 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ y: -5 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className={`h-full group ${isPastEvent ? 'opacity-70 hover:opacity-100 transition-all duration-500' : ''}`}
+            className={`h-full group ${isPastEvent ? 'grayscale hover:grayscale-0 transition-all duration-500' : ''}`}
         >
             <Link href={`/eventos/${event.slug}`} className="block h-full">
                 <div className="h-full bg-zinc-900/40 backdrop-blur-sm border border-white/5 rounded-3xl overflow-hidden flex flex-col group-hover:border-white/10 group-hover:bg-zinc-900/60 transition-all duration-300 relative group-hover:shadow-[0_0_30px_rgba(0,0,0,0.5)]">
@@ -114,7 +114,7 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
                                 src={event.mainImageUrl}
                                 alt={event.imageAltTexts?.main || `${event.name} - Evento de música electrónica en ${event.location?.city || 'Latinoamérica'}`}
                                 fill
-                                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                className={`object-cover transition-all duration-700 group-hover:scale-105 ${isPastEvent ? 'opacity-80 group-hover:opacity-100' : ''}`}
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                                 loading="lazy"
                                 priority={featured}

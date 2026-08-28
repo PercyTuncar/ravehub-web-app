@@ -14,11 +14,13 @@ interface EventsClientProps {
         tipo?: string;
         region?: string;
     };
+    children?: React.ReactNode;
 }
 
 export default function EventsClient({
     initialEvents,
     searchParams,
+    children,
 }: EventsClientProps) {
     // Initialize filters from searchParams if available
     const [filters, setFilters] = useState<FilterState>({
@@ -199,6 +201,9 @@ export default function EventsClient({
                                 <EventGrid events={filteredEvents} />
                             )}
                         </div>
+
+                        {/* Additional Content (Statistics and Country Links) */}
+                        {children}
                     </div>
                 </div>
             </div>
