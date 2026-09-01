@@ -15,6 +15,9 @@ import { toast } from 'sonner';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { convertCurrency, getCurrencySymbol } from '@/lib/utils/currency-converter';
 import { useState, useEffect } from 'react';
+import { isDiscountActive, getLowestPriceWithDiscount } from '@/lib/utils/discount-calculator';
+import { DiscountBadge } from './DiscountBadge';
+import { CompactDiscountTimer } from './DiscountUrgencyBanner';
 
 interface EventCardProps {
     event: Event;
@@ -26,30 +29,45 @@ interface EventCardProps {
 export default function EventCard({ event, featured = false, aspectRatio = "aspect-[4/3]", isPastEvent = false }: EventCardProps) {
     const { currency: targetCurrency } = useCurrency();
     const [displayPrice, setDisplayPrice] = useState<number>(0);
+    const [originalDisplayPrice, setOriginalDisplayPrice] = useState<number>(0);
     const [priceSymbol, setPriceSymbol] = useState<string>('S/');
     const [calculatingPrice, setCalculatingPrice] = useState(false);
 
     const isSoldOut = event.eventStatus === 'soldout' || event.eventStatus === 'cancelled';
     const isUpcoming = new Date(event.startDate).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000 && new Date(event.startDate) > new Date();
 
-    // Calculate lowest price from sales phases
-    let minPrice = Infinity;
-    event.salesPhases?.forEach(phase => {
-        if (phase.status === 'active' || phase.status === 'upcoming') {
-            phase.zonesPricing?.forEach(zone => {
-                if (zone.price < minPrice) {
-                    minPrice = zone.price;
-                }
-            });
-        }
+    // DEBUG: Log ALL events
+    console.log('EventCard:', event.name, {
+        hasDiscountField: !!event.discount,
+        discount: event.discount,
+        slug: event.slug
     });
-    if (minPrice === Infinity) minPrice = 0;
+
+    // Check if there's an active discount
+    const hasActiveDiscount = event.discount ? isDiscountActive(event) : false;
+
+    // DEBUG: Log para verificar
+    if (event.discount) {
+        console.log('Event with discount:', event.name, {
+            hasActiveDiscount,
+            discount: event.discount,
+            enabled: event.discount.enabled,
+            percentage: event.discount.percentage,
+            endDate: event.discount.endDate
+        });
+    }
+
+    // Calculate lowest price from sales phases with discount applied
+    const priceInfo = getLowestPriceWithDiscount(event);
+    const minPrice = priceInfo.price;
+    const originalPrice = priceInfo.originalPrice;
 
     // Currency Conversion Effect
     useEffect(() => {
         const updatePrice = async () => {
             if (minPrice <= 0) {
                 setDisplayPrice(0);
+                setOriginalDisplayPrice(0);
                 return;
             }
 
@@ -59,6 +77,7 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
 
             if (eventCurrency === targetCurrency) {
                 setDisplayPrice(minPrice);
+                setOriginalDisplayPrice(originalPrice);
                 return;
             }
 
@@ -66,9 +85,15 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
             try {
                 const result = await convertCurrency(minPrice, eventCurrency, targetCurrency);
                 setDisplayPrice(result.amount);
+
+                if (priceInfo.hasDiscount) {
+                    const originalResult = await convertCurrency(originalPrice, eventCurrency, targetCurrency);
+                    setOriginalDisplayPrice(originalResult.amount);
+                }
             } catch (error) {
                 console.error('Error converting currency:', error);
                 setDisplayPrice(minPrice);
+                setOriginalDisplayPrice(originalPrice);
                 setPriceSymbol(getCurrencySymbol(eventCurrency));
             } finally {
                 setCalculatingPrice(false);
@@ -76,7 +101,7 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
         };
 
         updatePrice();
-    }, [minPrice, event.currency, targetCurrency]);
+    }, [minPrice, originalPrice, event.currency, targetCurrency, priceInfo.hasDiscount]);
 
     const startDate = parseEventDate(event.startDate);
 
@@ -128,12 +153,26 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
                         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-90" />
 
                         {/* Top Badges */}
-                        <div className="absolute top-4 left-4 flex gap-2">
+                        <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
                             <Badge className="bg-white/10 backdrop-blur-md text-white border-white/10 hover:bg-white/20 transition-colors uppercase tracking-wider text-[10px] font-bold px-2 py-0.5">
                                 {event.eventType}
                             </Badge>
                             {isUpcoming && <Badge className="bg-orange-500 text-white border-none animate-pulse px-2 py-0.5 text-[10px]">PRONTO</Badge>}
+                            {hasActiveDiscount && event.discount && (
+                                <DiscountBadge
+                                    percentage={event.discount.percentage}
+                                    size="sm"
+                                    variant="default"
+                                />
+                            )}
                         </div>
+
+                        {/* Discount Timer - Bottom Left */}
+                        {hasActiveDiscount && event.discount && (
+                            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
+                                <CompactDiscountTimer endDate={event.discount.endDate} className="text-white" />
+                            </div>
+                        )}
 
                         {/* Share (Hover only) */}
                         <button
@@ -168,7 +207,7 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
                             {/* Price */}
                             <div className="flex flex-col">
                                 <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Desde</span>
-                                <div className="text-white font-bold">
+                                <div className={`font-bold ${priceInfo.hasDiscount ? 'space-y-0.5' : ''}`}>
                                     {isSoldOut ? (
                                         <span className="text-red-500">SOLD OUT</span>
                                     ) : (
@@ -176,7 +215,16 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
                                             {calculatingPrice ? (
                                                 <span className="opacity-50 text-sm">...</span>
                                             ) : (
-                                                <span>{priceSymbol} {displayPrice > 0 ? displayPrice.toLocaleString() : 'Gratis'}</span>
+                                                <>
+                                                    {priceInfo.hasDiscount && originalDisplayPrice > 0 && (
+                                                        <div className="text-xs text-zinc-500 line-through">
+                                                            {priceSymbol} {originalDisplayPrice.toLocaleString()}
+                                                        </div>
+                                                    )}
+                                                    <span className={priceInfo.hasDiscount ? 'text-green-400' : 'text-white'}>
+                                                        {priceSymbol} {displayPrice > 0 ? displayPrice.toLocaleString() : 'Gratis'}
+                                                    </span>
+                                                </>
                                             )}
                                         </>
                                     )}

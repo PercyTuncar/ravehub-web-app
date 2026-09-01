@@ -15,8 +15,9 @@ import EventsClient from '@/components/events/EventsClient';
 import { Pagination } from '@/components/ui/pagination';
 import JsonLd from '@/components/seo/JsonLd';
 
-// ISR: Revalidate every 10 minutes (600 seconds) + on-demand revalidation
-export const revalidate = 600;
+// No cache - always fetch fresh data
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ searchParams }: EventsPageProps): Promise<Metadata> {
   const { page: pageParam, tipo, region } = await searchParams;
@@ -88,11 +89,35 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
 
 async function getEvents(): Promise<Event[]> {
   try {
-    // OPTIMIZED: Use cached query to reduce repeated reads
-    // Only load published events with a reasonable limit for client-side filtering
+    // NO USE CACHE - Get fresh data directly
     const conditions = [{ field: 'eventStatus', operator: '==', value: 'published' }];
-    const allEvents = await eventsCollection.queryCached(conditions, 'startDate', 'asc', 100, 'events:published');
-    return allEvents as Event[];
+    const allEvents = await eventsCollection.query(conditions, 'startDate', 'asc', 100);
+
+    // DEBUG: Log eventos con descuento
+    const withDiscount = allEvents.filter((e: any) => e.discount);
+    console.log('🔍 [Server] Eventos con descuento:', withDiscount.length);
+
+    // CRITICAL FIX: Simplify discount object for serialization
+    const eventsWithSimplifiedDiscount = allEvents.map((event: any) => {
+      if (event.discount) {
+        return {
+          ...event,
+          discount: {
+            enabled: event.discount.enabled,
+            percentage: event.discount.percentage,
+            endDate: event.discount.endDate,
+            requireCode: event.discount.requireCode,
+            applyToPhaseId: event.discount.applyToPhaseId,
+            applyToZones: event.discount.applyToZones || [],
+          }
+        };
+      }
+      return event;
+    });
+
+    console.log('🔍 [Server] Después de simplificar:', eventsWithSimplifiedDiscount.filter((e: any) => e.discount).length);
+
+    return eventsWithSimplifiedDiscount as Event[];
   } catch (error) {
     console.error('Error loading events:', error);
     return [];

@@ -29,6 +29,9 @@ import {
   MessageCircle,
   ExternalLink,
   ShoppingCart,
+  Percent,
+  Tag,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Sheet,
@@ -53,6 +57,14 @@ import { useCurrency } from "@/lib/contexts/CurrencyContext";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { CheckoutPaymentModal } from "@/components/checkout/CheckoutPaymentModal";
 import type { CheckoutTicketItem } from "@/components/checkout/CheckoutPaymentModal";
+import {
+  isDiscountActive,
+  calculateDiscountedPrice,
+  getCurrentActivePhase,
+  validateDiscountCode
+} from "@/lib/utils/discount-calculator";
+import { DiscountCodeInput } from "@/components/events/DiscountCodeInput";
+import { DiscountBadge } from "@/components/events/DiscountBadge";
 
 import { toast } from "sonner";
 
@@ -531,6 +543,10 @@ function TicketCard({
   reservationPerTicket = DEFAULT_RESERVATION_FEE,
   extraPercentageInstallments = 0,
   extraPercentageFullPayment = 0,
+  event,
+  phaseId,
+  discountCode,
+  showDiscountPreview = false,
 }: {
   selection: TicketSelection;
   onUpdateQuantity: (q: number) => void;
@@ -544,7 +560,27 @@ function TicketCard({
   reservationPerTicket?: number;
   extraPercentageInstallments?: number;
   extraPercentageFullPayment?: number;
+  event: Event;
+  phaseId: string;
+  discountCode?: string;
+  showDiscountPreview?: boolean;
 }) {
+  // Calculate discount if applicable
+  const discountResult = calculateDiscountedPrice(
+    event,
+    selection.price,
+    phaseId,
+    selection.zoneId,
+    discountCode // Pass the validated code
+  );
+
+  // Determine if discount is potentially available but not applied yet
+  const hasActiveDiscount = event.discount ? isDiscountActive(event) : false;
+  const requiresCode = hasActiveDiscount && event.discount?.requireCode === true;
+  const discountAvailableButLocked = hasActiveDiscount && requiresCode && !discountCode && showDiscountPreview;
+
+  const finalPrice = discountResult.hasDiscount ? discountResult.discountedPrice : selection.price;
+  const hasDiscount = discountResult.hasDiscount;
   const stockPercent = Math.max(
     0,
     Math.min(
@@ -561,7 +597,7 @@ function TicketCard({
   const extraPercent = isInstallmentMode
     ? (extraPercentageInstallments ?? 0)
     : (extraPercentageFullPayment ?? 0);
-  const adjustedPrice = selection.price * (1 + extraPercent / 100);
+  const adjustedPrice = finalPrice * (1 + extraPercent / 100);
   const remainingPrice = Math.max(0, adjustedPrice - reservationPrice);
   const installmentPrice = installments > 0 ? remainingPrice / installments : 0;
 
@@ -673,13 +709,58 @@ function TicketCard({
               <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">
                 Precio
               </span>
-              <div className={`text-2xl font-black ${isExpiredPhase ? "text-zinc-500 line-through decoration-red-500/80" : "text-white"}`}>
+
+              {/* Show discount preview if available but locked */}
+              {discountAvailableButLocked && (
+                <div className="relative mb-1">
+                  <div className="text-sm text-zinc-400 mb-1 flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    <span>Con código:</span>
+                  </div>
+                  <div className="text-lg font-bold text-zinc-500 relative">
+                    <div className="absolute inset-0 bg-zinc-900/80 backdrop-blur-sm rounded flex items-center justify-center">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <ConvertedPrice
+                      amount={discountResult.discountedPrice}
+                      currency={currency}
+                      showOriginal={false}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {hasDiscount && !discountAvailableButLocked && (
+                <div className="text-sm text-zinc-500 mb-0.5 relative">
+                  <span className="relative inline-block">
+                    <ConvertedPrice
+                      amount={selection.price}
+                      currency={currency}
+                      showOriginal={false}
+                    />
+                    <span
+                      className="absolute left-0 right-0 top-1/2 h-[2px]"
+                      style={{
+                        backgroundColor: '#ef4444',
+                        transform: 'translateY(-50%) rotate(-8deg)'
+                      }}
+                    />
+                  </span>
+                </div>
+              )}
+              <div className={`text-2xl font-black flex items-center gap-2 ${isExpiredPhase ? "text-zinc-500 line-through decoration-red-500/80" : hasDiscount ? "text-green-400" : "text-white"}`}>
+                {hasDiscount && <DiscountBadge percentage={discountResult.discountPercentage} size="sm" />}
                 <ConvertedPrice
-                  amount={selection.price}
+                  amount={hasDiscount ? finalPrice : selection.price}
                   currency={currency}
                   showOriginal={false}
                 />
               </div>
+              {hasDiscount && !discountAvailableButLocked && (
+                <span className="text-xs text-green-400 mt-0.5">
+                  Ahorras <ConvertedPrice amount={discountResult.savings} currency={currency} showOriginal={false} className="inline" />
+                </span>
+              )}
             </div>
           </div>
 
@@ -769,6 +850,64 @@ function BuyTicketsContent({
 
   // State
   const [selectedPhase, setSelectedPhase] = useState<string>("");
+
+  // Discount code state
+  const [discountCodeInput, setDiscountCodeInput] = useState<string>("");
+  const [isDiscountCodeValid, setIsDiscountCodeValid] = useState<boolean>(false);
+  const [discountCodeValidated, setDiscountCodeValidated] = useState<boolean>(false);
+  const [buyWithoutDiscount, setBuyWithoutDiscount] = useState<boolean>(false); // NEW: Allow buying without discount
+  const [isValidatingCode, setIsValidatingCode] = useState<boolean>(false);
+  const [discountCodeError, setDiscountCodeError] = useState<string | null>(null);
+
+  // Check if discount requires code
+  const hasActiveDiscount = event.discount ? isDiscountActive(event) : false;
+  const requiresDiscountCode = hasActiveDiscount && event.discount?.requireCode === true;
+
+  // Determine if discount should be applied
+  const shouldApplyDiscount = hasActiveDiscount && (
+    !requiresDiscountCode || // No code required
+    isDiscountCodeValid ||   // Code is valid
+    buyWithoutDiscount === false // User hasn't chosen to buy without discount
+  );
+
+  // Handler for discount code validation
+  const handleDiscountCodeValidation = (isValid: boolean, code: string) => {
+    setIsDiscountCodeValid(isValid);
+    setDiscountCodeValidated(true);
+    if (isValid) {
+      setDiscountCodeInput(code);
+      setBuyWithoutDiscount(false); // Reset if code becomes valid
+    }
+  };
+
+  // Handler for applying discount code
+  const handleApplyDiscountCode = () => {
+    const code = discountCodeInput.trim();
+
+    if (!code) {
+      setDiscountCodeError('Por favor ingresa un código');
+      return;
+    }
+
+    setIsValidatingCode(true);
+    setDiscountCodeError(null);
+
+    // Simulate validation delay for better UX
+    setTimeout(() => {
+      const isValid = validateDiscountCode(event, code);
+
+      if (isValid) {
+        setIsDiscountCodeValid(true);
+        setDiscountCodeValidated(true);
+        setDiscountCodeError(null);
+      } else {
+        setIsDiscountCodeValid(false);
+        setDiscountCodeError('Código inválido o expirado. Verifica que el código sea correcto.');
+      }
+
+      setIsValidatingCode(false);
+    }, 800);
+  };
 
   useEffect(() => {
     const defaultPhaseId =
@@ -937,8 +1076,30 @@ function BuyTicketsContent({
 
   const getTotalTickets = () =>
     ticketSelections.reduce((acc, s) => acc + s.quantity, 0);
+
   const getTotalAmount = () =>
-    ticketSelections.reduce((acc, s) => acc + s.quantity * s.price, 0);
+    ticketSelections.reduce((acc, s) => {
+      // Only apply discount if code is valid or user hasn't chosen to buy without discount
+      const shouldApplyDiscountForCalculation = !buyWithoutDiscount && (
+        !requiresDiscountCode || isDiscountCodeValid
+      );
+
+      if (shouldApplyDiscountForCalculation) {
+        // Calculate discounted price for each selection
+        const discountResult = calculateDiscountedPrice(
+          event,
+          s.price,
+          activePhaseData?.id ?? "",
+          s.zoneId,
+          isDiscountCodeValid ? discountCodeInput : undefined
+        );
+        const finalPrice = discountResult.hasDiscount ? discountResult.discountedPrice : s.price;
+        return acc + s.quantity * finalPrice;
+      } else {
+        // Use regular price
+        return acc + s.quantity * s.price;
+      }
+    }, 0);
   const totalTickets = getTotalTickets();
   const totalAmountBase = getTotalAmount();
   const reservationBreakdown = useMemo(
@@ -1241,6 +1402,235 @@ function BuyTicketsContent({
         <div className="order-3 grid lg:grid-cols-[1fr_380px] gap-8 relative items-start">
           {/* Left Column: Selection */}
           <div className="space-y-8">
+            {/* DISCOUNT SECTION - Consolidated single card with dynamic colors and guaranteed contrast */}
+            {requiresDiscountCode && !isDiscountCodeValid && !buyWithoutDiscount && (
+              <div className="animate-fade-in">
+                <style jsx>{`
+                  @keyframes shimmer {
+                    0% { background-position: -200% 0; }
+                    100% { background-position: 200% 0; }
+                  }
+                  .animate-shimmer {
+                    animation: shimmer 3s infinite linear;
+                  }
+                `}</style>
+
+                <div
+                  className="relative overflow-hidden rounded-2xl backdrop-blur-sm shadow-2xl border-2"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                    borderColor: colorPalette.primary,
+                    boxShadow: `0 0 60px ${colorPalette.primary}30, 0 20px 40px rgba(0,0,0,0.3)`,
+                  }}
+                >
+                  {/* Animated gradient accent - top */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1 animate-shimmer"
+                    style={{
+                      backgroundImage: `linear-gradient(90deg, transparent, ${colorPalette.primary}, transparent)`,
+                      backgroundSize: '200% 100%',
+                    }}
+                  />
+
+                  {/* Subtle gradient overlay for depth */}
+                  <div
+                    className="absolute inset-0 opacity-10 pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle at top right, ${colorPalette.primary}, transparent 70%)`,
+                    }}
+                  />
+
+                  <div className="relative p-5 sm:p-6 space-y-5">
+                    {/* Header: Discount Available */}
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                      <div
+                        className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg"
+                        style={{
+                          backgroundColor: colorPalette.primary,
+                        }}
+                      >
+                        <Tag className="h-7 w-7 text-black" strokeWidth={2.5} />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-black text-3xl sm:text-4xl text-white">
+                            {event.discount?.percentage}% de descuento
+                          </h3>
+                          <span
+                            className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white rounded-lg shadow-lg"
+                            style={{
+                              backgroundColor: colorPalette.primary,
+                            }}
+                          >
+                            Disponible
+                          </span>
+                        </div>
+                        <p className="text-base sm:text-lg text-white/90 leading-relaxed font-medium">
+                          Ingresa tu código promocional para activar el descuento
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Divider with gradient */}
+                    <div
+                      className="h-[2px] rounded-full"
+                      style={{
+                        background: `linear-gradient(90deg, transparent, ${colorPalette.primary}80, transparent)`,
+                      }}
+                    />
+
+                    {/* Input Section */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label htmlFor="discount-code" className="block text-sm font-semibold text-white uppercase tracking-wide">
+                          Código promocional
+                        </label>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <Input
+                            id="discount-code"
+                            type="text"
+                            value={discountCodeInput}
+                            onChange={(e) => {
+                              setDiscountCodeInput(e.target.value.toUpperCase());
+                              setDiscountCodeError(null);
+                            }}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleApplyDiscountCode();
+                              }
+                            }}
+                            placeholder="Ej: PROMO2026"
+                            className="h-12 bg-white/10 border-2 border-white/20 text-white placeholder:text-white/50 font-mono text-base focus:border-white focus:bg-white/15 flex-1 shadow-inner transition-all"
+                            disabled={isValidatingCode}
+                          />
+                          <Button
+                            onClick={handleApplyDiscountCode}
+                            disabled={!discountCodeInput.trim() || isValidatingCode}
+                            className="h-12 px-8 font-bold text-base uppercase tracking-wide shadow-xl hover:shadow-2xl transition-all hover:scale-105 text-white"
+                            style={{
+                              backgroundColor: colorPalette.primary,
+                            }}
+                          >
+                            {isValidatingCode ? 'Verificando...' : 'Aplicar'}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Error message */}
+                      {discountCodeError && (
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/20 border-2 border-red-500/50 backdrop-blur-sm">
+                          <XCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm text-red-300 font-semibold">{discountCodeError}</p>
+                        </div>
+                      )}
+
+                      {/* Help link */}
+                      {event.discount?.helpLink && (
+                        <div className="pt-1">
+                          <a
+                            href={event.discount.helpLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm font-medium transition-all group"
+                          >
+                            <span className="text-white/70 group-hover:text-white">¿No tienes código?</span>
+                            <span
+                              className="font-bold group-hover:underline-offset-4 transition-all text-white"
+                              style={{
+                                textDecoration: 'underline',
+                                textDecorationColor: colorPalette.primary,
+                                textUnderlineOffset: '2px'
+                              }}
+                            >
+                              Solicítalo aquí
+                            </span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-white/70 group-hover:text-white" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bottom accent line */}
+                  <div
+                    className="h-1"
+                    style={{
+                      background: `linear-gradient(90deg, ${colorPalette.primary}00, ${colorPalette.primary}60, ${colorPalette.primary}00)`,
+                    }}
+                  />
+                </div>
+
+                {/* Option to skip discount - OUTSIDE the card, below it */}
+                <div className="mt-6 flex items-center justify-center gap-3 text-center">
+                  <div className="h-px flex-1 bg-white/10 max-w-[100px]" />
+                  <button
+                    onClick={() => setBuyWithoutDiscount(true)}
+                    className="text-sm text-white/60 hover:text-white transition-colors flex items-center gap-2 group"
+                  >
+                    <span>Continuar sin descuento</span>
+                    <ArrowRight className="w-4 h-4 rotate-90 group-hover:translate-y-1 transition-transform" />
+                  </button>
+                  <div className="h-px flex-1 bg-white/10 max-w-[100px]" />
+                </div>
+              </div>
+            )}
+
+            {/* Success: Code applied */}
+            {requiresDiscountCode && isDiscountCodeValid && (
+              <div className="relative overflow-hidden rounded-2xl bg-green-500/10 border border-green-500/30 backdrop-blur-sm animate-fade-in">
+                <div className="p-5 sm:p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 bg-green-500/20 rounded-xl flex items-center justify-center border border-green-500/30 flex-shrink-0">
+                      <CheckCircle2 className="w-6 h-6 text-green-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-green-400 mb-0.5">
+                        Código aplicado correctamente
+                      </p>
+                      <p className="text-sm text-green-400/70">
+                        {event.discount?.percentage}% de descuento activado en tus entradas
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Buying without discount */}
+            {buyWithoutDiscount && (
+              <div className="relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-sm animate-fade-in">
+                <div className="p-5 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-11 h-11 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 flex-shrink-0">
+                        <Info className="w-6 h-6 text-white/70" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-white mb-0.5">
+                          Comprando a precio regular
+                        </p>
+                        <p className="text-sm text-white/60">
+                          Sin descuento aplicado
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setBuyWithoutDiscount(false)}
+                      className="text-white/70 hover:text-white hover:bg-white/5 shrink-0"
+                    >
+                      Aplicar código
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ALWAYS show ticket selection */}
+            <>
             {/* 1. TICKETS GRID - PRIORIDAD #1 según UX best practices */}
             <div className="space-y-6">
               <div className="flex items-center gap-3">
@@ -1288,6 +1678,10 @@ function BuyTicketsContent({
                     extraPercentageFullPayment={
                       event.extraPercentageFullPayment ?? 0
                     }
+                    event={event}
+                    phaseId={activePhaseData?.id ?? ""}
+                    discountCode={isDiscountCodeValid ? discountCodeInput : undefined}
+                    showDiscountPreview={buyWithoutDiscount}
                   />
                 ))}
               </div>
@@ -1627,6 +2021,7 @@ function BuyTicketsContent({
                 </div>
               </div>
             )}
+            </>
           </div>
 
           {/* Right Column: Sticky Summary (Desktop) */}
@@ -1676,26 +2071,72 @@ function BuyTicketsContent({
                   ) : (
                     ticketSelections
                       .filter((s) => s.quantity > 0)
-                      .map((s) => (
-                        <div
-                          key={s.zoneId}
-                          className="flex justify-between items-center text-sm"
-                        >
-                          <span className="text-zinc-300">
-                            <span className="text-white font-bold">
-                              {s.quantity}x
-                            </span>{" "}
-                            {s.zoneName}
-                          </span>
-                          <span className="font-medium text-white">
-                            <ConvertedPrice
-                              amount={s.price * s.quantity}
-                              currency={event.currency}
-                              showOriginal={false}
-                            />
-                          </span>
-                        </div>
-                      ))
+                      .map((s) => {
+                        // Only calculate discount if user is using it
+                        const shouldShowDiscount = !buyWithoutDiscount && (
+                          !requiresDiscountCode || isDiscountCodeValid
+                        );
+
+                        let discountResult = { hasDiscount: false, discountedPrice: s.price, discountPercentage: 0 };
+
+                        if (shouldShowDiscount) {
+                          discountResult = calculateDiscountedPrice(
+                            event,
+                            s.price,
+                            activePhaseData?.id ?? "",
+                            s.zoneId,
+                            isDiscountCodeValid ? discountCodeInput : undefined
+                          );
+                        }
+
+                        const finalPrice = discountResult.hasDiscount ? discountResult.discountedPrice : s.price;
+
+                        return (
+                          <div
+                            key={s.zoneId}
+                            className="space-y-1"
+                          >
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-zinc-300">
+                                <span className="text-white font-bold">
+                                  {s.quantity}x
+                                </span>{" "}
+                                {s.zoneName}
+                              </span>
+                              <span className="font-medium text-white">
+                                <ConvertedPrice
+                                  amount={finalPrice * s.quantity}
+                                  currency={event.currency}
+                                  showOriginal={false}
+                                />
+                              </span>
+                            </div>
+                            {discountResult.hasDiscount && (
+                              <div className="flex justify-between items-center text-xs ml-4">
+                                <span className="text-green-400">
+                                  {discountResult.discountPercentage}% descuento
+                                </span>
+                                <span className="text-zinc-500 relative">
+                                  <span className="relative inline-block">
+                                    <ConvertedPrice
+                                      amount={s.price * s.quantity}
+                                      currency={event.currency}
+                                      showOriginal={false}
+                                    />
+                                    <span
+                                      className="absolute left-0 right-0 top-1/2 h-[2px]"
+                                      style={{
+                                        backgroundColor: '#ef4444',
+                                        transform: 'translateY(-50%) rotate(-8deg)'
+                                      }}
+                                    />
+                                  </span>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
                   )}
                 </div>
 
@@ -2363,6 +2804,9 @@ export default function BuyTicketsClient({
   eventDjs,
   children,
 }: BuyTicketsClientProps) {
+  // Check if there's an active discount
+  const hasActiveDiscount = event.discount ? isDiscountActive(event) : false;
+
   return (
     <EventColorProvider>
       <BuyTicketsContent event={event} eventDjs={eventDjs}>

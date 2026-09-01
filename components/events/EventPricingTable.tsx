@@ -26,6 +26,13 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useInView } from "framer-motion";
 import { ZonePrice } from "./ZonePrice";
+import {
+  isDiscountActive,
+  discountAppliesInPhase,
+  discountAppliesInZone,
+  calculateDiscountedPrice
+} from "@/lib/utils/discount-calculator";
+import { DiscountBadge } from "./DiscountBadge";
 
 interface EventPricingTableProps {
   event: Event;
@@ -376,6 +383,9 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
   const accentColor = colorPalette?.accent || dominantColor;
   const currency = event.currency || "USD";
 
+  // Check if there's an active discount
+  const hasActiveDiscount = event.discount ? isDiscountActive(event) : false;
+
   // Organize pricing data
   const pricingData = useMemo(() => {
     if (!event.salesPhases || event.salesPhases.length === 0) return [];
@@ -573,7 +583,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                         >
                           {/* Left: Info */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-1">
+                            <div className="flex items-center gap-3 mb-1 flex-wrap">
                               <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors">
                                 {zone.zoneName}
                               </h3>
@@ -584,6 +594,17 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                                 >
                                   AGOTADO
                                 </Badge>
+                              )}
+                              {/* Show discount badge if applicable */}
+                              {hasActiveDiscount &&
+                                event.discount &&
+                                discountAppliesInPhase(event, phase.id) &&
+                                discountAppliesInZone(event, zone.zoneId) && (
+                                <DiscountBadge
+                                  percentage={event.discount.percentage}
+                                  size="sm"
+                                  variant="default"
+                                />
                               )}
                             </div>
                             <p className="text-sm text-zinc-400 line-clamp-1">
@@ -603,6 +624,9 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                                   price={zone.price}
                                   currency={currency}
                                   dominantColor={dominantColor}
+                                  event={event}
+                                  phaseId={phase.id}
+                                  zoneId={zone.zoneId}
                                 />
                               </div>
                             </div>

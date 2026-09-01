@@ -27,6 +27,8 @@ import { EventStageMap } from '@/components/events/EventStageMap';
 import { EventPaymentInfo } from '@/components/events/EventPaymentInfo';
 import { PreventAutoScroll } from '@/components/events/PreventAutoScroll';
 import { EventTracking } from '@/components/analytics/EventTracking';
+import { DiscountPopup } from '@/components/events/DiscountPopup';
+import { isDiscountActive } from '@/lib/utils/discount-calculator';
 
 // ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
 export const revalidate = 180;
@@ -80,23 +82,36 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const shouldNotIndex = event.eventStatus === 'draft' || event.eventStatus === 'cancelled';
     const isPastEvent = event.startDate && new Date(event.startDate) < new Date();
 
+    // Check if there's an active discount
+    const hasActiveDiscount = event.discount?.enabled &&
+      new Date(event.discount.endDate) > new Date();
+
+    // Use discount SEO metadata if available and discount is active
+    const title = hasActiveDiscount && event.discount?.seoTitleWithDiscount
+      ? event.discount.seoTitleWithDiscount
+      : (event.seoTitle || event.name);
+
+    const description = hasActiveDiscount && event.discount?.seoDescriptionWithDiscount
+      ? event.discount.seoDescriptionWithDiscount
+      : (event.seoDescription || event.shortDescription);
+
     return {
-      title: event.seoTitle || event.name,
-      description: event.seoDescription || event.shortDescription,
+      title,
+      description,
       keywords: (event.seoKeywords as string[] | undefined) || event.tags,
       robots: shouldNotIndex ? { index: false, follow: true } : { index: true, follow: true },
       alternates: { canonical: url },
       openGraph: {
-        title: event.seoTitle || event.name,
-        description: event.seoDescription || event.shortDescription,
+        title,
+        description,
         images: event.mainImageUrl ? [event.mainImageUrl] : [],
         type: 'website',
         url,
       },
       twitter: {
         card: 'summary_large_image',
-        title: event.seoTitle || event.name,
-        description: event.seoDescription || event.shortDescription,
+        title,
+        description,
         images: event.mainImageUrl ? [event.mainImageUrl] : [],
       },
     };
@@ -151,6 +166,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
   const { event, eventDjs } = data;
 
+  // Check if there's an active discount
+  const hasActiveDiscount = event.discount ? isDiscountActive(event) : false;
+
   // Generate breadcrumbs
   const breadcrumbItems = [
     { label: 'Eventos', href: '/eventos' },
@@ -178,6 +196,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       <EventColorProvider>
         <ForceDarkMode />
         <PreventAutoScroll />
+
+        {/* Discount Popup - Shows on every visit */}
+        {hasActiveDiscount && event.discount && (
+          <DiscountPopup
+            percentage={event.discount.percentage}
+            endDate={event.discount.endDate}
+            eventSlug={event.slug}
+            eventName={event.name}
+          />
+        )}
+
         <div className="min-h-screen bg-[#141618] text-[#FAFDFF]" suppressHydrationWarning>
           {/* SEO: Server-rendered H1 */}
           <h1 className="sr-only">{event.name}</h1>

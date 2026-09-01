@@ -12,6 +12,9 @@ import { es } from 'date-fns/locale';
 import { parseEventDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { isDiscountActive, getLowestPriceWithDiscount } from '@/lib/utils/discount-calculator';
+import { DiscountBadge } from './DiscountBadge';
+import { CompactDiscountTimer } from './DiscountUrgencyBanner';
 
 interface UpcomingEventCardProps {
     event: Event;
@@ -21,16 +24,13 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
     const isSoldOut = event.eventStatus === 'soldout' || event.eventStatus === 'cancelled';
     const isUpcoming = parseEventDate(event.startDate).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000 && parseEventDate(event.startDate) > new Date();
 
-    // Price calculation
-    let minPrice = Infinity;
-    event.salesPhases?.forEach(phase => {
-        if (phase.status === 'active' || phase.status === 'upcoming') {
-            phase.zonesPricing?.forEach(zone => {
-                if (zone.price < minPrice) minPrice = zone.price;
-            });
-        }
-    });
-    if (minPrice === Infinity) minPrice = 0;
+    // Check if there's an active discount
+    const hasActiveDiscount = event.discount ? isDiscountActive(event) : false;
+
+    // Calculate lowest price with discount applied
+    const priceInfo = getLowestPriceWithDiscount(event);
+    const minPrice = priceInfo.price;
+    const hasDiscount = priceInfo.hasDiscount;
 
     const startDate = parseEventDate(event.startDate);
     const dayNumber = format(startDate, "d");
@@ -107,8 +107,22 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
                         </div>
                     </div>
 
-                    {/* Status and Type Badge - Top Right */}
-                    <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+                    {/* Discount Badge - Top Right (if has discount) */}
+                    {hasActiveDiscount && event.discount && (
+                        <div className="absolute top-4 right-4 z-10">
+                            <DiscountBadge percentage={event.discount.percentage} size="lg" />
+                        </div>
+                    )}
+
+                    {/* Discount Timer - Bottom Left (if has discount) */}
+                    {hasActiveDiscount && event.discount && (
+                        <div className="absolute bottom-4 left-4 z-10 bg-black/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/10">
+                            <CompactDiscountTimer endDate={event.discount.endDate} className="text-white" />
+                        </div>
+                    )}
+
+                    {/* Status and Type Badge - Top Right (moved down if has discount) */}
+                    <div className={`absolute ${hasActiveDiscount ? 'top-20' : 'top-4'} right-4 z-10 flex flex-col items-end gap-2`}>
                         {/* Share Button */}
                         <Button
                             size="icon"
@@ -215,9 +229,19 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                                 {isSoldOut ? 'Precio' : 'Desde'}
                             </span>
-                            <span className="text-xl font-bold text-foreground">
+                            {hasDiscount && priceInfo.originalPrice > 0 && (
+                                <span className="text-sm text-muted-foreground line-through">
+                                    S/ {priceInfo.originalPrice}
+                                </span>
+                            )}
+                            <span className={`text-xl font-bold ${hasDiscount ? 'text-green-500' : 'text-foreground'}`}>
                                 {minPrice > 0 && !isSoldOut ? `S/ ${minPrice}` : isSoldOut ? '-' : 'Gratis'}
                             </span>
+                            {hasDiscount && (
+                                <span className="text-xs text-green-500 font-medium">
+                                    Ahorras S/ {(priceInfo.originalPrice - minPrice).toFixed(0)}
+                                </span>
+                            )}
                         </div>
 
                         {/* Action Button */}

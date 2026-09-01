@@ -17,7 +17,8 @@ import {
     LogOut,
     DollarSign,
     ShoppingBag,
-    Link2
+    Link2,
+    Percent
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -31,6 +32,7 @@ const mainMenuItems = [
 
 const managementItems = [
     { title: 'Eventos', href: '/admin/events', icon: Calendar },
+    { title: 'Descuentos', href: '/admin/discounts', icon: Percent },
     { title: 'Entradas', href: '/admin/tickets', icon: Ticket },
     { title: 'DJs', href: '/admin/djs', icon: Music },
     { title: 'Blog', href: '/admin/blog', icon: FileText },

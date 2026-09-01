@@ -101,11 +101,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ravehublatam.com';
     const url = `${baseUrl}/eventos/${slug}/entradas`;
 
-    // Calculate lowest price for "Desde..."
+    // Calculate lowest price for "Desde..." with discount applied
     let lowestPrice = 0;
+    let hasActiveDiscount = false;
+    let discountPercentage = 0;
 
     if (event.salesPhases && event.salesPhases.length > 0) {
       const now = new Date();
+
+      // Check if there's an active discount
+      if (event.discount?.enabled && new Date(event.discount.endDate) > now) {
+        hasActiveDiscount = true;
+        discountPercentage = event.discount.percentage;
+      }
 
       // Sort phases by startDate to ensure correct order
       const sortedPhases = [...event.salesPhases].sort((a, b) =>
@@ -130,9 +138,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       }
 
       if (targetPhase?.zonesPricing && targetPhase.zonesPricing.length > 0) {
-        // Filter out zero or invalid prices
+        // Filter out zero or invalid prices and apply discount if active
         const validPrices = targetPhase.zonesPricing
-          .map(z => Number(z.price))
+          .map(z => {
+            let price = Number(z.price);
+
+            // Apply discount if active and applies to this phase and zone
+            if (hasActiveDiscount &&
+                event.discount?.applyToPhaseId === targetPhase?.id &&
+                (!event.discount.applyToZones || event.discount.applyToZones.length === 0 || event.discount.applyToZones.includes(z.zoneId))) {
+              price = price * (1 - discountPercentage / 100);
+            }
+
+            return price;
+          })
           .filter(p => !isNaN(p) && p > 0);
 
         if (validPrices.length > 0) {
@@ -141,23 +160,41 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       }
     }
 
-    // Generate transactional title: "Entradas {NombreEvento} | Desde {Currency} {Price}"
+    // Generate transactional title with discount if applicable
     const currency = event.currency || 'PEN';
     // Force specific symbols if not found in map, or default to currency code
     const currencySymbol = event.currencySymbol || getCurrencySymbol(currency);
 
     const priceLabel = lowestPrice > 0 ? formatCurrencyForSeo(lowestPrice, currency, currencySymbol) : '';
 
-    // Only include price in title if we actually found a valid price > 0
+    // Use discount SEO metadata if available and active
+    const baseTitle = hasActiveDiscount && event.discount?.seoTitleWithDiscount
+      ? event.discount.seoTitleWithDiscount
+      : `Entradas ${event.name}`;
+
+    const baseDescription = hasActiveDiscount && event.discount?.seoDescriptionWithDiscount
+      ? event.discount.seoDescriptionWithDiscount
+      : event.shortDescription;
+
+    // Generate title with discount badge if applicable
+    const discountBadge = hasActiveDiscount ? ` 🔥 ${discountPercentage}% OFF` : '';
     const priceText = priceLabel ? ` | Desde ${priceLabel}` : '';
-    const seoTitle = `Entradas ${event.name}${priceText}`;
+    const seoTitle = baseTitle.includes('Entradas')
+      ? `${baseTitle}${discountBadge}${priceText}`
+      : `Entradas ${event.name}${discountBadge}${priceText}`;
 
     // Validate venue to avoid undefined in description
     const venue = event.location?.venue || event.location?.city || 'el lugar del evento';
     const city = event.location?.city || 'Latinoamérica';
 
-    // Generate description using the template
-    const seoDescription = `Compra tus entradas oficiales para ${event.name} en ${city}. Disfruta el mejor festival de ${event.musicGenre || 'música electrónica'} este ${format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })} en ${venue}.${priceLabel ? ` Tickets desde ${priceLabel}.` : ''} ¡Paga en cuotas sin intereses exclusivo en Ravehub!`;
+    // Generate description with discount mention if applicable
+    const discountText = hasActiveDiscount
+      ? ` ¡APROVECHA ${discountPercentage}% DE DESCUENTO!`
+      : '';
+
+    const seoDescription = baseDescription.length > 0 && hasActiveDiscount
+      ? baseDescription
+      : `Compra tus entradas oficiales para ${event.name} en ${city}.${discountText} Disfruta el mejor festival de ${event.musicGenre || 'música electrónica'} este ${format(new Date(event.startDate), 'dd MMM yyyy', { locale: es })} en ${venue}.${priceLabel ? ` Tickets desde ${priceLabel}.` : ''} ¡Paga en cuotas sin intereses exclusivo en Ravehub!`;
 
     return {
       title: seoTitle,

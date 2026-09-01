@@ -200,6 +200,36 @@ export interface Event {
   seoDescription?: string;
   seoKeywords?: string[];
   schemaType?: string;
+
+  // Discount system
+  discount?: {
+    enabled: boolean;
+    percentage: number; // 5, 10, 15, 20, 25, 30, 35, 40, 45, 50
+    applyToPhaseId: string; // ID de la fase donde se aplica el descuento
+    applyToZones: string[]; // IDs de zonas ([] o null = todas las zonas)
+    endDate: string; // Fecha de expiración en formato ISO string
+
+    // Códigos de descuento (opcional)
+    requireCode: boolean;
+    codes?: string[]; // Array de códigos válidos
+    helpLink?: string; // Link a WhatsApp u otro medio para solicitar código
+
+    // Estadísticas de uso
+    stats?: {
+      totalUses: number;
+      codeUsage: Record<string, number>; // { "CODE123": 5, "CODE456": 3 }
+      lastUsedAt?: string;
+    };
+
+    // SEO override cuando hay descuento activo
+    seoTitleWithDiscount?: string;
+    seoDescriptionWithDiscount?: string;
+
+    // Metadata adicional
+    createdAt?: string;
+    createdBy?: string;
+    updatedAt?: string;
+  };
 }
 
 // Blog types
