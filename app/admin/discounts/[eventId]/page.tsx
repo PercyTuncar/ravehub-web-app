@@ -16,6 +16,7 @@ import { AuthGuard } from '@/components/admin/AuthGuard';
 import { eventsCollection } from '@/lib/firebase/collections';
 import { Event } from '@/lib/types';
 import { isDiscountActive, getCurrentActivePhase, getDiscountTimeRemaining } from '@/lib/utils/discount-calculator';
+import { updateEventDiscount } from '@/lib/actions/discount-actions';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -155,23 +156,15 @@ export default function DiscountConfigPage({ params }: { params: Promise<{ event
           }
         : undefined;
 
-      // Update only the discount field instead of the entire event
-      await eventsCollection.update(eventId, {
-        discount: discountData
-      });
+      // Use server action to update and revalidate
+      const result = await updateEventDiscount(eventId, event.slug, discountData);
 
-      // Clear cache and revalidate paths
-      const { clearCache } = await import('@/lib/firebase/collections');
-      clearCache('events:published');
-
-      // Revalidate Next.js pages
-      const { revalidatePath } = await import('next/cache');
-      revalidatePath('/eventos');
-      revalidatePath('/eventos/[slug]', 'page');
-      revalidatePath(`/eventos/${event.slug}`);
-
-      alert('Descuento guardado exitosamente');
-      router.push('/admin/discounts');
+      if (result.success) {
+        alert('Descuento guardado exitosamente');
+        router.push('/admin/discounts');
+      } else {
+        throw new Error(result.error || 'Error desconocido');
+      }
     } catch (error) {
       console.error('Error saving discount:', error);
       // Show more detailed error
