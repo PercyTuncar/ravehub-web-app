@@ -38,8 +38,8 @@ export default function DiscountsListPage() {
       const allEvents = await eventsCollection.getAll();
 
       // Filtrar solo eventos publicados o en draft que tengan venta de tickets
-      const eligibleEvents = allEvents.filter(
-        (event: Event) =>
+      const eligibleEvents = (allEvents as Event[]).filter(
+        (event) =>
           event.name && // Verificar que tenga nombre
           (event.eventStatus === 'published' || event.eventStatus === 'draft') &&
           event.sellTicketsOnPlatform === true
