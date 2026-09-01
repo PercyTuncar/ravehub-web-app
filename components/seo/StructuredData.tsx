@@ -6,6 +6,15 @@ interface StructuredDataProps {
 }
 
 export default function StructuredData({ event }: StructuredDataProps) {
+  // Check if discount is active
+  const hasActiveDiscount = event.discount?.enabled && event.discount.percentage > 0;
+  const isDiscountActive = hasActiveDiscount && (() => {
+    if (!event.discount?.endDate) return false;
+    const now = new Date();
+    const end = new Date(event.discount.endDate);
+    return now <= end;
+  })();
+
   // 1. Filtrar la fase activa para precios reales
   const activePhase =
     event.salesPhases.find((p) => {
@@ -18,16 +27,23 @@ export default function StructuredData({ event }: StructuredDataProps) {
       return now >= startDate && now <= endDate;
     }) || event.salesPhases[0];
 
-  // 2. Construir ofertas dinámicas basándonos en la moneda de la DB
+  // 2. Construir ofertas dinámicas basándonos en la moneda de la DB con descuentos
   const offers = activePhase?.zonesPricing
     ? activePhase.zonesPricing.map((pricing) => {
         const zone = event.zones?.find((z) => z.id === pricing.zoneId);
         const zoneName = zone?.name || "General";
         const available = pricing.available ?? zone?.capacity ?? 0;
-        return {
+        const originalPrice = pricing.price;
+
+        // Calculate discounted price if applicable
+        const discountedPrice = isDiscountActive
+          ? originalPrice * (1 - event.discount!.percentage / 100)
+          : originalPrice;
+
+        const baseOffer: any = {
           "@type": "Offer",
           name: `${zoneName} - ${activePhase.name}`,
-          price: pricing.price,
+          price: discountedPrice,
           priceCurrency: event.currency || "PEN",
           availability:
             available > 0
@@ -37,6 +53,25 @@ export default function StructuredData({ event }: StructuredDataProps) {
           validFrom: activePhase.startDate,
           priceValidUntil: activePhase.endDate || event.endDate,
         };
+
+        // Add discount-specific properties if discount is active
+        if (isDiscountActive && event.discount) {
+          baseOffer.priceSpecification = {
+            "@type": "PriceSpecification",
+            price: discountedPrice,
+            priceCurrency: event.currency || "PEN",
+            validThrough: event.discount.endDate,
+          };
+
+          // Add original price for comparison (using UnitPriceSpecification pattern)
+          baseOffer.priceSpecification.referenceQuantity = {
+            "@type": "QuantitativeValue",
+            value: originalPrice,
+            unitText: "ORIGINAL_PRICE"
+          };
+        }
+
+        return baseOffer;
       })
     : [];
 

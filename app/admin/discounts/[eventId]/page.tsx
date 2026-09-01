@@ -132,32 +132,33 @@ export default function DiscountConfigPage({ params }: { params: Promise<{ event
     try {
       setSaving(true);
 
-      const updatedEvent: Event = {
-        ...event,
-        discount: enabled
-          ? {
-              enabled: true,
-              percentage,
-              applyToPhaseId,
-              applyToZones,
-              endDate: new Date(endDate).toISOString(),
-              requireCode,
-              codes: requireCode ? codes : undefined,
-              helpLink: requireCode ? helpLink : undefined,
-              seoTitleWithDiscount: seoTitleWithDiscount || undefined,
-              seoDescriptionWithDiscount: seoDescriptionWithDiscount || undefined,
-              stats: event.discount?.stats || {
-                totalUses: 0,
-                codeUsage: {},
-              },
-              createdAt: event.discount?.createdAt || new Date().toISOString(),
-              createdBy: event.discount?.createdBy || 'admin',
-              updatedAt: new Date().toISOString(),
-            }
-          : undefined,
-      };
+      // Only update the discount field, not the entire event
+      const discountData = enabled
+        ? {
+            enabled: true,
+            percentage,
+            applyToPhaseId,
+            applyToZones,
+            endDate: new Date(endDate).toISOString(),
+            requireCode,
+            codes: requireCode ? codes : undefined,
+            helpLink: requireCode ? helpLink : undefined,
+            seoTitleWithDiscount: seoTitleWithDiscount || undefined,
+            seoDescriptionWithDiscount: seoDescriptionWithDiscount || undefined,
+            stats: event.discount?.stats || {
+              totalUses: 0,
+              codeUsage: {},
+            },
+            createdAt: event.discount?.createdAt || new Date().toISOString(),
+            createdBy: event.discount?.createdBy || 'admin',
+            updatedAt: new Date().toISOString(),
+          }
+        : undefined;
 
-      await eventsCollection.update(eventId, updatedEvent);
+      // Update only the discount field instead of the entire event
+      await eventsCollection.update(eventId, {
+        discount: discountData
+      });
 
       // Clear cache and revalidate paths
       const { clearCache } = await import('@/lib/firebase/collections');
@@ -173,7 +174,9 @@ export default function DiscountConfigPage({ params }: { params: Promise<{ event
       router.push('/admin/discounts');
     } catch (error) {
       console.error('Error saving discount:', error);
-      alert('Error al guardar el descuento');
+      // Show more detailed error
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      alert(`Error al guardar el descuento: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
