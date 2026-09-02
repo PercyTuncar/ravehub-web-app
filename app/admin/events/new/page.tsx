@@ -26,7 +26,7 @@ import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
 import { generateSlug } from '@/lib/utils/slug-generator';
 import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
-import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart, isEventInPast } from '@/lib/utils/date-timezone';
+import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart, isEventInPast, getEventDateTime } from '@/lib/utils/date-timezone';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { revalidateEventsListing } from '@/lib/revalidate';
 
@@ -362,17 +362,29 @@ export default function NewEventPage() {
         };
       }
 
-      // Calcular estado automático
+      // Calcular estado automático considerando timezone
       if (!phase.startDate || !phase.endDate) {
         return { ...phase, status: 'upcoming' };
       }
 
-      const startDate = new Date(phase.startDate);
-      const endDate = new Date(phase.endDate);
+      // Usar getEventDateTime para considerar timezone
+      const startDateTime = getEventDateTime({
+        startDate: phase.startDate.split('T')[0],
+        startTime: phase.startDate.split('T')[1]?.substring(0, 5) || '00:00',
+        timezone: eventData.timezone,
+        country: eventData.country
+      });
 
-      if (now < startDate) {
+      const endDateTime = getEventDateTime({
+        startDate: phase.endDate.split('T')[0],
+        startTime: phase.endDate.split('T')[1]?.substring(0, 5) || '23:59',
+        timezone: eventData.timezone,
+        country: eventData.country
+      });
+
+      if (now < startDateTime) {
         return { ...phase, status: 'upcoming' };
-      } else if (now > endDate) {
+      } else if (now > endDateTime) {
         return { ...phase, status: 'expired' };
       } else {
         return { ...phase, status: 'active' };
@@ -1944,13 +1956,26 @@ export default function NewEventPage() {
                       if (!phase.startDate || !phase.endDate) return 'upcoming';
 
                       const now = new Date();
-                      const startDate = new Date(phase.startDate);
-                      const endDate = new Date(phase.endDate);
 
-                      if (now < startDate) return 'upcoming';
-                      if (now > endDate) return 'expired';
+                      // Usar getEventDateTime para considerar timezone
+                      const startDateTime = getEventDateTime({
+                        startDate: phase.startDate.split('T')[0],
+                        startTime: phase.startDate.split('T')[1]?.substring(0, 5) || '00:00',
+                        timezone: eventData.timezone,
+                        country: eventData.country
+                      });
+
+                      const endDateTime = getEventDateTime({
+                        startDate: phase.endDate.split('T')[0],
+                        startTime: phase.endDate.split('T')[1]?.substring(0, 5) || '23:59',
+                        timezone: eventData.timezone,
+                        country: eventData.country
+                      });
+
+                      if (now < startDateTime) return 'upcoming';
+                      if (now > endDateTime) return 'expired';
                       if (phase.manualStatus === 'active') return 'active';
-                      if (now >= startDate && now <= endDate) return 'active';
+                      if (now >= startDateTime && now <= endDateTime) return 'active';
 
                       return 'upcoming';
                     };

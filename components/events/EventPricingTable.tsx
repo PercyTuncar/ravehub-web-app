@@ -21,7 +21,7 @@ import { Event } from "@/lib/types";
 import { useEventColors } from "./EventColorContext";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { parseLocalDate } from "@/lib/utils/date-timezone";
+import { parseLocalDate, getEventDateTime } from "@/lib/utils/date-timezone";
 import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useInView } from "framer-motion";
@@ -364,12 +364,25 @@ function StockProgressBar({
 }
 
 // Helper to get automatic status
-function getPhaseStatus(phase: any) {
+function getPhaseStatus(phase: any, eventTimezone?: string, eventCountry?: string) {
   if (phase.manualStatus) return phase.manualStatus;
 
   const now = new Date();
-  const start = new Date(phase.startDate);
-  const end = new Date(phase.endDate);
+
+  // Usar getEventDateTime para considerar timezone
+  const start = getEventDateTime({
+    startDate: phase.startDate.split('T')[0],
+    startTime: phase.startDate.split('T')[1]?.substring(0, 5) || '00:00',
+    timezone: eventTimezone,
+    country: eventCountry
+  });
+
+  const end = getEventDateTime({
+    startDate: phase.endDate.split('T')[0],
+    startTime: phase.endDate.split('T')[1]?.substring(0, 5) || '23:59',
+    timezone: eventTimezone,
+    country: eventCountry
+  });
 
   if (now < start) return "upcoming";
   if (now > end) return "expired";
@@ -397,7 +410,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
     );
 
     return sortedPhases.map((phase, index) => {
-      const computedStatus = getPhaseStatus(phase);
+      const computedStatus = getPhaseStatus(phase, event.timezone, event.country);
 
       // Filter out zones that no longer exist in event.zones and map to zone data
       const zones = (phase.zonesPricing || [])
