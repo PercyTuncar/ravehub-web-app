@@ -26,7 +26,7 @@ import { SOUTH_AMERICAN_CURRENCIES, getCurrencySymbol } from '@/lib/utils';
 import { generateSlug } from '@/lib/utils/slug-generator';
 import { generateArtistLineupIds } from '@/lib/data/dj-events';
 import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
-import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart } from '@/lib/utils/date-timezone';
+import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart, isEventInPast } from '@/lib/utils/date-timezone';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { revalidateEventsListing } from '@/lib/revalidate';
 
@@ -752,17 +752,18 @@ export default function NewEventPage() {
                     value={formatDateForInput(eventData.startDate)}
                     onChange={(e) => {
                       const selectedDate = e.target.value;
-                      if (isDateInPast(selectedDate)) {
-                        alert('No puedes seleccionar una fecha pasada');
+                      // Validar considerando la hora del evento
+                      if (isEventInPast(selectedDate, eventData.startTime, eventData.timezone)) {
+                        alert('No puedes seleccionar una fecha/hora pasada');
                         return;
                       }
                       updateEventData('startDate', selectedDate);
                     }}
                     className="h-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                   />
-                  {eventData.startDate && isDateInPast(eventData.startDate) && (
+                  {eventData.startDate && isEventInPast(eventData.startDate, eventData.startTime, eventData.timezone) && (
                     <p className="text-xs text-red-600 dark:text-red-400">
-                      ⚠️ No puedes seleccionar una fecha pasada
+                      ⚠️ No puedes seleccionar una fecha/hora pasada
                     </p>
                   )}
                 </div>

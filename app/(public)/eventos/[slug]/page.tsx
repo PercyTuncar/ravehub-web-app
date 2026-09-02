@@ -29,6 +29,7 @@ import { PreventAutoScroll } from '@/components/events/PreventAutoScroll';
 import { EventTracking } from '@/components/analytics/EventTracking';
 import { DiscountPopup } from '@/components/events/DiscountPopup';
 import { isDiscountActive } from '@/lib/utils/discount-calculator';
+import { getEventDateTime } from '@/lib/utils/date-timezone';
 
 // ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
 export const revalidate = 180;
@@ -80,7 +81,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     // Only draft and cancelled events should not be indexed
     // Past events (finished, completed, past) should remain indexed for historical value
     const shouldNotIndex = event.eventStatus === 'draft' || event.eventStatus === 'cancelled';
-    const isPastEvent = event.startDate && new Date(event.startDate) < new Date();
+
+    // Check if event is in the past considering date + time
+    const isPastEvent = event.startDate && getEventDateTime({
+      startDate: event.startDate,
+      startTime: event.startTime,
+      timezone: event.timezone,
+      country: event.country
+    }) < new Date();
 
     // Check if there's an active discount
     const hasActiveDiscount = event.discount?.enabled &&

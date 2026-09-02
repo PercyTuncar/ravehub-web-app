@@ -160,17 +160,77 @@ export function getMinDate(): string {
 }
 
 /**
- * Validates that a date is not in the past
+ * Combina startDate + startTime + timezone para obtener el Date exacto del evento
+ * Esto permite comparaciones precisas considerando la hora real del evento
+ *
+ * @param event - Objeto con startDate, startTime opcional, y timezone opcional
+ * @returns Date object representando la fecha y hora exacta del evento
+ */
+export function getEventDateTime(event: {
+  startDate: string;
+  startTime?: string;
+  timezone?: string;
+  country?: string;
+}): Date {
+  const dateStr = event.startDate; // "2026-09-02"
+  const timeStr = event.startTime || "23:59"; // Por defecto fin del día si no hay hora
+
+  // Si la fecha incluye 'T', es ISO completo
+  if (dateStr.includes('T')) {
+    return new Date(dateStr);
+  }
+
+  // Extraer componentes de fecha YYYY-MM-DD
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+
+  // Crear fecha en timezone local
+  // month - 1 porque los meses en JS son 0-indexed
+  const eventDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+
+  return eventDate;
+}
+
+/**
+ * Validates that a date is not in the past (SOLO FECHA, sin hora)
+ * DEPRECATED: Usar isEventInPast() para validaciones que consideren la hora
  */
 export function isDateInPast(dateString: string): boolean {
   if (!dateString) return false;
-  
+
   const selectedDate = new Date(dateString);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   selectedDate.setHours(0, 0, 0, 0);
-  
+
   return selectedDate < today;
+}
+
+/**
+ * Valida si un evento (fecha + hora) ya pasó
+ * Considera la hora del evento, no solo la fecha
+ *
+ * @param dateString - Fecha del evento (YYYY-MM-DD)
+ * @param timeString - Hora del evento (HH:MM) - opcional, por defecto 23:59
+ * @param timezone - Timezone del evento - opcional
+ * @returns true si el evento ya pasó, false si aún no
+ */
+export function isEventInPast(
+  dateString: string,
+  timeString?: string,
+  timezone?: string
+): boolean {
+  if (!dateString) return false;
+
+  // Obtener fecha/hora completa del evento
+  const eventDateTime = getEventDateTime({
+    startDate: dateString,
+    startTime: timeString || "23:59", // Dar margen hasta fin del día
+    timezone
+  });
+
+  const now = new Date();
+  return eventDateTime < now;
 }
 
 /**

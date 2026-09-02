@@ -8,6 +8,7 @@ import { isSameMonth, isAfter, parseISO, addDays } from 'date-fns';
 import { Clock, Calendar, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useRef } from 'react';
+import { getEventDateTime } from '@/lib/utils/date-timezone';
 
 interface EventGridProps {
     events: Event[];
@@ -50,8 +51,16 @@ export default function EventGrid({ events }: EventGridProps) {
 
     const now = new Date();
 
-    // Filter only future events for the main logic (optional, but requested to hide past)
-    const futureEvents = sortedEvents.filter(e => new Date(e.startDate) >= now);
+    // Filter events considering date + time + timezone
+    const futureEvents = sortedEvents.filter(e => {
+        const eventDateTime = getEventDateTime({
+            startDate: e.startDate,
+            startTime: e.startTime,
+            timezone: e.timezone,
+            country: e.country
+        });
+        return eventDateTime >= now;
+    });
 
     // 1. Hero Event: The very first upcoming event
     const heroEvent = futureEvents[0];
@@ -76,8 +85,16 @@ export default function EventGrid({ events }: EventGridProps) {
         !isSameMonth(new Date(e.startDate), now)
     );
 
-    // 5. Past Events logic
-    const pastEvents = sortedEvents.filter(e => new Date(e.startDate) < now).reverse(); // Most recent past first
+    // 5. Past Events logic - considering date + time
+    const pastEvents = sortedEvents.filter(e => {
+        const eventDateTime = getEventDateTime({
+            startDate: e.startDate,
+            startTime: e.startTime,
+            timezone: e.timezone,
+            country: e.country
+        });
+        return eventDateTime < now;
+    }).reverse(); // Most recent past first
     const [showAllPastEvents, setShowAllPastEvents] = useState(false);
     const pastEventsToShow = showAllPastEvents ? pastEvents : pastEvents.slice(0, 6);
 

@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { isDiscountActive, getLowestPriceWithDiscount } from '@/lib/utils/discount-calculator';
 import { DiscountBadge } from './DiscountBadge';
 import { CompactDiscountTimer } from './DiscountUrgencyBanner';
+import { getEventDateTime } from '@/lib/utils/date-timezone';
 
 interface UpcomingEventCardProps {
     event: Event;
@@ -22,7 +23,17 @@ interface UpcomingEventCardProps {
 
 export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
     const isSoldOut = event.eventStatus === 'soldout' || event.eventStatus === 'cancelled';
-    const isUpcoming = parseEventDate(event.startDate).getTime() - new Date().getTime() < 7 * 24 * 60 * 60 * 1000 && parseEventDate(event.startDate) > new Date();
+
+    // Calculate if event is upcoming (within 7 days) considering date + time
+    const eventDateTime = getEventDateTime({
+        startDate: event.startDate,
+        startTime: event.startTime,
+        timezone: event.timezone,
+        country: event.country
+    });
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const isUpcoming = eventDateTime > now && eventDateTime <= sevenDaysFromNow;
 
     // Check if there's an active discount
     const hasActiveDiscount = event.discount ? isDiscountActive(event) : false;
