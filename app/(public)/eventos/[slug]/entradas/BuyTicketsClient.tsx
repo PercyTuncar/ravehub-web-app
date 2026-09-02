@@ -63,6 +63,7 @@ import {
   getCurrentActivePhase,
   validateDiscountCode
 } from "@/lib/utils/discount-calculator";
+import { getEventDateTime } from "@/lib/utils/date-timezone";
 import { DiscountCodeInput } from "@/components/events/DiscountCodeInput";
 import { DiscountBadge } from "@/components/events/DiscountBadge";
 
@@ -451,10 +452,14 @@ function PhaseTimeProgress({
   startDate,
   endDate,
   isSoldOut = false,
+  timezone,
+  country
 }: {
   startDate: string;
   endDate: string;
   isSoldOut?: boolean;
+  timezone?: string;
+  country?: string;
 }) {
   const [progress, setProgress] = useState(0);
   const containerRef = useRef(null);
@@ -462,8 +467,21 @@ function PhaseTimeProgress({
 
   useEffect(() => {
     const calculateProgress = () => {
-      const start = new Date(startDate).getTime();
-      const end = new Date(endDate).getTime();
+      // Usar getEventDateTime para considerar timezone
+      const start = getEventDateTime({
+        startDate: startDate.split('T')[0],
+        startTime: startDate.split('T')[1]?.substring(0, 5) || '00:00',
+        timezone,
+        country
+      }).getTime();
+
+      const end = getEventDateTime({
+        startDate: endDate.split('T')[0],
+        startTime: endDate.split('T')[1]?.substring(0, 5) || '23:59',
+        timezone,
+        country
+      }).getTime();
+
       const now = new Date().getTime();
 
       const totalDuration = end - start;
@@ -480,7 +498,7 @@ function PhaseTimeProgress({
     }, 60000); // Update every minute
 
     return () => clearInterval(interval);
-  }, [startDate, endDate]);
+  }, [startDate, endDate, timezone, country]);
 
   const displayProgress = isSoldOut ? 100 : progress;
   const isCritical = isSoldOut || displayProgress > 90;
@@ -651,6 +669,8 @@ function TicketCard({
             startDate={phaseStartDate}
             endDate={phaseEndDate}
             isSoldOut={phaseStatus === "sold_out"}
+            timezone={event.timezone}
+            country={event.country}
           />
         </div>
 
