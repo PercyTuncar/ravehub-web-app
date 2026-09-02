@@ -1,5 +1,6 @@
 import { Event, SalesPhase } from '@/lib/types';
 import { getEventDateTime } from '@/lib/utils/date-timezone';
+import { getCurrencySymbol } from '@/lib/utils/currency-converter';
 
 /**
  * Interfaz para el resultado del cálculo de descuento
@@ -47,13 +48,13 @@ export function discountAppliesInPhase(event: Event, phaseId: string): boolean {
     return false;
   }
 
-  // Si el descuento aplica a todas las fases
-  if (event.discount.applyToAllPhases) {
+  // Si applyToPhaseId está vacío o es '*', aplica a todas las fases
+  if (!event.discount.applyToPhaseId || event.discount.applyToPhaseId === '*') {
     return true;
   }
 
-  // Verificar si la fase está en la lista de fases aplicables
-  return event.discount.applicablePhaseIds?.includes(phaseId) || false;
+  // Verificar si la fase coincide con la configurada
+  return event.discount.applyToPhaseId === phaseId;
 }
 
 /**
@@ -64,13 +65,13 @@ export function discountAppliesInZone(event: Event, zoneId: string): boolean {
     return false;
   }
 
-  // Si el descuento aplica a todas las zonas
-  if (event.discount.applyToAllZones) {
+  // Si applyToZones está vacío o null, aplica a todas las zonas
+  if (!event.discount.applyToZones || event.discount.applyToZones.length === 0) {
     return true;
   }
 
   // Verificar si la zona está en la lista de zonas aplicables
-  return event.discount.applicableZoneIds?.includes(zoneId) || false;
+  return event.discount.applyToZones.includes(zoneId);
 }
 
 /**
@@ -196,12 +197,15 @@ export function getLowestPriceWithDiscount(event: Event, code?: string): number 
 
   // Iterar sobre todas las fases y zonas para encontrar el precio más bajo
   event.salesPhases.forEach((phase) => {
-    phase.tickets?.forEach((ticket) => {
+    // Usar prices si existe
+    const pricesList = phase.prices || phase.zonesPricing || [];
+
+    pricesList.forEach((priceItem) => {
       const calculation = calculateDiscountedPrice(
         event,
-        ticket.price,
+        priceItem.price,
         phase.id,
-        ticket.zoneId,
+        priceItem.zoneId,
         code
       );
 
@@ -216,6 +220,63 @@ export function getLowestPriceWithDiscount(event: Event, code?: string): number 
   });
 
   return lowestPrice === Infinity ? 0 : lowestPrice;
+}
+
+/**
+ * Obtiene información detallada del precio más bajo con descuento
+ */
+export function getLowestPriceWithDiscountDetails(event: Event, code?: string): {
+  price: number;
+  originalPrice: number;
+  hasDiscount: boolean;
+  discountPercentage: number;
+} {
+  if (!event.salesPhases || event.salesPhases.length === 0) {
+    return {
+      price: 0,
+      originalPrice: 0,
+      hasDiscount: false,
+      discountPercentage: 0
+    };
+  }
+
+  let lowestPrice = Infinity;
+  let lowestOriginalPrice = Infinity;
+  let hasDiscount = false;
+  let discountPercentage = 0;
+
+  // Iterar sobre todas las fases y zonas
+  event.salesPhases.forEach((phase) => {
+    const pricesList = phase.prices || phase.zonesPricing || [];
+
+    pricesList.forEach((priceItem) => {
+      const calculation = calculateDiscountedPrice(
+        event,
+        priceItem.price,
+        phase.id,
+        priceItem.zoneId,
+        code
+      );
+
+      const effectivePrice = calculation.hasDiscount
+        ? calculation.discountedPrice
+        : calculation.originalPrice;
+
+      if (effectivePrice < lowestPrice) {
+        lowestPrice = effectivePrice;
+        lowestOriginalPrice = calculation.originalPrice;
+        hasDiscount = calculation.hasDiscount;
+        discountPercentage = calculation.discountPercentage;
+      }
+    });
+  });
+
+  return {
+    price: lowestPrice === Infinity ? 0 : lowestPrice,
+    originalPrice: lowestOriginalPrice === Infinity ? 0 : lowestOriginalPrice,
+    hasDiscount,
+    discountPercentage
+  };
 }
 
 /**
@@ -276,6 +337,21 @@ export function getDiscountTimeRemaining(
  */
 export function getDiscountBadgeText(percentage: number): string {
   return `${percentage}% OFF`;
+}
+
+/**
+ * Formatea un precio con símbolo de moneda
+ */
+export function formatPrice(price: number, currency: string, currencySymbol?: string): string {
+  const symbol = currencySymbol || getCurrencySymbol(currency);
+
+  // Formatear con separadores de miles
+  const formattedNumber = price.toLocaleString('es-ES', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+
+  return `${symbol} ${formattedNumber}`;
 }
 
 /**

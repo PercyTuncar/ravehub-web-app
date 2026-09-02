@@ -22,7 +22,7 @@ export function ZonePrice({ price, currency, dominantColor, event, phaseId, zone
   let discountPercentage = 0;
 
   if (event && phaseId && zoneId) {
-    const discountResult = calculateDiscountedPrice(event, price, phaseId, zoneId, undefined, showPreview);
+    const discountResult = calculateDiscountedPrice(event, price, phaseId, zoneId, undefined);
     if (discountResult.hasDiscount) {
       finalPrice = discountResult.discountedPrice;
       hasDiscount = true;

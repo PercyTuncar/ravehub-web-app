@@ -12,7 +12,7 @@ import { es } from 'date-fns/locale';
 import { parseEventDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { isDiscountActive, getLowestPriceWithDiscount } from '@/lib/utils/discount-calculator';
+import { isDiscountActive, getLowestPriceWithDiscountDetails } from '@/lib/utils/discount-calculator';
 import { DiscountBadge } from './DiscountBadge';
 import { CompactDiscountTimer } from './DiscountUrgencyBanner';
 import { getEventDateTime } from '@/lib/utils/date-timezone';
@@ -39,7 +39,7 @@ export default function UpcomingEventCard({ event }: UpcomingEventCardProps) {
     const hasActiveDiscount = event.discount ? isDiscountActive(event) : false;
 
     // Calculate lowest price with discount applied
-    const priceInfo = getLowestPriceWithDiscount(event);
+    const priceInfo = getLowestPriceWithDiscountDetails(event);
     const minPrice = priceInfo.price;
     const hasDiscount = priceInfo.hasDiscount;
 

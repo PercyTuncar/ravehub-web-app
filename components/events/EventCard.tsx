@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { convertCurrency, getCurrencySymbol } from '@/lib/utils/currency-converter';
 import { useState, useEffect } from 'react';
-import { isDiscountActive, getLowestPriceWithDiscount } from '@/lib/utils/discount-calculator';
+import { isDiscountActive, getLowestPriceWithDiscountDetails } from '@/lib/utils/discount-calculator';
 import { DiscountBadge } from './DiscountBadge';
 import { CompactDiscountTimer } from './DiscountUrgencyBanner';
 import { getEventDateTime } from '@/lib/utils/date-timezone';
@@ -69,7 +69,7 @@ export default function EventCard({ event, featured = false, aspectRatio = "aspe
     }
 
     // Calculate lowest price from sales phases with discount applied
-    const priceInfo = getLowestPriceWithDiscount(event);
+    const priceInfo = getLowestPriceWithDiscountDetails(event);
     const minPrice = priceInfo.price;
     const originalPrice = priceInfo.originalPrice;
 
