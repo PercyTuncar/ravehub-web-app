@@ -10,6 +10,7 @@ import { Event } from '@/lib/types';
 import { parseEventDate } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getEventDateTime } from '@/lib/utils/date-timezone';
 
 import { useEnhancedColorExtraction, useEventColors } from './EventColorContext';
 import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
@@ -39,7 +40,16 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
 
     // Countdown Logic - Safe for Hydration
     const calculateTimeLeft = () => {
-        const difference = +new Date(event.startDate) - +new Date();
+        // Usar getEventDateTime para obtener la fecha/hora exacta con timezone
+        const eventDateTime = getEventDateTime({
+            startDate: event.startDate,
+            startTime: event.startTime,
+            timezone: event.timezone,
+            country: event.country
+        });
+
+        const difference = eventDateTime.getTime() - new Date().getTime();
+
         if (difference > 0) {
             return {
                 days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -62,7 +72,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
             setTimeLeft(calculateTimeLeft());
         }, 1000);
         return () => clearInterval(timer);
-    }, [event.startDate]);
+    }, [event.startDate, event.startTime, event.timezone]);
 
     const isSoldOut = event.eventStatus === 'soldout' || event.eventStatus === 'cancelled';
     const startDate = parseEventDate(event.startDate);
