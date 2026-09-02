@@ -122,7 +122,8 @@ export function calculateDiscountedPrice(
   ticketPrice: number,
   phaseId: string,
   zoneId: string,
-  code?: string
+  code?: string,
+  showPreview: boolean = false
 ): DiscountCalculationResult {
   const result: DiscountCalculationResult = {
     hasDiscount: false,
@@ -166,7 +167,8 @@ export function calculateDiscountedPrice(
   // Verificar si se requiere código y si es válido
   result.requiresCode = event.discount.requireCode || false;
 
-  if (result.requiresCode) {
+  // Si requiere código pero estamos mostrando preview, permitir ver el descuento
+  if (result.requiresCode && !showPreview) {
     if (!code || !isDiscountCodeValid(event, code)) {
       return result;
     }
