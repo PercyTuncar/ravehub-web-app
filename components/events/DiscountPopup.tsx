@@ -9,6 +9,8 @@ import Link from 'next/link';
 interface DiscountPopupProps {
   percentage: number;
   endDate: string;
+  timezone?: string;
+  country?: string;
   eventSlug: string;
   eventName: string;
 }
@@ -16,11 +18,13 @@ interface DiscountPopupProps {
 export function DiscountPopup({
   percentage,
   endDate,
+  timezone,
+  country,
   eventSlug,
   eventName,
 }: DiscountPopupProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(getDiscountTimeRemaining(endDate));
+  const [timeRemaining, setTimeRemaining] = useState(getDiscountTimeRemaining(endDate, timezone, country));
 
   useEffect(() => {
     // Show popup after a short delay (better UX)
@@ -33,7 +37,7 @@ export function DiscountPopup({
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const remaining = getDiscountTimeRemaining(endDate);
+      const remaining = getDiscountTimeRemaining(endDate, timezone, country);
       setTimeRemaining(remaining);
 
       if (remaining.isExpired) {
@@ -42,7 +46,7 @@ export function DiscountPopup({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [endDate]);
+  }, [endDate, timezone, country]);
 
   if (!isOpen || timeRemaining.isExpired) {
     return null;

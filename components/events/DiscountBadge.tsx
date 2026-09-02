@@ -8,6 +8,8 @@ import { useState, useEffect } from 'react';
 interface DiscountBadgeProps {
   percentage: number;
   endDate?: string;
+  timezone?: string;
+  country?: string;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'outline' | 'minimal';
   showCountdown?: boolean;
@@ -17,24 +19,26 @@ interface DiscountBadgeProps {
 export function DiscountBadge({
   percentage,
   endDate,
+  timezone,
+  country,
   size = 'md',
   variant = 'default',
   showCountdown = false,
   className = '',
 }: DiscountBadgeProps) {
   const [timeRemaining, setTimeRemaining] = useState(
-    endDate ? getDiscountTimeRemaining(endDate) : null
+    endDate ? getDiscountTimeRemaining(endDate, timezone, country) : null
   );
 
   useEffect(() => {
     if (!endDate || !showCountdown) return;
 
     const interval = setInterval(() => {
-      setTimeRemaining(getDiscountTimeRemaining(endDate));
+      setTimeRemaining(getDiscountTimeRemaining(endDate, timezone, country));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [endDate, showCountdown]);
+  }, [endDate, showCountdown, timezone, country]);
 
   const sizeClasses = {
     sm: 'text-xs px-2 py-1',

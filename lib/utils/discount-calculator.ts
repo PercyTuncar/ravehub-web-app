@@ -1,4 +1,5 @@
 import { Event, SalesPhase } from '@/lib/types';
+import { getEventDateTime } from '@/lib/utils/date-timezone';
 
 /**
  * Interfaz para el resultado del cálculo de descuento
@@ -17,17 +18,25 @@ export interface DiscountCalculationResult {
 
 /**
  * Verifica si un descuento está activo y no ha expirado
+ * Considera la fecha/hora exacta del timezone del evento
  */
 export function isDiscountActive(event: Event): boolean {
   if (!event.discount || !event.discount.enabled) {
     return false;
   }
 
-  // Verificar si el descuento ha expirado
+  // Verificar si el descuento ha expirado considerando timezone
   const now = new Date();
-  const endDate = new Date(event.discount.endDate);
 
-  return now <= endDate;
+  // La fecha de fin del descuento debe incluir hora (23:59 si no se especifica)
+  const endDateTime = getEventDateTime({
+    startDate: event.discount.endDate,
+    startTime: '23:59', // Fin del día por defecto
+    timezone: event.timezone,
+    country: event.country
+  });
+
+  return now <= endDateTime;
 }
 
 /**
@@ -38,7 +47,13 @@ export function discountAppliesInPhase(event: Event, phaseId: string): boolean {
     return false;
   }
 
-  return event.discount.applyToPhaseId === phaseId;
+  // Si el descuento aplica a todas las fases
+  if (event.discount.applyToAllPhases) {
+    return true;
+  }
+
+  // Verificar si la fase está en la lista de fases aplicables
+  return event.discount.applicablePhaseIds?.includes(phaseId) || false;
 }
 
 /**
@@ -49,51 +64,72 @@ export function discountAppliesInZone(event: Event, zoneId: string): boolean {
     return false;
   }
 
-  // Si applyToZones está vacío o es null, aplica a todas las zonas
-  if (!event.discount.applyToZones || event.discount.applyToZones.length === 0) {
+  // Si el descuento aplica a todas las zonas
+  if (event.discount.applyToAllZones) {
     return true;
   }
 
-  return event.discount.applyToZones.includes(zoneId);
+  // Verificar si la zona está en la lista de zonas aplicables
+  return event.discount.applicableZoneIds?.includes(zoneId) || false;
 }
 
 /**
- * Valida un código de descuento
+ * Obtiene la fase de venta activa actual
  */
-export function validateDiscountCode(event: Event, code: string): boolean {
-  if (!event.discount || !event.discount.enabled || !event.discount.requireCode) {
-    return true; // No se requiere código
+export function getCurrentActivePhase(event: Event): SalesPhase | null {
+  if (!event.salesPhases || event.salesPhases.length === 0) {
+    return null;
   }
 
-  if (!event.discount.codes || event.discount.codes.length === 0) {
+  const now = new Date();
+
+  // Buscar la fase activa actual
+  const activePhase = event.salesPhases.find((phase) => {
+    const startDate = new Date(phase.startDate);
+    const endDate = new Date(phase.endDate);
+    return now >= startDate && now <= endDate;
+  });
+
+  return activePhase || null;
+}
+
+/**
+ * Verifica si un código de descuento es válido
+ */
+export function isDiscountCodeValid(event: Event, code: string): boolean {
+  if (!event.discount || !event.discount.enabled) {
     return false;
   }
 
-  // Comparación insensible a mayúsculas/minúsculas
-  const normalizedCode = code.trim().toUpperCase();
-  const normalizedCodes = event.discount.codes.map(c => c.trim().toUpperCase());
+  // Si no se requiere código, es válido por defecto
+  if (!event.discount.requireCode) {
+    return true;
+  }
 
-  return normalizedCodes.includes(normalizedCode);
+  // Verificar si el código coincide (case-insensitive)
+  const normalizedCode = code.trim().toUpperCase();
+  const normalizedDiscountCodes = event.discount.codes?.map((c) => c.toUpperCase()) || [];
+
+  return normalizedDiscountCodes.includes(normalizedCode);
 }
 
 /**
- * Calcula el precio con descuento aplicado
+ * Calcula el precio con descuento para un ticket específico
  */
 export function calculateDiscountedPrice(
   event: Event,
-  originalPrice: number,
+  ticketPrice: number,
   phaseId: string,
   zoneId: string,
-  discountCode?: string,
-  showPreview: boolean = false // NEW: Para páginas informativas
+  code?: string
 ): DiscountCalculationResult {
   const result: DiscountCalculationResult = {
     hasDiscount: false,
-    originalPrice,
-    discountedPrice: originalPrice,
+    originalPrice: ticketPrice,
+    discountedPrice: ticketPrice,
     discountPercentage: 0,
     savings: 0,
-    requiresCode: event.discount?.requireCode || false,
+    requiresCode: false,
     isExpired: false,
     appliesInCurrentPhase: false,
     appliesInZone: false,
@@ -110,7 +146,7 @@ export function calculateDiscountedPrice(
     return result;
   }
 
-  // Verificar si aplica en la fase actual
+  // Verificar si el descuento aplica a la fase actual
   const appliesInPhase = discountAppliesInPhase(event, phaseId);
   result.appliesInCurrentPhase = appliesInPhase;
 
@@ -118,7 +154,7 @@ export function calculateDiscountedPrice(
     return result;
   }
 
-  // Verificar si aplica en la zona
+  // Verificar si el descuento aplica a la zona
   const appliesInZone = discountAppliesInZone(event, zoneId);
   result.appliesInZone = appliesInZone;
 
@@ -126,20 +162,22 @@ export function calculateDiscountedPrice(
     return result;
   }
 
-  // Verificar código si es requerido (SKIP si showPreview es true)
-  if (event.discount.requireCode && !showPreview) {
-    if (!discountCode || !validateDiscountCode(event, discountCode)) {
+  // Verificar si se requiere código y si es válido
+  result.requiresCode = event.discount.requireCode || false;
+
+  if (result.requiresCode) {
+    if (!code || !isDiscountCodeValid(event, code)) {
       return result;
     }
   }
 
-  // Calcular descuento
-  const discountPercentage = event.discount.percentage;
-  const discountAmount = originalPrice * (discountPercentage / 100);
-  const discountedPrice = originalPrice - discountAmount;
+  // Calcular el descuento
+  const discountPercentage = event.discount.percentage || 0;
+  const discountAmount = (ticketPrice * discountPercentage) / 100;
+  const discountedPrice = Math.max(0, ticketPrice - discountAmount);
 
   result.hasDiscount = true;
-  result.discountedPrice = Math.max(0, discountedPrice); // No puede ser negativo
+  result.discountedPrice = discountedPrice;
   result.discountPercentage = discountPercentage;
   result.savings = discountAmount;
 
@@ -147,118 +185,48 @@ export function calculateDiscountedPrice(
 }
 
 /**
- * Obtiene la fase activa actual de un evento
+ * Obtiene el precio más bajo considerando descuentos
  */
-export function getCurrentActivePhase(event: Event): SalesPhase | null {
+export function getLowestPriceWithDiscount(event: Event, code?: string): number {
   if (!event.salesPhases || event.salesPhases.length === 0) {
-    return null;
-  }
-
-  const now = new Date();
-
-  // Buscar fase activa
-  const activePhase = event.salesPhases.find(phase => {
-    const startDate = new Date(phase.startDate);
-    const endDate = new Date(phase.endDate);
-
-    // Verificar estado manual
-    if (phase.manualStatus === 'active') {
-      return true;
-    }
-
-    if (phase.manualStatus === 'sold_out' || phase.status === 'sold_out') {
-      return false;
-    }
-
-    // Verificar por fecha
-    return now >= startDate && now <= endDate;
-  });
-
-  return activePhase || null;
-}
-
-/**
- * Obtiene el precio más bajo con descuento aplicado (para SEO)
- */
-export function getLowestPriceWithDiscount(
-  event: Event,
-  phase?: SalesPhase
-): { price: number; hasDiscount: boolean; originalPrice: number } {
-  const targetPhase = phase || getCurrentActivePhase(event);
-
-  if (!targetPhase || !targetPhase.zonesPricing || targetPhase.zonesPricing.length === 0) {
-    return { price: 0, hasDiscount: false, originalPrice: 0 };
+    return 0;
   }
 
   let lowestPrice = Infinity;
-  let lowestOriginalPrice = Infinity;
-  let hasAnyDiscount = false;
 
-  for (const zonePricing of targetPhase.zonesPricing) {
-    const originalPrice = zonePricing.price;
+  // Iterar sobre todas las fases y zonas para encontrar el precio más bajo
+  event.salesPhases.forEach((phase) => {
+    phase.tickets?.forEach((ticket) => {
+      const calculation = calculateDiscountedPrice(
+        event,
+        ticket.price,
+        phase.id,
+        ticket.zoneId,
+        code
+      );
 
-    if (originalPrice <= 0) continue;
+      const effectivePrice = calculation.hasDiscount
+        ? calculation.discountedPrice
+        : calculation.originalPrice;
 
-    const discountResult = calculateDiscountedPrice(
-      event,
-      originalPrice,
-      targetPhase.id,
-      zonePricing.zoneId,
-      undefined,
-      true // showPreview = true para páginas informativas
-    );
-
-    if (discountResult.hasDiscount) {
-      hasAnyDiscount = true;
-      if (discountResult.discountedPrice < lowestPrice) {
-        lowestPrice = discountResult.discountedPrice;
-        lowestOriginalPrice = originalPrice;
+      if (effectivePrice < lowestPrice) {
+        lowestPrice = effectivePrice;
       }
-    } else {
-      if (originalPrice < lowestPrice) {
-        lowestPrice = originalPrice;
-        lowestOriginalPrice = originalPrice;
-      }
-    }
-  }
-
-  if (lowestPrice === Infinity) {
-    return { price: 0, hasDiscount: false, originalPrice: 0 };
-  }
-
-  return {
-    price: lowestPrice,
-    hasDiscount: hasAnyDiscount,
-    originalPrice: lowestOriginalPrice,
-  };
-}
-
-/**
- * Formatea el precio con el símbolo de moneda
- */
-export function formatPrice(price: number, currency: string, currencySymbol?: string): string {
-  const symbol = currencySymbol || currency;
-
-  // Formatear con separadores de miles
-  const formattedNumber = price.toLocaleString('es-ES', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
+    });
   });
 
-  return `${symbol} ${formattedNumber}`;
+  return lowestPrice === Infinity ? 0 : lowestPrice;
 }
 
 /**
- * Genera el badge de texto para el descuento (ej: "20% OFF")
+ * Obtiene el tiempo restante hasta que expire el descuento
+ * Considera la fecha/hora exacta del timezone del evento
  */
-export function getDiscountBadgeText(percentage: number): string {
-  return `${percentage}% OFF`;
-}
-
-/**
- * Calcula el tiempo restante hasta que expire el descuento
- */
-export function getDiscountTimeRemaining(endDate: string): {
+export function getDiscountTimeRemaining(
+  endDate: string,
+  timezone?: string,
+  country?: string
+): {
   days: number;
   hours: number;
   minutes: number;
@@ -266,9 +234,16 @@ export function getDiscountTimeRemaining(endDate: string): {
   isExpired: boolean;
   totalMilliseconds: number;
 } {
+  // Obtener la fecha/hora exacta considerando timezone
+  const endDateTime = getEventDateTime({
+    startDate: endDate,
+    startTime: '23:59', // Fin del día
+    timezone,
+    country
+  });
+
   const now = new Date();
-  const end = new Date(endDate);
-  const diff = end.getTime() - now.getTime();
+  const diff = endDateTime.getTime() - now.getTime();
 
   if (diff <= 0) {
     return {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getEventDateTime } from '@/lib/utils/date-timezone';
 
 interface CountdownTimerProps {
   targetDate: string;
@@ -23,77 +24,67 @@ export function CountdownTimer({ targetDate, targetTime, timezone, className }: 
   useEffect(() => {
     const calculateTimeLeft = () => {
       try {
-        // Parse target date and time
-        const dateStr = targetDate;
-        const timeStr = targetTime || '00:00';
-        const [hours, minutes] = timeStr.split(':').map(Number);
-        
-        // Create date in the specified timezone or local timezone
-        const target = new Date(dateStr);
-        target.setHours(hours, minutes || 0, 0, 0);
-        
-        // Adjust for timezone if provided
-        if (timezone) {
-          // Simple timezone offset handling (can be improved)
-          const offsetMatch = timezone.match(/UTC([+-])(\d+):(\d+)/);
-          if (offsetMatch) {
-            const sign = offsetMatch[1] === '+' ? 1 : -1;
-            const offsetHours = parseInt(offsetMatch[2]);
-            const offsetMinutes = parseInt(offsetMatch[3]);
-            const offsetMs = sign * (offsetHours * 60 + offsetMinutes) * 60 * 1000;
-            const localOffset = target.getTimezoneOffset() * 60 * 1000;
-            target.setTime(target.getTime() - localOffset - offsetMs);
-          }
-        }
+        // Usar getEventDateTime para obtener la fecha/hora exacta considerando timezone
+        const targetDateTime = getEventDateTime({
+          startDate: targetDate,
+          startTime: targetTime || '23:59',
+          timezone
+        });
 
         const now = new Date();
-        const difference = target.getTime() - now.getTime();
+        const difference = targetDateTime.getTime() - now.getTime();
 
         if (difference <= 0) {
           setHasPassed(true);
-          setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-          return;
+          return null;
         }
 
-        setHasPassed(false);
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+        return { days, hours, minutes, seconds };
       } catch (error) {
         console.error('Error calculating countdown:', error);
-        setTimeLeft(null);
+        return null;
       }
     };
 
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000);
+    // Calculate initial time
+    const initial = calculateTimeLeft();
+    setTimeLeft(initial);
 
-    return () => clearInterval(interval);
+    // Update every second
+    const timer = setInterval(() => {
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [targetDate, targetTime, timezone]);
-
-  if (!timeLeft) {
-    return null;
-  }
 
   if (hasPassed) {
     return (
-      <div className={cn('flex items-center gap-2 text-muted-foreground', className)}>
-        <Clock className="h-4 w-4" />
+      <div className={cn("flex items-center gap-2 text-muted-foreground", className)}>
+        <Clock className="w-4 h-4" />
         <span className="text-sm">El evento ya comenzó</span>
       </div>
     );
   }
 
-  return (
-    <div className={cn('flex items-center gap-4', className)}>
-      <div className="flex items-center gap-2">
-        <Clock className="h-4 w-4" />
-        <span className="text-sm font-medium">Falta:</span>
+  if (!timeLeft) {
+    return (
+      <div className={cn("flex items-center gap-2", className)}>
+        <Clock className="w-4 h-4 animate-pulse" />
+        <span className="text-sm">Cargando...</span>
       </div>
-      <div className="flex gap-2">
+    );
+  }
+
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <div className="grid grid-cols-4 gap-4">
         {timeLeft.days > 0 && (
           <div className="text-center">
             <div className="text-2xl font-bold tabular-nums">{String(timeLeft.days).padStart(2, '0')}</div>
@@ -116,4 +107,3 @@ export function CountdownTimer({ targetDate, targetTime, timezone, className }: 
     </div>
   );
 }
-

@@ -8,6 +8,8 @@ import { getDiscountTimeRemaining } from '@/lib/utils/discount-calculator';
 interface DiscountUrgencyBannerProps {
   percentage: number;
   endDate: string;
+  timezone?: string;
+  country?: string;
   onClose?: () => void;
   className?: string;
 }
@@ -15,15 +17,17 @@ interface DiscountUrgencyBannerProps {
 export function DiscountUrgencyBanner({
   percentage,
   endDate,
+  timezone,
+  country,
   onClose,
   className = '',
 }: DiscountUrgencyBannerProps) {
-  const [timeRemaining, setTimeRemaining] = useState(getDiscountTimeRemaining(endDate));
+  const [timeRemaining, setTimeRemaining] = useState(getDiscountTimeRemaining(endDate, timezone, country));
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const remaining = getDiscountTimeRemaining(endDate);
+      const remaining = getDiscountTimeRemaining(endDate, timezone, country);
       setTimeRemaining(remaining);
 
       if (remaining.isExpired) {
@@ -32,7 +36,7 @@ export function DiscountUrgencyBanner({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [endDate]);
+  }, [endDate, timezone, country]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -179,16 +183,26 @@ export function DiscountUrgencyBanner({
 }
 
 // Versión compacta para usar en tarjetas de eventos
-export function CompactDiscountTimer({ endDate, className = '' }: { endDate: string; className?: string }) {
-  const [timeRemaining, setTimeRemaining] = useState(getDiscountTimeRemaining(endDate));
+export function CompactDiscountTimer({
+  endDate,
+  timezone,
+  country,
+  className = ''
+}: {
+  endDate: string;
+  timezone?: string;
+  country?: string;
+  className?: string;
+}) {
+  const [timeRemaining, setTimeRemaining] = useState(getDiscountTimeRemaining(endDate, timezone, country));
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimeRemaining(getDiscountTimeRemaining(endDate));
+      setTimeRemaining(getDiscountTimeRemaining(endDate, timezone, country));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [endDate]);
+  }, [endDate, timezone, country]);
 
   if (timeRemaining.isExpired) {
     return null;

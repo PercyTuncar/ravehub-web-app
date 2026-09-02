@@ -430,7 +430,7 @@ export default function DiscountConfigPage({ params }: { params: Promise<{ event
 
                     {/* End Date */}
                     <div className="space-y-2">
-                      <Label className="text-base font-semibold">Fecha y Hora de Fin *</Label>
+                      <Label className="text-base font-semibold">Fecha y Hora de Fin del Descuento *</Label>
                       <Input
                         type="datetime-local"
                         value={endDate}
@@ -438,7 +438,10 @@ export default function DiscountConfigPage({ params }: { params: Promise<{ event
                         className="h-12"
                       />
                       <p className="text-sm text-muted-foreground">
-                        El descuento se desactivará automáticamente después de esta fecha
+                        El descuento se desactivará automáticamente después de esta fecha en el timezone del país del evento ({event?.timezone || 'America/Lima'}).
+                      </p>
+                      <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">
+                        ⚠️ La fecha de fin del descuento es INDEPENDIENTE de la fecha del evento. Puedes configurar que el descuento termine antes, durante o incluso después del evento.
                       </p>
                     </div>
                   </CardContent>
