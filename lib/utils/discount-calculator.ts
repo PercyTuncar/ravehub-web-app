@@ -272,6 +272,20 @@ export function getDiscountTimeRemaining(
 }
 
 /**
+ * Genera el badge de texto para el descuento (ej: "20% OFF")
+ */
+export function getDiscountBadgeText(percentage: number): string {
+  return `${percentage}% OFF`;
+}
+
+/**
+ * Alias para isDiscountCodeValid (compatibilidad)
+ */
+export function validateDiscountCode(event: Event, code: string): boolean {
+  return isDiscountCodeValid(event, code);
+}
+
+/**
  * Incrementa el contador de uso de un código de descuento
  * Esta función debe ser llamada al confirmar una compra
  */
