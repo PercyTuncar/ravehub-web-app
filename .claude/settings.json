@@ -93,7 +93,8 @@
       "Bash(curl -s http://localhost:3000/eventos/zamna-lima-peru-2026/entradas)",
       "Bash(xargs grep -l \"Eventos Pasados\")",
       "Bash(npx tsx *)",
-      "Bash(xargs grep -l \"eventsCollection\")"
+      "Bash(xargs grep -l \"eventsCollection\")",
+      "Bash(Get-Date -Format \"yyyy-MM-dd HH:mm:ss zzz\")"
     ]
   }
 }
