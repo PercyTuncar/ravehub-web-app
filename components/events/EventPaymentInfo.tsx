@@ -62,11 +62,8 @@ export function EventPaymentInfo({ event }: EventPaymentInfoProps) {
 
       <CardContent className="relative z-10 space-y-5 p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/15 shadow-sm"
-            style={{ backgroundColor: `${dominantColor}20`, borderColor: `${dominantColor}30` }}
-          >
-            <CreditCard className="h-5 w-5" style={{ color: dominantColor }} />
+          <div className="flex shrink-0 items-center justify-center pt-0.5">
+            <CreditCard className="h-6 w-6" style={{ color: dominantColor }} />
           </div>
           <div className="min-w-0 flex-1 pt-0.5">
             <h3 className="text-lg font-bold text-[#FAFDFF]">Información de Pago y Entradas</h3>
@@ -120,11 +117,8 @@ export function EventPaymentInfo({ event }: EventPaymentInfoProps) {
 
               {event.ticketDownloadAvailableDate && (
                 <div className="flex items-start gap-3 rounded-xl border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 backdrop-blur-md">
-                  <div
-                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-                    style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
-                  >
-                    <Calendar className="h-3.5 w-3.5" />
+                  <div className="mt-0.5 flex shrink-0 items-center justify-center">
+                    <Calendar className="h-5 w-5" style={{ color: accentColor }} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs text-white/55">Disponible para descarga desde</p>

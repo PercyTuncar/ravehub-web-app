@@ -338,8 +338,8 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
           {/* Feature Grid */}
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-3 rounded-2xl border border-white/[0.10] bg-white/[0.045] p-6 shadow-lg shadow-black/10 backdrop-blur-xl transition-colors hover:bg-white/[0.07]">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 mb-2">
-                <Sparkles className="w-5 h-5" />
+              <div className="mb-2">
+                <Sparkles className="w-8 h-8 text-orange-500" />
               </div>
               <h3 className="font-bold text-white text-lg">Experiencia Total</h3>
               <p className="text-sm text-zinc-400">
@@ -348,8 +348,8 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
             </div>
 
             <div className="space-y-3 rounded-2xl border border-white/[0.10] bg-white/[0.045] p-6 shadow-lg shadow-black/10 backdrop-blur-xl transition-colors hover:bg-white/[0.07]">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 mb-2">
-                <Music className="w-5 h-5" />
+              <div className="mb-2">
+                <Music className="w-8 h-8 text-purple-500" />
               </div>
               <h3 className="font-bold text-white text-lg">Lineup Exclusivo</h3>
               <p className="text-sm text-zinc-400">
@@ -358,8 +358,8 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
             </div>
 
             <div className="space-y-3 rounded-2xl border border-white/[0.10] bg-white/[0.045] p-6 shadow-lg shadow-black/10 backdrop-blur-xl transition-colors hover:bg-white/[0.07]">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-2">
-                <ShieldCheck className="w-5 h-5" />
+              <div className="mb-2">
+                <ShieldCheck className="w-8 h-8 text-emerald-500" />
               </div>
               <h3 className="font-bold text-white text-lg">Compra Segura</h3>
               <p className="text-sm text-zinc-400">

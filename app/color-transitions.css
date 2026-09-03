@@ -15,8 +15,7 @@
   /* Source: https://stackoverflow.com/q/13994568 */
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  -webkit-perspective: 1000;
-  perspective: 1000;
+  /* REMOVED perspective from * selector to prevent breaking position: fixed elements */
 }
 
 /* Optimize transitions for color properties only */
@@ -31,3 +30,4 @@
   transition-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
   will-change: color, background-color, border-color, background;
 }
+

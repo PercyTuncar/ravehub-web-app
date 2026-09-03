@@ -1343,11 +1343,8 @@ function BuyTicketsContent({
               </h1>
               <div className="flex flex-wrap gap-3 text-sm mt-6">
                 <div className="group relative overflow-hidden flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 shadow-lg shadow-black/10">
-                  <div
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 shadow-sm"
-                    style={{ backgroundColor: `${colorPalette.dominant}20`, color: colorPalette.dominant }}
-                  >
-                    <Calendar className="w-4 h-4" />
+                  <div className="flex shrink-0 items-center justify-center">
+                    <Calendar className="w-5 h-5" style={{ color: colorPalette.dominant }} />
                   </div>
                   <div className="min-w-0">
                     <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Fecha</div>
@@ -1362,11 +1359,8 @@ function BuyTicketsContent({
                 </div>
                 {event.startTime && (
                   <div className="group relative overflow-hidden flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 shadow-lg shadow-black/10">
-                    <div
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 shadow-sm"
-                      style={{ backgroundColor: `${colorPalette.accent}20`, color: colorPalette.accent }}
-                    >
-                      <Clock className="w-4 h-4" />
+                    <div className="flex shrink-0 items-center justify-center">
+                      <Clock className="w-5 h-5" style={{ color: colorPalette.accent }} />
                     </div>
                     <div className="min-w-0">
                       <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Hora</div>
@@ -1375,11 +1369,8 @@ function BuyTicketsContent({
                   </div>
                 )}
                 <div className="group relative overflow-hidden flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 shadow-lg shadow-black/10">
-                  <div
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 shadow-sm"
-                    style={{ backgroundColor: `${colorPalette.secondary}20`, color: colorPalette.secondary }}
-                  >
-                    <MapPin className="w-4 h-4" />
+                  <div className="flex shrink-0 items-center justify-center">
+                    <MapPin className="w-5 h-5" style={{ color: colorPalette.secondary }} />
                   </div>
                   <div className="min-w-0">
                     <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Lugar</div>
@@ -1654,11 +1645,8 @@ function BuyTicketsContent({
             {/* 1. TICKETS GRID - PRIORIDAD #1 según UX best practices */}
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
-                  style={{ backgroundColor: `${colorPalette.primary}20`, color: colorPalette.primary }}
-                >
-                  <Ticket className="w-5 h-5" />
+                <div className="flex shrink-0 items-center justify-center">
+                  <Ticket className="w-6 h-6" style={{ color: colorPalette.primary }} />
                 </div>
                 <h2 className="text-xl font-black text-white">
                   Selecciona tus entradas
@@ -2365,7 +2353,7 @@ function BuyTicketsContent({
       </div>
 
       {/* Mobile Sticky Footer - positioned above bottom navbar */}
-      <div className="lg:hidden fixed bottom-24 left-0 w-full z-40 px-3">
+      <div className="lg:hidden fixed bottom-24 left-0 right-0 z-40 px-3">
         {/* Main Purchase CTA - Premium Liquid Glass Effect */}
         <div className="relative overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
           {/* Multi-layer glass background */}

@@ -46,15 +46,9 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
       <CardContent className="relative z-10 space-y-4 p-5 sm:p-6">
         {/* Header with icon and title */}
         <div className="mb-1 flex items-start gap-3">
-          <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/15 shadow-sm"
-            style={{
-              backgroundColor: `${dominantColor}20`,
-              borderColor: `${dominantColor}30`,
-            }}
-          >
+          <div className="flex shrink-0 items-center justify-center pt-0.5">
             <FaWhatsapp
-              className="h-5 w-5"
+              className="h-6 w-6"
               style={{
                 color: '#25D366',
                 transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
