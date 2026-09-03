@@ -227,7 +227,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           <h1 className="sr-only">{event.name}</h1>
 
           {/* Breadcrumbs - SEO visible navigation */}
-          <div className="container mx-auto px-4 pt-6">
+          <div className="container mx-auto px-4 sm:pt-6">
             <Breadcrumbs items={breadcrumbItems} />
           </div>
 

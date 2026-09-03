@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Search, SlidersHorizontal, X, Calendar, MapPin, DollarSign } from 'lucide-react';
+import { Search, Filter, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -13,7 +13,7 @@ export interface FilterState {
     search: string;
     type: string;
     city: string;
-    date?: string | Date;
+    date?: string | Date; // Changed to allow string presets like 'weekend'
     minPrice: string;
     maxPrice: string;
 }
@@ -38,39 +38,54 @@ export default function FilterSidebar({ filters, setFilters, resultsCount }: Fil
             city: 'all',
             date: undefined,
             minPrice: '',
-            maxPrice: '',
+            maxPrice: ''
         });
     };
 
-    const activeFiltersCount = [
-        filters.type !== 'all' ? 1 : 0,
-        filters.city !== 'all' ? 1 : 0,
-        filters.date ? 1 : 0,
-        filters.minPrice || filters.maxPrice ? 1 : 0,
-    ].reduce((a, b) => a + b, 0);
+    const activeFiltersCount =
+        (filters.type !== 'all' ? 1 : 0) +
+        (filters.city !== 'all' ? 1 : 0) +
+        (filters.minPrice ? 1 : 0) +
+        (filters.search ? 1 : 0) +
+        (filters.date ? 1 : 0);
 
     return (
         <>
-            {/* Mobile: Subtle Floating Filter Chips - NO sticky bar */}
-            <div className="lg:hidden flex flex-wrap gap-2">
-                {/* Filter Button - Minimal & Subtle */}
+            {/* Desktop Sidebar - Content Only (Wrapper handles position/scroll) */}
+            <div className="hidden lg:block">
+                <div className="bg-zinc-950/50 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-2xl min-h-min">
+                    <div className="mb-6 flex items-center justify-between sticky top-0 bg-zinc-950/95 z-10 pb-4 border-b border-white/5 -mx-2 px-2 pt-2 top-content-fade">
+                        <h3 className="font-bold text-white text-lg">Filtros</h3>
+                        <span className="text-xs text-zinc-500 bg-white/5 px-2 py-1 rounded-full">{resultsCount} resultados</span>
+                    </div>
+                    <FilterContent
+                        filters={filters}
+                        updateFilter={updateFilter}
+                        clearFilters={clearFilters}
+                        activeFiltersCount={activeFiltersCount}
+                    />
+                </div>
+            </div>
+
+            {/* Mobile Filter Bar - Optimized for less space */}
+            <div className="lg:hidden mb-4 sticky top-20 z-40 bg-zinc-950/95 backdrop-blur-md py-2 -mx-4 px-4 border-b border-white/5">
                 <Sheet open={isOpen} onOpenChange={setIsOpen}>
                     <SheetTrigger asChild>
-                        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:text-white transition-all text-xs font-medium backdrop-blur-sm">
-                            <SlidersHorizontal className="h-3.5 w-3.5" />
-                            <span>Filtrar</span>
+                        <Button variant="outline" size="sm" className="h-8 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs font-medium w-full justify-center">
+                            <Filter className="mr-1.5 h-3 w-3" />
+                            Filtros
                             {activeFiltersCount > 0 && (
-                                <span className="ml-1 w-4 h-4 rounded-full bg-orange-500 text-[9px] flex items-center justify-center font-bold">
+                                <span className="ml-1.5 px-1.5 h-4 rounded-full bg-orange-500 text-[9px] flex items-center justify-center text-white font-bold">
                                     {activeFiltersCount}
                                 </span>
                             )}
-                        </button>
+                        </Button>
                     </SheetTrigger>
-                    <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl bg-zinc-950 border-white/10">
+                    <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl bg-zinc-950 border-white/10">
                         <SheetHeader className="mb-6 text-left">
-                            <SheetTitle className="text-2xl font-black text-white">Filtrar Eventos</SheetTitle>
+                            <SheetTitle className="text-xl font-bold text-white">Filtrar Eventos</SheetTitle>
                         </SheetHeader>
-                        <div className="overflow-y-auto h-full pb-24">
+                        <div className="overflow-y-auto h-full pb-20">
                             <FilterContent
                                 filters={filters}
                                 updateFilter={updateFilter}
@@ -80,42 +95,12 @@ export default function FilterSidebar({ filters, setFilters, resultsCount }: Fil
                         </div>
                     </SheetContent>
                 </Sheet>
-
-                {/* Active Filter Chips - Show what's selected */}
-                {filters.type !== 'all' && (
-                    <button
-                        onClick={() => updateFilter('type', 'all')}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-all text-xs font-medium backdrop-blur-sm"
-                    >
-                        <span className="capitalize">{filters.type}</span>
-                        <X className="h-3 w-3" />
-                    </button>
-                )}
-                {filters.city !== 'all' && (
-                    <button
-                        onClick={() => updateFilter('city', 'all')}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-all text-xs font-medium backdrop-blur-sm"
-                    >
-                        <MapPin className="h-3 w-3" />
-                        <span className="capitalize">{filters.city}</span>
-                        <X className="h-3 w-3" />
-                    </button>
-                )}
-                {filters.date && (
-                    <button
-                        onClick={() => updateFilter('date', undefined)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 transition-all text-xs font-medium backdrop-blur-sm"
-                    >
-                        <Calendar className="h-3 w-3" />
-                        <X className="h-3 w-3" />
-                    </button>
-                )}
             </div>
 
             {/* Desktop Sidebar */}
             <div className="hidden lg:block">
                 <div className="bg-zinc-950/50 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-2xl min-h-min">
-                    <div className="mb-6 flex items-center justify-between sticky top-0 bg-zinc-950/95 z-10 pb-4 border-b border-white/5 -mx-2 px-2 pt-2">
+                    <div className="mb-6 flex items-center justify-between sticky top-0 bg-zinc-950/95 z-10 pb-4 border-b border-white/5 -mx-2 px-2 pt-2 top-content-fade">
                         <h3 className="font-bold text-white text-lg">Filtros</h3>
                         <span className="text-xs text-zinc-500 bg-white/5 px-2 py-1 rounded-full">
                             {resultsCount} resultados
@@ -143,7 +128,7 @@ interface FilterContentProps {
 function FilterContent({ filters, updateFilter, clearFilters, activeFiltersCount }: FilterContentProps) {
     return (
         <div className="space-y-8">
-            {/* Search */}
+            {/* Search Section */}
             <div className="space-y-3">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Búsqueda</label>
                 <div className="relative group">
@@ -157,7 +142,7 @@ function FilterContent({ filters, updateFilter, clearFilters, activeFiltersCount
                 </div>
             </div>
 
-            {/* Type */}
+            {/* Type Section - Enhanced */}
             <div className="space-y-3">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Tipo de Evento</label>
                 <div className="grid grid-cols-1 gap-2">
@@ -165,22 +150,21 @@ function FilterContent({ filters, updateFilter, clearFilters, activeFiltersCount
                         { value: 'all', label: 'Todos los eventos', icon: '🎪' },
                         { value: 'festival', label: 'Festivales', icon: '🎆' },
                         { value: 'concert', label: 'Conciertos', icon: '🎵' },
-                        { value: 'club', label: 'Club / Discoteca', icon: '🕺' },
-                    ].map((option) => (
+                        { value: 'club', label: 'Club / Discoteca', icon: '🕺' }
+                    ].map((type) => (
                         <button
-                            key={option.value}
-                            onClick={() => updateFilter('type', option.value)}
-                            className={`group relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 border ${
-                                filters.type === option.value
-                                    ? 'bg-zinc-800/80 border-orange-500/30 text-white shadow-lg shadow-orange-500/10'
-                                    : 'bg-zinc-900/40 border-transparent hover:bg-zinc-800 hover:border-white/10 text-zinc-400 hover:text-white'
-                            }`}
+                            key={type.value}
+                            onClick={() => updateFilter('type', type.value)}
+                            className={`group relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 border ${filters.type === type.value
+                                ? 'bg-zinc-800/80 border-orange-500/30 text-white shadow-lg shadow-orange-500/10'
+                                : 'bg-zinc-900/40 border-transparent hover:bg-zinc-800 hover:border-white/10 text-zinc-400 hover:text-white'
+                                }`}
                         >
                             <div className="flex items-center gap-3">
-                                <span className="text-lg opacity-80 group-hover:scale-110 transition-transform">{option.icon}</span>
-                                <span>{option.label}</span>
+                                <span className="text-lg opacity-80 group-hover:scale-110 transition-transform">{type.icon}</span>
+                                <span>{type.label}</span>
                             </div>
-                            {filters.type === option.value && (
+                            {filters.type === type.value && (
                                 <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
                             )}
                         </button>
@@ -188,7 +172,7 @@ function FilterContent({ filters, updateFilter, clearFilters, activeFiltersCount
                 </div>
             </div>
 
-            {/* City */}
+            {/* Cities Section */}
             <div className="space-y-3">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Ciudad</label>
                 <div className="grid grid-cols-1 gap-2">
@@ -197,48 +181,44 @@ function FilterContent({ filters, updateFilter, clearFilters, activeFiltersCount
                         { value: 'Lima', label: 'Lima' },
                         { value: 'Santiago', label: 'Santiago' },
                         { value: 'Buenos Aires', label: 'Buenos Aires' },
-                        { value: 'Ciudad de México', label: 'Ciudad de México' },
+                        { value: 'CDMX', label: 'Ciudad de México' },
                         { value: 'Bogotá', label: 'Bogotá' },
-                        { value: 'Medellín', label: 'Medellín' },
+                        { value: 'Medellín', label: 'Medellín' }
                     ].map((city) => (
                         <button
                             key={city.value}
                             onClick={() => updateFilter('city', city.value)}
-                            className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm transition-all duration-200 border ${
-                                filters.city === city.value
-                                    ? 'bg-zinc-800/80 border-orange-500/30 text-white font-medium shadow-lg'
-                                    : 'bg-zinc-900/40 border-transparent text-zinc-400 hover:text-white hover:bg-zinc-800 hover:border-white/10'
-                            }`}
+                            className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm transition-all duration-200 border ${filters.city === city.value
+                                ? 'bg-zinc-800/80 border-orange-500/30 text-white font-medium shadow-lg'
+                                : 'bg-zinc-900/40 border-transparent text-zinc-400 hover:text-white hover:bg-zinc-800 hover:border-white/10'
+                                }`}
                         >
                             <span>{city.label}</span>
-                            {filters.city === city.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
-                            )}
+                            {filters.city === city.value && <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]" />}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Date */}
+            {/* Date Section */}
             <div className="space-y-3">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Fecha</label>
                 <div className="grid grid-cols-2 gap-2">
                     {[
-                        { value: undefined, label: 'Cualquier fecha' },
+                        { value: 'all', label: 'Cualquier fecha' },
                         { value: 'weekend', label: 'Fin de Semana' },
                         { value: 'month', label: 'Este Mes' },
-                        { value: 'nextMonth', label: 'Próximo Mes' },
-                    ].map((option) => (
+                        { value: 'next_month', label: 'Próximo Mes' }
+                    ].map((dateOption) => (
                         <button
-                            key={option.label}
-                            onClick={() => updateFilter('date', option.value)}
-                            className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 border text-center ${
-                                filters.date === option.value
-                                    ? 'bg-zinc-800 border-white/20 text-white shadow-md'
-                                    : 'bg-zinc-900/40 border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
-                            }`}
+                            key={dateOption.value}
+                            onClick={() => updateFilter('date', dateOption.value === 'all' ? undefined : dateOption.value)}
+                            className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 border text-center ${(filters.date as any) === dateOption.value || (dateOption.value === 'all' && !filters.date)
+                                ? 'bg-zinc-800 border-white/20 text-white shadow-md'
+                                : 'bg-zinc-900/40 border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+                                }`}
                         >
-                            {option.label}
+                            {dateOption.label}
                         </button>
                     ))}
                 </div>
@@ -249,19 +229,19 @@ function FilterContent({ filters, updateFilter, clearFilters, activeFiltersCount
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Rango de Precio (PEN)</label>
                 <div className="flex items-center gap-2">
                     <Input
-                        className="bg-zinc-900/50 border-white/5 text-sm h-10 rounded-lg focus:border-white/20"
-                        placeholder="Min"
                         type="number"
+                        placeholder="Min"
                         value={filters.minPrice}
                         onChange={(e) => updateFilter('minPrice', e.target.value)}
+                        className="bg-zinc-900/50 border-white/5 text-sm h-10 rounded-lg focus:border-white/20"
                     />
                     <span className="text-zinc-600">-</span>
                     <Input
-                        className="bg-zinc-900/50 border-white/5 text-sm h-10 rounded-lg focus:border-white/20"
-                        placeholder="Max"
                         type="number"
+                        placeholder="Max"
                         value={filters.maxPrice}
                         onChange={(e) => updateFilter('maxPrice', e.target.value)}
+                        className="bg-zinc-900/50 border-white/5 text-sm h-10 rounded-lg focus:border-white/20"
                     />
                 </div>
             </div>
@@ -269,10 +249,11 @@ function FilterContent({ filters, updateFilter, clearFilters, activeFiltersCount
             {/* Clear Filters */}
             {activeFiltersCount > 0 && (
                 <Button
+                    variant="ghost"
+                    className="w-full text-zinc-400 hover:text-white hover:bg-white/5"
                     onClick={clearFilters}
-                    variant="outline"
-                    className="w-full bg-white/5 hover:bg-white/10 border-white/10 text-white"
                 >
+                    <X className="mr-2 h-4 w-4" />
                     Limpiar filtros
                 </Button>
             )}

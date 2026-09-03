@@ -1,0 +1,33 @@
+/* Smooth color transitions - Applied globally */
+/* Source: https://blog.arashtad.com/updates/animate-color-changes-with-variables/ */
+
+/* GPU acceleration for smooth transitions */
+/* Source: https://www.lexo.ch/blog/2025/01/boost-css-performance-with-will-change-and-transform-translate3d-why-gpu-acceleration-matters/ */
+
+* {
+  /* Smooth color transitions with cubic-bezier */
+  /* Source: https://developer.chrome.com/docs/css-ui/css-linear-easing-function */
+  transition-property: color, background-color, border-color, fill, stroke, background, box-shadow;
+  transition-duration: 2.5s;
+  transition-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1); /* ease-in-out */
+
+  /* GPU acceleration to prevent flicker */
+  /* Source: https://stackoverflow.com/q/13994568 */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Optimize transitions for color properties only */
+/* Source: https://stackoverflow.com/questions/8947441/css3-transitions-is-transition-all-slower-than-transition-x */
+[style*="color:"],
+[style*="background:"],
+[style*="background-color:"],
+[style*="border-color:"],
+[style*="box-shadow:"] {
+  transition-property: color, background-color, border-color, background, box-shadow;
+  transition-duration: 2.5s;
+  transition-timing-function: cubic-bezier(0.4, 0.0, 0.2, 1);
+  will-change: color, background-color, border-color, background;
+}

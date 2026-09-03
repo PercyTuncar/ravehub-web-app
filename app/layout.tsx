@@ -13,6 +13,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Toaster } from 'react-hot-toast'
 import { Toaster as SonnerToaster } from 'sonner'
 import './globals.css'
+import './color-transitions.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { MarketingTracking } from '@/components/analytics/MarketingTracking'
 import { PageViewTracking } from '@/components/analytics/PageViewTracking'

@@ -108,8 +108,8 @@ function EventsPageShell({ children }: { children: React.ReactNode }) {
         <p>Descubre los mejores festivales y eventos en Latinoamérica</p>
       </div>
 
-      {/* Main Content Container */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 lg:pt-24">
+      {/* Main Content Container - Aligned with navbar width, adjusted padding for mobile */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-20 pb-12 lg:pt-24 w-full">
         {children}
       </div>
     </div>

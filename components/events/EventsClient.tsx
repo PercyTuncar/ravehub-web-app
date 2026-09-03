@@ -85,20 +85,9 @@ export default function EventsClient({
     }, [initialEvents, filters]);
 
     return (
-        <div className="min-h-screen bg-zinc-950 relative selection:bg-orange-500/30">
-
-            {/* Background Gradients (Orange/Warm for Logo Harmony) */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-orange-500/5 via-transparent to-transparent" />
-                <div className="absolute top-20 left-20 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow" />
-                <div className="absolute bottom-40 right-20 w-[500px] h-[500px] bg-red-600/5 rounded-full blur-[100px] mix-blend-screen" />
-            </div>
-
-            {/* Main Content */}
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 lg:pt-24">
-                <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-                    {/* Sidebar Filters */}
-                    <aside className="w-full lg:w-80 shrink-0">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
+            {/* Sidebar Filters */}
+            <aside className="w-full lg:w-80 shrink-0">
                         <div className="lg:sticky lg:top-24 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar rounded-3xl">
                             <FilterSidebar
                                 filters={filters}
@@ -206,7 +195,5 @@ export default function EventsClient({
                         {children}
                     </div>
                 </div>
-            </div>
-        </div>
     );
 }
