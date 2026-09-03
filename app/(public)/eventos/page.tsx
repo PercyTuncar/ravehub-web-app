@@ -1,32 +1,37 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Calendar, MapPin, Users, Clock, Search, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { eventsCollection } from '@/lib/firebase/collections';
+import { Calendar, MapPin } from 'lucide-react';
 import { Event } from '@/lib/types';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import Image from 'next/image';
 import EventsClient from '@/components/events/EventsClient';
-import { Pagination } from '@/components/ui/pagination';
 import JsonLd from '@/components/seo/JsonLd';
+import { Suspense } from 'react';
+import { getEventsList, getEventsCount } from './actions';
 
-// No cache - always fetch fresh data
-export const revalidate = 0;
-export const dynamic = 'force-dynamic';
+// ISR: Regenerate every 10 minutes (600 seconds)
+// This allows CDN caching while keeping content reasonably fresh
+export const revalidate = 600;
+
+// Mark this route as static for ISR
+export const dynamic = 'force-static';
+export const dynamicParams = true;
+
+interface EventsPageProps {
+  searchParams?: {
+    page?: string;
+    tipo?: string;
+    region?: string;
+  };
+}
 
 export async function generateMetadata({ searchParams }: EventsPageProps): Promise<Metadata> {
-  const { page: pageParam, tipo, region } = await searchParams;
+  const params = searchParams || {};
+  const { page: pageParam, tipo, region } = params;
 
   const currentPage = Math.max(1, parseInt(pageParam || '1', 10));
 
   try {
     // OPTIMIZED: Use count() instead of fetching all documents
-    const totalEvents = await eventsCollection.count([{ field: 'eventStatus', operator: '==', value: 'published' }]);
+    const totalEvents = await getEventsCount();
     const totalPages = Math.ceil(totalEvents / 12);
 
     if (currentPage > totalPages && currentPage > 1) {
@@ -37,7 +42,7 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
 
     // Determine if this is a filtered page
     const hasFilters = tipo || region;
-    const isRepetitiveFilter = hasFilters && (tipo || region); // All filters are considered potentially repetitive
+    const isRepetitiveFilter = hasFilters && (tipo || region);
 
     const baseTitle = 'Eventos de Música Electrónica';
     const pageTitle = currentPage === 1 ? baseTitle : `${baseTitle} - Página ${currentPage}`;
@@ -64,7 +69,6 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
       description,
       keywords: ['eventos', 'música electrónica', 'festivales', 'conciertos', 'techno', 'house', 'trance', 'entradas', 'Latinoamérica'],
       alternates: { canonical: canonicalUrl },
-      // Add noindex for filtered pages to prevent thousands of URLs
       robots: isRepetitiveFilter ? 'noindex, follow' : 'index, follow',
       openGraph: {
         title,
@@ -87,58 +91,34 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
   }
 }
 
-async function getEvents(): Promise<Event[]> {
-  try {
-    // NO USE CACHE - Get fresh data directly
-    const conditions = [{ field: 'eventStatus', operator: '==', value: 'published' }];
-    const allEvents = await eventsCollection.query(conditions, 'startDate', 'asc', 100);
+// Inline lightweight shell that renders immediately
+function EventsPageShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-zinc-950 relative">
+      {/* Background Gradients - Rendered immediately */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-orange-500/5 via-transparent to-transparent" />
+        <div className="absolute top-20 left-20 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute bottom-40 right-20 w-[500px] h-[500px] bg-red-600/5 rounded-full blur-[100px] mix-blend-screen" />
+      </div>
 
-    // DEBUG: Log eventos con descuento
-    const withDiscount = allEvents.filter((e: any) => e.discount);
-    console.log('🔍 [Server] Eventos con descuento:', withDiscount.length);
+      {/* SEO Content - Server Rendered (Hidden visually, visible to search engines) */}
+      <div className="sr-only">
+        <h1>Eventos de Música Electrónica</h1>
+        <p>Descubre los mejores festivales y eventos en Latinoamérica</p>
+      </div>
 
-    // CRITICAL FIX: Simplify discount object for serialization
-    const eventsWithSimplifiedDiscount = allEvents.map((event: any) => {
-      if (event.discount) {
-        return {
-          ...event,
-          discount: {
-            enabled: event.discount.enabled,
-            percentage: event.discount.percentage,
-            endDate: event.discount.endDate,
-            requireCode: event.discount.requireCode,
-            applyToPhaseId: event.discount.applyToPhaseId,
-            applyToZones: event.discount.applyToZones || [],
-          }
-        };
-      }
-      return event;
-    });
-
-    console.log('🔍 [Server] Después de simplificar:', eventsWithSimplifiedDiscount.filter((e: any) => e.discount).length);
-
-    return eventsWithSimplifiedDiscount as Event[];
-  } catch (error) {
-    console.error('Error loading events:', error);
-    return [];
-  }
+      {/* Main Content Container */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 lg:pt-24">
+        {children}
+      </div>
+    </div>
+  );
 }
 
-interface EventsPageProps {
-  searchParams: Promise<{
-    page?: string;
-    tipo?: string;
-    region?: string;
-  }>;
-}
-
-export default async function EventsPage({ searchParams }: EventsPageProps) {
-  const { page: pageParam, tipo, region } = await searchParams;
-
-  const currentPage = Math.max(1, parseInt(pageParam || '1', 10));
-
-  const allEvents = await getEvents();
-  // OPTIMIZED: Count is already efficient due to caching and limited query
+// Server Component that fetches and renders events
+async function EventsContent({ searchParams }: { searchParams?: { tipo?: string; region?: string } }) {
+  const allEvents = await getEventsList();
   const totalEvents = allEvents.length;
 
   // Generate ItemList schema for the events listing page
@@ -183,28 +163,18 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
     })),
   };
 
-  // Paginate events
-  // const paginatedEvents = allEvents.slice(offset, offset + eventsPerPage);
-
   return (
     <>
-      {/* JSON-LD Schema for Events List - Server Component renders before client hydration */}
       <JsonLd data={eventsListSchema} id="events-list-schema" />
-
-      {/* SEO Content - Server Rendered (Hidden visually, visible to search engines) */}
-      <div className="sr-only">
-        <h1>Eventos de Música Electrónica</h1>
-        <p>Descubre los mejores festivales y eventos en Latinoamérica</p>
-      </div>
 
       <EventsClient
         initialEvents={allEvents}
-        currentPage={currentPage}
+        currentPage={1}
         totalPages={1}
         totalEvents={totalEvents}
-        searchParams={{ tipo, region }}
+        searchParams={searchParams || {}}
       >
-        {/* Statistics and Country Links - Positioned after filters */}
+        {/* Statistics and Country Links */}
         <div className="mt-12 space-y-8">
           {/* Statistics */}
           <div className="flex items-center justify-center gap-6 text-sm text-zinc-400 bg-zinc-900/30 backdrop-blur-md border border-white/5 rounded-2xl p-6">
@@ -230,10 +200,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <Link
-                href="/pe"
-                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-red-500/50 rounded-xl p-6 text-center transition-all duration-300"
-              >
+              <Link href="/pe" className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-red-500/50 rounded-xl p-6 text-center transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-red-500/0 to-red-600/0 group-hover:from-red-500/10 group-hover:to-red-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-red-500" />
@@ -242,10 +209,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 </div>
               </Link>
 
-              <Link
-                href="/cl"
-                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-blue-500/50 rounded-xl p-6 text-center transition-all duration-300"
-              >
+              <Link href="/cl" className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-blue-500/50 rounded-xl p-6 text-center transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-blue-600/0 group-hover:from-blue-500/10 group-hover:to-blue-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-blue-500" />
@@ -254,10 +218,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 </div>
               </Link>
 
-              <Link
-                href="/co"
-                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-yellow-500/50 rounded-xl p-6 text-center transition-all duration-300"
-              >
+              <Link href="/co" className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-yellow-500/50 rounded-xl p-6 text-center transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 to-yellow-600/0 group-hover:from-yellow-500/10 group-hover:to-yellow-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-yellow-500" />
@@ -266,10 +227,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 </div>
               </Link>
 
-              <Link
-                href="/ec"
-                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-yellow-500/50 rounded-xl p-6 text-center transition-all duration-300"
-              >
+              <Link href="/ec" className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-yellow-500/50 rounded-xl p-6 text-center transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 to-blue-600/0 group-hover:from-yellow-500/10 group-hover:to-blue-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-yellow-500" />
@@ -278,10 +236,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 </div>
               </Link>
 
-              <Link
-                href="/mx"
-                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-green-500/50 rounded-xl p-6 text-center transition-all duration-300"
-              >
+              <Link href="/mx" className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-green-500/50 rounded-xl p-6 text-center transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-green-500/0 to-red-600/0 group-hover:from-green-500/10 group-hover:to-red-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-green-500" />
@@ -290,10 +245,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 </div>
               </Link>
 
-              <Link
-                href="/ar"
-                className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-sky-500/50 rounded-xl p-6 text-center transition-all duration-300"
-              >
+              <Link href="/ar" className="group relative overflow-hidden bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800 hover:border-sky-500/50 rounded-xl p-6 text-center transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-sky-500/0 to-sky-600/0 group-hover:from-sky-500/10 group-hover:to-sky-600/5 transition-all duration-300" />
                 <div className="relative">
                   <MapPin className="w-8 h-8 mx-auto mb-3 text-sky-500" />
@@ -306,5 +258,23 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
         </div>
       </EventsClient>
     </>
+  );
+}
+
+export default async function EventsPage({ searchParams }: EventsPageProps) {
+  const params = searchParams || {};
+  const { tipo, region } = params;
+
+  return (
+    <EventsPageShell>
+      {/*
+        Suspense permite que el shell (fondo, gradientes) se renderice INMEDIATAMENTE
+        mientras el contenido pesado (eventos) se "streamea" después.
+        Esto elimina la pantalla en blanco en F5.
+      */}
+      <Suspense fallback={null}>
+        <EventsContent searchParams={{ tipo, region }} />
+      </Suspense>
+    </EventsPageShell>
   );
 }

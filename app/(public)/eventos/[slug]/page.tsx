@@ -31,8 +31,9 @@ import { DiscountPopup } from '@/components/events/DiscountPopup';
 import { isDiscountActive } from '@/lib/utils/discount-calculator';
 import { getEventDateTime } from '@/lib/utils/date-timezone';
 
-// ISR: Revalidate every 3 minutes (180 seconds) + on-demand revalidation
-export const revalidate = 180;
+// ISR: Revalidate every 10 minutes (600 seconds) + on-demand revalidation
+// Events don't change frequently, so 10 minutes is reasonable
+export const revalidate = 600;
 
 // Pre-generate the most popular/recent events at build time to reduce on-demand generation
 // This significantly reduces Active CPU usage on Vercel by avoiding dynamic generation for popular pages
@@ -134,9 +135,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 async function getEventData(slug: string): Promise<{ event: Event; eventDjs: EventDj[] } | null> {
   try {
-    // Find event by slug with ISR cache and revalidation tags
+    // Find event by slug with cached query (1 minute TTL)
     const conditions = [{ field: 'slug', operator: '==', value: slug }];
-    const events = await eventsCollection.query(conditions, undefined, 'desc', 1);
+    const events = await eventsCollection.queryCached(
+      conditions,
+      undefined,
+      'desc',
+      1,
+      `event-${slug}` // Cache key
+    );
 
     if (events.length === 0) {
       return null;

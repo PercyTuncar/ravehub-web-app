@@ -11,7 +11,9 @@ import { Sparkles, Music, ShieldCheck, Info } from 'lucide-react';
 import { BTSRegistrationModal } from '@/components/tickets/bts-registration-modal';
 import { EventTracking } from '@/components/analytics/EventTracking';
 
-export const revalidate = 180;
+// ISR: Revalidate every 10 minutes (600 seconds)
+// Ticket pages are relatively static, 10 minutes is reasonable
+export const revalidate = 600;
 
 // Pre-generate the most popular/recent events' ticket pages at build time
 // This reduces Active CPU usage by avoiding dynamic generation for popular ticket pages
@@ -46,8 +48,15 @@ export async function generateStaticParams() {
 
 async function getEventData(slug: string): Promise<{ event: Event; eventDjs: EventDj[] } | null> {
   try {
+    // Use cached query for better performance
     const conditions = [{ field: 'slug', operator: '==', value: slug }];
-    const events = await eventsCollection.query(conditions);
+    const events = await eventsCollection.queryCached(
+      conditions,
+      undefined,
+      'desc',
+      1,
+      `event-tickets-${slug}` // Cache key
+    );
 
     if (events.length === 0) {
       return null;

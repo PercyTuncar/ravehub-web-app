@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Ticket, UserPlus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
 import { trackGA4Purchase } from '@/lib/analytics/ga4-tracking';
 
-export default function PurchaseSuccessPage() {
+function PurchaseSuccessContent() {
     const searchParams = useSearchParams();
     const email = searchParams?.get('email');
     const ticketId = searchParams?.get('ticketId');
@@ -114,5 +114,13 @@ export default function PurchaseSuccessPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function PurchaseSuccessPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#141618]">Cargando...</div>}>
+            <PurchaseSuccessContent />
+        </Suspense>
     );
 }

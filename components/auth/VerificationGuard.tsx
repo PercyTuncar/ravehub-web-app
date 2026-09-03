@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 
 export function VerificationGuard({ children }: { children: React.ReactNode }) {
     const { firebaseUser, loading } = useAuth();
@@ -48,13 +47,41 @@ export function VerificationGuard({ children }: { children: React.ReactNode }) {
         }
     }, [firebaseUser, loading, pathname, router]);
 
-    // While loading auth state, show a loading spinner or nothing to prevent flash
+    // ✅ OPTIMIZACIÓN: Páginas públicas no necesitan esperar al auth
+    // Solo páginas protegidas (profile, admin, checkout) deberían bloquearse
+    const publicPages = [
+        '/',
+        '/eventos',
+        '/djs',
+        '/blog',
+        '/tienda',
+        '/pe',
+        '/cl',
+        '/co',
+        '/mx',
+        '/ec',
+        '/ar',
+    ];
+
+    const isPublicPage = publicPages.includes(pathname) ||
+        pathname.startsWith('/eventos/') ||
+        pathname.startsWith('/djs/') ||
+        pathname.startsWith('/blog/') ||
+        pathname.startsWith('/tienda/') ||
+        pathname.startsWith('/go/');
+
+    // ✅ Si es página pública, renderizar inmediatamente (no esperar auth)
+    if (isPublicPage) {
+        return <>{children}</>;
+    }
+
+    // ⚠️ Solo páginas protegidas esperan el auth
+    // Mientras loading, no mostrar spinner bloqueante - renderizar el children
+    // El contenido protegido internamente manejará su propio estado de carga
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#141618]">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            </div>
-        );
+        // Para páginas protegidas, renderizar children de todas formas
+        // Los componentes internos (ProfileAuthGuard, etc.) manejarán el redirect
+        return <>{children}</>;
     }
 
     // If unverified and not on allowed path, render nothing (while redirecting)
