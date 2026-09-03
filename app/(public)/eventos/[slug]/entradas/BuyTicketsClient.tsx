@@ -1796,11 +1796,8 @@ function BuyTicketsContent({
             {event.salesPhases && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
-                    style={{ backgroundColor: `${colorPalette.primary}20`, color: colorPalette.primary }}
-                  >
-                    <Clock className="w-5 h-5" />
+                  <div className="flex shrink-0 items-center justify-center">
+                    <Clock className="w-6 h-6" style={{ color: colorPalette.primary }} />
                   </div>
                   <h2 className="text-xl font-black text-white">
                     Fases de Venta
@@ -1866,11 +1863,8 @@ function BuyTicketsContent({
             {/* 4. STAGE MAP - Información de apoyo para decisión */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
-                  style={{ backgroundColor: `${colorPalette.primary}20`, color: colorPalette.primary }}
-                >
-                  <MapPin className="w-5 h-5" />
+                <div className="flex shrink-0 items-center justify-center">
+                  <MapPin className="w-6 h-6" style={{ color: colorPalette.primary }} />
                 </div>
                 <h2 className="text-xl font-black text-white">
                   Mapa del Escenario
@@ -1890,11 +1884,8 @@ function BuyTicketsContent({
 
                 <div className="p-6 space-y-4">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
-                      style={{ backgroundColor: `${colorPalette.primary}20`, color: colorPalette.primary }}
-                    >
-                      <CreditCard className="w-5 h-5" />
+                    <div className="flex shrink-0 items-center justify-center">
+                      <CreditCard className="w-6 h-6" style={{ color: colorPalette.primary }} />
                     </div>
                     <h3 className="font-black text-white text-lg">Método de Pago</h3>
                   </div>
@@ -2057,11 +2048,8 @@ function BuyTicketsContent({
 
               <div className="relative z-10 p-6 space-y-6">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
-                    style={{ backgroundColor: `${colorPalette.dominant}20`, color: colorPalette.dominant }}
-                  >
-                    <ShoppingCart className="w-5 h-5" />
+                  <div className="flex shrink-0 items-center justify-center">
+                    <ShoppingCart className="w-6 h-6" style={{ color: colorPalette.dominant }} />
                   </div>
                   <h3 className="text-xl font-black text-white">
                     Resumen
@@ -2316,11 +2304,8 @@ function BuyTicketsContent({
 
             <div className="relative z-10 p-8 sm:p-12">
               <div className="flex items-center gap-3 mb-6">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 shadow-sm"
-                  style={{ backgroundColor: `${colorPalette.dominant}20`, color: colorPalette.dominant }}
-                >
-                  <Info className="w-5 h-5" />
+                <div className="flex shrink-0 items-center justify-center">
+                  <Info className="w-6 h-6" style={{ color: colorPalette.dominant }} />
                 </div>
                 <h2 className="text-2xl font-black text-white">
                   Todo sobre {event.name}

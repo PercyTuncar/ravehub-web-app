@@ -209,11 +209,8 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                     <div className="space-y-6">
                         <div className="space-y-4">
                             <div className="flex items-start gap-4">
-                                <div
-                                    className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-1000 ease-out"
-                                    style={{ backgroundColor: `${colorPalette.dominant}20` }}
-                                >
-                                    <Calendar className="w-6 h-6 transition-colors duration-1000 ease-out" style={{ color: colorPalette.dominant }} />
+                                <div className="flex items-center justify-center flex-shrink-0 pt-1">
+                                    <Calendar className="w-7 h-7 transition-colors duration-1000 ease-out" style={{ color: colorPalette.dominant }} />
                                 </div>
                                 <div className="flex-1 pt-1">
                                     <p className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1">Fecha y hora</p>
@@ -227,11 +224,8 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                             </div>
 
                             <div className="flex items-start gap-4">
-                                <div
-                                    className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-1000 ease-out"
-                                    style={{ backgroundColor: `${colorPalette.accent}20` }}
-                                >
-                                    <MapPin className="w-6 h-6 transition-colors duration-1000 ease-out" style={{ color: colorPalette.accent }} />
+                                <div className="flex items-center justify-center flex-shrink-0 pt-1">
+                                    <MapPin className="w-7 h-7 transition-colors duration-1000 ease-out" style={{ color: colorPalette.accent }} />
                                 </div>
                                 <div className="flex-1 pt-1">
                                     <p className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1">Ubicación</p>

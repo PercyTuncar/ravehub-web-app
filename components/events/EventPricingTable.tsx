@@ -497,11 +497,8 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
         />
         <div className="relative flex flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-7 md:px-8">
           <div className="flex items-start gap-3">
-            <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 shadow-lg"
-              style={{ backgroundColor: `${dominantColor}24`, color: dominantColor }}
-            >
-              <Ticket className="h-5 w-5" />
+            <div className="flex shrink-0 items-center justify-center pt-1">
+              <Ticket className="h-7 w-7" style={{ color: dominantColor }} />
             </div>
             <div>
               <h2 className="text-2xl font-bold tracking-tight text-white">Entradas</h2>
