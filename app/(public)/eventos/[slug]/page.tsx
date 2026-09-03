@@ -226,13 +226,33 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
           {/* SEO: Server-rendered H1 */}
           <h1 className="sr-only">{event.name}</h1>
 
-          {/* Breadcrumbs - SEO visible navigation */}
-          <div className="container mx-auto px-4 sm:pt-6">
-            <Breadcrumbs items={breadcrumbItems} />
-          </div>
-
           {/* Hero Section with Dynamic Colors */}
           <EventDetailHero event={event} />
+
+          {/* Breadcrumbs - Elegant positioning after hero */}
+          <div className="hidden md:block bg-[#141618] py-4">
+            <div className="container mx-auto px-8 lg:px-16 xl:px-20">
+              <nav aria-label="Breadcrumb">
+                <ol className="flex items-center gap-2 text-sm text-white/50">
+                  <li>
+                    <Link href="/" className="hover:text-white transition-colors">
+                      Inicio
+                    </Link>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span>/</span>
+                    <Link href="/eventos" className="hover:text-white transition-colors">
+                      Eventos
+                    </Link>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span>/</span>
+                    <span className="text-white/80">{event.name}</span>
+                  </li>
+                </ol>
+              </nav>
+            </div>
+          </div>
 
           {/* Main Content */}
           <div className="relative isolate overflow-hidden bg-[#141618] w-full max-w-full">

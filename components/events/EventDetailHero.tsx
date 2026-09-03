@@ -70,7 +70,8 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
             country: event.country
         });
 
-        const difference = eventDateTime.getTime() - new Date().getTime();
+        const now = new Date();
+        const difference = eventDateTime.getTime() - now.getTime();
 
         if (difference > 0) {
             return {
@@ -83,18 +84,55 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     };
 
+    // Calculate event status
+    const getEventStatus = () => {
+        const now = new Date();
+
+        const eventStartDateTime = getEventDateTime({
+            startDate: event.startDate,
+            startTime: event.startTime,
+            timezone: event.timezone,
+            country: event.country
+        });
+
+        // Check if event has ended
+        if (event.endDate && event.endTime) {
+            const eventEndDateTime = getEventDateTime({
+                startDate: event.endDate,
+                startTime: event.endTime,
+                timezone: event.timezone,
+                country: event.country
+            });
+
+            if (now > eventEndDateTime) {
+                return 'finished';
+            }
+        }
+
+        // Check if event is live (started but not ended)
+        if (now >= eventStartDateTime) {
+            return 'live';
+        }
+
+        // Event hasn't started yet
+        return 'upcoming';
+    };
+
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    const [eventStatus, setEventStatus] = useState<'upcoming' | 'live' | 'finished'>('upcoming');
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
         setTimeLeft(calculateTimeLeft());
+        setEventStatus(getEventStatus());
 
         const timer = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
+            setEventStatus(getEventStatus());
         }, 1000);
         return () => clearInterval(timer);
-    }, [event.startDate, event.startTime, event.timezone]);
+    }, [event.startDate, event.startTime, event.endDate, event.endTime, event.timezone]);
 
     const isSoldOut = event.eventStatus === 'soldout' || event.eventStatus === 'cancelled';
     const startDate = parseEventDate(event.startDate);
@@ -289,7 +327,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
             </div>
 
             {/* DESKTOP DESIGN - NETFLIX-STYLE CINEMATIC */}
-            <div className="hidden md:block relative w-full h-screen min-h-[700px] max-h-[900px] overflow-hidden bg-black">
+            <div className="hidden md:block relative w-full h-screen min-h-[700px] max-h-[900px] overflow-hidden bg-black pt-20">
 
                 {/* Full-bleed background image - Principle #1 */}
                 <div className="absolute inset-0">
@@ -338,8 +376,8 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                 </div>
 
                 {/* Content container - 60/40 golden ratio, left third - Principles #3, #9 */}
-                <div className="relative z-10 h-full flex flex-col justify-center lg:justify-start lg:pt-32 xl:pt-40">
-                    <div className="container mx-auto px-8 lg:px-12">
+<div className="relative z-10 h-[calc(100%-5rem)] flex flex-col justify-start pt-24 lg:pt-28">
+                    <div className="container mx-auto px-8 lg:px-16 xl:px-20">
                         <div className="max-w-2xl">
 
                             {/* Badge - Small, unobtrusive */}
@@ -357,14 +395,14 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
 
                             {/* Title - Huge, cinematic - Principle #8 */}
                             <h1
-                                className="text-5xl lg:text-7xl xl:text-8xl font-black text-white leading-[0.9] mb-6 tracking-tight"
+                                className="text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-[0.95] mb-5 tracking-tight"
                                 style={{ textShadow: '0 4px 60px rgba(0,0,0,0.8)' }}
                             >
                                 {event.name}
                             </h1>
 
                             {/* Metadata row - Inline, Netflix style */}
-                            <div className="flex items-center gap-4 mb-6 text-white/80">
+                            <div className="flex items-center gap-4 mb-5 text-white/80">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="w-4 h-4 transition-colors duration-1000 ease-out" style={{ color: colorPalette.dominant }} />
                                     <span className="text-base font-medium capitalize">
@@ -397,20 +435,133 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                                 )}
                             </div>
 
-                            {/* Description - 2-3 lines max */}
+                            {/* Description - Compact for SEO */}
                             {event.shortDescription && (
-                                <p className="text-lg lg:text-xl text-white/90 leading-relaxed mb-8 line-clamp-3 max-w-xl font-light">
+                                <p className="text-lg text-white/85 leading-relaxed mb-5 line-clamp-2 max-w-xl">
                                     {event.shortDescription}
                                 </p>
                             )}
 
-                            {/* CTAs - Single primary action - Principle #10 */}
+                            {/* Countdown - Clock style
+                             * Optimization: Visual yet compact
+                             */}
+                            {!isSoldOut && isClient && eventStatus === 'upcoming' && (
+                                <div className="mb-5">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Clock className="w-4 h-4 text-white/50" />
+                                        <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+                                            Comienza en
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {/* Days */}
+                                        {timeLeft.days > 0 && (
+                                            <>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <div
+                                                        className="min-w-[56px] h-[56px] rounded-xl flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-lg"
+                                                        style={{
+                                                            background: `linear-gradient(135deg, ${colorPalette.dominant}25, ${colorPalette.accent}15)`,
+                                                        }}
+                                                    >
+                                                        <span className="text-2xl font-black text-white tabular-nums">
+                                                            {timeLeft.days.toString().padStart(2, '0')}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-wide">días</span>
+                                                </div>
+                                                <span className="text-xl font-black text-white/30 pb-4">:</span>
+                                            </>
+                                        )}
+
+                                        {/* Hours */}
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div
+                                                className="min-w-[56px] h-[56px] rounded-xl flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-lg"
+                                                style={{
+                                                    background: `linear-gradient(135deg, ${colorPalette.dominant}25, ${colorPalette.accent}15)`,
+                                                }}
+                                            >
+                                                <span className="text-2xl font-black text-white tabular-nums">
+                                                    {timeLeft.hours.toString().padStart(2, '0')}
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-white/40 uppercase tracking-wide">horas</span>
+                                        </div>
+
+                                        <span className="text-xl font-black text-white/30 pb-4">:</span>
+
+                                        {/* Minutes */}
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div
+                                                className="min-w-[56px] h-[56px] rounded-xl flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-lg"
+                                                style={{
+                                                    background: `linear-gradient(135deg, ${colorPalette.dominant}25, ${colorPalette.accent}15)`,
+                                                }}
+                                            >
+                                                <span className="text-2xl font-black text-white tabular-nums">
+                                                    {timeLeft.minutes.toString().padStart(2, '0')}
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-white/40 uppercase tracking-wide">min</span>
+                                        </div>
+
+                                        <span className="text-xl font-black text-white/30 pb-4">:</span>
+
+                                        {/* Seconds */}
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div
+                                                className="min-w-[56px] h-[56px] rounded-xl flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-lg"
+                                                style={{
+                                                    background: `linear-gradient(135deg, ${colorPalette.dominant}25, ${colorPalette.accent}15)`,
+                                                }}
+                                            >
+                                                <span className="text-2xl font-black text-white tabular-nums">
+                                                    {timeLeft.seconds.toString().padStart(2, '0')}
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-white/40 uppercase tracking-wide">seg</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {eventStatus === 'live' && isClient && (
+                                <div className="mb-5 inline-flex items-center gap-3 px-5 py-3 rounded-xl backdrop-blur-xl border animate-pulse shadow-lg"
+                                    style={{
+                                        background: `linear-gradient(135deg, #ef4444, #dc2626)`,
+                                        borderColor: '#fca5a5',
+                                        boxShadow: `0 10px 30px -10px rgba(239, 68, 68, 0.6)`
+                                    }}>
+                                    <div className="relative flex items-center justify-center">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-white animate-ping absolute"></div>
+                                        <div className="w-2.5 h-2.5 rounded-full bg-white"></div>
+                                    </div>
+                                    <span className="text-base font-black text-white uppercase tracking-wider">
+                                        🔴 EN VIVO AHORA
+                                    </span>
+                                </div>
+                            )}
+
+                            {eventStatus === 'finished' && isClient && (
+                                <div className="mb-5 inline-flex items-center gap-3 px-5 py-3 rounded-xl backdrop-blur-xl border"
+                                    style={{
+                                        background: `rgba(107, 114, 128, 0.2)`,
+                                        borderColor: 'rgba(156, 163, 175, 0.3)'
+                                    }}>
+                                    <span className="text-base font-semibold text-white/60 uppercase tracking-wider">
+                                        ✓ Finalizado
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* CTAs - Compact */}
                             <div className="flex items-center gap-4">
                                 {event.sellTicketsOnPlatform && !isSoldOut ? (
                                     <Link href={`/eventos/${event.slug}/entradas`}>
                                         <Button
                                             size="lg"
-                                            className="h-16 px-10 text-lg font-bold rounded-lg text-white transition-all duration-1000 ease-out hover:scale-105 shadow-2xl border-none"
+                                            className="h-16 px-10 text-lg font-bold rounded-lg text-white transition-all duration-300 hover:scale-105 shadow-2xl border-none"
                                             style={{
                                                 background: colorPalette.gradients.primary,
                                                 boxShadow: `0 20px 40px -12px ${colorPalette.dominant}60`,
@@ -428,7 +579,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                                     <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer">
                                         <Button
                                             size="lg"
-                                            className="h-16 px-10 text-lg font-bold rounded-lg text-white transition-all duration-1000 ease-out hover:scale-105 shadow-2xl border-none"
+                                            className="h-16 px-10 text-lg font-bold rounded-lg text-white transition-all duration-300 hover:scale-105 shadow-2xl border-none"
                                             style={{
                                                 background: colorPalette.gradients.primary,
                                                 boxShadow: `0 20px 40px -12px ${colorPalette.dominant}60`,
@@ -440,16 +591,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                                     </a>
                                 ) : null}
 
-                                {/* Secondary info button */}
-                                <button
-                                    className="h-16 px-8 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white font-semibold transition-all duration-300 flex items-center gap-3"
-                                    aria-label="Más información"
-                                >
-                                    <Info className="w-5 h-5" />
-                                    Más info
-                                </button>
-
-                                {/* Share button */}
+                                {/* Share button - Tertiary action */}
                                 <button
                                     onClick={handleShare}
                                     className="h-16 w-16 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 flex items-center justify-center transition-all duration-300"
@@ -458,16 +600,6 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                                     <Share2 className="w-5 h-5 text-white" />
                                 </button>
                             </div>
-
-                            {/* Countdown - Small, Netflix-style */}
-                            {!isSoldOut && timeLeft.days > 0 && timeLeft.days < 30 && (
-                                <div className="mt-8 inline-flex items-center gap-3 px-4 py-2 rounded-full bg-black/60 backdrop-blur-xl border border-white/10">
-                                    <Clock className="w-4 h-4 transition-colors duration-1000 ease-out" style={{ color: colorPalette.dominant }} />
-                                    <span className="text-sm font-semibold text-white">
-                                        Quedan {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m
-                                    </span>
-                                </div>
-                            )}
 
                         </div>
                     </div>

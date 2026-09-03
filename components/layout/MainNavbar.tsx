@@ -53,12 +53,25 @@ export function MainNavbar() {
 
   // Don't show on mobile (only desktop)
   return (
-    <nav
-      className={`hidden md:flex fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-        ? 'bg-[#282D31]/98 backdrop-blur-xl border-b border-[#DFE0E0]/30 shadow-lg shadow-[#141618]/20'
-        : 'bg-[rgb(40_45_49/0.6)] backdrop-blur-lg border-b border-[#DFE0E0]/20'
-        }`}
-    >
+    <>
+      <style jsx>{`
+        nav.main-navbar {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          z-index: 9999 !important;
+        }
+      `}</style>
+      <nav
+        className="main-navbar hidden md:flex transition-all duration-300"
+        style={{
+          background: scrolled ? 'rgba(40, 45, 49, 0.98)' : 'rgba(40, 45, 49, 0.6)',
+          backdropFilter: scrolled ? 'blur(24px)' : 'blur(16px)',
+          borderBottom: scrolled ? '1px solid rgba(223, 224, 224, 0.3)' : '1px solid rgba(223, 224, 224, 0.2)',
+          boxShadow: scrolled ? '0 10px 15px -3px rgba(20, 22, 24, 0.2)' : 'none'
+        }}
+      >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex h-20 items-center justify-between">
           {/* Logo */}
@@ -323,5 +336,6 @@ export function MainNavbar() {
         </div>
       </div>
     </nav>
+    </>
   );
 }
