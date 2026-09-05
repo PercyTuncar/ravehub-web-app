@@ -624,7 +624,7 @@ function TicketCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        group relative overflow-hidden rounded-2xl transition-all duration-300
+        group relative overflow-hidden rounded-xl md:rounded-2xl transition-all duration-300
         ${
           isExpiredPhase
             ? "border-red-500/35 bg-gradient-to-br from-red-500/10 via-zinc-900/60 to-zinc-900/50 opacity-80"
@@ -635,36 +635,33 @@ function TicketCard({
         border backdrop-blur-2xl`}
     >
       {/* Liquid Glass border glow */}
-      <div className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 via-transparent to-white/5 opacity-50 blur-sm" />
+      <div className="absolute inset-0 rounded-xl md:rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-br from-white/20 via-transparent to-white/5 opacity-50 blur-sm" />
       </div>
 
       {/* Top shine effect (iPhone liquid glass) */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full blur-sm opacity-60" />
 
-      <div className="relative z-10 p-5 sm:p-6 flex flex-col sm:flex-row gap-6">
-        {/* Info */}
-        <div className="flex-1 space-y-3">
-          <div className="flex justify-between items-start">
-            <h3 className="text-xl font-bold text-white group-hover:text-orange-400 transition-colors">
-              {selection.zoneName}
-            </h3>
-            {isExpiredPhase ? (
-              <Badge className="bg-red-600 text-white border-red-500/70 hover:bg-red-600 shadow-sm shadow-red-950/40">
-                <XCircle className="w-3 h-3 mr-1" /> Agotada
-              </Badge>
-            ) : isLowStock ? (
-              <Badge className="bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30">
-                <Flame className="w-3 h-3 mr-1" /> Últimas
-              </Badge>
-            ) : null}
-          </div>
+      {/* MOBILE OPTIMIZED LAYOUT */}
+      <div className="relative z-10 p-3.5 md:p-5 lg:p-6">
+        {/* Header Row: Zone name + Badge */}
+        <div className="flex justify-between items-start gap-3 mb-3">
+          <h3 className="text-base md:text-xl font-bold text-white group-hover:text-orange-400 transition-colors leading-tight">
+            {selection.zoneName}
+          </h3>
+          {isExpiredPhase ? (
+            <Badge className="bg-red-600 text-white border-red-500/70 hover:bg-red-600 shadow-sm shadow-red-950/40 text-[10px] md:text-xs shrink-0">
+              <XCircle className="w-3 h-3 mr-1" /> Agotada
+            </Badge>
+          ) : isLowStock ? (
+            <Badge className="bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 text-[10px] md:text-xs shrink-0">
+              <Flame className="w-3 h-3 mr-1" /> Últimas
+            </Badge>
+          ) : null}
+        </div>
 
-          <p className="text-sm text-zinc-400 leading-relaxed max-w-md">
-            {selection.zoneDescription || "Acceso exclusivo al evento."}
-          </p>
-
-          {/* Time Progress Bar instead of Stock */}
+        {/* Progress Bar - ALWAYS VISIBLE (Critical for urgency) */}
+        <div className="mb-3">
           <PhaseTimeProgress
             startDate={phaseStartDate}
             endDate={phaseEndDate}
@@ -674,72 +671,62 @@ function TicketCard({
           />
         </div>
 
-        {/* Pricing & Actions */}
-        <div className="flex flex-col items-end justify-between gap-4 min-w-[140px]">
-          <div className="text-right relative min-h-[72px]">
-            {/* Installment view — CSS fade instead of AnimatePresence to avoid React DevTools fiber warning */}
+        {/* Price + Quantity Controls Row - HORIZONTAL on Mobile */}
+        <div className="flex items-center justify-between gap-3">
+          {/* Price Section - Compact */}
+          <div className="flex-1 min-w-0">
+            {/* Installment view */}
             <div
-              className={`flex flex-col items-end transition-all duration-300 ${
+              className={`transition-all duration-300 ${
                 isInstallmentMode
                   ? "opacity-100 translate-x-0 pointer-events-auto"
-                  : "opacity-0 translate-x-4 pointer-events-none absolute inset-0"
+                  : "opacity-0 translate-x-4 pointer-events-none absolute"
               }`}
             >
-              <div className="flex flex-col items-end mb-1">
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">
-                  Reserva
-                </span>
-                <span className="text-sm font-bold text-white bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
-                  <ConvertedPrice
-                    amount={reservationPrice}
-                    currency={currency}
-                    showOriginal={false}
-                  />
-                </span>
+              <div className="flex items-baseline gap-1.5 flex-wrap">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">
+                    Reserva:
+                  </span>
+                  <span className="text-sm md:text-base font-bold text-white">
+                    <ConvertedPrice
+                      amount={reservationPrice}
+                      currency={currency}
+                      showOriginal={false}
+                    />
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[10px] text-zinc-500">
+                    + {installments}x
+                  </span>
+                  <span className="text-base md:text-lg font-black text-orange-400">
+                    <ConvertedPrice
+                      amount={installmentPrice}
+                      currency={currency}
+                      showOriginal={false}
+                    />
+                  </span>
+                </div>
               </div>
-              <div className="flex items-baseline gap-1 text-xl font-black text-orange-400">
-                <span className="text-xs font-bold text-zinc-500 mr-0.5">
-                  + {installments} x
-                </span>
-                <ConvertedPrice
-                  amount={installmentPrice}
-                  currency={currency}
-                  showOriginal={false}
-                />
-              </div>
-              <span className="text-[10px] text-zinc-500 mt-0.5">
-                Total:{" "}
-                <ConvertedPrice
-                  amount={adjustedPrice}
-                  currency={currency}
-                  showOriginal={false}
-                  className="inline"
-                />
-              </span>
             </div>
 
             {/* Full-price view */}
             <div
-              className={`flex flex-col items-end transition-all duration-300 ${
+              className={`transition-all duration-300 ${
                 !isInstallmentMode
                   ? "opacity-100 translate-x-0 pointer-events-auto"
-                  : "opacity-0 -translate-x-4 pointer-events-none absolute inset-0"
+                  : "opacity-0 -translate-x-4 pointer-events-none absolute"
               }`}
             >
-              <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">
-                Precio
-              </span>
-
               {/* Show discount preview if available but locked */}
               {discountAvailableButLocked && (
-                <div className="relative mb-1">
-                  <div className="text-sm text-zinc-400 mb-1 flex items-center gap-1">
-                    <Lock className="w-3 h-3" />
-                    <span>Con código:</span>
-                  </div>
-                  <div className="text-lg font-bold text-zinc-500 relative">
+                <div className="flex items-center gap-2 mb-1">
+                  <Lock className="w-3 h-3 text-zinc-400" />
+                  <span className="text-xs text-zinc-400">Con código:</span>
+                  <div className="text-sm font-bold text-zinc-500 relative">
                     <div className="absolute inset-0 bg-zinc-900/80 backdrop-blur-sm rounded flex items-center justify-center">
-                      <Lock className="w-4 h-4" />
+                      <Lock className="w-3 h-3" />
                     </div>
                     <ConvertedPrice
                       amount={discountResult.discountedPrice}
@@ -750,49 +737,55 @@ function TicketCard({
                 </div>
               )}
 
-              {hasDiscount && !discountAvailableButLocked && (
-                <div className="text-sm text-zinc-500 mb-0.5 relative">
-                  <span className="relative inline-block">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                {hasDiscount && !discountAvailableButLocked && (
+                  <span className="text-sm text-zinc-500 relative">
+                    <span className="relative inline-block">
+                      <ConvertedPrice
+                        amount={selection.price}
+                        currency={currency}
+                        showOriginal={false}
+                      />
+                      <span
+                        className="absolute left-0 right-0 top-1/2 h-[2px]"
+                        style={{
+                          backgroundColor: '#ef4444',
+                          transform: 'translateY(-50%) rotate(-8deg)'
+                        }}
+                      />
+                    </span>
+                  </span>
+                )}
+                <div className={`flex items-center gap-1.5 ${isExpiredPhase ? "text-zinc-500 line-through decoration-red-500/80" : hasDiscount ? "text-green-400" : "text-white"}`}>
+                  {hasDiscount && <DiscountBadge percentage={discountResult.discountPercentage} size="sm" />}
+                  <span className="text-xl md:text-2xl font-black">
                     <ConvertedPrice
-                      amount={selection.price}
+                      amount={hasDiscount ? finalPrice : selection.price}
                       currency={currency}
                       showOriginal={false}
                     />
-                    <span
-                      className="absolute left-0 right-0 top-1/2 h-[2px]"
-                      style={{
-                        backgroundColor: '#ef4444',
-                        transform: 'translateY(-50%) rotate(-8deg)'
-                      }}
-                    />
                   </span>
                 </div>
-              )}
-              <div className={`text-2xl font-black flex items-center gap-2 ${isExpiredPhase ? "text-zinc-500 line-through decoration-red-500/80" : hasDiscount ? "text-green-400" : "text-white"}`}>
-                {hasDiscount && <DiscountBadge percentage={discountResult.discountPercentage} size="sm" />}
-                <ConvertedPrice
-                  amount={hasDiscount ? finalPrice : selection.price}
-                  currency={currency}
-                  showOriginal={false}
-                />
               </div>
               {hasDiscount && !discountAvailableButLocked && (
-                <span className="text-xs text-green-400 mt-0.5">
+                <div className="text-[10px] text-green-400 mt-0.5">
                   Ahorras <ConvertedPrice amount={discountResult.savings} currency={currency} showOriginal={false} className="inline" />
-                </span>
+                </div>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-zinc-950/50 p-1.5 rounded-xl border border-white/10">
+          {/* Quantity Controls - Touch-optimized */}
+          <div className="flex items-center gap-2 bg-zinc-950/50 p-1.5 rounded-xl border border-white/10 shrink-0">
             <button
               onClick={() => onUpdateQuantity(selection.quantity - 1)}
               disabled={!isPhasePurchasable || selection.quantity <= 0}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors"
+              className="w-9 h-9 md:w-8 md:h-8 flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors active:scale-95"
+              aria-label="Disminuir cantidad"
             >
               <Minus className="w-4 h-4" />
             </button>
-            <span className="w-8 text-center font-bold text-white tabular-nums">
+            <span className="w-8 md:w-8 text-center font-bold text-white tabular-nums text-base">
               {selection.quantity}
             </span>
             <button
@@ -802,7 +795,8 @@ function TicketCard({
                 selection.quantity >= selection.maxPerTransaction ||
                 totalTickets >= 10
               }
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-black hover:bg-orange-400 hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black transition-colors"
+              className="w-9 h-9 md:w-8 md:h-8 flex items-center justify-center rounded-lg bg-white text-black hover:bg-orange-400 hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black transition-colors active:scale-95"
+              aria-label="Aumentar cantidad"
             >
               <Plus className="w-4 h-4" />
             </button>
