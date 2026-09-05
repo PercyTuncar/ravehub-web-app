@@ -1353,11 +1353,7 @@ function BuyTicketsContent({
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm md:text-base">
                 {/* Fecha */}
                 <div className="flex items-center gap-2.5">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{
-                    backgroundColor: `${colorPalette.dominant}20`,
-                  }}>
-                    <Calendar className="w-4.5 h-4.5" style={{ color: colorPalette.dominant }} />
-                  </div>
+                  <Calendar className="w-5 h-5 flex-shrink-0" style={{ color: colorPalette.dominant }} />
                   <div className="flex flex-col">
                     <span className="text-xs text-zinc-500 font-medium leading-tight">Fecha</span>
                     <span className="text-sm md:text-base font-bold text-white leading-tight">
@@ -1378,11 +1374,7 @@ function BuyTicketsContent({
                 {/* Hora */}
                 {event.startTime && (
                   <div className="flex items-center gap-2.5">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{
-                      backgroundColor: `${colorPalette.accent}20`,
-                    }}>
-                      <Clock className="w-4.5 h-4.5" style={{ color: colorPalette.accent }} />
-                    </div>
+                    <Clock className="w-5 h-5 flex-shrink-0" style={{ color: colorPalette.accent }} />
                     <div className="flex flex-col">
                       <span className="text-xs text-zinc-500 font-medium leading-tight">Hora</span>
                       <span className="text-sm md:text-base font-bold text-white leading-tight">{event.startTime}</span>
@@ -1395,11 +1387,7 @@ function BuyTicketsContent({
 
                 {/* Lugar */}
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0" style={{
-                    backgroundColor: `${colorPalette.secondary}20`,
-                  }}>
-                    <MapPin className="w-4.5 h-4.5" style={{ color: colorPalette.secondary }} />
-                  </div>
+                  <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: colorPalette.secondary }} />
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs text-zinc-500 font-medium leading-tight">Lugar</span>
                     <span className="text-sm md:text-base font-bold text-white leading-tight truncate">{event.location.venue}</span>
