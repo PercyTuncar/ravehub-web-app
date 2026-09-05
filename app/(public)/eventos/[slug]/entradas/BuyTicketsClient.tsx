@@ -688,7 +688,7 @@ function TicketCard({
                 <div className="flex items-center gap-2">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-[11px] md:text-xs text-emerald-400 uppercase tracking-wider font-extrabold">
-                      Reserva:
+                      RSV:
                     </span>
                     <span className="text-lg md:text-xl font-black text-white drop-shadow-[0_2px_8px_rgba(16,185,129,0.3)]">
                       <ConvertedPrice
