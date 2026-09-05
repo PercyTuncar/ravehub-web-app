@@ -675,7 +675,7 @@ function TicketCard({
         <div className="flex items-center justify-between gap-3">
           {/* Price Section - Compact */}
           <div className="flex-1 min-w-0">
-            {/* Installment view */}
+            {/* Installment view - OPTIMIZED FOR MOBILE */}
             <div
               className={`transition-all duration-300 ${
                 isInstallmentMode
@@ -683,24 +683,34 @@ function TicketCard({
                   : "opacity-0 translate-x-4 pointer-events-none absolute"
               }`}
             >
-              <div className="flex items-baseline gap-1.5 flex-wrap">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">
-                    Reserva:
-                  </span>
-                  <span className="text-sm md:text-base font-bold text-white">
-                    <ConvertedPrice
-                      amount={reservationPrice}
-                      currency={currency}
-                      showOriginal={false}
-                    />
-                  </span>
+              <div className="space-y-1">
+                {/* RESERVA - ÉNFASIS PRINCIPAL (precio bajo, atractivo) */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[11px] md:text-xs text-emerald-400 uppercase tracking-wider font-extrabold">
+                      Reserva:
+                    </span>
+                    <span className="text-lg md:text-xl font-black text-white drop-shadow-[0_2px_8px_rgba(16,185,129,0.3)]">
+                      <ConvertedPrice
+                        amount={reservationPrice}
+                        currency={currency}
+                        showOriginal={false}
+                      />
+                    </span>
+                  </div>
+                  <div className="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                    <span className="text-[9px] md:text-[10px] font-bold text-emerald-400 uppercase tracking-wide leading-none">
+                      Hoy
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-[10px] text-zinc-500">
-                    + {installments}x
+
+                {/* CUOTAS - SECUNDARIO (más sutil, menos prominente) */}
+                <div className="flex items-baseline gap-1 opacity-60">
+                  <span className="text-[10px] text-zinc-500 font-medium">
+                    + {installments} cuotas de
                   </span>
-                  <span className="text-base md:text-lg font-black text-orange-400">
+                  <span className="text-sm md:text-base font-bold text-zinc-400">
                     <ConvertedPrice
                       amount={installmentPrice}
                       currency={currency}
@@ -776,16 +786,16 @@ function TicketCard({
           </div>
 
           {/* Quantity Controls - Touch-optimized */}
-          <div className="flex items-center gap-2 bg-zinc-950/50 p-1.5 rounded-xl border border-white/10 shrink-0">
+          <div className="flex items-center gap-1.5 bg-zinc-950/50 p-1 rounded-lg border border-white/10 shrink-0">
             <button
               onClick={() => onUpdateQuantity(selection.quantity - 1)}
               disabled={!isPhasePurchasable || selection.quantity <= 0}
-              className="w-9 h-9 md:w-8 md:h-8 flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors active:scale-95"
+              className="w-8 h-8 md:w-8 md:h-8 flex items-center justify-center rounded-md bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-800 transition-colors active:scale-95"
               aria-label="Disminuir cantidad"
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="w-3.5 h-3.5" />
             </button>
-            <span className="w-8 md:w-8 text-center font-bold text-white tabular-nums text-base">
+            <span className="w-7 md:w-8 text-center font-bold text-white tabular-nums text-sm">
               {selection.quantity}
             </span>
             <button
@@ -795,10 +805,10 @@ function TicketCard({
                 selection.quantity >= selection.maxPerTransaction ||
                 totalTickets >= 10
               }
-              className="w-9 h-9 md:w-8 md:h-8 flex items-center justify-center rounded-lg bg-white text-black hover:bg-orange-400 hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black transition-colors active:scale-95"
+              className="w-8 h-8 md:w-8 md:h-8 flex items-center justify-center rounded-md bg-white text-black hover:bg-orange-400 hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-black transition-colors active:scale-95"
               aria-label="Aumentar cantidad"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
