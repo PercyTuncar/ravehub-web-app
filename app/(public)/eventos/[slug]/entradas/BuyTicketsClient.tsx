@@ -1330,62 +1330,86 @@ function BuyTicketsContent({
           <span className="text-sm font-medium">Volver al evento</span>
         </Link>
 
-        {/* Header - Order 2 - MEJORADO CON LIQUID GLASS */}
+        {/* Header - Order 2 - DISEÑO LIMPIO Y MODERNO */}
         <div className="order-2">
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-            <div className="flex-1">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white mb-6">
-                <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r" style={{
-                  backgroundImage: `linear-gradient(to right, white, ${colorPalette.dominant})`
-                }}>
-                  Entradas Oficiales
-                </span>
-                <br />
-                <span className="text-3xl md:text-4xl text-zinc-300 font-bold mt-2 block">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 md:gap-8">
+            <div className="flex-1 space-y-5 md:space-y-6">
+              {/* Título - Jerarquía visual clara */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-1 w-8 rounded-full" style={{ backgroundColor: colorPalette.dominant }}></div>
+                  <span className="text-xs md:text-sm font-bold uppercase tracking-wider" style={{
+                    color: colorPalette.dominant
+                  }}>
+                    Entradas Oficiales
+                  </span>
+                </div>
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
                   {event.name}
-                </span>
-              </h1>
-              <div className="flex flex-wrap gap-3 text-sm mt-6">
-                <div className="group relative overflow-hidden flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 shadow-lg shadow-black/10">
-                  <div className="flex shrink-0 items-center justify-center">
-                    <Calendar className="w-5 h-5" style={{ color: colorPalette.dominant }} />
+                </h1>
+              </div>
+
+              {/* Event Info - Diseño limpio sin cards individuales */}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm md:text-base">
+                {/* Fecha */}
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{
+                    backgroundColor: `${colorPalette.dominant}20`,
+                  }}>
+                    <Calendar className="w-4.5 h-4.5" style={{ color: colorPalette.dominant }} />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Fecha</div>
-                    <div className="text-sm font-bold text-white">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-zinc-500 font-medium leading-tight">Fecha</span>
+                    <span className="text-sm md:text-base font-bold text-white leading-tight">
                       {format(
                         getEventDate(event.startDate),
                         "d MMM yyyy",
                         { locale: es },
                       )}
-                    </div>
+                    </span>
                   </div>
                 </div>
+
+                {/* Separador vertical */}
                 {event.startTime && (
-                  <div className="group relative overflow-hidden flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 shadow-lg shadow-black/10">
-                    <div className="flex shrink-0 items-center justify-center">
-                      <Clock className="w-5 h-5" style={{ color: colorPalette.accent }} />
+                  <div className="hidden sm:block w-px h-10 bg-white/10"></div>
+                )}
+
+                {/* Hora */}
+                {event.startTime && (
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{
+                      backgroundColor: `${colorPalette.accent}20`,
+                    }}>
+                      <Clock className="w-4.5 h-4.5" style={{ color: colorPalette.accent }} />
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Hora</div>
-                      <div className="text-sm font-bold text-white">{event.startTime}</div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-zinc-500 font-medium leading-tight">Hora</span>
+                      <span className="text-sm md:text-base font-bold text-white leading-tight">{event.startTime}</span>
                     </div>
                   </div>
                 )}
-                <div className="group relative overflow-hidden flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 shadow-lg shadow-black/10">
-                  <div className="flex shrink-0 items-center justify-center">
-                    <MapPin className="w-5 h-5" style={{ color: colorPalette.secondary }} />
+
+                {/* Separador vertical */}
+                <div className="hidden sm:block w-px h-10 bg-white/10"></div>
+
+                {/* Lugar */}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0" style={{
+                    backgroundColor: `${colorPalette.secondary}20`,
+                  }}>
+                    <MapPin className="w-4.5 h-4.5" style={{ color: colorPalette.secondary }} />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-medium uppercase tracking-wider text-white/50">Lugar</div>
-                    <div className="text-sm font-bold text-white">{event.location.venue}</div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs text-zinc-500 font-medium leading-tight">Lugar</span>
+                    <span className="text-sm md:text-base font-bold text-white leading-tight truncate">{event.location.venue}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE */}
-            <div className="lg:hidden w-full md:w-auto mt-6 md:mt-0">
+            <div className="lg:hidden w-full md:w-auto">
               <button
                 onClick={() => {
                   trackClickWhatsApp({
@@ -1395,7 +1419,7 @@ function BuyTicketsContent({
                   });
                   setShowWhatsAppDrawer(true);
                 }}
-                className="relative overflow-hidden flex items-center justify-center gap-2 w-full md:w-auto px-4 py-3 rounded-xl bg-gradient-to-br from-[#25D366]/20 via-[#25D366]/10 to-[#128C7E]/10 border border-[#25D366]/30 hover:border-[#25D366]/50 active:scale-[0.98] transition-all group backdrop-blur-sm shadow-lg shadow-[#25D366]/10"
+                className="relative overflow-hidden flex items-center justify-center gap-2 w-full md:w-auto px-5 py-3.5 rounded-xl bg-gradient-to-br from-[#25D366]/20 via-[#25D366]/10 to-[#128C7E]/10 border border-[#25D366]/30 hover:border-[#25D366]/50 active:scale-[0.98] transition-all group backdrop-blur-sm shadow-lg shadow-[#25D366]/10"
               >
                 {/* Shine effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -1405,7 +1429,7 @@ function BuyTicketsContent({
                   alt="WhatsApp"
                   className="w-5 h-5 relative z-10"
                 />
-                <span className="font-bold text-[#25D366] relative z-10">
+                <span className="font-bold text-[#25D366] relative z-10 text-sm md:text-base">
                   Unirme al Grupo WhatsApp
                 </span>
               </button>
