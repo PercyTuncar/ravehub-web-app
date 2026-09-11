@@ -9,6 +9,7 @@ export default function PageWrapper({ children }: { children: React.ReactNode })
     // These pages handle their own padding/spacing
     const shouldRemovePadding =
         pathname === '/eventos' ||
+        pathname.startsWith('/tienda') ||
         /^\/eventos\/[^/]+(\/(?:entradas|comprar))?$/.test(pathname) ||
         pathname.startsWith('/profile') ||
         pathname.startsWith('/go') ||

@@ -122,7 +122,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
   const cartItemCount = getTotalItems();
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-20 md:pb-0">
+    <div className="min-h-screen bg-zinc-950 pb-20 md:pb-0 pt-20">
       {/* Main Container */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
