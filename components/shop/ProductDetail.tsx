@@ -189,26 +189,26 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                 </span>
                 {product.discountPercentage && product.discountPercentage > 0 && (
                   <>
-                    <span className="text-xl text-zinc-500">
-                      <span className="line-through">
-                        <ConvertedPrice amount={product.price} currency={product.currency} showOriginal={false} />
-                      </span>
-                    </span>
-                    <span className="text-sm font-bold text-red-400 bg-red-500/20 px-2.5 py-1 rounded-md">
+                    <div className="text-xl text-zinc-400 line-through decoration-2 decoration-zinc-400">
+                      <ConvertedPrice amount={product.price} currency={product.currency} showOriginal={false} />
+                    </div>
+                    <span className="text-base font-bold text-white bg-red-600 px-3 py-1.5 rounded-md">
                       -{product.discountPercentage}% OFF
                     </span>
                   </>
                 )}
               </div>
               {product.discountPercentage && product.discountPercentage > 0 && (
-                <p className="text-sm text-green-400 mt-2 font-medium">
+                <div className="text-sm text-green-400 mt-2 font-medium">
                   Ahorras{' '}
-                  <ConvertedPrice
-                    amount={product.price - finalPrice}
-                    currency={product.currency}
-                    showOriginal={false}
-                  />
-                </p>
+                  <span className="font-bold">
+                    <ConvertedPrice
+                      amount={product.price - finalPrice}
+                      currency={product.currency}
+                      showOriginal={false}
+                    />
+                  </span>
+                </div>
               )}
             </div>
 

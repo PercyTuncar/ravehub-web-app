@@ -379,14 +379,14 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                             </h3>
 
                             {/* Price */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-base font-bold text-white">
                                 <ConvertedPrice amount={finalPrice} currency={product.currency} showOriginal={false} />
                               </span>
                               {product.discountPercentage && product.discountPercentage > 0 && (
-                                <span className="text-sm text-zinc-500 line-through">
+                                <div className="text-sm text-zinc-400 line-through decoration-2 decoration-zinc-400">
                                   <ConvertedPrice amount={product.price} currency={product.currency} showOriginal={false} />
-                                </span>
+                                </div>
                               )}
                             </div>
                           </div>
