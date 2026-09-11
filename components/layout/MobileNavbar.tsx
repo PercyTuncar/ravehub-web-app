@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Calendar, Ticket, Plus, User, LogOut, Settings, ShoppingBag, Heart, X, ChevronUp, Headphones, Trophy, Recycle } from 'lucide-react';
+import { Home, Calendar, Ticket, Plus, User, LogOut, Settings, ShoppingBag, Heart, X, ChevronUp, Headphones, Trophy, Recycle, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -60,6 +60,7 @@ export function MobileNavbar() {
 
   // More menu options
   const moreMenuItems = [
+    { icon: Headphones, label: 'Programas', href: '/programas', requiresAuth: false, hasSubmenu: true },
     { icon: ShoppingBag, label: 'Tienda', href: '/tienda', requiresAuth: false },
     { icon: Heart, label: 'Favoritos', href: '/profile/favorites', requiresAuth: true },
     { icon: Settings, label: 'Configuración', href: '/profile/settings', requiresAuth: true },
@@ -248,6 +249,27 @@ export function MobileNavbar() {
             {moreMenuItems.map((item) => {
               if (item.requiresAuth && !user) return null;
               const Icon = item.icon;
+
+              // If it's Programas, show as button to open submenu
+              if (item.hasSubmenu) {
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => setIsProgramasOpen(true)}
+                    className={`w-full flex items-center justify-between gap-3 px-4 py-3 transition-colors ${isActive(item.href) || isActive('/djs')
+                        ? 'bg-[#141618] text-[#FBA905]'
+                        : 'text-[#FAFDFF] hover:bg-[#141618] hover:text-[#FBA905]'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-5 w-5" />
+                      <span className="text-sm font-medium">{item.label}</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-[#53575A]" />
+                  </button>
+                );
+              }
+
               return (
                 <Link
                   key={item.href}
@@ -302,18 +324,6 @@ export function MobileNavbar() {
                 href="/eventos"
                 isActive={isActive('/eventos')}
               />
-
-              {/* Programas Button */}
-              <button
-                onClick={() => setIsProgramasOpen(!isProgramasOpen)}
-                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isProgramasOpen || isActive('/programas') || isActive('/djs')
-                    ? 'text-[#FBA905]'
-                    : 'text-[#53575A] active:text-[#FBA905]'
-                  }`}
-              >
-                <Headphones className="h-6 w-6" />
-                <span className="text-[10px] font-medium">Programas</span>
-              </button>
 
               {/* Profile Button - Central Floating */}
               <div className="relative -mt-8 flex items-center justify-center">
