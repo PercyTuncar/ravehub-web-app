@@ -7,7 +7,7 @@ import { ShoppingCart, Search, SlidersHorizontal, X, Filter } from 'lucide-react
 import { Product, ProductCategory } from '@/lib/types';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCart } from '@/lib/contexts/CartContext';
-import { ConvertedPrice } from '@/components/common/ConvertedPrice';
+import { ConvertedPrice, SimplePrice } from '@/components/common/ConvertedPrice';
 
 interface ShopClientProps {
   initialProducts: Product[];
@@ -122,9 +122,9 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
   const cartItemCount = getTotalItems();
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950 pb-20 md:pb-0 pt-20">
       {/* Header Bar */}
-      <div className="sticky top-0 z-40 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10">
+      <div className="hidden md:block sticky top-20 z-50 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo/Title */}
@@ -133,7 +133,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
             </Link>
 
             {/* Search Bar - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+            <div className="flex flex-1 max-w-2xl mx-8">
               <div className="relative w-full">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-500 h-5 w-5" />
                 <input
@@ -162,29 +162,29 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
               </button>
             </Link>
           </div>
+        </div>
+      </div>
 
-          {/* Search Bar - Mobile */}
-          <div className="md:hidden pb-3">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Buscar..."
-                value={searchTerm}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSearchTerm(value);
-                  setTimeout(() => updateURL(categoryFilter, sortBy, value), 300);
-                }}
-                className="w-full pl-10 pr-4 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20"
-              />
-            </div>
-          </div>
+      {/* Mobile Search - Always visible on mobile */}
+      <div className="md:hidden sticky top-20 z-50 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10 px-4 py-3">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500 h-4 w-4" />
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchTerm(value);
+              setTimeout(() => updateURL(categoryFilter, sortBy, value), 300);
+            }}
+            className="w-full pl-10 pr-4 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20"
+          />
         </div>
       </div>
 
       {/* Main Container */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pt-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-zinc-500 mb-8">
           <Link href="/" className="hover:text-white">Inicio</Link>
@@ -384,9 +384,9 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                                 <ConvertedPrice amount={finalPrice} currency={product.currency} showOriginal={false} />
                               </span>
                               {product.discountPercentage && product.discountPercentage > 0 && (
-                                <div className="text-sm text-zinc-400 line-through decoration-2 decoration-zinc-400">
-                                  <ConvertedPrice amount={product.price} currency={product.currency} showOriginal={false} />
-                                </div>
+                                <span className="text-sm text-zinc-400 line-through decoration-2 decoration-zinc-400">
+                                  <SimplePrice amount={product.price} currency={product.currency} showCurrency={true} />
+                                </span>
                               )}
                             </div>
                           </div>

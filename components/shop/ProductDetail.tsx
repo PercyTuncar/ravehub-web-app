@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Product, ProductCategory, ProductReview } from '@/lib/types';
 import { useCart } from '@/lib/contexts/CartContext';
-import { ConvertedPrice } from '@/components/common/ConvertedPrice';
+import { ConvertedPrice, SimplePrice } from '@/components/common/ConvertedPrice';
 import { createEventId, trackMarketingEvent } from '@/lib/analytics/client';
 
 interface ProductDetailProps {
@@ -63,9 +63,9 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
   const cartItemCount = getTotalItems();
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950 pb-20 md:pb-0 pt-20">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10">
+      <div className="hidden md:block sticky top-20 z-50 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/tienda">
@@ -94,7 +94,7 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 md:pt-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-zinc-500 mb-6">
           <Link href="/" className="hover:text-white">Inicio</Link>
@@ -189,9 +189,9 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                 </span>
                 {product.discountPercentage && product.discountPercentage > 0 && (
                   <>
-                    <div className="text-xl text-zinc-400 line-through decoration-2 decoration-zinc-400">
-                      <ConvertedPrice amount={product.price} currency={product.currency} showOriginal={false} />
-                    </div>
+                    <span className="text-xl text-zinc-400 line-through decoration-2 decoration-zinc-400">
+                      <SimplePrice amount={product.price} currency={product.currency} showCurrency={true} />
+                    </span>
                     <span className="text-base font-bold text-white bg-red-600 px-3 py-1.5 rounded-md">
                       -{product.discountPercentage}% OFF
                     </span>
@@ -202,11 +202,7 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                 <div className="text-sm text-green-400 mt-2 font-medium">
                   Ahorras{' '}
                   <span className="font-bold">
-                    <ConvertedPrice
-                      amount={product.price - finalPrice}
-                      currency={product.currency}
-                      showOriginal={false}
-                    />
+                    <SimplePrice amount={product.price - finalPrice} currency={product.currency} showCurrency={true} />
                   </span>
                 </div>
               )}
