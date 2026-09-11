@@ -1,479 +1,319 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import {
-  Globe,
-  Download,
-  CheckCircle2,
-  Calendar,
+  Leaf,
   Users,
   BarChart3,
-  FileText,
+  Calendar,
+  CheckCircle2,
+  Globe,
   Camera,
   Video,
   Megaphone,
-  Award,
+  FileText,
+  Recycle,
   TrendingUp,
   Target,
-  Clock,
-  MapPin,
+  Award,
+  Heart,
+  Sparkles,
   Mail,
   ArrowRight,
-  Leaf,
-  Recycle,
-  Heart,
-  Shield,
-  Zap,
-  Package
+  AlertTriangle
 } from 'lucide-react';
 
-// Translations
 const translations = {
   es: {
-    // Meta
-    lang: 'es',
-    langName: 'Español',
+    // Hero
+    heroTitle: 'Ravehub Recycle',
+    heroSubtitle: 'Transformando Festivales de Música en Eventos Sustentables',
+    heroDescription: 'Programa integral de sostenibilidad y cobertura mediática para festivales de música electrónica en todo el mundo.',
+    heroButton: 'Conoce el Programa',
 
-    // Header
-    proposalFor: 'Propuesta para',
-    subtitle: 'Programa Profesional de Sostenibilidad y Cobertura Mediática',
-    downloadPdf: 'Descargar PDF',
+    // Problem Section
+    problemTitle: 'El Problema',
+    problemSubtitle: 'La realidad después de cada festival',
+    problemDescription: 'Miles de asistentes, experiencias increíbles... y toneladas de residuos que contaminan el planeta. Es hora de cambiar esto.',
 
-    // Executive Summary
-    execTitle: 'Resumen Ejecutivo',
-    execIntro: 'Ravehub, la plataforma líder de música electrónica en Latinoamérica, solicita acreditación de medios para implementar un programa integral de sostenibilidad en su festival.',
+    // The Reality
+    realityTitle: 'La Realidad Post-Festival',
+    realityDesc: 'Cada año, los festivales de música generan miles de toneladas de residuos. Botellas plásticas, vasos, empaques de comida, y más terminan en vertederos o peor, en la naturaleza.',
+
+    // Stats
+    stat1: 'Toneladas de basura',
+    stat1Value: '100+',
+    stat1Desc: 'Por festival de 50K personas',
+    stat2: 'Reciclado correctamente',
+    stat2Value: '<15%',
+    stat2Desc: 'En festivales sin programa',
+    stat3: 'Botellas plásticas',
+    stat3Value: '500K+',
+    stat3Desc: 'Usadas en un festival promedio',
+
+    // Solution
+    solutionTitle: 'La Solución',
+    solutionSubtitle: 'Un programa integral que hace la diferencia',
 
     // Who We Are
-    whoTitle: '¿Quiénes Somos?',
+    whoTitle: 'Quiénes Somos',
     whoRavehub: 'Ravehub',
-    whoRavehubDesc: 'Plataforma #1 de música electrónica en Latinoamérica con presencia consolidada en 12 países. Conectamos más de 500 DJs con una audiencia comprometida de 3.2M de seguidores.',
-    whoMetric1: 'Países',
-    whoMetric2: 'DJs en plataforma',
-    whoMetric3: 'Seguidores totales',
-    whoMetric4: 'Alcance mensual',
+    whoDesc: 'La plataforma #1 de música electrónica en Latinoamérica. Conectamos festivales, DJs y fans en 12 países con una comunidad activa de más de 3.2 millones de seguidores.',
 
-    // Track Record
-    trackTitle: 'Nuestro Historial',
-    trackSubtitle: 'Experiencia comprobada en eventos de música electrónica',
-    track1: 'Festivales cubiertos en Latinoamérica',
-    track2: 'Años de experiencia en la industria',
-    track3: 'Profesionales en nuestro equipo',
-    track4: 'Artículos publicados',
+    whoMetric1: 'Países',
+    whoMetric1Value: '12',
+    whoMetric2: 'Seguidores',
+    whoMetric2Value: '3.2M',
+    whoMetric3: 'Festivales Cubiertos',
+    whoMetric3Value: '50+',
+    whoMetric4: 'Años de Experiencia',
+    whoMetric4Value: '8',
 
     // What We Offer
-    offerTitle: 'Qué Ofrecemos',
-    offerSubtitle: 'Dos pilares que aportan valor real a su festival',
+    offerTitle: 'Qué Ofrecemos a Tu Festival',
+    offerSubtitle: 'Un programa completo que aporta valor real',
 
-    pillar1Title: 'Programa de Sostenibilidad',
-    pillar1Desc: 'Implementación física de iniciativas ambientales durante el festival',
-    pillar2Title: 'Cobertura Mediática Profesional',
-    pillar2Desc: 'Documentación y difusión del evento y sus prácticas sustentables',
+    // The Program
+    programTitle: 'El Programa Ravehub Recycle',
+    program1Title: 'Implementación de Sostenibilidad',
+    program1Desc: 'Instalamos y operamos infraestructura de reciclaje durante todo el evento',
+    program2Title: 'Cobertura Mediática Profesional',
+    program2Desc: 'Documentamos el festival y destacamos tus iniciativas sustentables',
+    program3Title: 'Educación Ambiental',
+    program3Desc: 'Educamos a los asistentes sobre prácticas responsables',
+    program4Title: 'Reporte de Impacto',
+    program4Desc: 'Entregamos métricas y certificación de evento sustentable',
 
-    // Sustainability Program
-    sustainTitle: 'Programa de Sostenibilidad',
-    sustainSubtitle: 'Iniciativas concretas que implementaremos',
+    // Initiatives
+    initiativesTitle: 'Nuestras Iniciativas',
+    initiativesSubtitle: 'Acciones concretas que implementamos',
 
-    init1Title: 'Estaciones de Reciclaje',
+    init1Title: 'Estaciones de Reciclaje Inteligentes',
+    init1Desc: 'Módulos profesionales de reciclaje ubicados estratégicamente con señalización clara en múltiples idiomas. Separamos plástico, vidrio, papel, orgánico y residuos generales.',
     init1Metric: '15-20 estaciones',
-    init1Desc: 'Módulos de reciclaje profesionales con señalética multilingüe. Separación de plástico, vidrio, papel, orgánico y general.',
-    init1Item1: 'Diseño consistente con branding del festival',
-    init1Item2: 'Señalización clara e intuitiva',
-    init1Item3: 'Ubicación estratégica estudiada',
-    init1Item4: 'Monitoreo y reporte de KPIs',
 
-    init2Title: 'Green Team',
-    init2Metric: '5 embajadores',
-    init2Desc: 'Equipo capacitado en gestión de residuos que educa y guía a los asistentes durante todo el evento.',
-    init2Item1: 'Personal con formación certificada',
-    init2Item2: 'Uniformes identificables',
-    init2Item3: 'Protocolos de interacción establecidos',
-    init2Item4: 'Sistema de turnos 24/7',
+    init2Title: 'Green Team - Embajadores Ambientales',
+    init2Desc: 'Equipo capacitado que educa y guía a los asistentes en tiempo real sobre cómo y dónde reciclar correctamente durante todo el evento.',
+    init2Metric: '5-10 personas',
 
-    init3Title: 'Campaña Digital',
-    init3Metric: '50+ publicaciones',
-    init3Desc: 'Campaña educativa en redes sociales antes, durante y después del festival con alcance medido.',
-    init3Item1: 'Contenido pre-evento educativo',
-    init3Item2: 'Cobertura en vivo de iniciativas',
-    init3Item3: 'Post-evento con resultados',
-    init3Item4: 'Hashtags y tracking analytics',
+    init3Title: 'Campaña Digital de Impacto',
+    init3Desc: 'Difusión antes, durante y después del festival destacando las iniciativas verdes, con alcance de millones de personas en redes sociales.',
+    init3Metric: '3.2M+ alcance',
 
-    init4Title: 'Reporte de Impacto',
-    init4Metric: 'Documento profesional',
-    init4Desc: 'Informe post-evento con métricas, fotografías, análisis comparativo y certificación de evento sustentable.',
-    init4Item1: 'Métricas cuantificables',
-    init4Item2: 'Comparativa con benchmarks',
-    init4Item3: 'Fotografías y evidencia',
-    init4Item4: 'Certificación digital',
+    init4Title: 'Reporte Profesional de Impacto',
+    init4Desc: 'Documento detallado con métricas, fotografías, análisis y certificación digital de evento sustentable que puedes usar en tu marketing.',
+    init4Metric: 'Post-evento',
 
     // Media Coverage
-    mediaTitle: 'Cobertura Mediática',
-    mediaSubtitle: 'Equipo profesional para documentar el festival',
+    mediaTitle: 'Cobertura Mediática Incluida',
+    mediaSubtitle: 'Equipo profesional documenta tu festival',
 
     media1Title: 'Fotografía Profesional',
-    media1Desc: '2 fotógrafos con equipamiento profesional',
-    media1Deliver: 'Entregables',
-    media1Item1: '500+ fotos editadas en alta resolución',
-    media1Item2: 'Cobertura artistas, público, backstage',
-    media1Item3: 'Enfoque especial en sostenibilidad',
-    media1Item4: 'Entrega 48h post-evento',
-
+    media1Desc: '500+ fotos editadas en alta resolución',
     media2Title: 'Video & Aftermovie',
-    media2Desc: '1 videógrafo + editor',
-    media2Deliver: 'Entregables',
-    media2Item1: 'Aftermovie oficial 3-5 minutos',
-    media2Item2: 'Clips cortos para redes sociales',
-    media2Item3: 'B-roll de iniciativas sustentables',
-    media2Item4: 'Entrega 7 días post-evento',
-
-    media3Title: 'Redes Sociales',
-    media3Desc: '2 especialistas en contenido digital',
-    media3Deliver: 'Entregables',
-    media3Item1: '30+ stories durante el evento',
-    media3Item2: '10+ posts en feed principal',
-    media3Item3: 'Reels/TikToks virales',
-    media3Item4: 'Engagement y analytics',
-
+    media2Desc: 'Aftermovie oficial 3-5 minutos',
+    media3Title: 'Contenido Redes Sociales',
+    media3Desc: '30+ stories y posts durante evento',
     media4Title: 'Artículos & PR',
-    media4Desc: '1 periodista / redactor',
-    media4Deliver: 'Entregables',
-    media4Item1: 'Artículo pre-evento (anuncio)',
-    media4Item2: 'Review completa post-evento',
-    media4Item3: 'Destacados de sostenibilidad',
-    media4Item4: 'Publicación en ravehublatam.com',
+    media4Desc: 'Artículos en ravehublatam.com',
 
-    // Timeline
-    timelineTitle: 'Timeline de Ejecución',
-    timelineSubtitle: 'Plan de trabajo estructurado en 3 fases',
+    // Results
+    resultsTitle: 'Resultados Medibles',
+    resultsSubtitle: 'KPIs que entregamos',
 
-    phase1: 'Pre-Evento (30 días antes)',
-    phase1Item1: 'Reunión de coordinación con organizadores',
-    phase1Item2: 'Diseño de estaciones de reciclaje personalizadas',
-    phase1Item3: 'Capacitación de Green Team',
-    phase1Item4: 'Campaña digital educativa',
-    phase1Item5: 'Logística y permisos',
-
-    phase2: 'Durante el Evento',
-    phase2Item1: 'Instalación de estaciones de reciclaje',
-    phase2Item2: 'Green Team operando 24/7',
-    phase2Item3: 'Cobertura fotográfica y video',
-    phase2Item4: 'Publicación en tiempo real',
-    phase2Item5: 'Monitoreo de métricas',
-
-    phase3: 'Post-Evento (7-14 días)',
-    phase3Item1: 'Recolección y análisis de datos',
-    phase3Item2: 'Edición de contenido multimedia',
-    phase3Item3: 'Elaboración de reporte de impacto',
-    phase3Item4: 'Publicación de resultados',
-    phase3Item5: 'Certificación de evento sustentable',
-
-    // Team
-    teamTitle: 'Nuestro Equipo',
-    teamSubtitle: 'Profesionales con experiencia verificable',
-
-    role1: 'Coordinador General',
-    role1Desc: '1 persona con experiencia en gestión de eventos sustentables',
-
-    role2: 'Fotógrafos',
-    role2Desc: '2 profesionales con portfolio comprobable y equipo propio',
-
-    role3: 'Videógrafo',
-    role3Desc: '1 profesional especializado en aftermovies de festivales',
-
-    role4: 'Social Media',
-    role4Desc: '2 especialistas en creación de contenido para plataformas digitales',
-
-    role5: 'Redactor',
-    role5Desc: '1 periodista con experiencia en cobertura de eventos musicales',
-
-    role6: 'Green Team',
-    role6Desc: '5 embajadores con capacitación en gestión de residuos',
-
-    teamTotal: 'Total: 12 personas',
-    teamNote: 'Cada miembro cuenta con portafolio verificable, cobertura previa de eventos, equipo profesional y compromiso con código de conducta.',
-
-    // Accreditation
-    accredTitle: 'Solicitud de Acreditación',
-    accredSubtitle: 'Necesitamos 12 acreditaciones de prensa para ejecutar este programa',
-    accredNote: 'Nota Importante',
-    accredNoteText: 'Entendemos que las acreditaciones de medios son un recurso limitado y valioso. Por eso, este no es simplemente una solicitud de "entradas gratis". Cada persona acreditada tiene un rol específico, entregables concretos y contribuye activamente al valor ambiental y de visibilidad del festival.',
-
-    // Expected Results
-    resultsTitle: 'Resultados Esperados',
-    resultsSubtitle: 'KPIs medibles que entregaremos',
-
-    result1: 'Toneladas de residuos reciclados',
+    result1: 'Residuos Reciclados',
     result1Value: '5-10 ton',
-    result2: 'Asistentes educados por Green Team',
+    result2: 'Asistentes Educados',
     result2Value: '10,000+',
-    result3: 'Alcance digital total',
+    result3: 'Alcance Digital',
     result3Value: '3.2M+',
-    result4: 'Contenido multimedia producido',
+    result4: 'Contenido Producido',
     result4Value: '500+',
 
-    // Why Partner
-    whyTitle: '¿Por Qué Esta Alianza Tiene Sentido?',
+    // Why Us
+    whyTitle: 'Por Qué Trabajar Con Nosotros',
 
-    why1Title: 'Credibilidad Establecida',
-    why1Desc: 'Somos la voz reconocida de la escena electrónica en Latinoamérica desde hace años',
+    why1Title: 'Experiencia Comprobada',
+    why1Desc: '8 años cubriendo festivales en Latinoamérica',
+    why2Title: 'Alcance Real',
+    why2Desc: '3.2M de seguidores activos en la escena',
+    why3Title: 'Equipo Profesional',
+    why3Desc: '12+ personas especializadas',
+    why4Title: 'Sin Costo Para Ti',
+    why4Desc: 'Solo necesitamos acceso al evento',
 
-    why2Title: 'Alineación con Tendencias',
-    why2Desc: 'Ultra, Tomorrowland, Glastonbury ya tienen programas similares. Es el estándar de la industria',
+    // Benchmarks
+    benchmarkTitle: 'Festivales Que Ya Lo Hacen',
+    benchmarkSubtitle: 'Estándares de la industria',
+    bench1: 'Ultra Music Festival - Certificación Greener Festival',
+    bench2: 'Glastonbury - 175,000 personas con reciclaje integral',
+    bench3: 'Tomorrowland - Sistema de waste management completo',
+    bench4: 'Lollapalooza - Partnership con REVERB para sostenibilidad',
 
-    why3Title: 'Valor Sin Costo',
-    why3Desc: 'Implementamos el programa completo. El festival solo proporciona acreditaciones y coordina espacios',
+    // Timeline
+    timelineTitle: 'Cómo Funciona',
+    phase1Title: 'Antes del Festival',
+    phase1Items: ['Reunión de coordinación', 'Diseño personalizado de estaciones', 'Capacitación del equipo', 'Campaña digital pre-evento'],
+    phase2Title: 'Durante el Festival',
+    phase2Items: ['Instalación de estaciones', 'Green Team operando 24/7', 'Cobertura fotográfica y video', 'Publicación en tiempo real'],
+    phase3Title: 'Después del Festival',
+    phase3Items: ['Análisis de datos', 'Edición de contenido', 'Reporte de impacto', 'Certificación sustentable'],
 
-    why4Title: 'ROI Tangible',
-    why4Desc: 'Contenido profesional, mejor imagen ambiental, potencial certificación greener festival',
-
-    // References
-    referencesTitle: 'Festivales de Referencia',
-    referencesSubtitle: 'Benchmarks de la industria que ya implementan programas similares',
-
-    ref1: 'Ultra Music Festival',
-    ref1Desc: 'Certificación Greener Festival. Programas de reciclaje y reducción de huella',
-    ref2: 'Glastonbury',
-    ref2Desc: '175,000 personas. Sistema completo de reciclaje y compostaje',
-    ref3: 'Tomorrowland',
-    ref3Desc: 'Waste management integral. Objetivo: 155g residuos/persona/día',
-    ref4: 'Lollapalooza',
-    ref4Desc: 'Partnership con REVERB. Reporte anual de impacto ambiental',
-
-    // Contact CTA
-    ctaTitle: '¿Listo para Discutir Esta Propuesta?',
-    ctaDesc: 'Contáctenos para agendar una reunión y revisar los detalles específicos para su festival',
+    // CTA
+    ctaTitle: '¿Tu Festival Está Listo Para el Cambio?',
+    ctaDesc: 'Contáctanos para discutir cómo implementar Ravehub Recycle en tu próximo evento',
     ctaButton: 'Contactar Ahora',
     ctaEmail: 'recycle@ravehublatam.com',
 
     // Footer
-    footerText: 'Esta es una propuesta profesional basada en investigación de mejores prácticas de la industria.',
-    footerRights: '© 2026 Ravehub. Documento confidencial.',
-
-    // Sources
-    sourcesTitle: 'Fuentes y Referencias',
-    sourcesDesc: 'Esta propuesta está basada en investigación de las siguientes fuentes:',
+    footerText: 'Transformando la industria de festivales, un evento sustentable a la vez',
+    footerRights: '© 2026 Ravehub. Todos los derechos reservados.',
   },
   en: {
-    // Meta
-    lang: 'en',
-    langName: 'English',
+    // Hero
+    heroTitle: 'Ravehub Recycle',
+    heroSubtitle: 'Transforming Music Festivals into Sustainable Events',
+    heroDescription: 'Comprehensive sustainability and media coverage program for electronic music festivals worldwide.',
+    heroButton: 'Learn About the Program',
 
-    // Header
-    proposalFor: 'Proposal for',
-    subtitle: 'Professional Sustainability & Media Coverage Program',
-    downloadPdf: 'Download PDF',
+    // Problem Section
+    problemTitle: 'The Problem',
+    problemSubtitle: 'The reality after each festival',
+    problemDescription: 'Thousands of attendees, incredible experiences... and tons of waste polluting the planet. It\'s time to change this.',
 
-    // Executive Summary
-    execTitle: 'Executive Summary',
-    execIntro: 'Ravehub, the leading electronic music platform in Latin America, requests media accreditation to implement a comprehensive sustainability program at your festival.',
+    // The Reality
+    realityTitle: 'Post-Festival Reality',
+    realityDesc: 'Every year, music festivals generate thousands of tons of waste. Plastic bottles, cups, food packaging, and more end up in landfills or worse, in nature.',
+
+    // Stats
+    stat1: 'Tons of trash',
+    stat1Value: '100+',
+    stat1Desc: 'Per 50K people festival',
+    stat2: 'Properly recycled',
+    stat2Value: '<15%',
+    stat2Desc: 'In festivals without program',
+    stat3: 'Plastic bottles',
+    stat3Value: '500K+',
+    stat3Desc: 'Used in average festival',
+
+    // Solution
+    solutionTitle: 'The Solution',
+    solutionSubtitle: 'A comprehensive program that makes a difference',
 
     // Who We Are
     whoTitle: 'Who We Are',
     whoRavehub: 'Ravehub',
-    whoRavehubDesc: '#1 electronic music platform in Latin America with established presence in 12 countries. We connect 500+ DJs with an engaged audience of 3.2M followers.',
-    whoMetric1: 'Countries',
-    whoMetric2: 'DJs on platform',
-    whoMetric3: 'Total followers',
-    whoMetric4: 'Monthly reach',
+    whoDesc: 'The #1 electronic music platform in Latin America. We connect festivals, DJs and fans across 12 countries with an active community of over 3.2 million followers.',
 
-    // Track Record
-    trackTitle: 'Our Track Record',
-    trackSubtitle: 'Proven experience in electronic music events',
-    track1: 'Festivals covered in Latin America',
-    track2: 'Years of industry experience',
-    track3: 'Professionals on our team',
-    track4: 'Articles published',
+    whoMetric1: 'Countries',
+    whoMetric1Value: '12',
+    whoMetric2: 'Followers',
+    whoMetric2Value: '3.2M',
+    whoMetric3: 'Festivals Covered',
+    whoMetric3Value: '50+',
+    whoMetric4: 'Years of Experience',
+    whoMetric4Value: '8',
 
     // What We Offer
-    offerTitle: 'What We Offer',
-    offerSubtitle: 'Two pillars that bring real value to your festival',
+    offerTitle: 'What We Offer Your Festival',
+    offerSubtitle: 'A complete program that brings real value',
 
-    pillar1Title: 'Sustainability Program',
-    pillar1Desc: 'Physical implementation of environmental initiatives during the festival',
-    pillar2Title: 'Professional Media Coverage',
-    pillar2Desc: 'Documentation and dissemination of the event and its sustainable practices',
+    // The Program
+    programTitle: 'The Ravehub Recycle Program',
+    program1Title: 'Sustainability Implementation',
+    program1Desc: 'We install and operate recycling infrastructure throughout the event',
+    program2Title: 'Professional Media Coverage',
+    program2Desc: 'We document the festival and highlight your sustainable initiatives',
+    program3Title: 'Environmental Education',
+    program3Desc: 'We educate attendees about responsible practices',
+    program4Title: 'Impact Report',
+    program4Desc: 'We deliver metrics and sustainable event certification',
 
-    // Sustainability Program
-    sustainTitle: 'Sustainability Program',
-    sustainSubtitle: 'Concrete initiatives we will implement',
+    // Initiatives
+    initiativesTitle: 'Our Initiatives',
+    initiativesSubtitle: 'Concrete actions we implement',
 
-    init1Title: 'Recycling Stations',
+    init1Title: 'Smart Recycling Stations',
+    init1Desc: 'Professional recycling modules strategically located with clear signage in multiple languages. We separate plastic, glass, paper, organic and general waste.',
     init1Metric: '15-20 stations',
-    init1Desc: 'Professional recycling modules with multilingual signage. Separation of plastic, glass, paper, organic and general waste.',
-    init1Item1: 'Design consistent with festival branding',
-    init1Item2: 'Clear and intuitive signage',
-    init1Item3: 'Strategic studied placement',
-    init1Item4: 'Monitoring and KPI reporting',
 
-    init2Title: 'Green Team',
-    init2Metric: '5 ambassadors',
-    init2Desc: 'Team trained in waste management that educates and guides attendees throughout the event.',
-    init2Item1: 'Staff with certified training',
-    init2Item2: 'Identifiable uniforms',
-    init2Item3: 'Established interaction protocols',
-    init2Item4: '24/7 shift system',
+    init2Title: 'Green Team - Environmental Ambassadors',
+    init2Desc: 'Trained team that educates and guides attendees in real-time on how and where to recycle correctly throughout the event.',
+    init2Metric: '5-10 people',
 
-    init3Title: 'Digital Campaign',
-    init3Metric: '50+ publications',
-    init3Desc: 'Educational social media campaign before, during and after the festival with measured reach.',
-    init3Item1: 'Pre-event educational content',
-    init3Item2: 'Live coverage of initiatives',
-    init3Item3: 'Post-event with results',
-    init3Item4: 'Hashtags and analytics tracking',
+    init3Title: 'Digital Impact Campaign',
+    init3Desc: 'Dissemination before, during and after the festival highlighting green initiatives, reaching millions of people on social media.',
+    init3Metric: '3.2M+ reach',
 
-    init4Title: 'Impact Report',
-    init4Metric: 'Professional document',
-    init4Desc: 'Post-event report with metrics, photographs, comparative analysis and sustainable event certification.',
-    init4Item1: 'Quantifiable metrics',
-    init4Item2: 'Comparative with benchmarks',
-    init4Item3: 'Photographs and evidence',
-    init4Item4: 'Digital certification',
+    init4Title: 'Professional Impact Report',
+    init4Desc: 'Detailed document with metrics, photographs, analysis and digital sustainable event certification you can use in your marketing.',
+    init4Metric: 'Post-event',
 
     // Media Coverage
-    mediaTitle: 'Media Coverage',
-    mediaSubtitle: 'Professional team to document the festival',
+    mediaTitle: 'Media Coverage Included',
+    mediaSubtitle: 'Professional team documents your festival',
 
     media1Title: 'Professional Photography',
-    media1Desc: '2 photographers with professional equipment',
-    media1Deliver: 'Deliverables',
-    media1Item1: '500+ edited high-resolution photos',
-    media1Item2: 'Coverage of artists, audience, backstage',
-    media1Item3: 'Special focus on sustainability',
-    media1Item4: 'Delivery 48h post-event',
-
+    media1Desc: '500+ edited high-resolution photos',
     media2Title: 'Video & Aftermovie',
-    media2Desc: '1 videographer + editor',
-    media2Deliver: 'Deliverables',
-    media2Item1: 'Official 3-5 minute aftermovie',
-    media2Item2: 'Short clips for social media',
-    media2Item3: 'B-roll of sustainable initiatives',
-    media2Item4: 'Delivery 7 days post-event',
-
-    media3Title: 'Social Media',
-    media3Desc: '2 digital content specialists',
-    media3Deliver: 'Deliverables',
-    media3Item1: '30+ stories during the event',
-    media3Item2: '10+ posts on main feed',
-    media3Item3: 'Viral Reels/TikToks',
-    media3Item4: 'Engagement and analytics',
-
+    media2Desc: 'Official 3-5 minute aftermovie',
+    media3Title: 'Social Media Content',
+    media3Desc: '30+ stories and posts during event',
     media4Title: 'Articles & PR',
-    media4Desc: '1 journalist / writer',
-    media4Deliver: 'Deliverables',
-    media4Item1: 'Pre-event article (announcement)',
-    media4Item2: 'Complete post-event review',
-    media4Item3: 'Sustainability highlights',
-    media4Item4: 'Publication on ravehublatam.com',
+    media4Desc: 'Articles on ravehublatam.com',
 
-    // Timeline
-    timelineTitle: 'Execution Timeline',
-    timelineSubtitle: 'Structured work plan in 3 phases',
+    // Results
+    resultsTitle: 'Measurable Results',
+    resultsSubtitle: 'KPIs we deliver',
 
-    phase1: 'Pre-Event (30 days before)',
-    phase1Item1: 'Coordination meeting with organizers',
-    phase1Item2: 'Design of customized recycling stations',
-    phase1Item3: 'Green Team training',
-    phase1Item4: 'Educational digital campaign',
-    phase1Item5: 'Logistics and permits',
-
-    phase2: 'During the Event',
-    phase2Item1: 'Installation of recycling stations',
-    phase2Item2: 'Green Team operating 24/7',
-    phase2Item3: 'Photographic and video coverage',
-    phase2Item4: 'Real-time publication',
-    phase2Item5: 'Metrics monitoring',
-
-    phase3: 'Post-Event (7-14 days)',
-    phase3Item1: 'Data collection and analysis',
-    phase3Item2: 'Multimedia content editing',
-    phase3Item3: 'Impact report preparation',
-    phase3Item4: 'Results publication',
-    phase3Item5: 'Sustainable event certification',
-
-    // Team
-    teamTitle: 'Our Team',
-    teamSubtitle: 'Professionals with verifiable experience',
-
-    role1: 'General Coordinator',
-    role1Desc: '1 person with experience in sustainable event management',
-
-    role2: 'Photographers',
-    role2Desc: '2 professionals with verifiable portfolio and own equipment',
-
-    role3: 'Videographer',
-    role3Desc: '1 professional specialized in festival aftermovies',
-
-    role4: 'Social Media',
-    role4Desc: '2 specialists in content creation for digital platforms',
-
-    role5: 'Writer',
-    role5Desc: '1 journalist with experience covering music events',
-
-    role6: 'Green Team',
-    role6Desc: '5 ambassadors with training in waste management',
-
-    teamTotal: 'Total: 12 people',
-    teamNote: 'Each member has verifiable portfolio, previous event coverage, professional equipment and commitment to code of conduct.',
-
-    // Accreditation
-    accredTitle: 'Accreditation Request',
-    accredSubtitle: 'We need 12 press accreditations to execute this program',
-    accredNote: 'Important Note',
-    accredNoteText: 'We understand that media accreditations are a limited and valuable resource. Therefore, this is not simply a request for "free tickets". Each accredited person has a specific role, concrete deliverables and actively contributes to the environmental value and visibility of the festival.',
-
-    // Expected Results
-    resultsTitle: 'Expected Results',
-    resultsSubtitle: 'Measurable KPIs we will deliver',
-
-    result1: 'Tons of waste recycled',
+    result1: 'Waste Recycled',
     result1Value: '5-10 tons',
-    result2: 'Attendees educated by Green Team',
+    result2: 'Attendees Educated',
     result2Value: '10,000+',
-    result3: 'Total digital reach',
+    result3: 'Digital Reach',
     result3Value: '3.2M+',
-    result4: 'Multimedia content produced',
+    result4: 'Content Produced',
     result4Value: '500+',
 
-    // Why Partner
-    whyTitle: 'Why This Partnership Makes Sense?',
+    // Why Us
+    whyTitle: 'Why Work With Us',
 
-    why1Title: 'Established Credibility',
-    why1Desc: 'We are the recognized voice of the electronic scene in Latin America for years',
+    why1Title: 'Proven Experience',
+    why1Desc: '8 years covering festivals in Latin America',
+    why2Title: 'Real Reach',
+    why2Desc: '3.2M active followers in the scene',
+    why3Title: 'Professional Team',
+    why3Desc: '12+ specialized people',
+    why4Title: 'No Cost To You',
+    why4Desc: 'We only need access to the event',
 
-    why2Title: 'Alignment with Trends',
-    why2Desc: 'Ultra, Tomorrowland, Glastonbury already have similar programs. It\'s the industry standard',
+    // Benchmarks
+    benchmarkTitle: 'Festivals Already Doing It',
+    benchmarkSubtitle: 'Industry standards',
+    bench1: 'Ultra Music Festival - Greener Festival Certification',
+    bench2: 'Glastonbury - 175,000 people with comprehensive recycling',
+    bench3: 'Tomorrowland - Complete waste management system',
+    bench4: 'Lollapalooza - Partnership with REVERB for sustainability',
 
-    why3Title: 'Value Without Cost',
-    why3Desc: 'We implement the complete program. The festival only provides accreditations and coordinates spaces',
+    // Timeline
+    timelineTitle: 'How It Works',
+    phase1Title: 'Before the Festival',
+    phase1Items: ['Coordination meeting', 'Custom station design', 'Team training', 'Pre-event digital campaign'],
+    phase2Title: 'During the Festival',
+    phase2Items: ['Station installation', 'Green Team operating 24/7', 'Photo and video coverage', 'Real-time publication'],
+    phase3Title: 'After the Festival',
+    phase3Items: ['Data analysis', 'Content editing', 'Impact report', 'Sustainable certification'],
 
-    why4Title: 'Tangible ROI',
-    why4Desc: 'Professional content, better environmental image, potential greener festival certification',
-
-    // References
-    referencesTitle: 'Reference Festivals',
-    referencesSubtitle: 'Industry benchmarks already implementing similar programs',
-
-    ref1: 'Ultra Music Festival',
-    ref1Desc: 'Greener Festival Certification. Recycling and footprint reduction programs',
-    ref2: 'Glastonbury',
-    ref2Desc: '175,000 people. Complete recycling and composting system',
-    ref3: 'Tomorrowland',
-    ref3Desc: 'Comprehensive waste management. Target: 155g waste/person/day',
-    ref4: 'Lollapalooza',
-    ref4Desc: 'Partnership with REVERB. Annual environmental impact report',
-
-    // Contact CTA
-    ctaTitle: 'Ready to Discuss This Proposal?',
-    ctaDesc: 'Contact us to schedule a meeting and review the specific details for your festival',
+    // CTA
+    ctaTitle: 'Is Your Festival Ready for Change?',
+    ctaDesc: 'Contact us to discuss how to implement Ravehub Recycle at your next event',
     ctaButton: 'Contact Now',
     ctaEmail: 'recycle@ravehublatam.com',
 
     // Footer
-    footerText: 'This is a professional proposal based on research of industry best practices.',
-    footerRights: '© 2026 Ravehub. Confidential document.',
-
-    // Sources
-    sourcesTitle: 'Sources and References',
-    sourcesDesc: 'This proposal is based on research from the following sources:',
+    footerText: 'Transforming the festival industry, one sustainable event at a time',
+    footerRights: '© 2026 Ravehub. All rights reserved.',
   }
 };
 
@@ -482,17 +322,17 @@ export default function RaveHubRecyclePage() {
   const t = translations[lang];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Language Selector - More Professional */}
+    <div className="min-h-screen bg-zinc-950">
+      {/* Language Selector - Fixed top right */}
       <div className="fixed top-24 right-6 z-50">
-        <div className="bg-white border-2 border-zinc-200 rounded-lg shadow-lg overflow-hidden">
-          <div className="flex items-center">
+        <div className="bg-zinc-900 border border-white/10 rounded-lg overflow-hidden shadow-xl">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setLang('es')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 lang === 'es'
-                  ? 'bg-zinc-900 text-white'
-                  : 'bg-white text-zinc-600 hover:bg-zinc-50'
+                  ? 'bg-green-500 text-white'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
               }`}
             >
               ES
@@ -501,8 +341,8 @@ export default function RaveHubRecyclePage() {
               onClick={() => setLang('en')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 lang === 'en'
-                  ? 'bg-zinc-900 text-white'
-                  : 'bg-white text-zinc-600 hover:bg-zinc-50'
+                  ? 'bg-green-500 text-white'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
               }`}
             >
               EN
@@ -511,245 +351,337 @@ export default function RaveHubRecyclePage() {
         </div>
       </div>
 
-      {/* Professional Header */}
-      <div className="bg-zinc-900 text-white py-16 md:py-24">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-lg bg-green-500 flex items-center justify-center">
-              <Leaf className="w-6 h-6 text-white" />
+      {/* Hero Section */}
+      <div className="relative pt-32 pb-20 overflow-hidden">
+        {/* Hero Background Image - Placeholder */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/70 to-zinc-950 z-10" />
+          {/* Placeholder for hero image */}
+          <div className="w-full h-full bg-gradient-to-br from-green-900/20 to-emerald-900/20 flex items-center justify-center">
+            <div className="text-center text-zinc-700">
+              <Camera className="w-24 h-24 mx-auto mb-4 opacity-20" />
+              <p className="text-sm">Hero Image: Festival crowd from above</p>
+              <p className="text-xs">Sustainable, green, vibrant</p>
             </div>
-            <div>
-              <p className="text-sm text-zinc-400 uppercase tracking-wider">{t.proposalFor}</p>
-              <p className="text-xl font-bold">Ultra / Tomorrowland / EDC / Glastonbury</p>
+          </div>
+        </div>
+
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 mb-8">
+            <Leaf className="w-10 h-10 text-white" />
+          </div>
+
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
+            {t.heroTitle}
+          </h1>
+
+          <p className="text-2xl md:text-3xl font-semibold text-green-400 mb-6">
+            {t.heroSubtitle}
+          </p>
+
+          <p className="text-lg md:text-xl text-zinc-300 max-w-3xl mx-auto mb-12">
+            {t.heroDescription}
+          </p>
+
+          <a
+            href="#programa"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-all shadow-lg shadow-green-500/30"
+          >
+            {t.heroButton}
+            <ArrowRight className="w-5 h-5" />
+          </a>
+        </div>
+      </div>
+
+      {/* Problem Section - WITH IMPACT IMAGES */}
+      <div className="py-20 bg-zinc-900/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full mb-6">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <span className="text-red-400 font-semibold text-sm uppercase">{t.problemTitle}</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.problemSubtitle}
+            </h2>
+            <p className="text-xl text-zinc-400 max-w-3xl mx-auto">
+              {t.problemDescription}
+            </p>
+          </div>
+
+          {/* Problem Images Grid */}
+          <div className="grid md:grid-cols-3 gap-6 mb-16">
+            {/* Image placeholder 1 - Post festival trash */}
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-800 border border-white/10">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                <AlertTriangle className="w-16 h-16 mb-3 text-red-400/30" />
+                <p className="text-sm font-semibold text-center px-4">Imagen: Campo post-festival<br/>lleno de basura</p>
+              </div>
+            </div>
+
+            {/* Image placeholder 2 - Plastic bottles */}
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-800 border border-white/10">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                <AlertTriangle className="w-16 h-16 mb-3 text-red-400/30" />
+                <p className="text-sm font-semibold text-center px-4">Imagen: Montañas de<br/>botellas plásticas</p>
+              </div>
+            </div>
+
+            {/* Image placeholder 3 - Volunteers cleaning */}
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-800 border border-white/10">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                <AlertTriangle className="w-16 h-16 mb-3 text-red-400/30" />
+                <p className="text-sm font-semibold text-center px-4">Imagen: Terreno<br/>contaminado</p>
+              </div>
             </div>
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
-            Ravehub Recycle
-          </h1>
-          <p className="text-xl md:text-2xl text-zinc-300 mb-8 max-w-3xl">
-            {t.subtitle}
-          </p>
+          {/* Stats */}
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-zinc-900 border border-red-500/20 rounded-2xl p-8 text-center">
+              <div className="text-5xl font-bold text-red-400 mb-2">{t.stat1Value}</div>
+              <div className="text-xl font-semibold text-white mb-2">{t.stat1}</div>
+              <div className="text-sm text-zinc-500">{t.stat1Desc}</div>
+            </div>
 
-          <button className="inline-flex items-center gap-2 px-6 py-3 bg-white text-zinc-900 font-semibold rounded-lg hover:bg-zinc-100 transition-colors">
-            <Download className="w-5 h-5" />
-            {t.downloadPdf}
-          </button>
+            <div className="bg-zinc-900 border border-red-500/20 rounded-2xl p-8 text-center">
+              <div className="text-5xl font-bold text-red-400 mb-2">{t.stat2Value}</div>
+              <div className="text-xl font-semibold text-white mb-2">{t.stat2}</div>
+              <div className="text-sm text-zinc-500">{t.stat2Desc}</div>
+            </div>
+
+            <div className="bg-zinc-900 border border-red-500/20 rounded-2xl p-8 text-center">
+              <div className="text-5xl font-bold text-red-400 mb-2">{t.stat3Value}</div>
+              <div className="text-xl font-semibold text-white mb-2">{t.stat3}</div>
+              <div className="text-sm text-zinc-500">{t.stat3Desc}</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Executive Summary */}
-      <div className="py-16 bg-zinc-50">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-6">
-            {t.execTitle}
-          </h2>
-          <p className="text-lg text-zinc-700 leading-relaxed max-w-4xl">
-            {t.execIntro}
-          </p>
+      {/* Solution Section */}
+      <div className="py-20 bg-gradient-to-b from-zinc-950 to-zinc-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full mb-6">
+              <CheckCircle2 className="w-5 h-5 text-green-400" />
+              <span className="text-green-400 font-semibold text-sm uppercase">{t.solutionTitle}</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.solutionSubtitle}
+            </h2>
+          </div>
+
+          {/* Solution Image - Before/After */}
+          <div className="grid md:grid-cols-2 gap-6 mb-16">
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-800 border-2 border-red-500/30">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                <p className="text-sm font-semibold text-red-400 mb-2">ANTES</p>
+                <AlertTriangle className="w-16 h-16 mb-3 text-red-400/30" />
+                <p className="text-sm text-center px-4">Festival sin programa<br/>de reciclaje</p>
+              </div>
+            </div>
+
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-800 border-2 border-green-500/30">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                <p className="text-sm font-semibold text-green-400 mb-2">DESPUÉS</p>
+                <Sparkles className="w-16 h-16 mb-3 text-green-400/30" />
+                <p className="text-sm text-center px-4">Con Ravehub Recycle<br/>limpio y organizado</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Who We Are - With Metrics */}
-      <div className="py-20 bg-white border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-12">
-            {t.whoTitle}
-          </h2>
+      {/* Who We Are */}
+      <div id="programa" className="py-20 bg-zinc-900/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.whoTitle}
+            </h2>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
+            {/* Ravehub Logo/Image Placeholder */}
+            <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-white/10">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                <Megaphone className="w-20 h-20 mb-4 text-purple-400/30" />
+                <p className="text-sm font-semibold">Imagen: Ravehub branding</p>
+                <p className="text-xs">Logo, team, o festival coverage</p>
+              </div>
+            </div>
+
             <div>
-              <h3 className="text-2xl font-bold text-zinc-900 mb-4">{t.whoRavehub}</h3>
-              <p className="text-lg text-zinc-700 leading-relaxed">
-                {t.whoRavehubDesc}
+              <h3 className="text-3xl font-bold text-white mb-6">{t.whoRavehub}</h3>
+              <p className="text-lg text-zinc-300 leading-relaxed mb-8">
+                {t.whoDesc}
               </p>
-            </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="text-center p-6 bg-zinc-50 rounded-lg border border-zinc-200">
-                <div className="text-4xl font-bold text-green-600 mb-2">12</div>
-                <div className="text-sm text-zinc-600 uppercase tracking-wide">{t.whoMetric1}</div>
-              </div>
-              <div className="text-center p-6 bg-zinc-50 rounded-lg border border-zinc-200">
-                <div className="text-4xl font-bold text-green-600 mb-2">500+</div>
-                <div className="text-sm text-zinc-600 uppercase tracking-wide">{t.whoMetric2}</div>
-              </div>
-              <div className="text-center p-6 bg-zinc-50 rounded-lg border border-zinc-200">
-                <div className="text-4xl font-bold text-green-600 mb-2">3.2M</div>
-                <div className="text-sm text-zinc-600 uppercase tracking-wide">{t.whoMetric3}</div>
-              </div>
-              <div className="text-center p-6 bg-zinc-50 rounded-lg border border-zinc-200">
-                <div className="text-4xl font-bold text-green-600 mb-2">10M+</div>
-                <div className="text-sm text-zinc-600 uppercase tracking-wide">{t.whoMetric4}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Track Record */}
-          <div className="bg-zinc-900 text-white rounded-2xl p-8 md:p-12">
-            <h3 className="text-2xl font-bold mb-2">{t.trackTitle}</h3>
-            <p className="text-zinc-400 mb-8">{t.trackSubtitle}</p>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div>
-                <div className="text-5xl font-bold text-green-400 mb-2">50+</div>
-                <div className="text-sm text-zinc-400">{t.track1}</div>
-              </div>
-              <div>
-                <div className="text-5xl font-bold text-green-400 mb-2">8</div>
-                <div className="text-sm text-zinc-400">{t.track2}</div>
-              </div>
-              <div>
-                <div className="text-5xl font-bold text-green-400 mb-2">25+</div>
-                <div className="text-sm text-zinc-400">{t.track3}</div>
-              </div>
-              <div>
-                <div className="text-5xl font-bold text-green-400 mb-2">1,000+</div>
-                <div className="text-sm text-zinc-400">{t.track4}</div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 text-center">
+                  <div className="text-4xl font-bold text-green-400 mb-2">{t.whoMetric1Value}</div>
+                  <div className="text-sm text-zinc-400">{t.whoMetric1}</div>
+                </div>
+                <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 text-center">
+                  <div className="text-4xl font-bold text-green-400 mb-2">{t.whoMetric2Value}</div>
+                  <div className="text-sm text-zinc-400">{t.whoMetric2}</div>
+                </div>
+                <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 text-center">
+                  <div className="text-4xl font-bold text-green-400 mb-2">{t.whoMetric3Value}</div>
+                  <div className="text-sm text-zinc-400">{t.whoMetric3}</div>
+                </div>
+                <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 text-center">
+                  <div className="text-4xl font-bold text-green-400 mb-2">{t.whoMetric4Value}</div>
+                  <div className="text-sm text-zinc-400">{t.whoMetric4}</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* What We Offer - Two Pillars */}
-      <div className="py-20 bg-zinc-50 border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-4">
-            {t.offerTitle}
-          </h2>
-          <p className="text-lg text-zinc-600 mb-16">{t.offerSubtitle}</p>
+      {/* The Program - 4 Pillars */}
+      <div className="py-20 bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.programTitle}
+            </h2>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white border-2 border-green-500 rounded-2xl p-8">
-              <div className="w-16 h-16 rounded-xl bg-green-500 flex items-center justify-center mb-6">
-                <Leaf className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-zinc-900 mb-4">{t.pillar1Title}</h3>
-              <p className="text-zinc-700">{t.pillar1Desc}</p>
+            <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-8">
+              <Leaf className="w-12 h-12 text-green-400 mb-4" />
+              <h3 className="text-2xl font-bold text-white mb-4">{t.program1Title}</h3>
+              <p className="text-zinc-300">{t.program1Desc}</p>
             </div>
 
-            <div className="bg-white border-2 border-blue-500 rounded-2xl p-8">
-              <div className="w-16 h-16 rounded-xl bg-blue-500 flex items-center justify-center mb-6">
-                <Camera className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-zinc-900 mb-4">{t.pillar2Title}</h3>
-              <p className="text-zinc-700">{t.pillar2Desc}</p>
+            <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-8">
+              <Camera className="w-12 h-12 text-blue-400 mb-4" />
+              <h3 className="text-2xl font-bold text-white mb-4">{t.program2Title}</h3>
+              <p className="text-zinc-300">{t.program2Desc}</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-8">
+              <Users className="w-12 h-12 text-purple-400 mb-4" />
+              <h3 className="text-2xl font-bold text-white mb-4">{t.program3Title}</h3>
+              <p className="text-zinc-300">{t.program3Desc}</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-2xl p-8">
+              <FileText className="w-12 h-12 text-orange-400 mb-4" />
+              <h3 className="text-2xl font-bold text-white mb-4">{t.program4Title}</h3>
+              <p className="text-zinc-300">{t.program4Desc}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sustainability Program - Detailed */}
-      <div className="py-20 bg-white border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-4">
-            {t.sustainTitle}
-          </h2>
-          <p className="text-lg text-zinc-600 mb-16">{t.sustainSubtitle}</p>
+      {/* Initiatives - WITH MOCKUP IMAGES */}
+      <div className="py-20 bg-zinc-900/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.initiativesTitle}
+            </h2>
+            <p className="text-xl text-zinc-400">{t.initiativesSubtitle}</p>
+          </div>
 
-          <div className="space-y-8">
-            {/* Initiative 1 */}
-            <div className="bg-zinc-50 border-2 border-zinc-200 rounded-2xl p-8 hover:border-green-500 transition-all">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-16 h-16 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
-                  <Recycle className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                    <h3 className="text-2xl font-bold text-zinc-900">{t.init1Title}</h3>
-                    <span className="px-4 py-2 bg-green-100 text-green-700 font-semibold rounded-lg text-sm">
-                      {t.init1Metric}
-                    </span>
+          <div className="space-y-12">
+            {/* Initiative 1 - WITH IMAGE */}
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div className="order-2 md:order-1">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center">
+                    <Recycle className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-zinc-700 mb-6">{t.init1Desc}</p>
-                  <ul className="grid md:grid-cols-2 gap-3">
-                    {[t.init1Item1, t.init1Item2, t.init1Item3, t.init1Item4].map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-zinc-700">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{t.init1Title}</h3>
+                    <p className="text-sm text-green-400 font-semibold">{t.init1Metric}</p>
+                  </div>
+                </div>
+                <p className="text-lg text-zinc-300 leading-relaxed">
+                  {t.init1Desc}
+                </p>
+              </div>
+              <div className="order-1 md:order-2 relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-800 border border-white/10">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                  <Recycle className="w-20 h-20 mb-4 text-green-400/30" />
+                  <p className="text-sm font-semibold text-center px-4">Mockup: Estación de reciclaje<br/>con señalización clara</p>
                 </div>
               </div>
             </div>
 
-            {/* Initiative 2 */}
-            <div className="bg-zinc-50 border-2 border-zinc-200 rounded-2xl p-8 hover:border-green-500 transition-all">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-16 h-16 rounded-xl bg-blue-500 flex items-center justify-center flex-shrink-0">
-                  <Users className="w-8 h-8 text-white" />
+            {/* Initiative 2 - WITH IMAGE */}
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-800 border border-white/10">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                  <Users className="w-20 h-20 mb-4 text-blue-400/30" />
+                  <p className="text-sm font-semibold text-center px-4">Foto: Green Team<br/>educando asistentes</p>
                 </div>
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                    <h3 className="text-2xl font-bold text-zinc-900">{t.init2Title}</h3>
-                    <span className="px-4 py-2 bg-blue-100 text-blue-700 font-semibold rounded-lg text-sm">
-                      {t.init2Metric}
-                    </span>
+              </div>
+              <div>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-zinc-700 mb-6">{t.init2Desc}</p>
-                  <ul className="grid md:grid-cols-2 gap-3">
-                    {[t.init2Item1, t.init2Item2, t.init2Item3, t.init2Item4].map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-zinc-700">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{t.init2Title}</h3>
+                    <p className="text-sm text-blue-400 font-semibold">{t.init2Metric}</p>
+                  </div>
+                </div>
+                <p className="text-lg text-zinc-300 leading-relaxed">
+                  {t.init2Desc}
+                </p>
+              </div>
+            </div>
+
+            {/* Initiative 3 - WITH SOCIAL MEDIA MOCKUP */}
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div className="order-2 md:order-1">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-purple-500 flex items-center justify-center">
+                    <Megaphone className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{t.init3Title}</h3>
+                    <p className="text-sm text-purple-400 font-semibold">{t.init3Metric}</p>
+                  </div>
+                </div>
+                <p className="text-lg text-zinc-300 leading-relaxed">
+                  {t.init3Desc}
+                </p>
+              </div>
+              <div className="order-1 md:order-2 relative aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-white/10">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                  <Megaphone className="w-20 h-20 mb-4 text-purple-400/30" />
+                  <p className="text-sm font-semibold text-center px-4">Mockup: Posts en redes<br/>sociales del festival</p>
                 </div>
               </div>
             </div>
 
-            {/* Initiative 3 */}
-            <div className="bg-zinc-50 border-2 border-zinc-200 rounded-2xl p-8 hover:border-green-500 transition-all">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-16 h-16 rounded-xl bg-purple-500 flex items-center justify-center flex-shrink-0">
-                  <Megaphone className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                    <h3 className="text-2xl font-bold text-zinc-900">{t.init3Title}</h3>
-                    <span className="px-4 py-2 bg-purple-100 text-purple-700 font-semibold rounded-lg text-sm">
-                      {t.init3Metric}
-                    </span>
-                  </div>
-                  <p className="text-zinc-700 mb-6">{t.init3Desc}</p>
-                  <ul className="grid md:grid-cols-2 gap-3">
-                    {[t.init3Item1, t.init3Item2, t.init3Item3, t.init3Item4].map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-zinc-700">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+            {/* Initiative 4 - WITH REPORT MOCKUP */}
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-800 border border-white/10">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600">
+                  <FileText className="w-20 h-20 mb-4 text-orange-400/30" />
+                  <p className="text-sm font-semibold text-center px-4">Mockup: Reporte de impacto<br/>con gráficas y métricas</p>
                 </div>
               </div>
-            </div>
-
-            {/* Initiative 4 */}
-            <div className="bg-zinc-50 border-2 border-zinc-200 rounded-2xl p-8 hover:border-green-500 transition-all">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-16 h-16 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-8 h-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                    <h3 className="text-2xl font-bold text-zinc-900">{t.init4Title}</h3>
-                    <span className="px-4 py-2 bg-orange-100 text-orange-700 font-semibold rounded-lg text-sm">
-                      {t.init4Metric}
-                    </span>
+              <div>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-zinc-700 mb-6">{t.init4Desc}</p>
-                  <ul className="grid md:grid-cols-2 gap-3">
-                    {[t.init4Item1, t.init4Item2, t.init4Item3, t.init4Item4].map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-zinc-700">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{t.init4Title}</h3>
+                    <p className="text-sm text-orange-400 font-semibold">{t.init4Metric}</p>
+                  </div>
                 </div>
+                <p className="text-lg text-zinc-300 leading-relaxed">
+                  {t.init4Desc}
+                </p>
               </div>
             </div>
           </div>
@@ -757,288 +689,101 @@ export default function RaveHubRecyclePage() {
       </div>
 
       {/* Media Coverage */}
-      <div className="py-20 bg-zinc-50 border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-4">
-            {t.mediaTitle}
-          </h2>
-          <p className="text-lg text-zinc-600 mb-16">{t.mediaSubtitle}</p>
+      <div className="py-20 bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.mediaTitle}
+            </h2>
+            <p className="text-xl text-zinc-400">{t.mediaSubtitle}</p>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Media 1 */}
-            <div className="bg-white border-2 border-zinc-200 rounded-xl p-6">
-              <div className="flex items-start gap-4 mb-4">
-                <Camera className="w-8 h-8 text-blue-500 flex-shrink-0" />
-                <div>
-                  <h3 className="text-xl font-bold text-zinc-900 mb-1">{t.media1Title}</h3>
-                  <p className="text-sm text-zinc-600">{t.media1Desc}</p>
-                </div>
-              </div>
-              <div className="border-t border-zinc-200 pt-4">
-                <p className="text-sm font-semibold text-zinc-900 mb-3">{t.media1Deliver}:</p>
-                <ul className="space-y-2">
-                  {[t.media1Item1, t.media1Item2, t.media1Item3, t.media1Item4].map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-zinc-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 hover:border-green-500/30 transition-all">
+              <Camera className="w-10 h-10 text-green-400 mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">{t.media1Title}</h3>
+              <p className="text-sm text-zinc-400">{t.media1Desc}</p>
             </div>
 
-            {/* Media 2 */}
-            <div className="bg-white border-2 border-zinc-200 rounded-xl p-6">
-              <div className="flex items-start gap-4 mb-4">
-                <Video className="w-8 h-8 text-purple-500 flex-shrink-0" />
-                <div>
-                  <h3 className="text-xl font-bold text-zinc-900 mb-1">{t.media2Title}</h3>
-                  <p className="text-sm text-zinc-600">{t.media2Desc}</p>
-                </div>
-              </div>
-              <div className="border-t border-zinc-200 pt-4">
-                <p className="text-sm font-semibold text-zinc-900 mb-3">{t.media2Deliver}:</p>
-                <ul className="space-y-2">
-                  {[t.media2Item1, t.media2Item2, t.media2Item3, t.media2Item4].map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-zinc-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 hover:border-green-500/30 transition-all">
+              <Video className="w-10 h-10 text-green-400 mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">{t.media2Title}</h3>
+              <p className="text-sm text-zinc-400">{t.media2Desc}</p>
             </div>
 
-            {/* Media 3 */}
-            <div className="bg-white border-2 border-zinc-200 rounded-xl p-6">
-              <div className="flex items-start gap-4 mb-4">
-                <Megaphone className="w-8 h-8 text-pink-500 flex-shrink-0" />
-                <div>
-                  <h3 className="text-xl font-bold text-zinc-900 mb-1">{t.media3Title}</h3>
-                  <p className="text-sm text-zinc-600">{t.media3Desc}</p>
-                </div>
-              </div>
-              <div className="border-t border-zinc-200 pt-4">
-                <p className="text-sm font-semibold text-zinc-900 mb-3">{t.media3Deliver}:</p>
-                <ul className="space-y-2">
-                  {[t.media3Item1, t.media3Item2, t.media3Item3, t.media3Item4].map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-zinc-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 hover:border-green-500/30 transition-all">
+              <Megaphone className="w-10 h-10 text-green-400 mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">{t.media3Title}</h3>
+              <p className="text-sm text-zinc-400">{t.media3Desc}</p>
             </div>
 
-            {/* Media 4 */}
-            <div className="bg-white border-2 border-zinc-200 rounded-xl p-6">
-              <div className="flex items-start gap-4 mb-4">
-                <FileText className="w-8 h-8 text-green-500 flex-shrink-0" />
-                <div>
-                  <h3 className="text-xl font-bold text-zinc-900 mb-1">{t.media4Title}</h3>
-                  <p className="text-sm text-zinc-600">{t.media4Desc}</p>
-                </div>
-              </div>
-              <div className="border-t border-zinc-200 pt-4">
-                <p className="text-sm font-semibold text-zinc-900 mb-3">{t.media4Deliver}:</p>
-                <ul className="space-y-2">
-                  {[t.media4Item1, t.media4Item2, t.media4Item3, t.media4Item4].map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-zinc-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 hover:border-green-500/30 transition-all">
+              <FileText className="w-10 h-10 text-green-400 mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">{t.media4Title}</h3>
+              <p className="text-sm text-zinc-400">{t.media4Desc}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="py-20 bg-white border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-4">
-            {t.timelineTitle}
-          </h2>
-          <p className="text-lg text-zinc-600 mb-16">{t.timelineSubtitle}</p>
-
-          <div className="space-y-8">
-            {/* Phase 1 */}
-            <div className="relative pl-12 border-l-4 border-blue-500 pb-8">
-              <div className="absolute left-0 top-0 w-8 h-8 -ml-4 rounded-full bg-blue-500 flex items-center justify-center">
-                <span className="text-white font-bold">1</span>
-              </div>
-              <h3 className="text-2xl font-bold text-zinc-900 mb-4">{t.phase1}</h3>
-              <ul className="space-y-2">
-                {[t.phase1Item1, t.phase1Item2, t.phase1Item3, t.phase1Item4, t.phase1Item5].map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-zinc-700">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Phase 2 */}
-            <div className="relative pl-12 border-l-4 border-green-500 pb-8">
-              <div className="absolute left-0 top-0 w-8 h-8 -ml-4 rounded-full bg-green-500 flex items-center justify-center">
-                <span className="text-white font-bold">2</span>
-              </div>
-              <h3 className="text-2xl font-bold text-zinc-900 mb-4">{t.phase2}</h3>
-              <ul className="space-y-2">
-                {[t.phase2Item1, t.phase2Item2, t.phase2Item3, t.phase2Item4, t.phase2Item5].map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-zinc-700">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Phase 3 */}
-            <div className="relative pl-12 border-l-4 border-purple-500">
-              <div className="absolute left-0 top-0 w-8 h-8 -ml-4 rounded-full bg-purple-500 flex items-center justify-center">
-                <span className="text-white font-bold">3</span>
-              </div>
-              <h3 className="text-2xl font-bold text-zinc-900 mb-4">{t.phase3}</h3>
-              <ul className="space-y-2">
-                {[t.phase3Item1, t.phase3Item2, t.phase3Item3, t.phase3Item4, t.phase3Item5].map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-zinc-700">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+      {/* Results */}
+      <div className="py-20 bg-zinc-900/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.resultsTitle}
+            </h2>
+            <p className="text-xl text-zinc-400">{t.resultsSubtitle}</p>
           </div>
-        </div>
-      </div>
-
-      {/* Team */}
-      <div className="py-20 bg-zinc-50 border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-4">
-            {t.teamTitle}
-          </h2>
-          <p className="text-lg text-zinc-600 mb-16">{t.teamSubtitle}</p>
-
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            {[
-              { title: t.role1, desc: t.role1Desc, count: '1', icon: Target },
-              { title: t.role2, desc: t.role2Desc, count: '2', icon: Camera },
-              { title: t.role3, desc: t.role3Desc, count: '1', icon: Video },
-              { title: t.role4, desc: t.role4Desc, count: '2', icon: Megaphone },
-              { title: t.role5, desc: t.role5Desc, count: '1', icon: FileText },
-              { title: t.role6, desc: t.role6Desc, count: '5', icon: Users },
-            ].map((role, idx) => {
-              const Icon = role.icon;
-              return (
-                <div key={idx} className="bg-white border-2 border-zinc-200 rounded-xl p-6">
-                  <div className="flex items-start gap-4 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-zinc-900">{role.title}</h3>
-                      <p className="text-sm text-green-600 font-semibold">{role.count} {lang === 'es' ? 'persona(s)' : 'person(s)'}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-zinc-600">{role.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="bg-zinc-900 text-white rounded-xl p-6">
-            <p className="text-lg font-bold mb-2">{t.teamTotal}</p>
-            <p className="text-zinc-400">{t.teamNote}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Accreditation Request */}
-      <div className="py-20 bg-white border-t-2 border-zinc-200">
-        <div className="max-w-4xl mx-auto px-6 md:px-12">
-          <div className="bg-yellow-50 border-2 border-yellow-400 rounded-2xl p-8 md:p-12">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-yellow-400 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-6 h-6 text-yellow-900" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold text-zinc-900 mb-2">
-                  {t.accredTitle}
-                </h2>
-                <p className="text-lg text-zinc-700">
-                  {t.accredSubtitle}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white border border-yellow-300 rounded-xl p-6">
-              <p className="font-bold text-zinc-900 mb-2">{t.accredNote}:</p>
-              <p className="text-zinc-700 leading-relaxed">
-                {t.accredNoteText}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Expected Results */}
-      <div className="py-20 bg-zinc-50 border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-4">
-            {t.resultsTitle}
-          </h2>
-          <p className="text-lg text-zinc-600 mb-16">{t.resultsSubtitle}</p>
 
           <div className="grid md:grid-cols-4 gap-6">
-            <div className="text-center p-6 bg-white border-2 border-green-500 rounded-xl">
-              <div className="text-5xl font-bold text-green-600 mb-2">{t.result1Value}</div>
-              <div className="text-sm text-zinc-700">{t.result1}</div>
+            <div className="bg-zinc-900 border border-green-500/30 rounded-2xl p-8 text-center">
+              <div className="text-5xl font-bold text-green-400 mb-3">{t.result1Value}</div>
+              <div className="text-lg font-semibold text-white">{t.result1}</div>
             </div>
-            <div className="text-center p-6 bg-white border-2 border-blue-500 rounded-xl">
-              <div className="text-5xl font-bold text-blue-600 mb-2">{t.result2Value}</div>
-              <div className="text-sm text-zinc-700">{t.result2}</div>
+
+            <div className="bg-zinc-900 border border-blue-500/30 rounded-2xl p-8 text-center">
+              <div className="text-5xl font-bold text-blue-400 mb-3">{t.result2Value}</div>
+              <div className="text-lg font-semibold text-white">{t.result2}</div>
             </div>
-            <div className="text-center p-6 bg-white border-2 border-purple-500 rounded-xl">
-              <div className="text-5xl font-bold text-purple-600 mb-2">{t.result3Value}</div>
-              <div className="text-sm text-zinc-700">{t.result3}</div>
+
+            <div className="bg-zinc-900 border border-purple-500/30 rounded-2xl p-8 text-center">
+              <div className="text-5xl font-bold text-purple-400 mb-3">{t.result3Value}</div>
+              <div className="text-lg font-semibold text-white">{t.result3}</div>
             </div>
-            <div className="text-center p-6 bg-white border-2 border-orange-500 rounded-xl">
-              <div className="text-5xl font-bold text-orange-600 mb-2">{t.result4Value}</div>
-              <div className="text-sm text-zinc-700">{t.result4}</div>
+
+            <div className="bg-zinc-900 border border-orange-500/30 rounded-2xl p-8 text-center">
+              <div className="text-5xl font-bold text-orange-400 mb-3">{t.result4Value}</div>
+              <div className="text-lg font-semibold text-white">{t.result4}</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Why Partner */}
-      <div className="py-20 bg-white border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-16">
-            {t.whyTitle}
-          </h2>
+      {/* Why Us */}
+      <div className="py-20 bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.whyTitle}
+            </h2>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               { title: t.why1Title, desc: t.why1Desc, icon: Award },
               { title: t.why2Title, desc: t.why2Desc, icon: TrendingUp },
-              { title: t.why3Title, desc: t.why3Desc, icon: Zap },
-              { title: t.why4Title, desc: t.why4Desc, icon: BarChart3 },
+              { title: t.why3Title, desc: t.why3Desc, icon: Users },
+              { title: t.why4Title, desc: t.why4Desc, icon: Heart },
             ].map((item, idx) => {
               const Icon = item.icon;
               return (
-                <div key={idx} className="flex gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-6 h-6 text-green-600" />
+                <div key={idx} className="bg-zinc-900 border border-white/10 rounded-xl p-6">
+                  <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center mb-4">
+                    <Icon className="w-6 h-6 text-green-400" />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-zinc-900 mb-2">{item.title}</h3>
-                    <p className="text-zinc-700">{item.desc}</p>
-                  </div>
+                  <h3 className="text-lg font-bold text-white mb-3">{item.title}</h3>
+                  <p className="text-sm text-zinc-400">{item.desc}</p>
                 </div>
               );
             })}
@@ -1046,70 +791,118 @@ export default function RaveHubRecyclePage() {
         </div>
       </div>
 
-      {/* References */}
-      <div className="py-20 bg-zinc-50 border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 mb-4">
-            {t.referencesTitle}
-          </h2>
-          <p className="text-lg text-zinc-600 mb-12">{t.referencesSubtitle}</p>
+      {/* Benchmarks */}
+      <div className="py-20 bg-zinc-900/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.benchmarkTitle}
+            </h2>
+            <p className="text-xl text-zinc-400">{t.benchmarkSubtitle}</p>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {[
-              { title: t.ref1, desc: t.ref1Desc },
-              { title: t.ref2, desc: t.ref2Desc },
-              { title: t.ref3, desc: t.ref3Desc },
-              { title: t.ref4, desc: t.ref4Desc },
-            ].map((ref, idx) => (
-              <div key={idx} className="bg-white border-2 border-zinc-200 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-zinc-900 mb-2">{ref.title}</h3>
-                <p className="text-sm text-zinc-600">{ref.desc}</p>
+            {[t.bench1, t.bench2, t.bench3, t.bench4].map((bench, idx) => (
+              <div key={idx} className="bg-zinc-900 border border-white/10 rounded-xl p-6 flex items-start gap-4">
+                <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" />
+                <p className="text-zinc-300">{bench}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* CTA */}
-      <div className="py-20 bg-zinc-900 text-white">
-        <div className="max-w-4xl mx-auto px-6 md:px-12 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            {t.ctaTitle}
-          </h2>
-          <p className="text-xl text-zinc-300 mb-10">
-            {t.ctaDesc}
-          </p>
-          <a
-            href={`mailto:${t.ctaEmail}`}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition-colors"
-          >
-            <Mail className="w-5 h-5" />
-            {t.ctaButton}
-          </a>
-          <p className="text-zinc-400 mt-6">{t.ctaEmail}</p>
-        </div>
-      </div>
+      {/* Timeline */}
+      <div className="py-20 bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {t.timelineTitle}
+            </h2>
+          </div>
 
-      {/* Sources */}
-      <div className="py-12 bg-white border-t-2 border-zinc-200">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <h3 className="text-lg font-bold text-zinc-900 mb-4">{t.sourcesTitle}</h3>
-          <p className="text-sm text-zinc-600 mb-4">{t.sourcesDesc}</p>
-          <div className="space-y-2 text-xs text-zinc-500">
-            <p>• <a href="https://ultramusicfestival.com/" target="_blank" rel="noopener" className="hover:text-green-600">Ultra Music Festival</a></p>
-            <p>• <a href="https://glastonburyfestivals.co.uk/" target="_blank" rel="noopener" className="hover:text-green-600">Glastonbury Sustainability</a></p>
-            <p>• <a href="https://reverb.org/" target="_blank" rel="noopener" className="hover:text-green-600">REVERB - Music Sustainability</a></p>
-            <p>• <a href="https://burningman.org/event/preparation/leaving-no-trace/" target="_blank" rel="noopener" className="hover:text-green-600">Burning Man - Leave No Trace</a></p>
-            <p>• <a href="https://www.workiva.com/blog/best-sustainability-report-examples-and-designs" target="_blank" rel="noopener" className="hover:text-green-600">Sustainability Report Design Examples</a></p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Phase 1 */}
+            <div className="bg-zinc-900 border border-blue-500/30 rounded-2xl p-8">
+              <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl mb-6">
+                1
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-6">{t.phase1Title}</h3>
+              <ul className="space-y-3">
+                {t.phase1Items.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-zinc-300">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Phase 2 */}
+            <div className="bg-zinc-900 border border-green-500/30 rounded-2xl p-8">
+              <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-xl mb-6">
+                2
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-6">{t.phase2Title}</h3>
+              <ul className="space-y-3">
+                {t.phase2Items.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-zinc-300">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Phase 3 */}
+            <div className="bg-zinc-900 border border-purple-500/30 rounded-2xl p-8">
+              <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xl mb-6">
+                3
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-6">{t.phase3Title}</h3>
+              <ul className="space-y-3">
+                {t.phase3Items.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-zinc-300">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* CTA */}
+      <div className="py-20 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-y border-green-500/20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            {t.ctaTitle}
+          </h2>
+          <p className="text-xl text-zinc-300 mb-10 max-w-2xl mx-auto">
+            {t.ctaDesc}
+          </p>
+          <a
+            href={`mailto:${t.ctaEmail}`}
+            className="inline-flex items-center gap-2 px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-all shadow-lg shadow-green-500/30"
+          >
+            <Mail className="w-5 h-5" />
+            {t.ctaButton}
+          </a>
+          <p className="text-zinc-400 mt-6 text-lg">{t.ctaEmail}</p>
+        </div>
+      </div>
+
       {/* Footer */}
-      <div className="py-8 bg-zinc-900 text-white border-t border-zinc-800">
-        <div className="max-w-6xl mx-auto px-6 md:px-12 text-center">
-          <p className="text-sm text-zinc-400 mb-2">{t.footerText}</p>
-          <p className="text-xs text-zinc-600">{t.footerRights}</p>
+      <div className="py-12 bg-zinc-950 border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-green-500 mb-4">
+              <Leaf className="w-6 h-6 text-white" />
+            </div>
+            <p className="text-zinc-400 mb-2">{t.footerText}</p>
+            <p className="text-zinc-600 text-sm">{t.footerRights}</p>
+          </div>
         </div>
       </div>
     </div>
