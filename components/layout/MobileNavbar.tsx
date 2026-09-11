@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Calendar, Ticket, Plus, User, LogOut, Settings, ShoppingBag, Heart, X, ChevronUp } from 'lucide-react';
+import { Home, Calendar, Ticket, Plus, User, LogOut, Settings, ShoppingBag, Heart, X, ChevronUp, Headphones, Trophy, Recycle } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -19,6 +19,7 @@ export function MobileNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isProgramasOpen, setIsProgramasOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -59,9 +60,15 @@ export function MobileNavbar() {
   // More menu options
   const moreMenuItems = [
     { icon: ShoppingBag, label: 'Tienda', href: '/tienda', requiresAuth: false },
-    { icon: Calendar, label: 'DJs', href: '/djs', requiresAuth: false },
     { icon: Heart, label: 'Favoritos', href: '/profile/favorites', requiresAuth: true },
     { icon: Settings, label: 'Configuración', href: '/profile/settings', requiresAuth: true },
+  ];
+
+  // Programas submenu
+  const programasItems = [
+    { icon: Headphones, label: 'DJs', href: '/djs', description: 'Descubre artistas y DJs' },
+    { icon: Trophy, label: 'RaveHub Top', href: '/programas/ravehub-top', description: 'Rankings de DJs LATAM' },
+    { icon: Recycle, label: 'RaveHub Recycle', href: '/programas/ravehub-recycle', description: 'Escena sostenible' },
   ];
 
   // Don't render on admin pages or login/register pages
@@ -71,6 +78,59 @@ export function MobileNavbar() {
 
   return (
     <>
+      {/* Programas Menu Overlay */}
+      {isProgramasOpen && (
+        <div
+          className="fixed inset-0 bg-[#141618]/80 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsProgramasOpen(false)}
+        />
+      )}
+
+      {/* Programas Menu Popup */}
+      <div
+        className={`fixed bottom-20 left-0 right-0 z-50 md:hidden transition-all duration-300 ease-out ${isProgramasOpen
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-full pointer-events-none'
+          }`}
+      >
+        <div className="mx-4 mb-4 bg-[#282D31] border border-[#DFE0E0]/20 rounded-2xl shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-[#DFE0E0]/20 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-[#FAFDFF]">Programas</h3>
+            <button
+              onClick={() => setIsProgramasOpen(false)}
+              className="p-1.5 rounded-lg hover:bg-[#141618] text-[#53575A] hover:text-[#FAFDFF] transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Programas Items */}
+          <div className="py-2">
+            {programasItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsProgramasOpen(false)}
+                  className={`flex items-start gap-3 px-4 py-3 transition-colors ${isActive(item.href)
+                      ? 'bg-[#141618] text-[#FBA905]'
+                      : 'text-[#FAFDFF] hover:bg-[#141618] hover:text-[#FBA905]'
+                    }`}
+                >
+                  <Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium">{item.label}</div>
+                    <div className="text-xs text-[#53575A] mt-0.5">{item.description}</div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* More Menu Overlay */}
       {isMoreMenuOpen && (
         <div
@@ -157,6 +217,18 @@ export function MobileNavbar() {
                 href="/eventos"
                 isActive={isActive('/eventos')}
               />
+
+              {/* Programas Button */}
+              <button
+                onClick={() => setIsProgramasOpen(!isProgramasOpen)}
+                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isProgramasOpen || isActive('/programas') || isActive('/djs')
+                    ? 'text-[#FBA905]'
+                    : 'text-[#53575A] active:text-[#FBA905]'
+                  }`}
+              >
+                <Headphones className="h-6 w-6" />
+                <span className="text-[10px] font-medium">Programas</span>
+              </button>
 
               {/* Profile Button - Central Floating */}
               <div className="relative -mt-8 flex items-center justify-center">

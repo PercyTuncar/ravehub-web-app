@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Music, User, LogIn, LogOut, ShoppingCart, Menu, X } from 'lucide-react';
+import { Music, User, LogIn, LogOut, ShoppingCart, Menu, X, Headphones, Trophy, Recycle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -176,17 +176,78 @@ export function MainNavbar() {
               </div>
             </div>
 
-            <Link
-              href="/djs"
-              className={`relative text-sm font-medium transition-all duration-300 group ${pathname.startsWith('/djs') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
-                }`}
-            >
-              DJs
-              {pathname.startsWith('/djs') && (
-                <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#FBA905] to-[#F1A000] rounded-full" />
-              )}
-              <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#FBA905] to-[#F1A000] rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-            </Link>
+            <div className="relative group">
+              <button
+                className={`relative text-sm font-medium transition-all duration-300 flex items-center group ${pathname.startsWith('/programas') || pathname.startsWith('/djs') ? 'text-[#FBA905]' : 'text-[#FAFDFF] hover:text-[#FBA905]'
+                  }`}
+              >
+                Programas
+                <svg
+                  className={`ml-1 h-4 w-4 transition-transform duration-300 ${pathname.startsWith('/programas') || pathname.startsWith('/djs') ? 'rotate-180' : 'group-hover:translate-y-0.5'
+                    }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                {(pathname.startsWith('/programas') || pathname.startsWith('/djs')) && (
+                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#FBA905] to-[#F1A000] rounded-full" />
+                )}
+              </button>
+              <div className="absolute top-full left-0 mt-2 w-80 bg-[#141618]/95 backdrop-blur-xl border border-[#DFE0E0]/30 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+                <div className="p-3">
+                  <div className="px-3 py-2 mb-2">
+                    <h3 className="text-xs font-semibold text-[#53575A] uppercase tracking-wider">Programas</h3>
+                  </div>
+
+                  <Link
+                    href="/djs"
+                    className="flex items-start gap-3 px-3 py-3 rounded-lg text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905] transition-all duration-200 group/item"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform">
+                      <Headphones className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold mb-1">DJs</div>
+                      <div className="text-xs text-[#53575A] group-hover/item:text-[#FAFDFF]/70">
+                        Descubre artistas y DJs de la escena electrónica
+                      </div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/programas/ravehub-top"
+                    className="flex items-start gap-3 px-3 py-3 rounded-lg text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905] transition-all duration-200 group/item"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FBA905] to-[#F1A000] flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform">
+                      <Trophy className="w-5 h-5 text-[#282D31]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold mb-1">RaveHub Top</div>
+                      <div className="text-xs text-[#53575A] group-hover/item:text-[#FAFDFF]/70">
+                        Rankings y reconocimiento de DJs de Latinoamérica
+                      </div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/programas/ravehub-recycle"
+                    className="flex items-start gap-3 px-3 py-3 rounded-lg text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905] transition-all duration-200 group/item"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform">
+                      <Recycle className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold mb-1">RaveHub Recycle</div>
+                      <div className="text-xs text-[#53575A] group-hover/item:text-[#FAFDFF]/70">
+                        Impulsamos una escena electrónica más sostenible
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            </div>
 
             <Link
               href="/tienda"
