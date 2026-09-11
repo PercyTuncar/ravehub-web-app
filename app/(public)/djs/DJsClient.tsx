@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { Music, MapPin, Calendar, Star, TrendingUp, Users, Search, Filter, Instagram, Sparkles } from 'lucide-react';
+import { Music, MapPin, Calendar, Star, TrendingUp, Users, Search, Filter, Instagram, Sparkles, Loader2 } from 'lucide-react';
 import { EventDj, Dj } from '@/lib/types';
 
 interface DJsClientProps {
@@ -20,12 +20,19 @@ interface DJsClientProps {
 
 export default function DJsClient({ initialEventDjs, initialDjs, searchParams }: DJsClientProps) {
   const router = useRouter();
-  const [eventDjs, setEventDjs] = useState<EventDj[]>(initialEventDjs);
-  const [djs, setDjs] = useState<Dj[]>(initialDjs);
+  const [eventDjs, setEventDjs] = useState<EventDj[]>(initialEventDjs.slice(0, 10));
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams?.busqueda || '');
   const [countryFilter, setCountryFilter] = useState<string>(searchParams?.pais || 'all');
   const [sortBy, setSortBy] = useState<string>(searchParams?.ordenar || 'name');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(initialEventDjs.length > 10);
+
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // All DJs for filtering
+  const allDjs = initialEventDjs;
 
   // Update URL when filters change
   const updateURL = (pais?: string, ordenar?: string, busqueda?: string) => {
@@ -38,28 +45,88 @@ export default function DJsClient({ initialEventDjs, initialDjs, searchParams }:
     router.push(queryString ? `/djs?${queryString}` : '/djs', { scroll: false });
   };
 
-  const filteredDJs = eventDjs.filter(dj => {
-    const matchesSearch = dj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         dj.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         dj.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filter and sort DJs
+  const getFilteredAndSortedDJs = useCallback(() => {
+    let filtered = allDjs.filter(dj => {
+      const matchesSearch = dj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           dj.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           dj.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesCountry = countryFilter === 'all' || dj.country === countryFilter;
+      const matchesCountry = countryFilter === 'all' || dj.country === countryFilter;
 
-    return matchesSearch && matchesCountry;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'country':
-        return a.country.localeCompare(b.country);
-      case 'upcoming-events':
-        return (b.upcomingEvents?.length || 0) - (a.upcomingEvents?.length || 0);
-      case 'name':
-      default:
-        return a.name.localeCompare(b.name);
+      return matchesSearch && matchesCountry;
+    });
+
+    // Sort
+    filtered = filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'country':
+          return a.country.localeCompare(b.country);
+        case 'upcoming-events':
+          return (b.upcomingEvents?.length || 0) - (a.upcomingEvents?.length || 0);
+        case 'name':
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+
+    return filtered;
+  }, [allDjs, searchTerm, countryFilter, sortBy]);
+
+  // Load more DJs
+  const loadMoreDJs = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+
+    // Simulate async loading (in production, this would be an API call)
+    setTimeout(() => {
+      const filtered = getFilteredAndSortedDJs();
+      const nextPage = page + 1;
+      const startIndex = 0;
+      const endIndex = nextPage * 10;
+      const newDJs = filtered.slice(startIndex, endIndex);
+
+      setEventDjs(newDJs);
+      setPage(nextPage);
+      setHasMore(endIndex < filtered.length);
+      setLoadingMore(false);
+    }, 500);
+  }, [page, hasMore, loadingMore, getFilteredAndSortedDJs]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    const filtered = getFilteredAndSortedDJs();
+    setEventDjs(filtered.slice(0, 10));
+    setPage(1);
+    setHasMore(filtered.length > 10);
+  }, [searchTerm, countryFilter, sortBy, getFilteredAndSortedDJs]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMoreDJs();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
-  });
 
-  const countries = [...new Set(eventDjs.map(dj => dj.country))].sort();
-  const topGenres = [...new Set(eventDjs.flatMap(dj => dj.genres))].slice(0, 10);
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, loadingMore, loadMoreDJs]);
+
+  const countries = [...new Set(allDjs.map(dj => dj.country))].sort();
+  const topGenres = [...new Set(allDjs.flatMap(dj => dj.genres))].slice(0, 10);
 
   if (loading) {
     return (
@@ -191,18 +258,19 @@ export default function DJsClient({ initialEventDjs, initialDjs, searchParams }:
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-zinc-500 text-sm">
-            {filteredDJs.length === 0 ? 'No se encontraron resultados' : `${filteredDJs.length} ${filteredDJs.length === 1 ? 'DJ encontrado' : 'DJs encontrados'}`}
+            {eventDjs.length === 0 ? 'No se encontraron resultados' : `${eventDjs.length} ${eventDjs.length === 1 ? 'DJ encontrado' : 'DJs encontrados'}`}
+            {hasMore && ' (cargando más al hacer scroll)'}
           </p>
         </div>
 
         {/* DJs Grid */}
-        {filteredDJs.length === 0 ? (
+        {eventDjs.length === 0 ? (
           <div className="text-center py-20">
             <div className="bg-zinc-900/30 backdrop-blur-md border border-white/5 rounded-3xl p-12 max-w-md mx-auto">
               <div className="text-6xl mb-6 opacity-50">🎧</div>
               <h3 className="text-2xl font-bold text-white mb-2">No se encontraron DJs</h3>
               <p className="text-zinc-500 mb-8">
-                {eventDjs.length === 0 ? 'No hay DJs disponibles en este momento.' : 'Intenta ajustar tus filtros de búsqueda.'}
+                {allDjs.length === 0 ? 'No hay DJs disponibles en este momento.' : 'Intenta ajustar tus filtros de búsqueda.'}
               </p>
               <button
                 onClick={() => {
@@ -218,76 +286,102 @@ export default function DJsClient({ initialEventDjs, initialDjs, searchParams }:
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            {filteredDJs.map((dj) => (
-              <Link
-                key={dj.id}
-                href={`/djs/${dj.slug || dj.name.toLowerCase().replace(/\s+/g, '-')}`}
-                className="group relative"
-              >
-                <div className="relative bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 hover:border-purple-500/30 hover:bg-zinc-900/60 transition-all duration-300">
-                  {/* Header */}
-                  <div className="flex items-start gap-4 mb-4">
-                    <Avatar className="h-16 w-16 ring-2 ring-white/10 group-hover:ring-purple-500/50 transition-all">
-                      <AvatarImage src={dj.imageUrl} alt={dj.name} />
-                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
-                        {dj.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-purple-400 transition-colors truncate">
-                        {dj.name}
-                      </h3>
-                      <div className="flex items-center text-sm text-zinc-500">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {dj.country}
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+              {eventDjs.map((dj) => (
+                <Link
+                  key={dj.id}
+                  href={`/djs/${dj.slug || dj.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="group relative"
+                >
+                  <div className="relative bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 hover:border-purple-500/30 hover:bg-zinc-900/60 transition-all duration-300">
+                    {/* Header */}
+                    <div className="flex items-start gap-4 mb-4">
+                      <Avatar className="h-16 w-16 ring-2 ring-white/10 group-hover:ring-purple-500/50 transition-all">
+                        <AvatarImage src={dj.imageUrl} alt={dj.name} />
+                        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
+                          {dj.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-purple-400 transition-colors truncate">
+                          {dj.name}
+                        </h3>
+                        <div className="flex items-center text-sm text-zinc-500">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {dj.country}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Genres */}
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {dj.genres.slice(0, 3).map((genre) => (
-                      <span
-                        key={genre}
-                        className="px-2.5 py-1 bg-white/5 border border-white/10 text-zinc-400 text-xs font-medium rounded-lg"
-                      >
-                        {genre}
-                      </span>
-                    ))}
-                    {dj.genres.length > 3 && (
-                      <span className="px-2.5 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-medium rounded-lg">
-                        +{dj.genres.length - 3}
-                      </span>
+                    {/* Genres */}
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {dj.genres.slice(0, 3).map((genre) => (
+                        <span
+                          key={genre}
+                          className="px-2.5 py-1 bg-white/5 border border-white/10 text-zinc-400 text-xs font-medium rounded-lg"
+                        >
+                          {genre}
+                        </span>
+                      ))}
+                      {dj.genres.length > 3 && (
+                        <span className="px-2.5 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-medium rounded-lg">
+                          +{dj.genres.length - 3}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Stats */}
+                    <div className="flex items-center justify-between text-sm text-zinc-500 mb-4">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4" />
+                        <span>{dj.upcomingEvents?.length || 0} próximos</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Music className="h-4 w-4" />
+                        <span>{dj.pastEvents?.length || 0} pasados</span>
+                      </div>
+                    </div>
+
+                    {/* Instagram */}
+                    {dj.instagramHandle && (
+                      <div className="flex items-center gap-2 text-sm text-zinc-600">
+                        <Instagram className="h-4 w-4" />
+                        <span>@{dj.instagramHandle}</span>
+                      </div>
                     )}
+
+                    {/* Hover Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/5 group-hover:to-pink-500/5 rounded-2xl transition-all duration-300 pointer-events-none" />
                   </div>
+                </Link>
+              ))}
+            </div>
 
-                  {/* Stats */}
-                  <div className="flex items-center justify-between text-sm text-zinc-500 mb-4">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-4 w-4" />
-                      <span>{dj.upcomingEvents?.length || 0} próximos</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Music className="h-4 w-4" />
-                      <span>{dj.pastEvents?.length || 0} pasados</span>
-                    </div>
+            {/* Loading More Indicator */}
+            {hasMore && (
+              <div
+                ref={observerTarget}
+                className="flex justify-center py-8"
+              >
+                {loadingMore && (
+                  <div className="flex items-center gap-3 text-zinc-400">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span>Cargando más DJs...</span>
                   </div>
+                )}
+              </div>
+            )}
 
-                  {/* Instagram */}
-                  {dj.instagramHandle && (
-                    <div className="flex items-center gap-2 text-sm text-zinc-600">
-                      <Instagram className="h-4 w-4" />
-                      <span>@{dj.instagramHandle}</span>
-                    </div>
-                  )}
-
-                  {/* Hover Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/5 group-hover:to-pink-500/5 rounded-2xl transition-all duration-300 pointer-events-none" />
-                </div>
-              </Link>
-            ))}
-          </div>
+            {/* End of Results */}
+            {!hasMore && eventDjs.length > 0 && (
+              <div className="text-center py-8">
+                <p className="text-zinc-500 text-sm">
+                  ✨ Has visto todos los DJs disponibles
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {/* Features Grid */}
