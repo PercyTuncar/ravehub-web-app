@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Calendar, Ticket, Plus, User, LogOut, Settings, ShoppingBag, Heart, X, ChevronUp, Headphones, Trophy, Recycle, ChevronRight } from 'lucide-react';
+import { Home, Calendar, Ticket, Plus, User, LogOut, Settings, ShoppingBag, Heart, X, ChevronUp, Headphones, Trophy, Recycle, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -107,18 +107,27 @@ export function MobileNavbar() {
           }`}
       >
         <div className="mx-4 mb-4 bg-[#282D31] border border-[#DFE0E0]/20 rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="px-4 py-3 border-b border-[#DFE0E0]/20 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-[#FAFDFF]">Ravehub Top Djs</h3>
-              <p className="text-xs text-[#53575A] mt-0.5">Selecciona un país</p>
+          {/* Header with Back Button */}
+          <div className="px-4 py-3 border-b border-[#DFE0E0]/20">
+            <div className="flex items-center gap-3 mb-1">
+              <button
+                onClick={() => {
+                  setIsTopDjsOpen(false);
+                  setIsProgramasOpen(true); // Back to Programas menu
+                }}
+                className="p-1.5 rounded-lg hover:bg-[#141618] text-[#FAFDFF] transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <h3 className="text-sm font-semibold text-[#FAFDFF] flex-1">Ravehub Top Djs</h3>
+              <button
+                onClick={() => setIsTopDjsOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-[#141618] text-[#53575A] hover:text-[#FAFDFF] transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <button
-              onClick={() => setIsTopDjsOpen(false)}
-              className="p-1.5 rounded-lg hover:bg-[#141618] text-[#53575A] hover:text-[#FAFDFF] transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <p className="text-xs text-[#53575A] pl-11">Selecciona un país</p>
           </div>
 
           {/* Countries Grid */}
@@ -157,9 +166,18 @@ export function MobileNavbar() {
           }`}
       >
         <div className="mx-4 mb-4 bg-[#282D31] border border-[#DFE0E0]/20 rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="px-4 py-3 border-b border-[#DFE0E0]/20 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#FAFDFF]">Programas</h3>
+          {/* Header with Back Button */}
+          <div className="px-4 py-3 border-b border-[#DFE0E0]/20 flex items-center gap-3">
+            <button
+              onClick={() => {
+                setIsProgramasOpen(false);
+                setIsMoreMenuOpen(true); // Reopen More menu
+              }}
+              className="p-1.5 rounded-lg hover:bg-[#141618] text-[#FAFDFF] transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h3 className="text-sm font-semibold text-[#FAFDFF] flex-1">Programas</h3>
             <button
               onClick={() => setIsProgramasOpen(false)}
               className="p-1.5 rounded-lg hover:bg-[#141618] text-[#53575A] hover:text-[#FAFDFF] transition-colors"
@@ -255,7 +273,10 @@ export function MobileNavbar() {
                 return (
                   <button
                     key={item.href}
-                    onClick={() => setIsProgramasOpen(true)}
+                    onClick={() => {
+                      setIsProgramasOpen(true);
+                      setIsMoreMenuOpen(false); // Close More menu when opening Programas
+                    }}
                     className={`w-full flex items-center justify-between gap-3 px-4 py-3 transition-colors ${isActive(item.href) || isActive('/djs')
                         ? 'bg-[#141618] text-[#FBA905]'
                         : 'text-[#FAFDFF] hover:bg-[#141618] hover:text-[#FBA905]'
