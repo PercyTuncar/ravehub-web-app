@@ -64,35 +64,6 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-20 md:pb-0 pt-20">
-      {/* Header */}
-      <div className="hidden md:block sticky top-20 z-50 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/tienda">
-              <button className="flex items-center gap-2 text-zinc-400 hover:text-white">
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Volver</span>
-              </button>
-            </Link>
-
-            <Link href="/">
-              <h1 className="text-xl font-bold text-white">Tienda</h1>
-            </Link>
-
-            <Link href="/tienda/carrito">
-              <button className="relative p-2 hover:bg-zinc-800 rounded-lg transition-colors">
-                <ShoppingCart className="h-6 w-6 text-white" />
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-white text-zinc-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-              </button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 md:pt-6">
         {/* Breadcrumb */}

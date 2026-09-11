@@ -123,66 +123,6 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-20 md:pb-0 pt-20">
-      {/* Header Bar */}
-      <div className="hidden md:block sticky top-20 z-50 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo/Title */}
-            <Link href="/">
-              <h1 className="text-xl font-bold text-white">Tienda</h1>
-            </Link>
-
-            {/* Search Bar - Desktop */}
-            <div className="flex flex-1 max-w-2xl mx-8">
-              <div className="relative w-full">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-500 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Buscar productos..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setSearchTerm(value);
-                    setTimeout(() => updateURL(categoryFilter, sortBy, value), 300);
-                  }}
-                  className="w-full pl-12 pr-4 py-2.5 bg-zinc-800 border border-white/10 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* Cart */}
-            <Link href="/tienda/carrito">
-              <button className="relative p-2 hover:bg-zinc-800 rounded-lg transition-colors">
-                <ShoppingCart className="h-6 w-6 text-white" />
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-white text-zinc-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-              </button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Search - Always visible on mobile */}
-      <div className="md:hidden sticky top-20 z-50 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10 px-4 py-3">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500 h-4 w-4" />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={searchTerm}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSearchTerm(value);
-              setTimeout(() => updateURL(categoryFilter, sortBy, value), 300);
-            }}
-            className="w-full pl-10 pr-4 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20"
-          />
-        </div>
-      </div>
-
       {/* Main Container */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pt-8">
         {/* Breadcrumb */}
@@ -236,6 +176,24 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-500 h-5 w-5" />
+                <input
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSearchTerm(value);
+                    setTimeout(() => updateURL(categoryFilter, sortBy, value), 300);
+                  }}
+                  className="w-full pl-12 pr-4 py-3 bg-zinc-900 border border-white/10 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent"
+                />
+              </div>
+            </div>
+
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
               <div className="flex items-center gap-4">
