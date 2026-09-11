@@ -63,27 +63,27 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
   const cartItemCount = getTotalItems();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-zinc-950">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white border-b border-zinc-200">
+      <div className="sticky top-0 z-40 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/tienda">
-              <button className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900">
+              <button className="flex items-center gap-2 text-zinc-400 hover:text-white">
                 <ArrowLeft className="w-4 h-4" />
                 <span className="text-sm font-medium">Volver</span>
               </button>
             </Link>
 
             <Link href="/">
-              <h1 className="text-xl font-bold text-zinc-900">Tienda Ravehub</h1>
+              <h1 className="text-xl font-bold text-white">Tienda</h1>
             </Link>
 
             <Link href="/tienda/carrito">
-              <button className="relative p-2 hover:bg-zinc-50 rounded-lg transition-colors">
-                <ShoppingCart className="h-6 w-6 text-zinc-900" />
+              <button className="relative p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+                <ShoppingCart className="h-6 w-6 text-white" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-zinc-900 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-white text-zinc-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                     {cartItemCount}
                   </span>
                 )}
@@ -94,27 +94,27 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-zinc-600 mb-8">
-          <Link href="/" className="hover:text-zinc-900">Inicio</Link>
+        <div className="flex items-center gap-2 text-sm text-zinc-500 mb-6">
+          <Link href="/" className="hover:text-white">Inicio</Link>
           <ChevronRight className="w-4 h-4" />
-          <Link href="/tienda" className="hover:text-zinc-900">Tienda</Link>
+          <Link href="/tienda" className="hover:text-white">Tienda</Link>
           <ChevronRight className="w-4 h-4" />
           {category && (
             <>
-              <span className="hover:text-zinc-900">{category.name}</span>
+              <span className="hover:text-white">{category.name}</span>
               <ChevronRight className="w-4 h-4" />
             </>
           )}
-          <span className="text-zinc-900 font-medium truncate">{product.name}</span>
+          <span className="text-white truncate max-w-[200px]">{product.name}</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
           {/* Images Section */}
           <div>
             {/* Main Image */}
-            <div className="relative aspect-[3/4] bg-zinc-100 rounded-lg overflow-hidden mb-4">
+            <div className="relative aspect-[4/5] lg:aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden mb-4">
               {images.length > 0 ? (
                 <img
                   src={images[selectedImage]}
@@ -123,7 +123,7 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <ShoppingCart className="w-20 h-20 text-zinc-300" />
+                  <ShoppingCart className="w-20 h-20 text-zinc-700" />
                 </div>
               )}
             </div>
@@ -137,8 +137,8 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                     onClick={() => setSelectedImage(idx)}
                     className={`relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all ${
                       selectedImage === idx
-                        ? 'border-zinc-900'
-                        : 'border-zinc-200 hover:border-zinc-400'
+                        ? 'border-white'
+                        : 'border-white/20 hover:border-white/50'
                     }`}
                   >
                     <img src={img} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
@@ -149,42 +149,42 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
           </div>
 
           {/* Product Info */}
-          <div className="lg:sticky lg:top-24 h-fit">
+          <div>
             {/* Category */}
             {category && (
-              <p className="text-sm text-zinc-600 mb-2">{category.name}</p>
+              <p className="text-sm text-zinc-400 mb-2">{category.name}</p>
             )}
 
             {/* Title */}
-            <h1 className="text-3xl font-bold text-zinc-900 mb-4">
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
               {product.name}
             </h1>
 
             {/* Rating */}
             {reviews.length > 0 && (
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
                       className={`w-4 h-4 ${
                         i < Math.round(averageRating)
-                          ? 'text-zinc-900 fill-zinc-900'
-                          : 'text-zinc-300'
+                          ? 'text-white fill-white'
+                          : 'text-zinc-700'
                       }`}
                     />
                   ))}
                 </div>
-                <span className="text-sm text-zinc-600">
-                  {averageRating.toFixed(1)} ({reviews.length} {reviews.length === 1 ? 'reseña' : 'reseñas'})
+                <span className="text-sm text-zinc-400">
+                  {averageRating.toFixed(1)} ({reviews.length})
                 </span>
               </div>
             )}
 
             {/* Price */}
-            <div className="mb-6 pb-6 border-b border-zinc-200">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-zinc-900">
+            <div className="mb-4 pb-4 border-b border-white/10">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className="text-3xl md:text-4xl font-bold text-white">
                   <ConvertedPrice amount={finalPrice} currency={product.currency} showOriginal={false} />
                 </span>
                 {product.discountPercentage && product.discountPercentage > 0 && (
@@ -192,15 +192,15 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                     <span className="text-xl text-zinc-500 line-through">
                       <ConvertedPrice amount={product.price} currency={product.currency} showOriginal={false} />
                     </span>
-                    <span className="text-sm font-bold text-red-600">
+                    <span className="text-sm font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded">
                       -{product.discountPercentage}%
                     </span>
                   </>
                 )}
               </div>
               {product.discountPercentage && product.discountPercentage > 0 && (
-                <p className="text-sm text-zinc-600 mt-2">
-                  Ahorra{' '}
+                <p className="text-sm text-zinc-400 mt-2">
+                  Ahorro:{' '}
                   <ConvertedPrice
                     amount={product.price - finalPrice}
                     currency={product.currency}
@@ -212,62 +212,62 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
 
             {/* Short Description */}
             {product.shortDescription && (
-              <p className="text-zinc-700 leading-relaxed mb-6">
+              <p className="text-zinc-300 leading-relaxed mb-4 text-sm md:text-base">
                 {product.shortDescription}
               </p>
             )}
 
             {/* Stock Status */}
-            <div className="mb-6">
+            <div className="mb-4">
               {product.stock > 0 ? (
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-zinc-900 font-medium">En stock</span>
-                  <span className="text-zinc-600">({product.stock} disponibles)</span>
+                  <span className="text-white font-medium">En stock</span>
+                  <span className="text-zinc-500">({product.stock} disponibles)</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <span className="text-zinc-900 font-medium">Agotado</span>
+                  <span className="text-white font-medium">Agotado</span>
                 </div>
               )}
             </div>
 
             {/* Quantity Selector */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-zinc-900 mb-3">Cantidad</label>
-              <div className="inline-flex items-center border border-zinc-300 rounded-md">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-white mb-2">Cantidad</label>
+              <div className="inline-flex items-center border border-white/20 rounded-lg bg-zinc-900">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-3 hover:bg-zinc-50 transition-colors"
+                  className="p-2.5 hover:bg-zinc-800 transition-colors"
                   disabled={quantity <= 1}
                 >
-                  <Minus className="w-4 h-4 text-zinc-900" />
+                  <Minus className="w-4 h-4 text-white" />
                 </button>
-                <span className="px-6 py-3 text-base font-medium text-zinc-900 min-w-[60px] text-center border-x border-zinc-300">
+                <span className="px-5 py-2.5 text-base font-medium text-white min-w-[50px] text-center">
                   {quantity}
                 </span>
                 <button
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  className="p-3 hover:bg-zinc-50 transition-colors"
+                  className="p-2.5 hover:bg-zinc-800 transition-colors"
                   disabled={quantity >= product.stock}
                 >
-                  <Plus className="w-4 h-4 text-zinc-900" />
+                  <Plus className="w-4 h-4 text-white" />
                 </button>
               </div>
             </div>
 
             {/* Add to Cart */}
-            <div className="space-y-3 mb-8">
+            <div className="space-y-3 mb-6">
               <button
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
-                className={`w-full py-4 rounded-md font-medium text-base transition-colors flex items-center justify-center gap-2 ${
+                className={`w-full py-3.5 rounded-lg font-medium text-base transition-colors flex items-center justify-center gap-2 ${
                   product.stock === 0
-                    ? 'bg-zinc-200 text-zinc-500 cursor-not-allowed'
+                    ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
                     : addedToCart
                     ? 'bg-green-600 text-white'
-                    : 'bg-zinc-900 text-white hover:bg-zinc-800'
+                    : 'bg-white text-zinc-900 hover:bg-zinc-100'
                 }`}
               >
                 {addedToCart ? (
@@ -283,7 +283,7 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                 )}
               </button>
 
-              <button className="w-full py-4 border-2 border-zinc-900 rounded-md font-medium text-base text-zinc-900 hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full py-3.5 border-2 border-white/20 rounded-lg font-medium text-base text-white hover:bg-zinc-900 transition-colors flex items-center justify-center gap-2">
                 <Heart className="w-5 h-5" />
                 Agregar a favoritos
               </button>
@@ -291,16 +291,16 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
 
             {/* Delivery Info */}
             {product.shippingEnabled && (
-              <div className="p-4 bg-zinc-50 rounded-lg mb-8">
+              <div className="p-4 bg-zinc-900 rounded-lg mb-4">
                 <div className="flex items-start gap-3">
-                  <Truck className="w-5 h-5 text-zinc-600 mt-0.5 flex-shrink-0" />
+                  <Truck className="w-5 h-5 text-zinc-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-zinc-900 mb-1">Información de envío</p>
-                    <p className="text-sm text-zinc-600">
+                    <p className="text-sm font-medium text-white mb-1">Información de envío</p>
+                    <p className="text-sm text-zinc-400">
                       {product.nationwideShipping && (
                         <>
                           {product.nationwideShipping.isFreeShipping ? (
-                            <span className="font-medium text-green-600">Envío gratis</span>
+                            <span className="font-medium text-green-400">Envío gratis</span>
                           ) : (
                             <>
                               Envío:{' '}
@@ -322,7 +322,7 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
             )}
 
             {/* Share */}
-            <button className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900">
+            <button className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white">
               <Share2 className="w-4 h-4" />
               Compartir
             </button>
@@ -330,21 +330,21 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
         </div>
 
         {/* Tabs Section */}
-        <div className="mt-16 border-t border-zinc-200 pt-12">
+        <div className="mt-12 border-t border-white/10 pt-8">
           {/* Tab Headers */}
-          <div className="flex gap-8 border-b border-zinc-200 mb-8">
+          <div className="flex gap-8 border-b border-white/10 mb-6 overflow-x-auto">
             {[
               { id: 'description', label: 'Descripción' },
-              { id: 'shipping', label: 'Envío y devoluciones' },
+              { id: 'shipping', label: 'Envío' },
               { id: 'reviews', label: `Reseñas (${reviews.length})` },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveSection(tab.id as any)}
-                className={`pb-4 font-medium text-sm transition-all border-b-2 ${
+                className={`pb-3 font-medium text-sm whitespace-nowrap transition-all border-b-2 ${
                   activeSection === tab.id
-                    ? 'border-zinc-900 text-zinc-900'
-                    : 'border-transparent text-zinc-600 hover:text-zinc-900'
+                    ? 'border-white text-white'
+                    : 'border-transparent text-zinc-500 hover:text-white'
                 }`}
               >
                 {tab.label}
@@ -355,17 +355,17 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
           {/* Tab Content */}
           <div className="max-w-4xl">
             {activeSection === 'description' && (
-              <div className="prose prose-zinc max-w-none">
-                <div className="text-zinc-700 leading-relaxed whitespace-pre-line">
+              <div className="prose prose-invert prose-zinc max-w-none">
+                <div className="text-zinc-300 leading-relaxed whitespace-pre-line text-sm md:text-base">
                   {product.description || 'No hay descripción disponible.'}
                 </div>
               </div>
             )}
 
             {activeSection === 'shipping' && (
-              <div className="space-y-6 text-sm text-zinc-700">
+              <div className="space-y-6 text-sm text-zinc-300">
                 <div>
-                  <h3 className="font-medium text-zinc-900 mb-2">Envío</h3>
+                  <h3 className="font-medium text-white mb-2">Envío</h3>
                   {product.shippingEnabled ? (
                     <div className="space-y-2">
                       {product.nationwideShipping && (
@@ -392,7 +392,7 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                 </div>
 
                 <div>
-                  <h3 className="font-medium text-zinc-900 mb-2">Devoluciones</h3>
+                  <h3 className="font-medium text-white mb-2">Devoluciones</h3>
                   <p>Aceptamos devoluciones dentro de los 30 días posteriores a la compra.</p>
                   <p className="mt-2">El producto debe estar en su estado original y sin usar.</p>
                 </div>
@@ -403,23 +403,23 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
               <div className="space-y-6">
                 {reviews.length > 0 ? (
                   reviews.map((review) => (
-                    <div key={review.id} className="pb-6 border-b border-zinc-200">
+                    <div key={review.id} className="pb-6 border-b border-white/10">
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-zinc-900">{review.userName}</span>
+                            <span className="font-medium text-white">{review.userName}</span>
                             <div className="flex items-center">
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
                                   className={`w-3 h-3 ${
-                                    i < review.rating ? 'text-zinc-900 fill-zinc-900' : 'text-zinc-300'
+                                    i < review.rating ? 'text-white fill-white' : 'text-zinc-700'
                                   }`}
                                 />
                               ))}
                             </div>
                           </div>
-                          <p className="text-xs text-zinc-600">
+                          <p className="text-xs text-zinc-500">
                             {new Date(review.createdAt).toLocaleDateString('es-ES', {
                               year: 'numeric',
                               month: 'long',
@@ -428,12 +428,12 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                           </p>
                         </div>
                       </div>
-                      <p className="text-zinc-700 leading-relaxed">{review.comment}</p>
+                      <p className="text-zinc-300 leading-relaxed">{review.comment}</p>
                     </div>
                   ))
                 ) : (
                   <div className="text-center py-12">
-                    <p className="text-zinc-600">Aún no hay reseñas para este producto.</p>
+                    <p className="text-zinc-400">Aún no hay reseñas para este producto.</p>
                     <p className="text-sm text-zinc-500 mt-2">Sé el primero en dejar una reseña.</p>
                   </div>
                 )}

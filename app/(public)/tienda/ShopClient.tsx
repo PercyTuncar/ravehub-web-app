@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Search, SlidersHorizontal, X, ChevronDown, Filter } from 'lucide-react';
+import { ShoppingCart, Search, SlidersHorizontal, X, Filter } from 'lucide-react';
 import { Product, ProductCategory } from '@/lib/types';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCart } from '@/lib/contexts/CartContext';
@@ -119,24 +119,23 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
     };
   }, [hasMore, loadingMore, loadMore]);
 
-  const filteredProducts = getFilteredAndSortedProducts();
   const cartItemCount = getTotalItems();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-zinc-950">
       {/* Header Bar */}
-      <div className="sticky top-0 z-40 bg-white border-b border-zinc-200">
+      <div className="sticky top-0 z-40 bg-zinc-900/95 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo/Title */}
             <Link href="/">
-              <h1 className="text-xl font-bold text-zinc-900">Tienda Ravehub</h1>
+              <h1 className="text-xl font-bold text-white">Tienda</h1>
             </Link>
 
             {/* Search Bar - Desktop */}
             <div className="hidden md:flex flex-1 max-w-2xl mx-8">
               <div className="relative w-full">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-400 h-5 w-5" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-500 h-5 w-5" />
                 <input
                   type="text"
                   placeholder="Buscar productos..."
@@ -146,17 +145,17 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                     setSearchTerm(value);
                     setTimeout(() => updateURL(categoryFilter, sortBy, value), 300);
                   }}
-                  className="w-full pl-12 pr-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent"
+                  className="w-full pl-12 pr-4 py-2.5 bg-zinc-800 border border-white/10 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent"
                 />
               </div>
             </div>
 
             {/* Cart */}
             <Link href="/tienda/carrito">
-              <button className="relative p-2 hover:bg-zinc-50 rounded-lg transition-colors">
-                <ShoppingCart className="h-6 w-6 text-zinc-900" />
+              <button className="relative p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+                <ShoppingCart className="h-6 w-6 text-white" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-zinc-900 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-white text-zinc-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                     {cartItemCount}
                   </span>
                 )}
@@ -167,7 +166,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
           {/* Search Bar - Mobile */}
           <div className="md:hidden pb-3">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500 h-4 w-4" />
               <input
                 type="text"
                 placeholder="Buscar..."
@@ -177,7 +176,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                   setSearchTerm(value);
                   setTimeout(() => updateURL(categoryFilter, sortBy, value), 300);
                 }}
-                className="w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                className="w-full pl-10 pr-4 py-2 bg-zinc-800 border border-white/10 rounded-lg text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20"
               />
             </div>
           </div>
@@ -187,10 +186,10 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
       {/* Main Container */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-zinc-600 mb-8">
-          <Link href="/" className="hover:text-zinc-900">Inicio</Link>
+        <div className="flex items-center gap-2 text-sm text-zinc-500 mb-8">
+          <Link href="/" className="hover:text-white">Inicio</Link>
           <span>/</span>
-          <span className="text-zinc-900 font-medium">Tienda</span>
+          <span className="text-white">Tienda</span>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -199,17 +198,17 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
             <div className="sticky top-24 space-y-8">
               {/* Categories */}
               <div>
-                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider mb-4">Categorías</h3>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Categorías</h3>
                 <div className="space-y-2">
                   <button
                     onClick={() => {
                       setCategoryFilter('all');
                       updateURL('all', sortBy, searchTerm);
                     }}
-                    className={`w-full text-left px-4 py-2 rounded-md text-sm transition-colors ${
+                    className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
                       categoryFilter === 'all'
-                        ? 'bg-zinc-900 text-white font-medium'
-                        : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                        ? 'bg-white text-zinc-900 font-medium'
+                        : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
                     }`}
                   >
                     Todos los productos
@@ -221,10 +220,10 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                         setCategoryFilter(category.id);
                         updateURL(category.id, sortBy, searchTerm);
                       }}
-                      className={`w-full text-left px-4 py-2 rounded-md text-sm transition-colors ${
+                      className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
                         categoryFilter === category.id
-                          ? 'bg-zinc-900 text-white font-medium'
-                          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                          ? 'bg-white text-zinc-900 font-medium'
+                          : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
                       }`}
                     >
                       {category.name}
@@ -238,19 +237,19 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-200">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
               <div className="flex items-center gap-4">
                 {/* Mobile Filter Button */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden flex items-center gap-2 px-4 py-2 border border-zinc-300 rounded-md text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                  className="lg:hidden flex items-center gap-2 px-4 py-2 border border-white/20 rounded-lg text-sm font-medium text-white hover:bg-zinc-800"
                 >
                   <Filter className="w-4 h-4" />
                   Filtros
                 </button>
 
-                <p className="text-sm text-zinc-600">
-                  <span className="font-medium text-zinc-900">{products.length}</span> productos
+                <p className="text-sm text-zinc-500">
+                  <span className="font-medium text-white">{products.length}</span> productos
                 </p>
               </div>
 
@@ -262,7 +261,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                   setSortBy(value);
                   updateURL(categoryFilter, value, searchTerm);
                 }}
-                className="px-4 py-2 border border-zinc-300 rounded-md text-sm font-medium text-zinc-700 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 cursor-pointer"
+                className="px-4 py-2 border border-white/20 bg-zinc-800 rounded-lg text-sm font-medium text-white hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-white/20 cursor-pointer"
               >
                 <option value="relevancia">Más relevantes</option>
                 <option value="nuevo">Más recientes</option>
@@ -274,11 +273,11 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
 
             {/* Mobile Filters */}
             {showFilters && (
-              <div className="lg:hidden mb-6 p-4 bg-zinc-50 border border-zinc-200 rounded-lg">
+              <div className="lg:hidden mb-6 p-4 bg-zinc-900 border border-white/10 rounded-lg">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold text-zinc-900">Filtros</h3>
+                  <h3 className="text-sm font-bold text-white">Filtros</h3>
                   <button onClick={() => setShowFilters(false)}>
-                    <X className="w-5 h-5 text-zinc-600" />
+                    <X className="w-5 h-5 text-zinc-400" />
                   </button>
                 </div>
                 <div className="space-y-2">
@@ -288,10 +287,10 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                       updateURL('all', sortBy, searchTerm);
                       setShowFilters(false);
                     }}
-                    className={`w-full text-left px-4 py-2 rounded-md text-sm ${
+                    className={`w-full text-left px-4 py-2 rounded-lg text-sm ${
                       categoryFilter === 'all'
-                        ? 'bg-zinc-900 text-white font-medium'
-                        : 'bg-white text-zinc-700 hover:bg-zinc-100'
+                        ? 'bg-white text-zinc-900 font-medium'
+                        : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
                     }`}
                   >
                     Todos los productos
@@ -304,10 +303,10 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                         updateURL(category.id, sortBy, searchTerm);
                         setShowFilters(false);
                       }}
-                      className={`w-full text-left px-4 py-2 rounded-md text-sm ${
+                      className={`w-full text-left px-4 py-2 rounded-lg text-sm ${
                         categoryFilter === category.id
-                          ? 'bg-zinc-900 text-white font-medium'
-                          : 'bg-white text-zinc-700 hover:bg-zinc-100'
+                          ? 'bg-white text-zinc-900 font-medium'
+                          : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
                       }`}
                     >
                       {category.name}
@@ -320,7 +319,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
             {/* Products Grid */}
             {products.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-lg text-zinc-600 mb-4">No se encontraron productos</p>
+                <p className="text-lg text-zinc-400 mb-4">No se encontraron productos</p>
                 <button
                   onClick={() => {
                     setSearchTerm('');
@@ -328,7 +327,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                     setSortBy('relevancia');
                     updateURL('all', 'relevancia', '');
                   }}
-                  className="px-6 py-2.5 bg-zinc-900 text-white font-medium rounded-md hover:bg-zinc-800 transition-colors"
+                  className="px-6 py-2.5 bg-white text-zinc-900 font-medium rounded-lg hover:bg-zinc-100 transition-colors"
                 >
                   Limpiar filtros
                 </button>
@@ -345,7 +344,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                       <Link key={product.id} href={`/tienda/${product.slug}`}>
                         <div className="group">
                           {/* Image */}
-                          <div className="relative aspect-[3/4] bg-zinc-100 rounded-lg overflow-hidden mb-3">
+                          <div className="relative aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden mb-3">
                             {product.images && product.images.length > 0 ? (
                               <img
                                 src={product.images[0]}
@@ -354,7 +353,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <ShoppingCart className="w-12 h-12 text-zinc-300" />
+                                <ShoppingCart className="w-12 h-12 text-zinc-700" />
                               </div>
                             )}
 
@@ -367,21 +366,21 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
 
                             {/* Out of Stock */}
                             {product.stock === 0 && (
-                              <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                                <span className="text-sm font-medium text-zinc-900">Agotado</span>
+                              <div className="absolute inset-0 bg-zinc-950/80 flex items-center justify-center">
+                                <span className="text-sm font-medium text-white">Agotado</span>
                               </div>
                             )}
                           </div>
 
                           {/* Info */}
                           <div>
-                            <h3 className="text-sm font-medium text-zinc-900 mb-1 line-clamp-2 group-hover:underline">
+                            <h3 className="text-sm font-medium text-white mb-1 line-clamp-2 group-hover:underline">
                               {product.name}
                             </h3>
 
                             {/* Price */}
                             <div className="flex items-center gap-2">
-                              <span className="text-base font-bold text-zinc-900">
+                              <span className="text-base font-bold text-white">
                                 <ConvertedPrice amount={finalPrice} currency={product.currency} showOriginal={false} />
                               </span>
                               {product.discountPercentage && product.discountPercentage > 0 && (
@@ -401,14 +400,14 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                 {hasMore && (
                   <div ref={observerTarget} className="flex justify-center py-12">
                     {loadingMore && (
-                      <div className="text-zinc-600">Cargando más productos...</div>
+                      <div className="text-zinc-400">Cargando más productos...</div>
                     )}
                   </div>
                 )}
 
                 {!hasMore && products.length > 0 && (
                   <div className="text-center py-12">
-                    <p className="text-sm text-zinc-600">Has visto todos los productos</p>
+                    <p className="text-sm text-zinc-500">Has visto todos los productos</p>
                   </div>
                 )}
               </>
