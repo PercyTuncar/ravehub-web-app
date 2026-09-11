@@ -28,33 +28,33 @@ const translations = {
   es: {
     // Hero
     heroTitle: 'Ravehub Recycle',
-    heroSubtitle: 'Transformando Festivales de Música en Eventos Sustentables',
-    heroDescription: 'Programa integral de sostenibilidad y cobertura mediática para festivales de música electrónica en todo el mundo.',
-    heroButton: 'Conoce el Programa',
+    heroSubtitle: 'Cumple con Normativa Ambiental + Mejora tu Imagen',
+    heroDescription: 'Te ayudamos a cumplir con los requisitos obligatorios de gestión de residuos para obtener permisos, mientras mejoramos la imagen sustentable de tu festival.',
+    heroButton: 'Ver Cómo Te Ayudamos',
 
     // Problem Section
-    problemTitle: 'El Problema',
-    problemSubtitle: 'La realidad después de cada festival',
-    problemDescription: 'Miles de asistentes, experiencias increíbles... y toneladas de residuos que contaminan el planeta. Es hora de cambiar esto.',
+    problemTitle: 'Tu Desafío Legal',
+    problemSubtitle: 'Requisitos obligatorios para obtener permisos',
+    problemDescription: 'Para obtener permisos, las autoridades exigen: Plan de Gestión de Residuos, contenedores adecuados, limpieza inmediata post-evento, y reportes de cumplimiento. Sin esto, no hay festival.',
 
     // The Reality
-    realityTitle: 'La Realidad Post-Festival',
-    realityDesc: 'Cada año, los festivales de música generan miles de toneladas de residuos. Botellas plásticas, vasos, empaques de comida, y más terminan en vertederos o peor, en la naturaleza.',
+    realityTitle: '¿Qué Exigen las Autoridades?',
+    realityDesc: 'Los gobiernos locales requieren que los organizadores presenten un Plan de Gestión de Residuos ANTES de aprobar permisos. Eventos con 500+ personas deben incluir reciclaje/compost. El organizador es legalmente responsable del venue Y del perímetro bajo su permiso.',
 
     // Stats
-    stat1: 'Toneladas de basura',
-    stat1Value: '100+',
-    stat1Desc: 'Por festival de 50K personas',
-    stat2: 'Reciclado correctamente',
-    stat2Value: '<15%',
-    stat2Desc: 'En festivales sin programa',
-    stat3: 'Botellas plásticas',
-    stat3Value: '500K+',
-    stat3Desc: 'Usadas en un festival promedio',
+    stat1: 'Plan de gestión',
+    stat1Value: '100%',
+    stat1Desc: 'Obligatorio para permisos',
+    stat2: 'Limpieza post-evento',
+    stat2Value: '24-48h',
+    stat2Desc: 'Plazo máximo exigido',
+    stat3: 'Multas por incumplimiento',
+    stat3Value: '$50K+',
+    stat3Desc: 'Puede llegar a esto o más',
 
     // Solution
     solutionTitle: 'La Solución',
-    solutionSubtitle: 'Un programa integral que hace la diferencia',
+    solutionSubtitle: 'Nosotros manejamos todo el cumplimiento por ti',
 
     // Who We Are
     whoTitle: 'Quiénes Somos',
@@ -71,39 +71,56 @@ const translations = {
     whoMetric4Value: '8',
 
     // What We Offer
-    offerTitle: 'Qué Ofrecemos a Tu Festival',
-    offerSubtitle: 'Un programa completo que aporta valor real',
+    offerTitle: 'Qué Incluye Nuestro Servicio',
+    offerSubtitle: 'Cumplimiento legal + valor agregado',
 
-    // The Program
-    programTitle: 'El Programa Ravehub Recycle',
-    program1Title: 'Implementación de Sostenibilidad',
-    program1Desc: 'Instalamos y operamos infraestructura de reciclaje durante todo el evento',
-    program2Title: 'Cobertura Mediática Profesional',
-    program2Desc: 'Documentamos el festival y destacamos tus iniciativas sustentables',
-    program3Title: 'Educación Ambiental',
-    program3Desc: 'Educamos a los asistentes sobre prácticas responsables',
-    program4Title: 'Reporte de Impacto',
-    program4Desc: 'Entregamos métricas y certificación de evento sustentable',
+    // The Program - Responsibilities
+    programTitle: 'Cubrimos TUS Responsabilidades Legales',
+
+    legal1Title: '📋 Plan de Gestión de Residuos',
+    legal1Subtitle: 'Requerido para permiso del evento',
+    legal1Desc: 'Elaboramos el documento técnico profesional que necesitas presentar a las autoridades para obtener tu permiso. Incluye mapeo de contenedores, protocolos, métricas esperadas y cumplimiento normativo.',
+
+    legal2Title: '♻️ Implementación Dentro del Venue',
+    legal2Subtitle: 'Tu responsabilidad contractual directa',
+    legal2Desc: 'Instalamos y operamos estaciones de reciclaje profesionales dentro de tu recinto. Green Team capacitado 24/7. Cumplimos TODO lo que prometiste en tu plan de gestión.',
+
+    legal3Title: '🧹 Limpieza del Perímetro',
+    legal3Subtitle: 'Área bajo tu permiso/control',
+    legal3Desc: 'Gestionamos residuos en zonas de entrada, salida, calles cerradas y todo el perímetro que está bajo tu responsabilidad legal según el permiso.',
+
+    legal4Title: '📊 Reporte Post-Evento',
+    legal4Subtitle: 'Documentación para autoridades',
+    legal4Desc: 'Reporte profesional con métricas reales, fotografías y evidencia de cumplimiento que presentas al gobierno. Demuestra que cumpliste con tu plan.',
+
+    // Bonus
+    bonusTitle: '🎁 Valor Agregado (Sin Costo Extra)',
+    bonusSubtitle: 'Porque nos importa el impacto total',
+
+    bonus1: 'Gestión en filas externas (fuera de tu responsabilidad legal)',
+    bonus2: 'Cobertura mediática profesional (foto, video, redes)',
+    bonus3: 'Campaña digital destacando tu compromiso ambiental',
+    bonus4: 'Certificación de evento sustentable para marketing',
 
     // Initiatives
-    initiativesTitle: 'Nuestras Iniciativas',
-    initiativesSubtitle: 'Acciones concretas que implementamos',
+    initiativesTitle: 'Cómo Cumplimos Por Ti',
+    initiativesSubtitle: 'Paso a paso del cumplimiento normativo',
 
-    init1Title: 'Estaciones de Reciclaje Inteligentes',
-    init1Desc: 'Módulos profesionales de reciclaje ubicados estratégicamente con señalización clara en múltiples idiomas. Separamos plástico, vidrio, papel, orgánico y residuos generales.',
-    init1Metric: '15-20 estaciones',
+    init1Title: 'Documento para Permiso',
+    init1Desc: 'Elaboramos tu Plan de Gestión de Residuos profesional con todos los requisitos técnicos que exigen las autoridades. Listo para presentar con tu solicitud de permiso.',
+    init1Metric: 'Pre-evento',
 
-    init2Title: 'Green Team - Embajadores Ambientales',
-    init2Desc: 'Equipo capacitado que educa y guía a los asistentes en tiempo real sobre cómo y dónde reciclar correctamente durante todo el evento.',
-    init2Metric: '5-10 personas',
+    init2Title: 'Implementación en Venue',
+    init2Desc: '15-20 estaciones de reciclaje dentro del recinto con señalización clara. Green Team capacitado operando 24/7. Cumplimos exactamente lo prometido en tu plan.',
+    init2Metric: 'Durante evento',
 
-    init3Title: 'Campaña Digital de Impacto',
-    init3Desc: 'Difusión antes, durante y después del festival destacando las iniciativas verdes, con alcance de millones de personas en redes sociales.',
-    init3Metric: '3.2M+ alcance',
+    init3Title: 'Gestión de Perímetro',
+    init3Desc: 'Limpieza y gestión de residuos en zonas de entrada, salida, calles cerradas y todo el perímetro bajo tu responsabilidad contractual según permiso.',
+    init3Metric: 'Durante evento',
 
-    init4Title: 'Reporte Profesional de Impacto',
-    init4Desc: 'Documento detallado con métricas, fotografías, análisis y certificación digital de evento sustentable que puedes usar en tu marketing.',
-    init4Metric: 'Post-evento',
+    init4Title: 'Reporte de Cumplimiento',
+    init4Desc: 'Documento con métricas reales, fotografías y evidencia que demuestran a las autoridades que cumpliste con tu plan de gestión. Evita multas y problemas legales.',
+    init4Metric: 'Post-evento (48h)',
 
     // Media Coverage
     mediaTitle: 'Cobertura Mediática Incluida',
@@ -132,16 +149,16 @@ const translations = {
     result4Value: '500+',
 
     // Why Us
-    whyTitle: 'Por Qué Trabajar Con Nosotros',
+    whyTitle: 'Por Qué Elegirnos',
 
-    why1Title: 'Experiencia Comprobada',
-    why1Desc: '8 años cubriendo festivales en Latinoamérica',
-    why2Title: 'Alcance Real',
-    why2Desc: '3.2M de seguidores activos en la escena',
-    why3Title: 'Equipo Profesional',
-    why3Desc: '12+ personas especializadas',
-    why4Title: 'Sin Costo Para Ti',
-    why4Desc: 'Solo necesitamos acceso al evento',
+    why1Title: 'Evita Multas y Problemas Legales',
+    why1Desc: 'Cumplimos 100% con normativa. Tu permiso aprobado sin rechazos.',
+    why2Title: 'Ahorra Tiempo y Headaches',
+    why2Desc: 'Nos encargamos de todo: documentos, implementación, reportes.',
+    why3Title: 'Experiencia Comprobada',
+    why3Desc: '50+ festivales sin incumplimientos ni multas.',
+    why4Title: 'Bonus: Mejora tu Imagen',
+    why4Desc: 'Cobertura mediática y certificación sustentable incluidas.',
 
     // Benchmarks
     benchmarkTitle: 'Festivales Que Ya Lo Hacen',
@@ -161,9 +178,9 @@ const translations = {
     phase3Items: ['Análisis de datos', 'Edición de contenido', 'Reporte de impacto', 'Certificación sustentable'],
 
     // CTA
-    ctaTitle: '¿Tu Festival Está Listo Para el Cambio?',
-    ctaDesc: 'Contáctanos para discutir cómo implementar Ravehub Recycle en tu próximo evento',
-    ctaButton: 'Contactar Ahora',
+    ctaTitle: '¿Necesitas Obtener Tus Permisos?',
+    ctaDesc: 'Contáctanos para manejar todo tu cumplimiento ambiental y obtener tus permisos sin problemas',
+    ctaButton: 'Solicitar Cotización',
     ctaEmail: 'recycle@ravehublatam.com',
 
     // Footer
@@ -173,33 +190,33 @@ const translations = {
   en: {
     // Hero
     heroTitle: 'Ravehub Recycle',
-    heroSubtitle: 'Transforming Music Festivals into Sustainable Events',
-    heroDescription: 'Comprehensive sustainability and media coverage program for electronic music festivals worldwide.',
-    heroButton: 'Learn About the Program',
+    heroSubtitle: 'Comply with Environmental Regulations + Improve Your Image',
+    heroDescription: 'We help you meet mandatory waste management requirements to obtain permits, while improving your festival\'s sustainable image.',
+    heroButton: 'See How We Help',
 
     // Problem Section
-    problemTitle: 'The Problem',
-    problemSubtitle: 'The reality after each festival',
-    problemDescription: 'Thousands of attendees, incredible experiences... and tons of waste polluting the planet. It\'s time to change this.',
+    problemTitle: 'Your Legal Challenge',
+    problemSubtitle: 'Mandatory requirements to obtain permits',
+    problemDescription: 'To obtain permits, authorities require: Waste Management Plan, adequate containers, immediate post-event cleanup, and compliance reports. Without this, no festival.',
 
     // The Reality
-    realityTitle: 'Post-Festival Reality',
-    realityDesc: 'Every year, music festivals generate thousands of tons of waste. Plastic bottles, cups, food packaging, and more end up in landfills or worse, in nature.',
+    realityTitle: 'What Do Authorities Require?',
+    realityDesc: 'Local governments require organizers to submit a Waste Management Plan BEFORE approving permits. Events with 500+ people must include recycling/composting. The organizer is legally responsible for the venue AND the perimeter under their permit.',
 
     // Stats
-    stat1: 'Tons of trash',
-    stat1Value: '100+',
-    stat1Desc: 'Per 50K people festival',
-    stat2: 'Properly recycled',
-    stat2Value: '<15%',
-    stat2Desc: 'In festivals without program',
-    stat3: 'Plastic bottles',
-    stat3Value: '500K+',
-    stat3Desc: 'Used in average festival',
+    stat1: 'Management plan',
+    stat1Value: '100%',
+    stat1Desc: 'Mandatory for permits',
+    stat2: 'Post-event cleanup',
+    stat2Value: '24-48h',
+    stat2Desc: 'Maximum deadline required',
+    stat3: 'Non-compliance fines',
+    stat3Value: '$50K+',
+    stat3Desc: 'Can reach this or more',
 
     // Solution
     solutionTitle: 'The Solution',
-    solutionSubtitle: 'A comprehensive program that makes a difference',
+    solutionSubtitle: 'We handle all compliance for you',
 
     // Who We Are
     whoTitle: 'Who We Are',
@@ -216,39 +233,56 @@ const translations = {
     whoMetric4Value: '8',
 
     // What We Offer
-    offerTitle: 'What We Offer Your Festival',
-    offerSubtitle: 'A complete program that brings real value',
+    offerTitle: 'What Our Service Includes',
+    offerSubtitle: 'Legal compliance + added value',
 
-    // The Program
-    programTitle: 'The Ravehub Recycle Program',
-    program1Title: 'Sustainability Implementation',
-    program1Desc: 'We install and operate recycling infrastructure throughout the event',
-    program2Title: 'Professional Media Coverage',
-    program2Desc: 'We document the festival and highlight your sustainable initiatives',
-    program3Title: 'Environmental Education',
-    program3Desc: 'We educate attendees about responsible practices',
-    program4Title: 'Impact Report',
-    program4Desc: 'We deliver metrics and sustainable event certification',
+    // The Program - Responsibilities
+    programTitle: 'We Cover YOUR Legal Responsibilities',
+
+    legal1Title: '📋 Waste Management Plan',
+    legal1Subtitle: 'Required for event permit',
+    legal1Desc: 'We prepare the professional technical document you need to submit to authorities to obtain your permit. Includes container mapping, protocols, expected metrics and regulatory compliance.',
+
+    legal2Title: '♻️ Venue Implementation',
+    legal2Subtitle: 'Your direct contractual responsibility',
+    legal2Desc: 'We install and operate professional recycling stations inside your venue. Trained Green Team 24/7. We fulfill EVERYTHING you promised in your management plan.',
+
+    legal3Title: '🧹 Perimeter Cleanup',
+    legal3Subtitle: 'Area under your permit/control',
+    legal3Desc: 'We manage waste in entry, exit zones, closed streets and the entire perimeter that is under your legal responsibility according to the permit.',
+
+    legal4Title: '📊 Post-Event Report',
+    legal4Subtitle: 'Documentation for authorities',
+    legal4Desc: 'Professional report with real metrics, photographs and evidence of compliance that you submit to the government. Proves you fulfilled your plan.',
+
+    // Bonus
+    bonusTitle: '🎁 Added Value (No Extra Cost)',
+    bonusSubtitle: 'Because we care about total impact',
+
+    bonus1: 'Management in external queues (outside your legal responsibility)',
+    bonus2: 'Professional media coverage (photo, video, social media)',
+    bonus3: 'Digital campaign highlighting your environmental commitment',
+    bonus4: 'Sustainable event certification for marketing',
 
     // Initiatives
-    initiativesTitle: 'Our Initiatives',
-    initiativesSubtitle: 'Concrete actions we implement',
+    initiativesTitle: 'How We Comply For You',
+    initiativesSubtitle: 'Step by step regulatory compliance',
 
-    init1Title: 'Smart Recycling Stations',
-    init1Desc: 'Professional recycling modules strategically located with clear signage in multiple languages. We separate plastic, glass, paper, organic and general waste.',
-    init1Metric: '15-20 stations',
+    init1Title: 'Permit Document',
+    init1Desc: 'We prepare your professional Waste Management Plan with all technical requirements demanded by authorities. Ready to submit with your permit application.',
+    init1Metric: 'Pre-event',
 
-    init2Title: 'Green Team - Environmental Ambassadors',
-    init2Desc: 'Trained team that educates and guides attendees in real-time on how and where to recycle correctly throughout the event.',
-    init2Metric: '5-10 people',
+    init2Title: 'Venue Implementation',
+    init2Desc: '15-20 recycling stations inside the venue with clear signage. Trained Green Team operating 24/7. We fulfill exactly what was promised in your plan.',
+    init2Metric: 'During event',
 
-    init3Title: 'Digital Impact Campaign',
-    init3Desc: 'Dissemination before, during and after the festival highlighting green initiatives, reaching millions of people on social media.',
-    init3Metric: '3.2M+ reach',
+    init3Title: 'Perimeter Management',
+    init3Desc: 'Cleanup and waste management in entry, exit zones, closed streets and entire perimeter under your contractual responsibility according to permit.',
+    init3Metric: 'During event',
 
-    init4Title: 'Professional Impact Report',
-    init4Desc: 'Detailed document with metrics, photographs, analysis and digital sustainable event certification you can use in your marketing.',
-    init4Metric: 'Post-event',
+    init4Title: 'Compliance Report',
+    init4Desc: 'Document with real metrics, photographs and evidence proving to authorities you fulfilled your management plan. Avoid fines and legal problems.',
+    init4Metric: 'Post-event (48h)',
 
     // Media Coverage
     mediaTitle: 'Media Coverage Included',
@@ -277,16 +311,16 @@ const translations = {
     result4Value: '500+',
 
     // Why Us
-    whyTitle: 'Why Work With Us',
+    whyTitle: 'Why Choose Us',
 
-    why1Title: 'Proven Experience',
-    why1Desc: '8 years covering festivals in Latin America',
-    why2Title: 'Real Reach',
-    why2Desc: '3.2M active followers in the scene',
-    why3Title: 'Professional Team',
-    why3Desc: '12+ specialized people',
-    why4Title: 'No Cost To You',
-    why4Desc: 'We only need access to the event',
+    why1Title: 'Avoid Fines and Legal Problems',
+    why1Desc: '100% regulatory compliance. Your permit approved without rejections.',
+    why2Title: 'Save Time and Headaches',
+    why2Desc: 'We handle everything: documents, implementation, reports.',
+    why3Title: 'Proven Experience',
+    why3Desc: '50+ festivals without non-compliance or fines.',
+    why4Title: 'Bonus: Improve Your Image',
+    why4Desc: 'Media coverage and sustainable certification included.',
 
     // Benchmarks
     benchmarkTitle: 'Festivals Already Doing It',
@@ -299,16 +333,16 @@ const translations = {
     // Timeline
     timelineTitle: 'How It Works',
     phase1Title: 'Before the Festival',
-    phase1Items: ['Coordination meeting', 'Custom station design', 'Team training', 'Pre-event digital campaign'],
+    phase1Items: ['Coordination meeting', 'Professional Waste Management Plan', 'Team training', 'Pre-event digital campaign'],
     phase2Title: 'During the Festival',
-    phase2Items: ['Station installation', 'Green Team operating 24/7', 'Photo and video coverage', 'Real-time publication'],
+    phase2Items: ['Station installation', 'Green Team operating 24/7', 'Photo and video coverage', 'Real-time compliance monitoring'],
     phase3Title: 'After the Festival',
-    phase3Items: ['Data analysis', 'Content editing', 'Impact report', 'Sustainable certification'],
+    phase3Items: ['Data collection', 'Content editing', 'Compliance report for authorities', 'Sustainable certification'],
 
     // CTA
-    ctaTitle: 'Is Your Festival Ready for Change?',
-    ctaDesc: 'Contact us to discuss how to implement Ravehub Recycle at your next event',
-    ctaButton: 'Contact Now',
+    ctaTitle: 'Need to Obtain Your Permits?',
+    ctaDesc: 'Contact us to handle all your environmental compliance and obtain your permits without problems',
+    ctaButton: 'Request Quote',
     ctaEmail: 'recycle@ravehublatam.com',
 
     // Footer
@@ -541,38 +575,72 @@ export default function RaveHubRecyclePage() {
         </div>
       </div>
 
-      {/* The Program - 4 Pillars */}
+      {/* The Program - Legal Responsibilities */}
       <div className="py-20 bg-zinc-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               {t.programTitle}
             </h2>
+            <p className="text-xl text-zinc-400">{t.offerSubtitle}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-8">
-              <Leaf className="w-12 h-12 text-green-400 mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-4">{t.program1Title}</h3>
-              <p className="text-zinc-300">{t.program1Desc}</p>
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {/* Legal 1 */}
+            <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-2 border-blue-500/30 rounded-2xl p-8">
+              <div className="text-4xl mb-4">📋</div>
+              <h3 className="text-2xl font-bold text-white mb-2">{t.legal1Title}</h3>
+              <p className="text-sm text-blue-400 font-semibold mb-4">{t.legal1Subtitle}</p>
+              <p className="text-zinc-300">{t.legal1Desc}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-8">
-              <Camera className="w-12 h-12 text-blue-400 mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-4">{t.program2Title}</h3>
-              <p className="text-zinc-300">{t.program2Desc}</p>
+            {/* Legal 2 */}
+            <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-2xl p-8">
+              <div className="text-4xl mb-4">♻️</div>
+              <h3 className="text-2xl font-bold text-white mb-2">{t.legal2Title}</h3>
+              <p className="text-sm text-green-400 font-semibold mb-4">{t.legal2Subtitle}</p>
+              <p className="text-zinc-300">{t.legal2Desc}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl p-8">
-              <Users className="w-12 h-12 text-purple-400 mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-4">{t.program3Title}</h3>
-              <p className="text-zinc-300">{t.program3Desc}</p>
+            {/* Legal 3 */}
+            <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-2 border-purple-500/30 rounded-2xl p-8">
+              <div className="text-4xl mb-4">🧹</div>
+              <h3 className="text-2xl font-bold text-white mb-2">{t.legal3Title}</h3>
+              <p className="text-sm text-purple-400 font-semibold mb-4">{t.legal3Subtitle}</p>
+              <p className="text-zinc-300">{t.legal3Desc}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-2xl p-8">
-              <FileText className="w-12 h-12 text-orange-400 mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-4">{t.program4Title}</h3>
-              <p className="text-zinc-300">{t.program4Desc}</p>
+            {/* Legal 4 */}
+            <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-2 border-orange-500/30 rounded-2xl p-8">
+              <div className="text-4xl mb-4">📊</div>
+              <h3 className="text-2xl font-bold text-white mb-2">{t.legal4Title}</h3>
+              <p className="text-sm text-orange-400 font-semibold mb-4">{t.legal4Subtitle}</p>
+              <p className="text-zinc-300">{t.legal4Desc}</p>
+            </div>
+          </div>
+
+          {/* Bonus Section */}
+          <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-2 border-yellow-500/30 rounded-2xl p-8">
+            <h3 className="text-3xl font-bold text-white mb-2">{t.bonusTitle}</h3>
+            <p className="text-lg text-yellow-400 mb-6">{t.bonusSubtitle}</p>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" />
+                <span className="text-zinc-300">{t.bonus1}</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" />
+                <span className="text-zinc-300">{t.bonus2}</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" />
+                <span className="text-zinc-300">{t.bonus3}</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" />
+                <span className="text-zinc-300">{t.bonus4}</span>
+              </div>
             </div>
           </div>
         </div>
