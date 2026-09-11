@@ -19,14 +19,14 @@ export default function ProgramasPage() {
     },
     {
       icon: Trophy,
-      title: 'RaveHub Top',
-      description: 'Rankings y reconocimiento de DJs de Latinoamérica.',
-      href: '/programas/ravehub-top',
+      title: 'Ravehub Top Djs',
+      description: 'Rankings y reconocimiento de DJs por país en Latinoamérica.',
+      href: '/programas/ravehub-top-djs',
       color: 'from-amber-500 to-orange-500',
     },
     {
       icon: Recycle,
-      title: 'RaveHub Recycle',
+      title: 'Ravehub Recycle',
       description: 'Impulsamos una escena electrónica más sostenible.',
       href: '/programas/ravehub-recycle',
       color: 'from-green-500 to-emerald-500',

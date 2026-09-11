@@ -20,6 +20,7 @@ export function MobileNavbar() {
   const router = useRouter();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isProgramasOpen, setIsProgramasOpen] = useState(false);
+  const [isTopDjsOpen, setIsTopDjsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -67,8 +68,19 @@ export function MobileNavbar() {
   // Programas submenu
   const programasItems = [
     { icon: Headphones, label: 'DJs', href: '/djs', description: 'Descubre artistas y DJs' },
-    { icon: Trophy, label: 'RaveHub Top', href: '/programas/ravehub-top', description: 'Rankings de DJs LATAM' },
-    { icon: Recycle, label: 'RaveHub Recycle', href: '/programas/ravehub-recycle', description: 'Escena sostenible' },
+    { icon: Trophy, label: 'Ravehub Top Djs', href: '/programas/ravehub-top-djs', description: 'Rankings de DJs por país', hasSubmenu: true },
+    { icon: Recycle, label: 'Ravehub Recycle', href: '/programas/ravehub-recycle', description: 'Escena sostenible' },
+  ];
+
+  // Países para Ravehub Top Djs
+  const topDjsCountries = [
+    { flag: '🇵🇪', name: 'Perú', href: '/programas/ravehub-top-djs/peru' },
+    { flag: '🇨🇱', name: 'Chile', href: '/programas/ravehub-top-djs/chile' },
+    { flag: '🇨🇴', name: 'Colombia', href: '/programas/ravehub-top-djs/colombia' },
+    { flag: '🇦🇷', name: 'Argentina', href: '/programas/ravehub-top-djs/argentina' },
+    { flag: '🇲🇽', name: 'México', href: '/programas/ravehub-top-djs/mexico' },
+    { flag: '🇧🇷', name: 'Brasil', href: '/programas/ravehub-top-djs/brasil' },
+    { flag: '🇪🇨', name: 'Ecuador', href: '/programas/ravehub-top-djs/ecuador' },
   ];
 
   // Don't render on admin pages or login/register pages
@@ -78,6 +90,56 @@ export function MobileNavbar() {
 
   return (
     <>
+      {/* Top Djs Countries Menu Overlay */}
+      {isTopDjsOpen && (
+        <div
+          className="fixed inset-0 bg-[#141618]/80 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsTopDjsOpen(false)}
+        />
+      )}
+
+      {/* Top Djs Countries Menu Popup */}
+      <div
+        className={`fixed bottom-20 left-0 right-0 z-50 md:hidden transition-all duration-300 ease-out ${isTopDjsOpen
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-full pointer-events-none'
+          }`}
+      >
+        <div className="mx-4 mb-4 bg-[#282D31] border border-[#DFE0E0]/20 rounded-2xl shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-[#DFE0E0]/20 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-[#FAFDFF]">Ravehub Top Djs</h3>
+              <p className="text-xs text-[#53575A] mt-0.5">Selecciona un país</p>
+            </div>
+            <button
+              onClick={() => setIsTopDjsOpen(false)}
+              className="p-1.5 rounded-lg hover:bg-[#141618] text-[#53575A] hover:text-[#FAFDFF] transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Countries Grid */}
+          <div className="p-4 grid grid-cols-2 gap-2">
+            {topDjsCountries.map((country) => (
+              <Link
+                key={country.href}
+                href={country.href}
+                onClick={() => {
+                  setIsTopDjsOpen(false);
+                  setIsProgramasOpen(false);
+                }}
+                className="flex items-center gap-2 px-3 py-3 bg-[#141618] rounded-lg text-[#FAFDFF] hover:bg-[#FBA905]/10 hover:text-[#FBA905] transition-all"
+              >
+                <span className="text-2xl">{country.flag}</span>
+                <span className="text-sm font-medium">{country.name}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Programas Menu Overlay */}
       {isProgramasOpen && (
         <div
@@ -109,6 +171,29 @@ export function MobileNavbar() {
           <div className="py-2">
             {programasItems.map((item) => {
               const Icon = item.icon;
+              const isTopDjs = item.hasSubmenu;
+
+              if (isTopDjs) {
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => setIsTopDjsOpen(true)}
+                    className="w-full flex items-start gap-3 px-4 py-3 transition-colors text-[#FAFDFF] hover:bg-[#141618] hover:text-[#FBA905]"
+                  >
+                    <Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="text-sm font-medium flex items-center gap-1">
+                        {item.label}
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                      <div className="text-xs text-[#53575A] mt-0.5">{item.description}</div>
+                    </div>
+                  </button>
+                );
+              }
+
               return (
                 <Link
                   key={item.href}

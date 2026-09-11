@@ -216,20 +216,54 @@ export function MainNavbar() {
                     </div>
                   </Link>
 
-                  <Link
-                    href="/programas/ravehub-top"
-                    className="flex items-start gap-3 px-3 py-3 rounded-lg text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905] transition-all duration-200 group/item"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FBA905] to-[#F1A000] flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform">
-                      <Trophy className="w-5 h-5 text-[#282D31]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold mb-1">RaveHub Top</div>
-                      <div className="text-xs text-[#53575A] group-hover/item:text-[#FAFDFF]/70">
-                        Rankings y reconocimiento de DJs de Latinoamérica
+                  <div className="relative group/sub">
+                    <button className="w-full flex items-start gap-3 px-3 py-3 rounded-lg text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905] transition-all duration-200 group/item">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FBA905] to-[#F1A000] flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform">
+                        <Trophy className="w-5 h-5 text-[#282D31]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold mb-1 flex items-center gap-1">
+                          Ravehub Top Djs
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                        <div className="text-xs text-[#53575A] group-hover/item:text-[#FAFDFF]/70">
+                          Rankings de DJs por país
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Submenu de países */}
+                    <div className="absolute left-full top-0 ml-2 w-56 bg-[#141618]/95 backdrop-blur-xl border border-[#DFE0E0]/30 rounded-xl shadow-2xl opacity-0 invisible group-hover/sub:opacity-100 group-hover/sub:visible transition-all duration-300 z-50 overflow-hidden">
+                      <div className="py-2">
+                        <div className="px-4 py-2 text-xs font-semibold text-[#53575A] uppercase tracking-wider">
+                          Países
+                        </div>
+                        <Link href="/programas/ravehub-top-djs/peru" className="block px-4 py-2 text-sm text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905]">
+                          🇵🇪 Perú
+                        </Link>
+                        <Link href="/programas/ravehub-top-djs/chile" className="block px-4 py-2 text-sm text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905]">
+                          🇨🇱 Chile
+                        </Link>
+                        <Link href="/programas/ravehub-top-djs/colombia" className="block px-4 py-2 text-sm text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905]">
+                          🇨🇴 Colombia
+                        </Link>
+                        <Link href="/programas/ravehub-top-djs/argentina" className="block px-4 py-2 text-sm text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905]">
+                          🇦🇷 Argentina
+                        </Link>
+                        <Link href="/programas/ravehub-top-djs/mexico" className="block px-4 py-2 text-sm text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905]">
+                          🇲🇽 México
+                        </Link>
+                        <Link href="/programas/ravehub-top-djs/brasil" className="block px-4 py-2 text-sm text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905]">
+                          🇧🇷 Brasil
+                        </Link>
+                        <Link href="/programas/ravehub-top-djs/ecuador" className="block px-4 py-2 text-sm text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905]">
+                          🇪🇨 Ecuador
+                        </Link>
                       </div>
                     </div>
-                  </Link>
+                  </div>
 
                   <Link
                     href="/programas/ravehub-recycle"
@@ -239,7 +273,7 @@ export function MainNavbar() {
                       <Recycle className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold mb-1">RaveHub Recycle</div>
+                      <div className="text-sm font-semibold mb-1">Ravehub Recycle</div>
                       <div className="text-xs text-[#53575A] group-hover/item:text-[#FAFDFF]/70">
                         Impulsamos una escena electrónica más sostenible
                       </div>

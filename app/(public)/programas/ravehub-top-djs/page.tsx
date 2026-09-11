@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { Trophy, Star, TrendingUp, Users } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'RaveHub Top | Rankings de DJs de Latinoamérica',
+  title: 'Ravehub Top Djs | Rankings de DJs de Latinoamérica',
   description: 'Descubre y vota por los mejores DJs de la escena electrónica en Latinoamérica. Rankings por país y reconocimiento a talentos locales.',
-  alternates: { canonical: '/programas/ravehub-top' },
+  alternates: { canonical: '/programas/ravehub-top-djs' },
 }
 
 export default function RaveHubTopPage() {
@@ -45,7 +45,7 @@ export default function RaveHubTopPage() {
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold text-[#FAFDFF] mb-6">
-              RaveHub Top
+              Ravehub Top Djs
             </h1>
 
             <p className="text-xl text-[#53575A] max-w-3xl mx-auto mb-8">

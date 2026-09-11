@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Recycle, Leaf, Heart, Calendar } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'RaveHub Recycle | Sustentabilidad en Festivales',
+  title: 'Ravehub Recycle | Sustentabilidad en Festivales',
   description: 'Iniciativa de Ravehub para promover el reciclaje y la sostenibilidad en festivales y eventos de música electrónica en Latinoamérica.',
   alternates: { canonical: '/programas/ravehub-recycle' },
 }
@@ -45,7 +45,7 @@ export default function RaveHubRecyclePage() {
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold text-[#FAFDFF] mb-6">
-              RaveHub Recycle
+              Ravehub Recycle
             </h1>
 
             <p className="text-xl text-[#53575A] max-w-3xl mx-auto mb-8">
