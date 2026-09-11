@@ -169,7 +169,7 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                       key={i}
                       className={`w-4 h-4 ${
                         i < Math.round(averageRating)
-                          ? 'text-white fill-white'
+                          ? 'text-yellow-400 fill-yellow-400'
                           : 'text-zinc-700'
                       }`}
                     />
@@ -189,18 +189,20 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                 </span>
                 {product.discountPercentage && product.discountPercentage > 0 && (
                   <>
-                    <span className="text-xl text-zinc-500 line-through">
-                      <ConvertedPrice amount={product.price} currency={product.currency} showOriginal={false} />
+                    <span className="text-xl text-zinc-500">
+                      <span className="line-through">
+                        <ConvertedPrice amount={product.price} currency={product.currency} showOriginal={false} />
+                      </span>
                     </span>
-                    <span className="text-sm font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded">
-                      -{product.discountPercentage}%
+                    <span className="text-sm font-bold text-red-400 bg-red-500/20 px-2.5 py-1 rounded-md">
+                      -{product.discountPercentage}% OFF
                     </span>
                   </>
                 )}
               </div>
               {product.discountPercentage && product.discountPercentage > 0 && (
-                <p className="text-sm text-zinc-400 mt-2">
-                  Ahorro:{' '}
+                <p className="text-sm text-green-400 mt-2 font-medium">
+                  Ahorras{' '}
                   <ConvertedPrice
                     amount={product.price - finalPrice}
                     currency={product.currency}
@@ -262,12 +264,12 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
               <button
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
-                className={`w-full py-3.5 rounded-lg font-medium text-base transition-colors flex items-center justify-center gap-2 ${
+                className={`w-full py-3.5 rounded-lg font-medium text-base transition-all flex items-center justify-center gap-2 ${
                   product.stock === 0
                     ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
                     : addedToCart
-                    ? 'bg-green-600 text-white'
-                    : 'bg-white text-zinc-900 hover:bg-zinc-100'
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : 'bg-white text-zinc-900 hover:bg-zinc-100 active:scale-[0.98]'
                 }`}
               >
                 {addedToCart ? (
@@ -283,7 +285,7 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                 )}
               </button>
 
-              <button className="w-full py-3.5 border-2 border-white/20 rounded-lg font-medium text-base text-white hover:bg-zinc-900 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full py-3.5 border-2 border-white/20 rounded-lg font-medium text-base text-white hover:bg-white/5 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                 <Heart className="w-5 h-5" />
                 Agregar a favoritos
               </button>
@@ -291,28 +293,30 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
 
             {/* Delivery Info */}
             {product.shippingEnabled && (
-              <div className="p-4 bg-zinc-900 rounded-lg mb-4">
+              <div className="p-4 bg-zinc-900/60 border border-white/10 rounded-lg mb-4">
                 <div className="flex items-start gap-3">
-                  <Truck className="w-5 h-5 text-zinc-400 mt-0.5 flex-shrink-0" />
+                  <Truck className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-white mb-1">Información de envío</p>
                     <p className="text-sm text-zinc-400">
                       {product.nationwideShipping && (
                         <>
                           {product.nationwideShipping.isFreeShipping ? (
-                            <span className="font-medium text-green-400">Envío gratis</span>
+                            <span className="font-medium text-green-400">✓ Envío gratis</span>
                           ) : (
                             <>
-                              Envío:{' '}
-                              <ConvertedPrice
-                                amount={product.nationwideShipping.shippingCost}
-                                currency={product.currency}
-                                showOriginal={false}
-                              />
+                              Costo:{' '}
+                              <span className="text-white font-medium">
+                                <ConvertedPrice
+                                  amount={product.nationwideShipping.shippingCost}
+                                  currency={product.currency}
+                                  showOriginal={false}
+                                />
+                              </span>
                             </>
                           )}
                           {' • '}
-                          Entrega en {product.nationwideShipping.estimatedDays} días hábiles
+                          Entrega en <span className="text-white font-medium">{product.nationwideShipping.estimatedDays} días</span> hábiles
                         </>
                       )}
                     </p>
@@ -413,7 +417,7 @@ export function ProductDetail({ product, category, reviews }: ProductDetailProps
                                 <Star
                                   key={i}
                                   className={`w-3 h-3 ${
-                                    i < review.rating ? 'text-white fill-white' : 'text-zinc-700'
+                                    i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-zinc-700'
                                   }`}
                                 />
                               ))}
