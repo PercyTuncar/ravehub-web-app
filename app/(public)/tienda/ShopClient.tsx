@@ -122,9 +122,9 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
   const cartItemCount = getTotalItems();
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-20 md:pb-0 pt-20">
+    <div className="min-h-screen bg-zinc-950 pb-20 md:pb-0">
       {/* Main Container */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:pt-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-zinc-500 mb-8">
           <Link href="/" className="hover:text-white">Inicio</Link>
