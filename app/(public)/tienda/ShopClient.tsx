@@ -1,17 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ShoppingCart, Package, Star, Heart, Search, Filter, Plus, Minus } from 'lucide-react';
-import { productsCollection, productCategoriesCollection } from '@/lib/firebase/collections';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { ShoppingCart, Heart, Search, SlidersHorizontal, X, ChevronDown, Star, TrendingUp, Package, Sparkles, Loader2 } from 'lucide-react';
 import { Product, ProductCategory } from '@/lib/types';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useCart } from '@/lib/contexts/CartContext';
 import { ConvertedPrice } from '@/components/common/ConvertedPrice';
 
 interface ShopClientProps {
@@ -25,296 +20,459 @@ interface ShopClientProps {
 }
 
 export default function ShopClient({ initialProducts, initialCategories, searchParams }: ShopClientProps) {
-  const { user } = useAuth();
   const router = useRouter();
-  const searchParamsHook = useSearchParams();
-  // OPTIMIZED: Use initial data from server, no need to refetch
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [categories, setCategories] = useState<ProductCategory[]>(initialCategories);
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(searchParams.busqueda || '');
-  const [categoryFilter, setCategoryFilter] = useState<string>(searchParams.categoria || 'all');
-  const [sortBy, setSortBy] = useState<string>(searchParams.ordenar || 'name');
+  const { user } = useAuth();
+  const { addItem, getTotalItems } = useCart();
 
-  // Update URL when filters change
+  const [products, setProducts] = useState<Product[]>(initialProducts.slice(0, 12));
+  const [searchTerm, setSearchTerm] = useState(searchParams?.busqueda || '');
+  const [categoryFilter, setCategoryFilter] = useState<string>(searchParams?.categoria || 'all');
+  const [sortBy, setSortBy] = useState<string>(searchParams?.ordenar || 'relevancia');
+  const [showFilters, setShowFilters] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(initialProducts.length > 12);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const allProducts = initialProducts;
+
+  // Update URL
   const updateURL = (categoria?: string, ordenar?: string, busqueda?: string) => {
     const params = new URLSearchParams();
     if (categoria && categoria !== 'all') params.set('categoria', categoria);
-    if (ordenar && ordenar !== 'name') params.set('ordenar', ordenar);
+    if (ordenar && ordenar !== 'relevancia') params.set('ordenar', ordenar);
     if (busqueda) params.set('busqueda', busqueda);
 
     const queryString = params.toString();
     router.push(queryString ? `/tienda?${queryString}` : '/tienda', { scroll: false });
   };
 
-  // REMOVED: Unnecessary useEffect that duplicated the server-side query
-  // The initialProducts and initialCategories from the server are sufficient
+  // Filter and sort
+  const getFilteredAndSortedProducts = useCallback(() => {
+    let filtered = allProducts.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === 'all' || product.categoryId === categoryFilter;
+      return matchesSearch && matchesCategory && product.isActive;
+    });
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.shortDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (product.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+    // Sort
+    filtered = filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'precio-asc':
+          return a.price - b.price;
+        case 'precio-desc':
+          return b.price - a.price;
+        case 'nombre':
+          return a.name.localeCompare(b.name);
+        case 'nuevo':
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        case 'relevancia':
+        default:
+          return 0;
+      }
+    });
 
-    const matchesCategory = categoryFilter === 'all' || product.categoryId === categoryFilter;
+    return filtered;
+  }, [allProducts, searchTerm, categoryFilter, sortBy]);
 
-    return matchesSearch && matchesCategory;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
-      case 'name':
-      default:
-        return a.name.localeCompare(b.name);
-    }
-  });
+  // Load more
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
 
-  const getCategoryName = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.name || 'Sin categoría';
-  };
+    setLoadingMore(true);
+    setTimeout(() => {
+      const filtered = getFilteredAndSortedProducts();
+      const nextPage = page + 1;
+      const endIndex = nextPage * 12;
+      const newProducts = filtered.slice(0, endIndex);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
+      setProducts(newProducts);
+      setPage(nextPage);
+      setHasMore(endIndex < filtered.length);
+      setLoadingMore(false);
+    }, 500);
+  }, [page, hasMore, loadingMore, getFilteredAndSortedProducts]);
+
+  // Reset on filter change
+  useEffect(() => {
+    const filtered = getFilteredAndSortedProducts();
+    setProducts(filtered.slice(0, 12));
+    setPage(1);
+    setHasMore(filtered.length > 12);
+  }, [searchTerm, categoryFilter, sortBy, getFilteredAndSortedProducts]);
+
+  // Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
     );
-  }
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, loadingMore, loadMore]);
+
+  const filteredProducts = getFilteredAndSortedProducts();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
-      <div className="mb-12">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">Tienda Ravehub</h1>
-        <p className="text-muted-foreground text-lg">
-          Merchandising oficial de los mejores eventos electrónicos
-        </p>
-      </div>
+    <div className="min-h-screen bg-zinc-950">
+      {/* Hero Banner */}
+      <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-pink-900/20 to-orange-900/30" />
+        <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10" />
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Buscar productos..."
-              value={searchTerm}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSearchTerm(value);
-                // Debounce URL update for search
-                setTimeout(() => updateURL(categoryFilter, sortBy, value), 300);
-              }}
-              className="pl-10"
-            />
-          </div>
-        </div>
-        <Select
-          value={categoryFilter}
-          onValueChange={(value) => {
-            setCategoryFilter(value);
-            updateURL(value, sortBy, searchTerm);
-          }}
-        >
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="Categoría" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las categorías</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={sortBy}
-          onValueChange={(value) => {
-            setSortBy(value);
-            updateURL(categoryFilter, value, searchTerm);
-          }}
-        >
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="Ordenar por" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="name">Nombre</SelectItem>
-            <SelectItem value="price-low">Precio: Menor a Mayor</SelectItem>
-            <SelectItem value="price-high">Precio: Mayor a Menor</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full mb-6">
+              <Sparkles className="w-4 h-4 text-yellow-400" />
+              <span className="text-sm font-medium text-white">Merchandising Oficial</span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tight">
+              Tienda Ravehub
+            </h1>
+            <p className="text-xl text-zinc-300 mb-8 max-w-2xl">
+              Ropa y merchandising oficial de los mejores eventos de música electrónica en Latinoamérica
+            </p>
 
-      {/* Products Grid */}
-      {filteredProducts.length === 0 ? (
-        <div className="text-center py-12">
-          <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-semibold mb-2">No se encontraron productos</h2>
-          <p className="text-muted-foreground">
-            {products.length === 0 ? 'No hay productos disponibles en este momento.' : 'Intenta con otros filtros de búsqueda.'}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              {/* Product Image */}
-              <div className="aspect-square bg-muted relative overflow-hidden">
-                {product.images && product.images.length > 0 ? (
-                  <img
-                    src={product.images[0]}
-                    alt={product.imageAltTexts?.[product.images[0]] || product.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Package className="h-16 w-16 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
-                )}
-                {product.discountPercentage && product.discountPercentage > 0 && (
-                  <div className="absolute top-2 left-2">
-                    <Badge variant="destructive">
-                      -{product.discountPercentage}%
-                    </Badge>
-                  </div>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 bg-background/80 hover:bg-background"
-                >
-                  <Heart className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
-                </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {product.shortDescription}
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {getCategoryName(product.categoryId)}
-                  </Badge>
-                  {product.brand && (
-                    <Badge variant="outline" className="text-xs">
-                      {product.brand}
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="space-y-3">
-                  {/* Price */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {product.discountPercentage && product.discountPercentage > 0 ? (
-                        <>
-                          <span className="text-lg font-bold">
-                            <ConvertedPrice
-                              amount={product.price * (1 - product.discountPercentage / 100)}
-                              currency={product.currency}
-                              showOriginal={false}
-                              className="text-orange-600"
-                            />
-                          </span>
-                          <span className="text-sm text-muted-foreground line-through">
-                            <ConvertedPrice
-                              amount={product.price}
-                              currency={product.currency}
-                              showOriginal={false}
-                            />
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-lg font-bold">
-                          <ConvertedPrice
-                            amount={product.price}
-                            currency={product.currency}
-                            showOriginal={false}
-                          />
-                        </span>
-                      )}
-                    </div>
-                    <span className={`text-sm ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
-                    </span>
-                  </div>
-
-                  {/* Variants indicator */}
-                  {product.hasVariants && (
-                    <p className="text-xs text-muted-foreground">
-                      Variantes disponibles
-                    </p>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <Link href={`/tienda/${product.slug}`} className="flex-1">
-                      <Button variant="outline" className="w-full">
-                        Ver Detalles
-                      </Button>
-                    </Link>
-                    <Button
-                      className="flex-1"
-                      disabled={product.stock === 0}
-                    >
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      Agregar
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Categories Section */}
-      {categories.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-semibold mb-6">Categorías</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.map((category) => (
-              <Card
-                key={category.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => {
-                  setCategoryFilter(category.id);
-                  updateURL(category.id, sortBy, searchTerm);
+            {/* Search Bar */}
+            <div className="relative max-w-xl">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Buscar productos..."
+                value={searchTerm}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchTerm(value);
+                  setTimeout(() => updateURL(categoryFilter, sortBy, value), 300);
                 }}
-              >
-                <CardContent className="p-4 text-center">
-                  <Package className="h-8 w-8 mx-auto mb-2 text-primary" />
-                  <h3 className="font-medium">{category.name}</h3>
-                  {category.description && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {category.description}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+              />
+            </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Call to Action */}
-      <Card className="mt-8">
-        <CardContent className="p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">¿Quieres ser el primero en enterarte?</h2>
-          <p className="text-muted-foreground mb-6">
-            Suscríbete a nuestro newsletter y recibe notificaciones cuando lancemos nuevos productos.
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Filters Bar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Mobile Filter Toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="lg:hidden flex items-center gap-2 px-4 py-2 bg-zinc-900/60 border border-white/10 rounded-xl text-white hover:bg-zinc-900 transition-all"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filtros
+              {(categoryFilter !== 'all' || searchTerm) && (
+                <span className="ml-1 px-2 py-0.5 bg-purple-500 rounded-full text-xs">
+                  {(categoryFilter !== 'all' ? 1 : 0) + (searchTerm ? 1 : 0)}
+                </span>
+              )}
+            </button>
+
+            {/* Category Pills */}
+            <div className="hidden lg:flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => {
+                  setCategoryFilter('all');
+                  updateURL('all', sortBy, searchTerm);
+                }}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  categoryFilter === 'all'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                    : 'bg-zinc-900/60 border border-white/10 text-zinc-300 hover:bg-zinc-900'
+                }`}
+              >
+                Todos
+              </button>
+              {initialCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => {
+                    setCategoryFilter(category.id);
+                    updateURL(category.id, sortBy, searchTerm);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    categoryFilter === category.id
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                      : 'bg-zinc-900/60 border border-white/10 text-zinc-300 hover:bg-zinc-900'
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSortBy(value);
+              updateURL(categoryFilter, value, searchTerm);
+            }}
+            className="px-4 py-2 bg-zinc-900/60 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+          >
+            <option value="relevancia">Más relevantes</option>
+            <option value="nuevo">Más nuevos</option>
+            <option value="precio-asc">Precio: menor a mayor</option>
+            <option value="precio-desc">Precio: mayor a menor</option>
+            <option value="nombre">Nombre A-Z</option>
+          </select>
+        </div>
+
+        {/* Mobile Filters Dropdown */}
+        {showFilters && (
+          <div className="lg:hidden mb-8 bg-zinc-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Filtros</h3>
+              <button onClick={() => setShowFilters(false)} className="text-zinc-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setCategoryFilter('all');
+                  updateURL('all', sortBy, searchTerm);
+                }}
+                className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all ${
+                  categoryFilter === 'all'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                Todos los productos
+              </button>
+              {initialCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => {
+                    setCategoryFilter(category.id);
+                    updateURL(category.id, sortBy, searchTerm);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all ${
+                    categoryFilter === category.id
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Results Count */}
+        <div className="mb-6">
+          <p className="text-zinc-400 text-sm">
+            {products.length === 0
+              ? 'No se encontraron productos'
+              : `${products.length} ${products.length === 1 ? 'producto' : 'productos'}`}
+            {hasMore && ' (cargando más al hacer scroll)'}
           </p>
-          <Button size="lg">
-            Suscribirse al Newsletter
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Products Grid */}
+        {products.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-12 max-w-md mx-auto">
+              <div className="text-6xl mb-6 opacity-50">🛍️</div>
+              <h3 className="text-2xl font-bold text-white mb-2">No hay productos</h3>
+              <p className="text-zinc-500 mb-8">
+                {allProducts.length === 0
+                  ? 'No hay productos disponibles en este momento.'
+                  : 'Intenta ajustar tus filtros de búsqueda.'}
+              </p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setCategoryFilter('all');
+                  setSortBy('relevancia');
+                  updateURL('all', 'relevancia', '');
+                }}
+                className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold hover:from-purple-600 hover:to-pink-600 transition-all"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map((product) => {
+                const finalPrice = product.discountPercentage
+                  ? product.price * (1 - product.discountPercentage / 100)
+                  : product.price;
+
+                return (
+                  <Link key={product.id} href={`/tienda/${product.slug}`}>
+                    <div className="group relative bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-2xl overflow-hidden hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
+                      {/* Image */}
+                      <div className="relative aspect-square overflow-hidden bg-zinc-900">
+                        {product.images && product.images.length > 0 ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-16 h-16 text-zinc-700" />
+                          </div>
+                        )}
+
+                        {/* Badges */}
+                        <div className="absolute top-3 left-3 flex flex-col gap-2">
+                          {product.discountPercentage && product.discountPercentage > 0 && (
+                            <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
+                              -{product.discountPercentage}%
+                            </span>
+                          )}
+                          {product.stock < 10 && product.stock > 0 && (
+                            <span className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full">
+                              ¡Últimas unidades!
+                            </span>
+                          )}
+                          {product.stock === 0 && (
+                            <span className="px-3 py-1 bg-zinc-800 text-white text-xs font-bold rounded-full">
+                              Agotado
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              // Add to wishlist logic
+                            }}
+                            className="p-2 bg-white/90 backdrop-blur-md rounded-full hover:bg-white transition-all"
+                          >
+                            <Heart className="w-4 h-4 text-zinc-900" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4">
+                        {/* Category */}
+                        {product.categoryId && (
+                          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">
+                            {initialCategories.find(c => c.id === product.categoryId)?.name || 'Producto'}
+                          </p>
+                        )}
+
+                        {/* Title */}
+                        <h3 className="font-bold text-white mb-2 line-clamp-2 group-hover:text-purple-400 transition-colors">
+                          {product.name}
+                        </h3>
+
+                        {/* Description */}
+                        {product.shortDescription && (
+                          <p className="text-sm text-zinc-500 mb-3 line-clamp-2">
+                            {product.shortDescription}
+                          </p>
+                        )}
+
+                        {/* Price */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xl font-bold text-white">
+                            <ConvertedPrice
+                              amount={finalPrice}
+                              currency={product.currency}
+                              showOriginal={false}
+                            />
+                          </span>
+                          {product.discountPercentage && product.discountPercentage > 0 && (
+                            <span className="text-sm text-zinc-500 line-through">
+                              <ConvertedPrice
+                                amount={product.price}
+                                currency={product.currency}
+                                showOriginal={false}
+                              />
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Stock */}
+                        <div className="flex items-center justify-between text-xs">
+                          <span className={`font-medium ${product.stock > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/10 group-hover:to-pink-500/10 pointer-events-none transition-all duration-300" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Load More */}
+            {hasMore && (
+              <div ref={observerTarget} className="flex justify-center py-12">
+                {loadingMore && (
+                  <div className="flex items-center gap-3 text-zinc-400">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span>Cargando más productos...</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* End */}
+            {!hasMore && products.length > 0 && (
+              <div className="text-center py-12">
+                <p className="text-zinc-500 text-sm">
+                  ✨ Has visto todos los productos disponibles
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Features */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+          <div className="bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 text-center">
+            <Package className="h-12 w-12 mx-auto mb-4 text-purple-400" />
+            <h3 className="font-bold text-white mb-2">Envío Seguro</h3>
+            <p className="text-sm text-zinc-500">Empaque protegido y seguimiento incluido</p>
+          </div>
+
+          <div className="bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 text-center">
+            <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-pink-400" />
+            <h3 className="font-bold text-white mb-2">Compra Fácil</h3>
+            <p className="text-sm text-zinc-500">Proceso de compra simple y rápido</p>
+          </div>
+
+          <div className="bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 text-center">
+            <Sparkles className="h-12 w-12 mx-auto mb-4 text-orange-400" />
+            <h3 className="font-bold text-white mb-2">Merchandising Oficial</h3>
+            <p className="text-sm text-zinc-500">Productos auténticos de eventos oficiales</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
