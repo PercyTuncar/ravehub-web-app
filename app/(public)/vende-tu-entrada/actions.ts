@@ -1,26 +1,37 @@
 'use server';
 
-import { eventsCollection } from '@/lib/firebase/collections';
+import 'server-only';
+import { getAdminDb } from '@/lib/firebase/admin';
 
 /**
  * Obtener eventos elegibles para reventa (solo próximos)
- * SERVER-SIDE: Usa cache para mejor performance
+ * SERVER-SIDE: Usa Admin SDK (sin Firestore Rules)
  */
 export async function getUpcomingEventsForResale() {
   try {
-    console.log('🔍 [Resale] Iniciando carga de eventos...');
+    console.log('🔍 [Resale] Iniciando carga de eventos con Admin SDK...');
 
-    // Obtener todos los eventos publicados (con cache)
-    const conditions = [{ field: 'eventStatus', operator: '==', value: 'published' }];
-    const allEvents = await eventsCollection.queryCached(
-      conditions,
-      'startDate',
-      'asc',
-      100,
-      'events-resale-list' // cache key
-    );
+    const db = await getAdminDb();
+    if (!db) {
+      console.error('❌ [Resale] Admin DB no inicializado');
+      return [];
+    }
 
-    console.log('🔍 [Resale] Total eventos publicados:', allEvents.length);
+    // Obtener todos los eventos publicados usando Admin SDK
+    const eventsSnapshot = await db
+      .collection('events')
+      .where('eventStatus', '==', 'published')
+      .orderBy('startDate', 'asc')
+      .limit(100)
+      .get();
+
+    console.log('🔍 [Resale] Total eventos publicados:', eventsSnapshot.size);
+
+    // Convertir a array de objetos
+    const allEvents = eventsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
     // Filtrar solo eventos futuros
     const now = new Date();
