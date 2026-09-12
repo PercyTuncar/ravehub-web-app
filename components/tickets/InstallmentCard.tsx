@@ -240,13 +240,13 @@ export function InstallmentCard({
                         // Para cuotas futuras o en revisión, mostrar fecha estática
                         <>
                             <Calendar className="w-3.5 h-3.5" />
-                            <span>Vence: <span className={status === 'active' ? 'text-blue-400 font-medium' : ''}>{formatDate(installment.dueDate)}</span></span>
+                            <span>Vence: <span>{formatDate(installment.dueDate)}</span></span>
                         </>
                     )}
                 </div>
 
                 {/* ✅ NUEVO: Warning para última cuota ajustada por fecha del evento */}
-                {installment.isAdjusted && (status === 'active' || status === 'future' || status === 'pending') && (
+                {installment.isAdjusted && (status === 'active' || status === 'future') && (
                     <div className="mb-4 bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
                         <p className="text-xs text-orange-300 flex items-start gap-2">
                             <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />

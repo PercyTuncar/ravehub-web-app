@@ -5,7 +5,7 @@ import { Share2, Heart, ChevronLeft, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
-import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections';
+import { eventsCollection, eventDjsCollection } from '@/lib/firebase/admin-collections';
 import { Event, EventDj } from '@/lib/types';
 import JsonLd, { JsonLdArray } from '@/components/seo/JsonLd';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
@@ -135,14 +135,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 async function getEventData(slug: string): Promise<{ event: Event; eventDjs: EventDj[] } | null> {
   try {
-    // Find event by slug with cached query (1 minute TTL)
+    // Public server-rendered pages must bypass client Firestore rules.
     const conditions = [{ field: 'slug', operator: '==', value: slug }];
-    const events = await eventsCollection.queryCached(
+    const events = await eventsCollection.query(
       conditions,
       undefined,
       'desc',
-      1,
-      `event-${slug}` // Cache key
+      1
     );
 
     if (events.length === 0) {

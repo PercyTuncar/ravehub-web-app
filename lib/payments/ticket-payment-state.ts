@@ -21,7 +21,7 @@ import { TicketTransaction, PaymentInstallment } from '@/lib/types';
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export interface PaymentAggregate {
-  paymentStatus: 'pending' | 'approved' | 'rejected';
+  paymentStatus: 'pending' | 'approved' | 'rejected' | 'expired';
   canDeliverTickets: boolean;
   totalScheduled: number;
   totalApproved: number;

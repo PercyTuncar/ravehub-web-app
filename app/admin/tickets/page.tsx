@@ -338,7 +338,7 @@ function TicketsAdminContent() {
                     // Eliminar cuotas antiguas de este ticket
                     const filtered = prev.filter(inst => inst.transactionId !== ticketId);
                     // Agregar las nuevas cuotas de este ticket
-                    return [...filtered, ...result.installments];
+                    return [...filtered, ...(result.installments || [])];
                 });
             }
             // ✅ No hacer setInstallments([]) si falla, mantener las existentes

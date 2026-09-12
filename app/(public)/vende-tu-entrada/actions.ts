@@ -2,6 +2,8 @@
 
 import 'server-only';
 import { getAdminDb } from '@/lib/firebase/admin';
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import type { Event } from '@/lib/types';
 
 /**
  * Serializar datos de Firestore para pasar a Client Components
@@ -33,7 +35,7 @@ function serializeFirestoreData(data: any): any {
  * Obtener eventos elegibles para reventa (solo próximos)
  * SERVER-SIDE: Usa Admin SDK (sin Firestore Rules)
  */
-export async function getUpcomingEventsForResale() {
+export async function getUpcomingEventsForResale(): Promise<Array<Event & { id: string }>> {
   try {
     console.log('🔍 [Resale] Iniciando carga de eventos con Admin SDK...');
 
@@ -54,12 +56,12 @@ export async function getUpcomingEventsForResale() {
     console.log('🔍 [Resale] Total eventos publicados:', eventsSnapshot.size);
 
     // Convertir a array de objetos y serializar
-    const allEvents = eventsSnapshot.docs.map(doc => {
+    const allEvents: Array<Event & { id: string }> = eventsSnapshot.docs.map((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
       return {
         id: doc.id,
         ...serializeFirestoreData(data)
-      };
+      } as Event & { id: string };
     });
 
     // Filtrar solo eventos futuros

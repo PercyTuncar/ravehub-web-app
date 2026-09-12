@@ -61,6 +61,48 @@ export function calculateResaleValue(
 }
 
 /**
+ * Calcula el valor de reventa EN TIEMPO REAL con precisión de milisegundos
+ * Para mostrar centavos que bajan dinámicamente
+ */
+export function calculateRealTimeResaleValue(
+  originalPrice: number,
+  eventDate: Date | string,
+  eventPublishDate: Date | string
+): DepreciationResult {
+  const now = new Date();
+  const event = new Date(eventDate);
+  const published = new Date(eventPublishDate);
+
+  // Milisegundos hasta el evento (PRECISIÓN EXACTA)
+  const msUntilEvent = Math.max(0, event.getTime() - now.getTime());
+  const daysUntilEvent = Math.ceil(msUntilEvent / (1000 * 60 * 60 * 24));
+
+  // Milisegundos totales del ciclo de vida
+  const totalMs = Math.max(1, event.getTime() - published.getTime());
+
+  // Porcentaje EXACTO de tiempo transcurrido (con decimales)
+  const timeElapsed = Math.max(0, Math.min(1, 1 - (msUntilEvent / totalMs)));
+
+  // Valor conserva entre 90% (día 1) y 10% (día del evento)
+  const valuePercentage = Math.max(10, 90 - (timeElapsed * 80));
+
+  // Depreciación
+  const depreciation = 100 - valuePercentage;
+
+  // Valor actual CON DECIMALES (centavos que bajan en tiempo real)
+  const currentValue = (originalPrice * valuePercentage) / 100;
+
+  return {
+    currentValue, // Ya NO redondeado - tiene decimales
+    originalPrice,
+    depreciation,
+    valuePercentage,
+    daysUntilEvent,
+    totalDays: Math.ceil(totalMs / (1000 * 60 * 60 * 24))
+  };
+}
+
+/**
  * Formatea el mensaje de depreciación para mostrar al usuario
  */
 export function formatDepreciationMessage(result: DepreciationResult): string {

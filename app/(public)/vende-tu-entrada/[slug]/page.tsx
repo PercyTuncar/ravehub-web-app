@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { eventsCollection } from '@/lib/firebase/collections';
-import { calculateResaleValue, getDaysUntilEvent, formatDaysUntilEvent, formatDepreciationMessage, getDepreciationColor } from '@/lib/utils/resale-calculator';
+import { calculateResaleValue, calculateRealTimeResaleValue, getDaysUntilEvent, formatDaysUntilEvent, formatDepreciationMessage, getDepreciationColor } from '@/lib/utils/resale-calculator';
 import { formatPrice } from '@/lib/utils/currency-converter';
 import { parseLocalDate } from '@/lib/utils/date-timezone';
 import { format } from 'date-fns';
@@ -31,7 +31,7 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { createResaleRequest } from '@/lib/actions/ticket-resale';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { EventColorProvider, useEnhancedColorExtraction } from '@/components/events/EventColorContext';
+import { EventColorProvider, useEnhancedColorExtraction, useEventColors } from '@/components/events/EventColorContext';
 import { DynamicBackgroundGradients } from '@/components/events/DynamicBackgroundGradients';
 
 function ResaleDetailContent() {
@@ -59,12 +59,113 @@ function ResaleDetailContent() {
     const imageUrl = event?.mainImageUrl || event?.bannerImageUrl || '';
     useEnhancedColorExtraction(imageUrl);
 
+    // Get extracted colors
+    const { colorPalette } = useEventColors();
+
+    // Countdown timer (actualizar cada segundo)
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+    // Real-time price (actualizar cada segundo con centavos bajando)
+    const [realTimePrice, setRealTimePrice] = useState<number | null>(null);
+
+    // Animated prices (animación de lotería desde 0 hasta el precio real)
+    // Usamos un Map para animar múltiples precios independientemente
+    const [animatedPrices, setAnimatedPrices] = useState<Map<string, number>>(new Map());
+    const [animatingKeys, setAnimatingKeys] = useState<Set<string>>(new Set());
+    const [hasAnimated, setHasAnimated] = useState<boolean>(false);
+
     // Debug: Log when colors are being extracted
     useEffect(() => {
         if (imageUrl) {
             console.log('🎨 [Resale] Extracting colors from:', imageUrl);
         }
     }, [imageUrl]);
+
+    // Función para animar un precio específico
+    const animatePrice = (key: string, targetPrice: number) => {
+        if (hasAnimated) return; // Solo animar la primera vez
+
+        const duration = 2000; // 2 segundos
+        const fps = 60;
+        const totalFrames = (duration / 1000) * fps;
+        const increment = targetPrice / totalFrames;
+
+        setAnimatingKeys(prev => new Set(prev).add(key));
+
+        let currentFrame = 0;
+        let currentValue = 0;
+
+        const animate = () => {
+            currentFrame++;
+            currentValue += increment;
+
+            if (currentFrame >= totalFrames || currentValue >= targetPrice) {
+                setAnimatedPrices(prev => new Map(prev).set(key, targetPrice));
+                setAnimatingKeys(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(key);
+                    return newSet;
+                });
+            } else {
+                setAnimatedPrices(prev => new Map(prev).set(key, currentValue));
+                requestAnimationFrame(animate);
+            }
+        };
+
+        requestAnimationFrame(animate);
+    };
+
+    // Trigger animation on first load
+    useEffect(() => {
+        if (!event || !selectedZone || hasAnimated) return;
+
+        // Animar precio principal
+        if (realTimePrice !== null) {
+            animatePrice('main', realTimePrice);
+            setHasAnimated(true);
+        }
+    }, [realTimePrice, event, selectedZone, hasAnimated]);
+
+    // Countdown effect + Real-time price update
+    useEffect(() => {
+        if (!event || !selectedZone) return;
+
+        const updateCountdownAndPrice = () => {
+            const now = new Date().getTime();
+            const eventTime = new Date(event.startDate).getTime();
+            const distance = eventTime - now;
+
+            if (distance < 0) {
+                setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+                setRealTimePrice(null);
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            setTimeLeft({ days, hours, minutes, seconds });
+
+            // Calcular precio en tiempo real CON DECIMALES
+            const realTimeCalc = calculateRealTimeResaleValue(
+                selectedZone.price,
+                event.startDate,
+                event.createdAt || event.startDate
+            );
+            setRealTimePrice(realTimeCalc.currentValue);
+        };
+
+        updateCountdownAndPrice();
+        const interval = setInterval(updateCountdownAndPrice, 1000);
+
+        return () => clearInterval(interval);
+    }, [event, selectedZone]);
+
+    useEffect(() => {
+        loadEvent();
+    }, [slug]);
 
     useEffect(() => {
         loadEvent();
@@ -343,6 +444,25 @@ function ResaleDetailContent() {
                                                 event.createdAt || event.startDate
                                             );
 
+                                            // Key única para esta zona
+                                            const zoneKey = `zone-${zonePricing.zoneId}`;
+
+                                            // Animar este precio al cargar (solo primera vez)
+                                            useEffect(() => {
+                                                if (!hasAnimated && event && selectedPhase) {
+                                                    animatePrice(zoneKey, calc.currentValue);
+                                                }
+                                            }, [hasAnimated, event, selectedPhase]);
+
+                                            // Mostrar precio animado o real
+                                            const isSelected = selectedZone?.zoneId === zonePricing.zoneId;
+                                            const isAnimatingThis = animatingKeys.has(zoneKey);
+                                            const animatedValue = animatedPrices.get(zoneKey);
+
+                                            const displayPrice = isAnimatingThis && animatedValue !== undefined
+                                                ? animatedValue
+                                                : (isSelected && realTimePrice !== null ? realTimePrice : calc.currentValue);
+
                                             return (
                                                 <div key={zonePricing.zoneId} className="flex items-center space-x-2 mb-3">
                                                     <RadioGroupItem value={zonePricing.zoneId} id={zonePricing.zoneId} />
@@ -357,8 +477,14 @@ function ResaleDetailContent() {
                                                                 </p>
                                                             </div>
                                                             <div className="text-right">
-                                                                <p className="text-xl font-bold text-green-400">
-                                                                    {formatPrice(calc.currentValue, event.currency)}
+                                                                <p
+                                                                    className="text-xl font-bold text-green-400 tabular-nums transition-all duration-100"
+                                                                    style={{
+                                                                        textShadow: isAnimatingThis ? '0 0 15px rgba(74, 222, 128, 0.5)' : 'none'
+                                                                    }}
+                                                                >
+                                                                    {event.currencySymbol || event.currency}{' '}
+                                                                    {displayPrice.toFixed(2)}
                                                                 </p>
                                                                 <p className="text-xs text-gray-500">
                                                                     {calc.valuePercentage.toFixed(0)}%
@@ -475,17 +601,97 @@ function ResaleDetailContent() {
                                     </div>
                                 )}
 
-                                {/* Summary */}
+                                {/* Summary with Countdown */}
                                 {resaleCalc && selectedZone && (
-                                    <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-6">
-                                        <div className="flex items-center justify-between mb-2">
+                                    <div
+                                        style={{
+                                            background: `linear-gradient(135deg, ${colorPalette.dominant}15, ${colorPalette.accent}15)`,
+                                            borderColor: `${colorPalette.dominant}30`
+                                        }}
+                                        className="border rounded-xl p-6 mb-6 backdrop-blur-sm"
+                                    >
+                                        {/* Countdown Timer */}
+                                        <div className="mb-4 pb-4 border-b" style={{ borderColor: `${colorPalette.dominant}20` }}>
+                                            <p className="text-xs text-gray-400 mb-2 text-center">⏰ Tiempo restante para el evento</p>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                <div className="text-center">
+                                                    <div
+                                                        style={{
+                                                            background: `${colorPalette.dominant}20`,
+                                                            color: colorPalette.text
+                                                        }}
+                                                        className="text-2xl font-bold rounded-lg py-2"
+                                                    >
+                                                        {timeLeft.days}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1">días</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <div
+                                                        style={{
+                                                            background: `${colorPalette.dominant}20`,
+                                                            color: colorPalette.text
+                                                        }}
+                                                        className="text-2xl font-bold rounded-lg py-2"
+                                                    >
+                                                        {timeLeft.hours}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1">hrs</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <div
+                                                        style={{
+                                                            background: `${colorPalette.dominant}20`,
+                                                            color: colorPalette.text
+                                                        }}
+                                                        className="text-2xl font-bold rounded-lg py-2"
+                                                    >
+                                                        {timeLeft.minutes}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1">min</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <div
+                                                        style={{
+                                                            background: `${colorPalette.dominant}20`,
+                                                            color: colorPalette.text
+                                                        }}
+                                                        className="text-2xl font-bold rounded-lg py-2 animate-pulse"
+                                                    >
+                                                        {timeLeft.seconds}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1">seg</p>
+                                                </div>
+                                            </div>
+                                            {timeLeft.days <= 7 && (
+                                                <p className="text-xs text-center mt-3 font-semibold" style={{ color: colorPalette.accent }}>
+                                                    ⚠️ ¡Tu entrada pierde valor cada día que pasa!
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Amount Summary */}
+                                        <div className="flex items-center justify-between">
                                             <span className="text-gray-400">Recibirás:</span>
-                                            <span className="text-3xl font-bold text-green-400">
-                                                {formatPrice(resaleCalc.currentValue, event.currency)}
+                                            <span
+                                                className="text-3xl font-bold tabular-nums transition-all duration-100"
+                                                style={{
+                                                    color: colorPalette.accent,
+                                                    textShadow: animatingKeys.has('main') ? `0 0 20px ${colorPalette.accent}80` : 'none'
+                                                }}
+                                            >
+                                                {event.currencySymbol || event.currency}{' '}
+                                                {(() => {
+                                                    const mainAnimated = animatedPrices.get('main');
+                                                    if (animatingKeys.has('main') && mainAnimated !== undefined) {
+                                                        return mainAnimated.toFixed(2);
+                                                    }
+                                                    return realTimePrice !== null ? realTimePrice.toFixed(2) : resaleCalc.currentValue.toFixed(2);
+                                                })()}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-gray-500">
-                                            {resaleCalc.valuePercentage.toFixed(0)}% del valor original
+                                        <p className="text-xs text-gray-500 text-right mt-1">
+                                            {resaleCalc.valuePercentage.toFixed(2)}% del valor original · {animatingKeys.has('main') ? '🎰 Calculando...' : '⏱️ Bajando en tiempo real'}
                                         </p>
                                     </div>
                                 )}
@@ -494,7 +700,11 @@ function ResaleDetailContent() {
                                 <Button
                                     onClick={handleSubmit}
                                     disabled={submitting || !selectedZone}
-                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-lg py-6 shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70 transition-all duration-300"
+                                    style={{
+                                        background: colorPalette.gradients?.primary || `linear-gradient(135deg, ${colorPalette.dominant}, ${colorPalette.accent})`,
+                                        boxShadow: `0 10px 30px ${colorPalette.dominant}40, 0 20px 60px ${colorPalette.dominant}20`
+                                    }}
+                                    className="w-full text-white text-lg py-6 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 font-bold"
                                 >
                                     {submitting ? (
                                         'Enviando...'

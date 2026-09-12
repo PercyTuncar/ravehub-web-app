@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { eventsCollection, eventDjsCollection } from '@/lib/firebase/collections';
+import { eventsCollection, eventDjsCollection } from '@/lib/firebase/admin-collections';
 import { Event, EventDj } from '@/lib/types';
 import StructuredData from '@/components/seo/StructuredData';
 import BuyTicketsClient from './BuyTicketsClient';
@@ -48,14 +48,12 @@ export async function generateStaticParams() {
 
 async function getEventData(slug: string): Promise<{ event: Event; eventDjs: EventDj[] } | null> {
   try {
-    // Use cached query for better performance
     const conditions = [{ field: 'slug', operator: '==', value: slug }];
-    const events = await eventsCollection.queryCached(
+    const events = await eventsCollection.query(
       conditions,
       undefined,
       'desc',
-      1,
-      `event-tickets-${slug}` // Cache key
+      1
     );
 
     if (events.length === 0) {
