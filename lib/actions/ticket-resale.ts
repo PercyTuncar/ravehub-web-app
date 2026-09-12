@@ -122,6 +122,7 @@ export async function createCustomQuote(data: {
 
 /**
  * Obtener eventos elegibles para reventa (solo próximos)
+ * ✅ PÚBLICO: No requiere autenticación para ver eventos
  */
 export async function getUpcomingEventsForResale(): Promise<{
   success: boolean;
@@ -129,10 +130,8 @@ export async function getUpcomingEventsForResale(): Promise<{
   error?: string;
 }> {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, error: 'No autenticado' };
-    }
+    // ✅ NO verificar autenticación aquí - debe ser público
+    // Los eventos son públicos, cualquiera puede verlos
 
     // Obtener todos los eventos publicados
     const allEvents = await eventsCollection.query([

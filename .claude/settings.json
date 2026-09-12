@@ -122,7 +122,8 @@
       "Bash(xargs grep -l \"installment\\\\|cuotas\")",
       "Bash(git commit -m 'feat: Sistema completo de cuotas con validación inteligente de fechas y mejoras de UX *)",
       "Bash(git push *)",
-      "Bash(xargs grep -l \"InstallmentTimeline\")"
+      "Bash(xargs grep -l \"InstallmentTimeline\")",
+      "Bash(git commit -m 'fix: Hacer eventos publicados accesibles sin autenticación para página de reventa *)"
     ]
   }
 }

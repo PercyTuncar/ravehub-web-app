@@ -22,9 +22,11 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // Events - read for all authenticated users, write for admins
+    // Events - read PUBLIC for published events, write for admins
     match /events/{eventId} {
-      allow read: if request.auth != null;
+      allow read: if resource.data.eventStatus == 'published' ||
+                     (request.auth != null &&
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator']);
       allow write: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
     }
