@@ -5,10 +5,6 @@
       "schedule": "0 2 * * *"
     },
     {
-      "path": "/api/cron/check-ticket-availability",
-      "schedule": "0 * * * *"
-    },
-    {
       "path": "/api/cron/check-overdue-installments",
       "schedule": "0 3 * * *"
     }

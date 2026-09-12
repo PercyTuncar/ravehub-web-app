@@ -1,0 +1,24 @@
+name: Check Ticket Availability
+
+on:
+  schedule:
+    # GitHub Actions replaces the hourly Vercel Cron on the Hobby plan.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-ticket-availability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check scheduled tickets
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            "https://www.ravehublatam.com/api/cron/check-ticket-availability"
