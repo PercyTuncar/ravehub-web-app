@@ -41,6 +41,7 @@ function AdminInstallmentsContent() {
   // Approve confirm dialog state
   const [approveTarget, setApproveTarget] = useState<{ id: string; number: number } | null>(null);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const fetchInstallments = async () => {
     setLoading(true);
@@ -61,15 +62,19 @@ function AdminInstallmentsContent() {
     if (!approveTarget) return;
     setProcessingId(approveTarget.id);
     setApproveDialogOpen(false);
-    const result = await approveInstallmentProof(approveTarget.id);
+    const result = await approveInstallmentProof(approveTarget.id, paymentDate);
     if (result.success) {
-      toast.success(`Cuota #${approveTarget.number} aprobada correctamente`);
+      const message = result.recalculated
+        ? `Cuota #${approveTarget.number} aprobada y fechas recalculadas`
+        : `Cuota #${approveTarget.number} aprobada correctamente`;
+      toast.success(message);
       setInstallments(prev => prev.filter(i => i.id !== approveTarget.id));
     } else {
       toast.error(result.error || 'Error al aprobar');
     }
     setProcessingId(null);
     setApproveTarget(null);
+    setPaymentDate(new Date().toISOString().split('T')[0]); // Reset to today
   };
 
   const handleRejectConfirm = async () => {
@@ -96,6 +101,7 @@ function AdminInstallmentsContent() {
 
   const openApproveDialog = (id: string, number: number) => {
     setApproveTarget({ id, number });
+    setPaymentDate(new Date().toISOString().split('T')[0]); // Reset to today when opening
     setApproveDialogOpen(true);
   };
 
@@ -269,9 +275,29 @@ function AdminInstallmentsContent() {
                 : ''}
             </DialogDescription>
           </DialogHeader>
+
+          {/* Payment Date Input */}
+          <div className="space-y-2">
+            <Label htmlFor="payment-date" className="text-white/80 flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Fecha real del pago
+            </Label>
+            <Input
+              id="payment-date"
+              type="date"
+              value={paymentDate}
+              onChange={e => setPaymentDate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]} // Cannot be future date
+              className="bg-black/30 border-white/10 text-white focus:border-green-500/50"
+            />
+            <p className="text-xs text-white/40">
+              Esta fecha se usará para calcular automáticamente las siguientes cuotas. Si el cliente pagó hace días, selecciona la fecha del comprobante.
+            </p>
+          </div>
+
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-sm text-green-400">
             Al aprobar, el usuario recibirá una notificación y el estado de la cuota cambiará a <strong>Pagada</strong>.
-            Si es la última cuota, el ticket quedará completamente aprobado.
+            Las fechas de las siguientes cuotas se recalcularán automáticamente desde esta fecha.
           </div>
           <DialogFooter className="gap-2">
             <Button

@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -42,6 +43,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { TicketFiltersSkeleton, TicketRowSkeleton, TicketStatSkeleton } from '@/components/admin/TicketLoadingSkeletons';
+import { db } from '@/lib/firebase/config';
+import { doc, updateDoc } from 'firebase/firestore';
 
 // Helper to parse dates
 const parseDate = (date: any) => {
@@ -72,6 +75,7 @@ function TicketsAdminContent() {
     const [paymentFilter, setPaymentFilter] = useState<string>('all');
     const [deliveryFilter, setDeliveryFilter] = useState<string>('all');
     const [proofFilter, setProofFilter] = useState<string>('all');
+    const [eventFilter, setEventFilter] = useState<string>('all');
 
     // Real-time stats from database
     const [realStats, setRealStats] = useState({
@@ -101,10 +105,22 @@ function TicketsAdminContent() {
     const [installmentProofModalOpen, setInstallmentProofModalOpen] = useState(false);
     const [selectedInstallment, setSelectedInstallment] = useState<any | null>(null);
 
+    // Payment Proof Modal
+    const [proofModalOpen, setProofModalOpen] = useState(false);
+    const [selectedProofUrl, setSelectedProofUrl] = useState<string>('');
+
     // Bulk selection
     const [selectedTicketIds, setSelectedTicketIds] = useState<Set<string>>(new Set());
     const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
     const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+    // Helper to check if event has passed
+    const isEventPassed = (eventDate: any) => {
+        if (!eventDate) return false;
+        const date = parseDate(eventDate);
+        const now = new Date();
+        return date < now;
+    };
 
     // Helper functions for ticket information
     const getTicketQuantity = (ticket: any) => {
@@ -112,6 +128,47 @@ function TicketsAdminContent() {
             return ticket.ticketItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
         }
         return ticket.quantity || 0;
+    };
+
+    // Get installment payment status
+    const getInstallmentStatus = (ticket: any) => {
+        // If not installment payment, it's complete
+        if (ticket.paymentType !== 'installment') {
+            return { status: 'complete', text: 'Pago completo', color: 'bg-green-500/20 text-green-400 border-green-500/30' };
+        }
+
+        // If payment is approved and not installment, it's complete
+        if (ticket.paymentStatus === 'approved' && ticket.paymentType !== 'installment') {
+            return { status: 'complete', text: 'Pago completo', color: 'bg-green-500/20 text-green-400 border-green-500/30' };
+        }
+
+        // For installment payments, we need to check the installments
+        // This will be updated when we load installments for each ticket
+        const ticketInstallments = installments.filter(inst => inst.transactionId === ticket.id);
+
+        if (ticketInstallments.length === 0) {
+            // No installments loaded yet, check based on paymentStatus
+            if (ticket.paymentStatus === 'approved') {
+                return { status: 'complete', text: 'Pago completo', color: 'bg-green-500/20 text-green-400 border-green-500/30' };
+            } else {
+                return { status: 'pending', text: 'Cuotas pendientes', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' };
+            }
+        }
+
+        const totalInstallments = ticketInstallments.length;
+        const paidInstallments = ticketInstallments.filter(inst => inst.status === 'paid' && inst.adminApproved).length;
+
+        if (paidInstallments === totalInstallments) {
+            return { status: 'complete', text: 'Pago completo', color: 'bg-green-500/20 text-green-400 border-green-500/30' };
+        } else if (paidInstallments === 0) {
+            return { status: 'pending', text: `${totalInstallments} cuotas pendientes`, color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' };
+        } else {
+            return {
+                status: 'partial',
+                text: `${paidInstallments}/${totalInstallments} cuotas pagadas`,
+                color: 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+            };
+        }
     };
 
     useEffect(() => {
@@ -134,6 +191,21 @@ function TicketsAdminContent() {
                 });
 
                 setTickets(sortedTickets);
+
+                // Load installments for all tickets with installment payment type
+                const installmentTickets = sortedTickets.filter((t: any) => t.paymentType === 'installment');
+                if (installmentTickets.length > 0) {
+                    const allInstallments = await Promise.all(
+                        installmentTickets.map((ticket: any) => getTicketInstallments(ticket.id))
+                    );
+
+                    // Flatten and combine all installments
+                    const combinedInstallments = allInstallments
+                        .filter(result => result.success)
+                        .flatMap(result => result.installments || []);
+
+                    setInstallments(combinedInstallments);
+                }
             } else {
                 toast.error(ticketsResult.error || 'Error al cargar tickets');
             }
@@ -261,13 +333,18 @@ function TicketsAdminContent() {
         try {
             const result = await getTicketInstallments(ticketId);
             if (result.success && result.installments) {
-                setInstallments(result.installments);
-            } else {
-                setInstallments([]);
+                // ✅ CORREGIR: Actualizar solo las cuotas de este ticket, no reemplazar todas
+                setInstallments(prev => {
+                    // Eliminar cuotas antiguas de este ticket
+                    const filtered = prev.filter(inst => inst.transactionId !== ticketId);
+                    // Agregar las nuevas cuotas de este ticket
+                    return [...filtered, ...result.installments];
+                });
             }
+            // ✅ No hacer setInstallments([]) si falla, mantener las existentes
         } catch (error) {
             console.error('Error loading installments:', error);
-            setInstallments([]);
+            // ✅ No limpiar todo, solo log del error
         }
     };
 
@@ -313,22 +390,52 @@ function TicketsAdminContent() {
         }
     };
 
+    // Installment proof upload with date
+    const [installmentPaymentDate, setInstallmentPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [autoApproveInstallment, setAutoApproveInstallment] = useState(false);
+
     const handleInstallmentProofUpload = async (url: string) => {
         if (!selectedInstallment) return;
 
         setActionLoading(true);
         try {
-            // Call a server action to update the installment with admin-uploaded proof
-            // For now, we'll use the same approach as manual assignment
-            // You might want to create a specific action for this
-            toast.success('Comprobante subido correctamente');
+            // Update installment with the uploaded proof
+            const installmentRef = doc(db, 'paymentInstallments', selectedInstallment.id);
+
+            await updateDoc(installmentRef, {
+                paymentProofUrl: url,
+                proofUrl: url,
+                uploadedAt: new Date().toISOString(),
+                uploadedBy: 'admin',
+            });
+
+            // If auto-approve is checked, approve immediately with the payment date
+            if (autoApproveInstallment) {
+                const result = await approveInstallmentProof(selectedInstallment.id, installmentPaymentDate);
+                if (result.success) {
+                    toast.success(result.recalculated
+                        ? 'Comprobante subido, aprobado y fechas recalculadas'
+                        : 'Comprobante subido y aprobado correctamente'
+                    );
+                } else {
+                    toast.error(result.error || 'Error al aprobar');
+                }
+            } else {
+                toast.success('Comprobante subido correctamente. Ahora puedes aprobarlo.');
+            }
+
             setInstallmentProofModalOpen(false);
             setSelectedInstallment(null);
+            setInstallmentPaymentDate(new Date().toISOString().split('T')[0]);
+            setAutoApproveInstallment(false);
 
+            // Reload installments and tickets
             if (selectedTicket) {
                 await loadTicketInstallments(selectedTicket.id);
             }
+            await loadTickets();
         } catch (error) {
+            console.error('Error uploading installment proof:', error);
             toast.error('Error al subir comprobante');
         } finally {
             setActionLoading(false);
@@ -370,6 +477,7 @@ function TicketsAdminContent() {
 
         const matchesStatus = statusFilter === 'all' || ticket.paymentStatus === statusFilter;
         const matchesPayment = paymentFilter === 'all' || ticket.paymentMethod === paymentFilter;
+        const matchesEvent = eventFilter === 'all' || ticket.eventId === eventFilter;
 
         const matchesDelivery = deliveryFilter === 'all' ||
             (deliveryFilter === 'pending' && (!ticket.ticketDeliveryStatus || ticket.ticketDeliveryStatus === 'pending')) ||
@@ -379,7 +487,7 @@ function TicketsAdminContent() {
             (proofFilter === 'hasProof' && ticket.paymentProofUrl) ||
             (proofFilter === 'noProof' && !ticket.paymentProofUrl);
 
-        return matchesSearch && matchesStatus && matchesPayment && matchesDelivery && matchesProof;
+        return matchesSearch && matchesStatus && matchesPayment && matchesEvent && matchesDelivery && matchesProof;
     });
 
     // Pagination
@@ -389,8 +497,27 @@ function TicketsAdminContent() {
         currentPage * ITEMS_PER_PAGE
     );
 
-    // Use real stats from database (loaded via getTicketStats)
-    const stats = realStats;
+    // Get unique events from tickets for event filter dropdown
+    const uniqueEvents = Array.from(
+        new Map(tickets.map(t => [t.eventId, { id: t.eventId, name: t.eventName }])).values()
+    ).sort((a, b) => a.name.localeCompare(b.name));
+
+    // Calculate filtered stats (stats for currently filtered tickets)
+    const filteredStats = {
+        total: filteredTickets.length,
+        pending: filteredTickets.filter(t => t.paymentStatus === 'pending').length,
+        approved: filteredTickets.filter(t => t.paymentStatus === 'approved').length,
+        rejected: filteredTickets.filter(t => t.paymentStatus === 'rejected').length,
+        totalSales: filteredTickets
+            .filter(t => t.paymentStatus === 'approved')
+            .reduce((sum, t) => sum + (t.totalAmount || 0), 0),
+        currency: realStats.currency
+    };
+
+    // Use filtered stats when a filter is active, otherwise use real stats
+    const stats = (eventFilter !== 'all' || statusFilter !== 'all' || paymentFilter !== 'all' || deliveryFilter !== 'all' || proofFilter !== 'all' || searchTerm)
+        ? filteredStats
+        : realStats;
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -421,11 +548,11 @@ function TicketsAdminContent() {
     const getDeliveryStatusBadge = (status: string) => {
         switch (status) {
             case 'available':
-                return <Badge className="bg-green-500/20 text-green-300 border-green-500/30">Tickets Subidos</Badge>;
+                return <Badge className="bg-green-500/20 text-green-300 border-green-500/30"><FileCheck className="w-3 h-3 mr-1" />Tickets Disponibles</Badge>;
             case 'delivered':
-                return <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">Entregado</Badge>;
+                return <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30"><CheckCircle className="w-3 h-3 mr-1" />Entregado</Badge>;
             default:
-                return <Badge className="bg-red-500/30 text-red-300 border-red-500/50 animate-pulse">Sin Subir</Badge>;
+                return <Badge className="bg-red-500/30 text-red-300 border-red-500/50 animate-pulse"><AlertCircle className="w-3 h-3 mr-1" />Tickets sin subir</Badge>;
         }
     };
 
@@ -474,8 +601,17 @@ function TicketsAdminContent() {
 
                 {/* Page Title */}
                 <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-white tracking-tight">Gestión de Tickets</h2>
-                    <p className="text-white/60 mt-1">Administra las entradas vendidas y verifica pagos offline</p>
+                    <h2 className="text-3xl font-bold text-white tracking-tight">
+                        Gestión de Tickets
+                        {eventFilter !== 'all' && (
+                            <span className="text-blue-400"> - {uniqueEvents.find(e => e.id === eventFilter)?.name}</span>
+                        )}
+                    </h2>
+                    <p className="text-white/60 mt-1">
+                        {eventFilter !== 'all'
+                            ? `Administra las entradas de este evento específico`
+                            : 'Administra las entradas vendidas y verifica pagos offline'}
+                    </p>
                 </div>
 
                 {/* Stats Cards */}
@@ -562,6 +698,20 @@ function TicketsAdminContent() {
                             </div>
 
                             {/* Filters */}
+                            <Select value={eventFilter} onValueChange={setEventFilter}>
+                                <SelectTrigger className="w-full lg:w-[220px] bg-black/20 border-white/10 text-white">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                    <SelectItem value="all">Todos los eventos</SelectItem>
+                                    {uniqueEvents.map(event => (
+                                        <SelectItem key={event.id} value={event.id}>
+                                            {event.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
                             <Select value={statusFilter} onValueChange={setStatusFilter}>
                                 <SelectTrigger className="w-full lg:w-[200px] bg-black/20 border-white/10 text-white">
                                     <SelectValue />
@@ -609,6 +759,24 @@ function TicketsAdminContent() {
                             </Select>
 
                             {/* Action Buttons */}
+                            {(eventFilter !== 'all' || statusFilter !== 'all' || paymentFilter !== 'all' || deliveryFilter !== 'all' || proofFilter !== 'all' || searchTerm) && (
+                                <Button
+                                    onClick={() => {
+                                        setEventFilter('all');
+                                        setStatusFilter('all');
+                                        setPaymentFilter('all');
+                                        setDeliveryFilter('all');
+                                        setProofFilter('all');
+                                        setSearchTerm('');
+                                    }}
+                                    variant="outline"
+                                    className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                >
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Limpiar Filtros
+                                </Button>
+                            )}
+
                             <Button
                                 onClick={loadTickets}
                                 variant="outline"
@@ -649,6 +817,42 @@ function TicketsAdminContent() {
                         </div>
                     </CardContent>
                 </Card>
+                )}
+
+                {/* Event Filter Banner */}
+                {eventFilter !== 'all' && (
+                    <Card className="bg-blue-500/10 backdrop-blur-xl border-blue-500/30 mb-6">
+                        <CardContent className="p-4 !pt-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                        <Filter className="w-5 h-5 text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-blue-300">Filtrando por evento</p>
+                                        <p className="text-xs text-blue-400/80">
+                                            {uniqueEvents.find(e => e.id === eventFilter)?.name}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="text-right">
+                                        <p className="text-xs text-blue-400/60">Tickets de este evento</p>
+                                        <p className="text-2xl font-bold text-blue-300">{filteredTickets.length}</p>
+                                    </div>
+                                    <Button
+                                        onClick={() => setEventFilter('all')}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                                    >
+                                        <XCircle className="w-4 h-4 mr-2" />
+                                        Ver Todos
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 )}
 
                 {/* Tickets Grid */}
@@ -751,11 +955,26 @@ function TicketsAdminContent() {
                                                         </Badge>
                                                     )}
 
-                                                    {/* Comprobante subido */}
+                                                    {/* Comprobante subido - Clickeable */}
                                                     {ticket.paymentProofUrl && (
-                                                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                                        <Badge
+                                                            className="bg-purple-500/20 text-purple-400 border-purple-500/30 cursor-pointer hover:bg-purple-500/30 transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedProofUrl(ticket.paymentProofUrl);
+                                                                setProofModalOpen(true);
+                                                            }}
+                                                        >
                                                             <FileCheck className="w-3 h-3 mr-1" />
-                                                            Con comprobante
+                                                            Ver comprobante
+                                                        </Badge>
+                                                    )}
+
+                                                    {/* Estado de cuotas */}
+                                                    {ticket.paymentType === 'installment' && (
+                                                        <Badge className={getInstallmentStatus(ticket).color}>
+                                                            <CreditCard className="w-3 h-3 mr-1" />
+                                                            {getInstallmentStatus(ticket).text}
                                                         </Badge>
                                                     )}
 
@@ -1340,7 +1559,47 @@ function TicketsAdminContent() {
                                 : ''}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
+                    <div className="space-y-4 py-4">
+                        {/* Payment Date Input */}
+                        <div className="space-y-2">
+                            <label htmlFor="installment-payment-date" className="text-sm font-medium text-white/80 flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                Fecha real del pago
+                            </label>
+                            <Input
+                                id="installment-payment-date"
+                                type="date"
+                                value={installmentPaymentDate}
+                                onChange={e => setInstallmentPaymentDate(e.target.value)}
+                                max={new Date().toISOString().split('T')[0]}
+                                className="bg-black/30 border-white/10 text-white focus:border-primary"
+                            />
+                            <p className="text-xs text-white/40">
+                                Esta fecha se usará para recalcular las siguientes cuotas si se aprueba.
+                            </p>
+                        </div>
+
+                        {/* Auto-approve Checkbox */}
+                        <div className="flex items-center space-x-2 p-3 bg-green-500/5 border border-green-500/20 rounded-lg">
+                            <input
+                                type="checkbox"
+                                id="auto-approve"
+                                checked={autoApproveInstallment}
+                                onChange={e => setAutoApproveInstallment(e.target.checked)}
+                                className="w-4 h-4 rounded border-white/20 bg-black/20 text-primary focus:ring-primary cursor-pointer"
+                            />
+                            <label htmlFor="auto-approve" className="text-sm text-white/80 cursor-pointer">
+                                Aprobar automáticamente después de subir
+                            </label>
+                        </div>
+
+                        {autoApproveInstallment && (
+                            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-400">
+                                <strong>Nota:</strong> Al aprobar, las fechas de las cuotas siguientes se recalcularán automáticamente desde la fecha especificada.
+                            </div>
+                        )}
+
+                        {/* File Upload */}
                         <FileUpload
                             onUploadComplete={handleInstallmentProofUpload}
                             folder="payment-proofs"
@@ -1357,9 +1616,80 @@ function TicketsAdminContent() {
                             onClick={() => {
                                 setInstallmentProofModalOpen(false);
                                 setSelectedInstallment(null);
+                                setInstallmentPaymentDate(new Date().toISOString().split('T')[0]);
+                                setAutoApproveInstallment(false);
                             }}
                         >
                             Cancelar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Payment Proof Viewer Modal */}
+            <Dialog open={proofModalOpen} onOpenChange={setProofModalOpen}>
+                <DialogContent className="bg-[#1A1D21] border-white/10 text-white max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-white">
+                            <FileCheck className="w-5 h-5 text-purple-400" />
+                            Comprobante de Pago
+                        </DialogTitle>
+                        <DialogDescription className="text-white/60">
+                            Visualización del comprobante de pago subido
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {selectedProofUrl && (
+                            <div className="relative bg-black/20 rounded-lg overflow-hidden">
+                                {selectedProofUrl.toLowerCase().endsWith('.pdf') ? (
+                                    <div className="flex flex-col items-center justify-center p-8 space-y-4">
+                                        <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+                                            <FileCheck className="w-8 h-8 text-red-400" />
+                                        </div>
+                                        <p className="text-white/60 text-center">
+                                            Documento PDF
+                                        </p>
+                                        <a
+                                            href={selectedProofUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                            Abrir PDF en nueva pestaña
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <img
+                                        src={selectedProofUrl}
+                                        alt="Comprobante de pago"
+                                        className="w-full h-auto max-h-[70vh] object-contain"
+                                    />
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter className="gap-2">
+                        <a
+                            href={selectedProofUrl}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Button
+                                variant="outline"
+                                className="border-white/10 text-white hover:bg-white/5"
+                            >
+                                <Download className="w-4 h-4 mr-2" />
+                                Descargar
+                            </Button>
+                        </a>
+                        <Button
+                            variant="outline"
+                            className="border-white/10 text-white hover:bg-white/5"
+                            onClick={() => setProofModalOpen(false)}
+                        >
+                            Cerrar
                         </Button>
                     </DialogFooter>
                 </DialogContent>

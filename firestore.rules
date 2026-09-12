@@ -165,27 +165,43 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid ==
         get(/databases/$(database)/documents/ticketTransactions/$(resource.data.transactionId)).data.userId;
 
-      // Users can create installments only via purchase flow (transactionId must exist and be theirs)
-      allow create: if request.auth != null
-        && exists(/databases/$(database)/documents/ticketTransactions/$(request.resource.data.transactionId))
-        && request.auth.uid == get(/databases/$(database)/documents/ticketTransactions/$(request.resource.data.transactionId)).data.userId
-        && request.resource.data.status == 'pending'
-        && request.resource.data.adminApproved == false;
+      // ✅ ELIMINAR: allow create completamente
+      // Las cuotas SOLO se crean vía Admin SDK (app/api/tickets/purchase/route.ts)
 
-      // Users can only update proof fields on their own installments
+      // ✅ CAMBIO: Regla de update segura - solo permite actualizar userUploadedProofUrl y userUploadedAt
+      // Todos los demás campos deben permanecer iguales
       allow update: if request.auth != null
         && request.auth.uid == get(/databases/$(database)/documents/ticketTransactions/$(resource.data.transactionId)).data.userId
-        && request.resource.data.transactionId == resource.data.transactionId // Cannot reassign
-        && request.resource.data.installmentNumber == resource.data.installmentNumber // Cannot renumber
-        && request.resource.data.amount == resource.data.amount // Cannot change amount
-        && request.resource.data.adminApproved == resource.data.adminApproved // Cannot approve self
-        && (!('paidAt' in request.resource.data) || request.resource.data.paidAt == resource.data.paidAt); // Cannot set paidAt
+        // Campos inmutables - deben ser idénticos
+        && request.resource.data.transactionId == resource.data.transactionId
+        && request.resource.data.installmentNumber == resource.data.installmentNumber
+        && request.resource.data.amount == resource.data.amount
+        && request.resource.data.currency == resource.data.currency
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.dueDate == resource.data.dueDate
+        && request.resource.data.adminApproved == resource.data.adminApproved
+        // Campos de auditoría - si existen, no pueden cambiar
+        && (!('paidAt' in request.resource.data) || request.resource.data.paidAt == resource.data.paidAt)
+        && (!('approvedAt' in request.resource.data) || request.resource.data.approvedAt == resource.data.approvedAt)
+        && (!('approvedBy' in request.resource.data) || request.resource.data.approvedBy == resource.data.approvedBy)
+        && (!('rejectedAt' in request.resource.data) || request.resource.data.rejectedAt == resource.data.rejectedAt)
+        && (!('rejectedBy' in request.resource.data) || request.resource.data.rejectedBy == resource.data.rejectedBy)
+        && (!('revertedAt' in request.resource.data) || request.resource.data.revertedAt == resource.data.revertedAt)
+        && (!('revertedBy' in request.resource.data) || request.resource.data.revertedBy == resource.data.revertedBy)
+        && (!('actualPaymentDate' in request.resource.data) || request.resource.data.actualPaymentDate == resource.data.actualPaymentDate)
+        && (!('paymentProofUrl' in request.resource.data) || request.resource.data.paymentProofUrl == resource.data.paymentProofUrl)
+        && (!('originalPhaseId' in request.resource.data) || request.resource.data.originalPhaseId == resource.data.originalPhaseId)
+        && (!('currentPhaseId' in request.resource.data) || request.resource.data.currentPhaseId == resource.data.currentPhaseId)
+        && (!('originalAmount' in request.resource.data) || request.resource.data.originalAmount == resource.data.originalAmount)
+        && (!('priceAdjusted' in request.resource.data) || request.resource.data.priceAdjusted == resource.data.priceAdjusted)
+        && (!('priceAdjustmentReason' in request.resource.data) || request.resource.data.priceAdjustmentReason == resource.data.priceAdjustmentReason)
+        && (!('priceAdjustedAt' in request.resource.data) || request.resource.data.priceAdjustedAt == resource.data.priceAdjustedAt);
 
       // Admins can read all installments
       allow read: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
 
-      // Admin writes go through Admin SDK only
+      // Admin writes go through Admin SDK only (bypasses these rules)
     }
 
     // Gallery collections - read for all, write for admins

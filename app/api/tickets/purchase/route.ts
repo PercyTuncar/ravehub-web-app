@@ -119,11 +119,14 @@ export async function POST(request: NextRequest) {
     if (paymentType === 'installment' && installments && installmentPlanMetadata) {
       const { calculateInstallmentPlan } = await import('@/lib/utils/admin-ticket-calculator');
       const reservationAmount = installmentPlanMetadata.reservationAmount;
+
+      // ✅ CAMBIO: Pasar fecha del evento para validación
       const plan = calculateInstallmentPlan(
         calculatedAdjustedTotal,
         reservationAmount,
         installments,
-        new Date(new Date().setMonth(new Date().getMonth() + 1))
+        new Date(new Date().setMonth(new Date().getMonth() + 1)),
+        event.eventDate // ✅ NUEVO: Validar contra fecha del evento
       );
 
       if (!plan.success || !plan.installments) {
@@ -131,6 +134,12 @@ export async function POST(request: NextRequest) {
           { error: plan.error || 'Unable to calculate installment plan' },
           { status: 400 }
         );
+      }
+
+      // ✅ NUEVO: Guardar warning si la última cuota fue ajustada
+      if (plan.lastInstallmentAdjusted && plan.warning) {
+        // Se guardará en la transacción para mostrar al usuario
+        transactionData.lastInstallmentWarning = plan.warning;
       }
 
       if (reservationAmount > 0) {
@@ -142,6 +151,7 @@ export async function POST(request: NextRequest) {
           dueDate: new Date().toISOString(),
           status: 'pending',
           adminApproved: false,
+          originalPhaseId: selectedPhase.id, // Track original phase
           ...(proofUrl ? {
             userUploadedProofUrl: proofUrl,
             userUploadedAt: new Date().toISOString(),
@@ -158,6 +168,9 @@ export async function POST(request: NextRequest) {
           dueDate: installment.dueDate.toISOString(),
           status: 'pending',
           adminApproved: false,
+          originalPhaseId: selectedPhase.id, // Track original phase
+          originalAmount: installment.amount, // Track original amount
+          isAdjusted: installment.isAdjusted || false, // ✅ NUEVO: Marca si fue ajustada
         });
       }
     }

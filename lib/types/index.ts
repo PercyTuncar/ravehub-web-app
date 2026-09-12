@@ -594,8 +594,9 @@ export interface TicketTransaction {
   paymentType: 'full' | 'installment';
   installments?: number;
   reservationAmount?: number;
-  paymentStatus: 'pending' | 'approved' | 'rejected';
+  paymentStatus: 'pending' | 'approved' | 'rejected' | 'expired'; // ✅ Agregado 'expired'
   expiresAt?: Date | string; // For pending offline payments
+  expiredAt?: string; // ✅ Cuándo expiró el ticket
   offlinePaymentMethod?: string;
   paymentProofUrl?: string;
   adminNotes?: string;
@@ -617,6 +618,9 @@ export interface TicketTransaction {
   isCourtesy: boolean;
   createdAt: Date | string;
   updatedAt?: Date;
+
+  // ✅ NUEVO: Warning sobre última cuota ajustada
+  lastInstallmentWarning?: string; // Aviso si la última cuota fue ajustada por la fecha del evento
 }
 
 // Payment Installment types
@@ -626,17 +630,37 @@ export interface PaymentInstallment {
   amount: number;
   currency: string;
   installmentNumber: number;
-  status: 'pending' | 'paid' | 'rejected' | 'overdue';
+  status: 'pending' | 'pending-approval' | 'paid' | 'rejected' | 'overdue'; // ✅ Agregado 'pending-approval'
   paymentProofUrl?: string; // Admin-uploaded proof
   userUploadedProofUrl?: string; // User-uploaded proof (pending admin approval)
   userUploadedAt?: string; // ISO string - when user uploaded proof
   paymentDate?: Date;
   paidAt?: string; // ISO string - when marked as paid
+  actualPaymentDate?: string; // ISO string - actual date from payment proof (can be different from paidAt/approvedAt)
   adminApproved: boolean;
-  approvedBy?: string;
+  approvedBy?: string; // ✅ ID del admin que aprobó
   approvedAt?: Date;
+  rejectedBy?: string; // ✅ ID del admin que rechazó
+  rejectedAt?: string; // ✅ Cuándo se rechazó
+  rejectionReason?: string; // ✅ Motivo del rechazo
+  revertedBy?: string; // ✅ ID del admin que revirtió
+  revertedAt?: string; // ✅ Cuándo se revirtió
   dueDate: Date | string;
   proofUrl?: string; // Legacy/additional proof field
+
+  // Phase tracking for price adjustments
+  originalPhaseId?: string; // Phase when ticket was purchased
+  currentPhaseId?: string; // Current phase if price was adjusted due to delay
+  originalAmount?: number; // Original amount before any price adjustment
+  priceAdjusted?: boolean; // True if amount was recalculated due to phase change
+  priceAdjustmentReason?: string; // Reason for price adjustment
+  priceAdjustmentDetails?: string; // ✅ JSON con detalles estructurados del ajuste
+  priceAdjustedAt?: string; // When price was adjusted
+  lastRecalculatedAt?: string; // ✅ Cuándo se recalculó la fecha por última vez
+  lastRecalculatedBy?: number; // ✅ Número de cuota que disparó el recálculo
+
+  // ✅ NUEVO: Validación contra fecha del evento
+  isAdjusted?: boolean; // True si la fecha fue ajustada para no exceder la fecha del evento
 }
 
 // Order types (for e-commerce)

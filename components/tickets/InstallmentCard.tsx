@@ -1,11 +1,12 @@
 'use client';
 
-import { CheckCircle2, Clock, CreditCard, Lock, Eye, Upload as UploadIcon, Calendar, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, CreditCard, Lock, Eye, Upload as UploadIcon, Calendar, XCircle, AlertCircle, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils/currency-converter';
+import { TimeRemaining } from '@/components/common/TimeRemaining';
 
-export type InstallmentStatus = 'paid' | 'pending-approval' | 'active' | 'future' | 'rejected';
+export type InstallmentStatus = 'paid' | 'pending-approval' | 'active' | 'future' | 'rejected' | 'overdue';
 
 interface InstallmentCardProps {
     installment: any; // PaymentInstallment
@@ -29,43 +30,50 @@ export function InstallmentCard({
     onRevert
 }: InstallmentCardProps) {
     const getStatusConfig = () => {
+        // ✅ NUEVO: Si es reserva (installmentNumber === 0), personalizar
+        const isReservation = installment.installmentNumber === 0;
+
         switch (status) {
             case 'paid':
                 return {
-                    icon: CheckCircle2,
-                    iconColor: 'text-green-400',
-                    bgColor: 'bg-green-500/10 backdrop-blur-sm',
-                    borderColor: 'border-green-500/20',
-                    textColor: 'text-green-400',
-                    badge: 'Pagado',
+                    icon: isReservation ? Bookmark : CheckCircle2,
+                    iconColor: isReservation ? 'text-purple-400' : 'text-green-400',
+                    bgColor: isReservation ? 'bg-purple-500/10 backdrop-blur-sm' : 'bg-green-500/10 backdrop-blur-sm',
+                    borderColor: isReservation ? 'border-purple-500/20' : 'border-green-500/20',
+                    textColor: isReservation ? 'text-purple-400' : 'text-green-400',
+                    badge: isReservation ? 'Reserva Pagada' : 'Pagado',
                     badgeVariant: 'default' as const,
-                    badgeClass: 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                    badgeClass: isReservation
+                        ? 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30'
+                        : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
                 };
             case 'pending-approval':
                 return {
-                    icon: Clock,
+                    icon: isReservation ? Bookmark : Clock,
                     iconColor: 'text-yellow-400',
                     bgColor: 'bg-yellow-500/10 backdrop-blur-sm',
                     borderColor: 'border-yellow-500/20',
                     textColor: 'text-yellow-400',
-                    badge: 'En Revisión',
+                    badge: isReservation ? 'Reserva en Revisión' : 'En Revisión',
                     badgeVariant: 'secondary' as const,
                     badgeClass: 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30'
                 };
             case 'active':
                 return {
-                    icon: CreditCard,
-                    iconColor: 'text-blue-400',
-                    bgColor: 'bg-blue-500/10 backdrop-blur-sm',
-                    borderColor: 'border-blue-500/50',
-                    textColor: 'text-blue-400',
-                    badge: 'Próximo Pago',
+                    icon: isReservation ? Bookmark : CreditCard,
+                    iconColor: isReservation ? 'text-purple-400' : 'text-blue-400',
+                    bgColor: isReservation ? 'bg-purple-500/10 backdrop-blur-sm' : 'bg-blue-500/10 backdrop-blur-sm',
+                    borderColor: isReservation ? 'border-purple-500/50' : 'border-blue-500/50',
+                    textColor: isReservation ? 'text-purple-400' : 'text-blue-400',
+                    badge: isReservation ? 'Pagar Reserva' : 'Próximo Pago',
                     badgeVariant: 'default' as const,
-                    badgeClass: 'bg-blue-500 hover:bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
+                    badgeClass: isReservation
+                        ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]'
+                        : 'bg-blue-500 hover:bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
                 };
             case 'future':
                 return {
-                    icon: Lock,
+                    icon: isReservation ? Bookmark : Lock,
                     iconColor: 'text-white/20',
                     bgColor: 'bg-white/5 backdrop-blur-sm',
                     borderColor: 'border-white/5',
@@ -76,14 +84,25 @@ export function InstallmentCard({
                 };
             case 'rejected':
                 return {
-                    icon: XCircle,
+                    icon: isReservation ? Bookmark : XCircle,
                     iconColor: 'text-red-400',
                     bgColor: 'bg-red-500/10 backdrop-blur-sm',
                     borderColor: 'border-red-500/20',
                     textColor: 'text-red-400',
-                    badge: 'Rechazado',
+                    badge: isReservation ? 'Reserva Rechazada' : 'Rechazado',
                     badgeVariant: 'destructive' as const,
                     badgeClass: 'bg-red-500/20 text-red-400 border-red-500/20'
+                };
+            case 'overdue':
+                return {
+                    icon: isReservation ? Bookmark : AlertCircle,
+                    iconColor: 'text-orange-500',
+                    bgColor: 'bg-orange-500/10 backdrop-blur-sm',
+                    borderColor: 'border-orange-500/30',
+                    textColor: 'text-orange-500',
+                    badge: isReservation ? 'Reserva Vencida' : 'Vencido',
+                    badgeVariant: 'destructive' as const,
+                    badgeClass: 'bg-orange-500/20 text-orange-500 border-orange-500/30'
                 };
         }
     };
@@ -122,11 +141,19 @@ export function InstallmentCard({
                             <Icon className={`w-5 h-5 ${config.iconColor}`} />
                         </div>
                         <div>
-                            <h4 className={`font-bold text-base ${status === 'future' ? 'text-white/40' : 'text-white'}`}>
+                            <h4 className={`font-bold text-base ${status === 'future' ? 'text-white/40' : 'text-white'} flex items-center gap-2`}>
                                 {getInstallmentTitle()}
+                                {/* ✅ NUEVO: Badge especial para reserva */}
+                                {installment.installmentNumber === 0 && (
+                                    <span className="text-[10px] px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full border border-purple-500/30 font-normal">
+                                        INICIAL
+                                    </span>
+                                )}
                             </h4>
                             {status === 'active' && (
-                                <p className="text-xs text-blue-400 font-medium animate-pulse">Tu turno para pagar</p>
+                                <p className="text-xs text-blue-400 font-medium animate-pulse">
+                                    {installment.installmentNumber === 0 ? 'Paga la reserva para iniciar' : 'Tu turno para pagar'}
+                                </p>
                             )}
                         </div>
                     </div>
@@ -134,6 +161,39 @@ export function InstallmentCard({
                         {config.badge}
                     </Badge>
                 </div>
+
+                {/* ✅ NUEVO: Tooltip explicativo para reserva activa */}
+                {installment.installmentNumber === 0 && status === 'active' && (
+                    <div className="mb-4 bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
+                        <p className="text-xs text-purple-300 flex items-start gap-2">
+                            <Bookmark className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                            <span>
+                                <strong>Reserva Inicial:</strong> Este pago aparta tu ticket y activa el plan de cuotas.
+                                Las cuotas restantes se habilitarán una vez aprobada la reserva.
+                            </span>
+                        </p>
+                    </div>
+                )}
+
+                {/* ✅ NUEVO: Alerta de urgencia para cuota activa que vence pronto */}
+                {status === 'active' && (() => {
+                    const dueDate = new Date(installment.dueDate);
+                    const now = new Date();
+                    const hoursRemaining = (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+                    if (hoursRemaining < 24 && hoursRemaining > 0) {
+                        return (
+                            <div className="mb-4 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_rgba(249,115,22,1)]" />
+                                <div className="flex-1">
+                                    <p className="text-xs text-orange-400 font-medium mb-0.5">⚠️ Vence en menos de 24 horas</p>
+                                    <p className="text-xs text-white/60">Paga ahora para mantener el precio original</p>
+                                </div>
+                            </div>
+                        );
+                    }
+                    return null;
+                })()}
 
                 {/* Amount */}
                 <div className="mb-4">
@@ -144,13 +204,38 @@ export function InstallmentCard({
 
                 {/* Due Date / Payment Date */}
                 <div className={`flex items-center gap-2 text-xs mb-4 ${status === 'future' ? 'text-white/20' : 'text-white/60'}`}>
-                    <Calendar className="w-3.5 h-3.5" />
                     {status === 'paid' && installment.paidAt ? (
-                        <span>Pagado: <span className="text-white font-medium">{formatDate(installment.paidAt)}</span></span>
+                        <>
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>Pagado: <span className="text-white font-medium">{formatDate(installment.paidAt)}</span></span>
+                        </>
+                    ) : status === 'active' || status === 'overdue' ? (
+                        // ✅ CAMBIO: Mostrar countdown para cuota activa o vencida
+                        <TimeRemaining
+                            targetDate={installment.dueDate}
+                            showIcon={true}
+                            className="font-medium"
+                        />
                     ) : (
-                        <span>Vence: <span className={status === 'active' ? 'text-blue-400 font-medium' : ''}>{formatDate(installment.dueDate)}</span></span>
+                        // Para cuotas futuras o en revisión, mostrar fecha estática
+                        <>
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>Vence: <span className={status === 'active' ? 'text-blue-400 font-medium' : ''}>{formatDate(installment.dueDate)}</span></span>
+                        </>
                     )}
                 </div>
+
+                {/* ✅ NUEVO: Warning para última cuota ajustada por fecha del evento */}
+                {installment.isAdjusted && (status === 'active' || status === 'future' || status === 'pending') && (
+                    <div className="mb-4 bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
+                        <p className="text-xs text-orange-300 flex items-start gap-2">
+                            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                            <span>
+                                <strong>Última Cuota:</strong> Debe pagarse 5 días antes del evento para garantizar el procesamiento a tiempo.
+                            </span>
+                        </p>
+                    </div>
+                )}
 
                 {/* Actions */}
                 {status === 'paid' && proofUrl && (
@@ -212,9 +297,28 @@ export function InstallmentCard({
                                 <XCircle className="w-3 h-3" />
                                 Pago Rechazado
                             </p>
-                            <p className="text-xs text-white/60 pl-5">
-                                Revisa el motivo y vuelve a intentarlo.
-                            </p>
+
+                            {/* ✅ AGREGAR: Mostrar motivo de rechazo */}
+                            {installment.rejectionReason ? (
+                                <div className="mt-2 pt-2 border-t border-red-500/20">
+                                    <p className="text-xs text-white/40 mb-1">Motivo:</p>
+                                    <p className="text-xs text-red-300/90 pl-3 border-l-2 border-red-500/30">
+                                        {installment.rejectionReason}
+                                    </p>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-white/60 pl-5">
+                                    Revisa el motivo con el administrador y vuelve a intentarlo.
+                                </p>
+                            )}
+
+                            {/* ✅ AGREGAR: Fecha de rechazo */}
+                            {installment.rejectedAt && (
+                                <p className="text-xs text-white/30 mt-2 flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    Rechazado: {formatDate(installment.rejectedAt)}
+                                </p>
+                            )}
                         </div>
                         <Button
                             type="button"

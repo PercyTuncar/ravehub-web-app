@@ -503,7 +503,8 @@ export async function createManualTicketTransaction(data: {
             dueDate: now,
             status: isReservationPaid ? 'paid' : 'pending',
             adminApproved: isReservationPaid,
-            ...(isReservationPaid ? { paidAt: now, approvedAt: now } : {}),
+            originalPhaseId: data.phaseId, // Track original phase
+            ...(isReservationPaid ? { paidAt: now, approvedAt: now, actualPaymentDate: now } : {}),
             ...(reservationProof ? { proofUrl: reservationProof } : {}),
           },
         });
@@ -522,7 +523,9 @@ export async function createManualTicketTransaction(data: {
             dueDate: installment.dueDate.toISOString(),
             status: isPaid ? 'paid' : 'pending',
             adminApproved: isPaid,
-            ...(isPaid ? { paidAt: now, approvedAt: now } : {}),
+            originalPhaseId: data.phaseId, // Track original phase
+            originalAmount: installment.amount, // Track original amount
+            ...(isPaid ? { paidAt: now, approvedAt: now, actualPaymentDate: now } : {}),
             ...(proof ? { proofUrl: proof } : {}),
           },
         });
@@ -845,29 +848,13 @@ export async function getPendingInstallments() {
   'use server';
   await requireAdmin();
   try {
-    // Fetch installments that are explicitly 'pending-approval' or have a userUploadedProofUrl but are not paid
-    // Ideally, we search by 'status' if we used a dedicated status. 
-    // Since 'pending-approval' might be a visual state, we check logic:
-    // status !== 'paid' && userUploadedProofUrl exists && !adminApproved
-
-    // Firestore composite index might be needed for complex queries.
-    // Simpler: Fetch all 'pending' status installments where userUploadedProofUrl != null? 
-    // Firestore doesn't support '!='. 
-    // Let's query installments with status 'pending' and client-side filter (or fetch all and filter).
-    // Better: If we rely on the `status` field being updated to something distinct, it is easier.
-    // But currently `status` might still be `pending` for unpaid ones and `paid` for paid ones.
-    // The `InstallmentCard` determines 'pending-approval' by `installment.userUploadedProofUrl && !installment.adminApproved`.
-
+    // ✅ CAMBIO: Query directo por estado 'pending-approval'
     const installments = await paymentInstallmentsCollection.query([
-      { field: 'adminApproved', operator: '==', value: false }
+      { field: 'status', operator: '==', value: 'pending-approval' }
     ]);
 
-    // Filter for those that HAVE a proof uploaded
-    const pendingReview = installments.filter((i: any) => i.userUploadedProofUrl);
-
-    // Initial simple enrich (fetching user and event data might be heavy if many, 
-    // but useful for admin UI).
-    const enriched = await Promise.all(pendingReview.map(async (inst: any) => {
+    // Ya no necesitamos filtro adicional - el estado es explícito
+    const enriched = await Promise.all(installments.map(async (inst: any) => {
       const ticket = await ticketTransactionsCollection.get(inst.transactionId);
       let user = null;
       let event = null;
@@ -918,11 +905,40 @@ export async function uploadUserInstallmentProof(
       return { success: false, error: 'No autorizado: esta cuota pertenece a otro usuario' };
     }
 
+    // ✅ NUEVO: Validar que solo puede subir pending o rejected
+    if (installment.status !== 'pending' && installment.status !== 'rejected') {
+      return {
+        success: false,
+        error: 'Esta cuota ya fue procesada. No puedes subir un nuevo comprobante.'
+      };
+    }
+
+    // ✅ NUEVO: Verificar que sea la siguiente cuota en orden
+    const allInstallments = await paymentInstallmentsCollection.query([
+      { field: 'transactionId', operator: '==', value: installment.transactionId }
+    ]);
+
+    const sortedInstallments = allInstallments.sort((a, b) => a.installmentNumber - b.installmentNumber);
+
+    // Encontrar la primera cuota que NO está pagada ni en revisión
+    const nextDueInstallment = sortedInstallments.find(inst =>
+      inst.status !== 'paid' &&
+      inst.status !== 'pending-approval' &&
+      inst.adminApproved !== true
+    );
+
+    if (!nextDueInstallment || nextDueInstallment.id !== installmentId) {
+      return {
+        success: false,
+        error: `Debes pagar las cuotas en orden. Actualmente debes pagar la cuota #${nextDueInstallment?.installmentNumber || '?'} primero.`
+      };
+    }
+
     // User can only update proof fields, not status/approval/amounts
     await paymentInstallmentsCollection.update(installmentId, {
       userUploadedProofUrl: downloadURL,
       userUploadedAt: new Date().toISOString(),
-      status: 'pending', // Back to review; UI derives 'pending-approval' from userUploadedProofUrl + !adminApproved
+      status: 'pending-approval', // ✅ CAMBIO: Estado explícito en lugar de derivado
     });
 
     // Notify all admins so the proof shows up for review (in-app notification).
@@ -952,15 +968,26 @@ export async function uploadUserInstallmentProof(
 
 // Admin Action: Approve Proof
 export async function approveInstallmentProof(
-  installmentId: string
-): Promise<{ success: boolean; error?: string }> {
+  installmentId: string,
+  actualPaymentDate?: string // ISO string - actual date from payment proof (optional, defaults to today)
+): Promise<{ success: boolean; error?: string; recalculated?: boolean }> {
   'use server';
-  await requireAdmin();
+
+  // ✅ CAMBIO: Capturar el usuario admin que aprueba
+  const adminUser = await requireAdmin();
 
   try {
     const installment = await paymentInstallmentsCollection.get(installmentId);
     if (!installment) {
       return { success: false, error: 'Cuota no encontrada' };
+    }
+
+    // ✅ NUEVO: Validar que existe comprobante
+    if (!installment.userUploadedProofUrl && !installment.proofUrl && !installment.paymentProofUrl) {
+      return {
+        success: false,
+        error: 'No se puede aprobar: no hay comprobante de pago subido. El cliente debe subir el comprobante primero.'
+      };
     }
 
     // Verify parent transaction exists
@@ -969,18 +996,36 @@ export async function approveInstallmentProof(
       return { success: false, error: 'Transacción padre no encontrada - requiere reconciliación' };
     }
 
+    // Determine the actual payment date
+    const paymentDate = actualPaymentDate ? new Date(actualPaymentDate) : new Date();
+    const now = new Date();
+
     // 1. Update the Installment
     await paymentInstallmentsCollection.update(installmentId, {
       status: 'paid',
       adminApproved: true,
-      paidAt: new Date().toISOString(),
-      approvedAt: new Date().toISOString(),
+      paidAt: now.toISOString(), // When it was approved
+      approvedAt: now.toISOString(),
+      approvedBy: adminUser.id, // ✅ NUEVO: Registrar quién aprobó
+      actualPaymentDate: paymentDate.toISOString(), // When it was actually paid (from proof)
       // Preserve user-uploaded proof as approved proof
       proofUrl: installment.userUploadedProofUrl || installment.proofUrl,
       paymentProofUrl: installment.userUploadedProofUrl || installment.proofUrl,
     });
 
-    // 2. Recalculate parent transaction status from complete schedule
+    // 2. Recalculate remaining installment dates based on actual payment date
+    const { recalculateRemainingInstallmentDates } = await import('@/lib/utils/installment-recalculator');
+    const recalcResult = await recalculateRemainingInstallmentDates(
+      installment.transactionId,
+      paymentDate,
+      installment.installmentNumber
+    );
+
+    if (!recalcResult.success) {
+      console.error('Failed to recalculate installment dates:', recalcResult.error);
+    }
+
+    // 3. Recalculate parent transaction status from complete schedule
     const { syncTransactionFromSchedule } = await import('@/lib/payments/ticket-payment-state');
     const syncResult = await syncTransactionFromSchedule(installment.transactionId);
 
@@ -988,13 +1033,13 @@ export async function approveInstallmentProof(
       console.error('Failed to sync transaction after installment approval:', syncResult.error);
     }
 
-    // 3. Notify user
+    // 4. Notify user
     await createNotification({
       userId: ticket.userId,
       ...InstallmentNotifications.paymentApproved(ticket.id, installment.installmentNumber)
     });
 
-    // 4. If all installments are now approved, notify completion
+    // 5. If all installments are now approved, notify completion
     if (syncResult.aggregate?.paymentStatus === 'approved') {
       await createNotification({
         userId: ticket.userId,
@@ -1005,7 +1050,10 @@ export async function approveInstallmentProof(
       });
     }
 
-    return { success: true };
+    return {
+      success: true,
+      recalculated: recalcResult.success && recalcResult.updated > 0
+    };
   } catch (error: any) {
     console.error('Error approving installment:', error);
     return { success: false, error: error.message || 'Error al aprobar la cuota' };
@@ -1018,7 +1066,9 @@ export async function rejectInstallmentProof(
   reason: string = 'Comprobante inválido'
 ): Promise<{ success: boolean; error?: string }> {
   'use server';
-  await requireAdmin();
+
+  // ✅ CAMBIO: Capturar el usuario admin que rechaza
+  const adminUser = await requireAdmin();
 
   try {
     const installment = await paymentInstallmentsCollection.get(installmentId);
@@ -1037,6 +1087,7 @@ export async function rejectInstallmentProof(
       status: 'rejected',
       adminApproved: false,
       rejectedAt: new Date().toISOString(),
+      rejectedBy: adminUser.id, // ✅ NUEVO: Registrar quién rechazó
       rejectionReason: reason,
       // Keep userUploadedProofUrl as audit trail; UI checks status='rejected' for re-upload flow
     });
@@ -1062,7 +1113,9 @@ export async function revertInstallmentPayment(
   installmentId: string
 ): Promise<{ success: boolean; error?: string }> {
   'use server';
-  await requireAdmin();
+
+  // ✅ CAMBIO: Capturar el usuario admin que revierte
+  const adminUser = await requireAdmin();
 
   try {
     const installment = await paymentInstallmentsCollection.get(installmentId);
@@ -1082,6 +1135,7 @@ export async function revertInstallmentPayment(
       adminApproved: false,
       paidAt: null,
       revertedAt: new Date().toISOString(),
+      revertedBy: adminUser.id, // ✅ NUEVO: Registrar quién revirtió
       // Keep proof history for audit
     });
 

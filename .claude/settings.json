@@ -96,7 +96,30 @@
       "Bash(xargs grep -l \"eventsCollection\")",
       "Bash(Get-Date -Format \"yyyy-MM-dd HH:mm:ss zzz\")",
       "Bash(grep -n \"backgroundColor.*colorPalette\\\\|backgroundColor.*dominantColor\\\\|bg-.*\\\\$\\\\{\" components/events/EventPricingTable.tsx)",
-      "Bash(git diff *)"
+      "Bash(git diff *)",
+      "Bash(xargs grep -l \"lucide-react\")",
+      "Bash(npx next *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Rediseña página de DJs con diseño moderno y consistente *)",
+      "Bash(git commit -m 'Mejora colores semánticos y corrige visualización de descuentos *)",
+      "Bash(git commit -m 'Corrige aplicación de estilos line-through en precio original *)",
+      "Bash(git commit -m 'Elimina headers duplicados y mueve búsqueda al contenido principal *)",
+      "Bash(git commit -m 'Elimina padding-top duplicado que causaba espacio extra *)",
+      "Bash(git commit -m 'Excluye /tienda del padding automático de PageWrapper *)",
+      "Bash(git commit -m 'Optimiza espaciado responsive para mobile en tienda *)",
+      "Bash(git commit -m 'Rediseña completamente Ravehub Recycle con enfoque profesional *)",
+      "Bash(git commit -m 'Rediseña Ravehub Recycle: genérico, dark mode, con imágenes placeholder *)",
+      "Bash(git restore *)",
+      "Bash(git commit -m 'Rediseña Ravehub Recycle enfocado en RESPONSABILIDAD LEGAL del organizador *)",
+      "Bash(git commit -m 'Rediseña Ravehub Recycle: EDUCACIÓN DE ASISTENTES \\(enfoque correcto\\) *)",
+      "Bash(xargs grep -l \"salesPhases\\\\|tier\\\\|phase\")",
+      "Read(//workspaces/**)",
+      "Bash(xargs grep -l \"cuota\\\\|installment\")",
+      "Bash(xargs grep -l \"expire\\\\|cleanup\\\\|ticket\")",
+      "Bash(grep -r \"return { success: false, error:\" lib/actions.ts)",
+      "Bash(chmod +x deploy.sh)",
+      "Bash(xargs grep -l \"Manual.*Ticket\\\\|Assign.*Ticket\")",
+      "Bash(xargs grep -l \"installment\\\\|cuotas\")"
     ]
   }
 }

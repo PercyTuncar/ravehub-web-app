@@ -1,8 +1,10 @@
+import { calculateInstallmentDueDates, getLastInstallmentWarning } from './date-utils';
 
 export interface InstallmentPlanItem {
     installmentNumber: number;
     amount: number;
     dueDate: Date;
+    isAdjusted?: boolean; // ✅ NUEVO: Marca si la fecha fue ajustada por el evento
 }
 
 export interface CalculationResult {
@@ -12,25 +14,29 @@ export interface CalculationResult {
     remainingAmount?: number;
     monthlyAmount?: number;
     installments?: InstallmentPlanItem[];
+    intervalDays?: number; // ✅ NUEVO: Días entre cuotas (puede ser 30 mensual o custom)
+    isMonthly?: boolean; // ✅ NUEVO: true si son cuotas mensuales, false si es intervalo custom
+    lastInstallmentAdjusted?: boolean; // ✅ NUEVO
+    warning?: string; // ✅ NUEVO
     error?: string;
 }
 
 /**
  * Calculates the installment plan for a ticket purchase.
- * 
+ * ✅ MEJORADO: Ahora valida que la última cuota no exceda la fecha del evento
+ *
  * @param totalAmount - Total price of the ticket(s)
  * @param reservationAmount - Initial down payment (can be 0)
  * @param installmentsCount - Number of installments (excluding reservation/initial payment if treated as separate)
- *                           However, usually "3 installments" means 3 payments total or 1 initial + 2 future?
- *                           Based on user request: "reserva con inicial y saldo en cuotas".
- *                           Interpretation: Initial (Reservation) + N Monthly Installments.
  * @param startDate - Date of the first installment (after the reservation)
+ * @param eventDate - Event date to validate against (✅ NUEVO)
  */
 export function calculateInstallmentPlan(
     totalAmount: number,
     reservationAmount: number,
     installmentsCount: number,
-    startDate: Date
+    startDate: Date,
+    eventDate?: Date | string | any // ✅ NUEVO: Fecha del evento
 ): CalculationResult {
 
     if (totalAmount <= 0) {
@@ -52,11 +58,15 @@ export function calculateInstallmentPlan(
     const remainingAmount = totalAmount - reservationAmount;
 
     // Calculate monthly amount, properly rounding to 2 decimals
-    // We want to ensure sum of installments equals exactly the remaining amount.
-    // We can distribute the difference in the last installment.
-
     const rawMonthlyAmount = remainingAmount / installmentsCount;
     const roundedMonthlyAmount = Math.floor(rawMonthlyAmount * 100) / 100;
+
+    // ✅ CAMBIO: Usar función de date-utils que calcula intervalos inteligentes
+    const calculationResult = eventDate
+        ? calculateInstallmentDueDates(startDate, installmentsCount, eventDate)
+        : { dueDates: [], intervalDays: 30, isMonthly: true, lastInstallmentAdjusted: false, warning: undefined };
+
+    const { dueDates, intervalDays, isMonthly, lastInstallmentAdjusted, warning } = calculationResult;
 
     const installments: InstallmentPlanItem[] = [];
     let currentSum = 0;
@@ -71,24 +81,23 @@ export function calculateInstallmentPlan(
             currentSum += amount;
         }
 
-        // Robust date calculation
-        const dueDate = new Date(startDate);
-        const originalDay = startDate.getDate();
-
-        // Add i months (not i-1, so first installment is +1 month from startDate)
-        dueDate.setMonth(startDate.getMonth() + i);
-
-        // Check for month overflow (e.g. Jan 31 + 1 month -> Feb 28/29, not March)
-        // If the day changed, it means we overflowed into the next month
-        if (dueDate.getDate() !== originalDay) {
-            // Set to last day of previous month (which is the correct month)
-            dueDate.setDate(0);
-        }
+        // ✅ CAMBIO: Usar fecha calculada con intervalos inteligentes
+        const dueDate = eventDate ? dueDates[i - 1] : (() => {
+            // Fallback: cálculo original si no hay eventDate
+            const date = new Date(startDate);
+            const originalDay = startDate.getDate();
+            date.setMonth(startDate.getMonth() + i);
+            if (date.getDate() !== originalDay) {
+                date.setDate(0);
+            }
+            return date;
+        })();
 
         installments.push({
             installmentNumber: i,
             amount: amount,
-            dueDate: dueDate
+            dueDate: dueDate,
+            isAdjusted: i === installmentsCount && lastInstallmentAdjusted // ✅ NUEVO
         });
     }
 
@@ -97,7 +106,11 @@ export function calculateInstallmentPlan(
         totalAmount,
         reservationAmount,
         remainingAmount,
-        monthlyAmount: roundedMonthlyAmount, // approximate for display
-        installments
+        monthlyAmount: roundedMonthlyAmount,
+        installments,
+        intervalDays, // ✅ NUEVO: Retornar intervalo calculado
+        isMonthly, // ✅ NUEVO: Indicar si es mensual o custom
+        lastInstallmentAdjusted, // ✅ NUEVO
+        warning // ✅ NUEVO
     };
 }
