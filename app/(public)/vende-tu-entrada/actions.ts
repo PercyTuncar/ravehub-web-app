@@ -4,6 +4,32 @@ import 'server-only';
 import { getAdminDb } from '@/lib/firebase/admin';
 
 /**
+ * Serializar datos de Firestore para pasar a Client Components
+ */
+function serializeFirestoreData(data: any): any {
+  if (!data) return data;
+
+  if (data._seconds !== undefined && data._nanoseconds !== undefined) {
+    // Es un Timestamp de Firestore
+    return new Date(data._seconds * 1000).toISOString();
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(item => serializeFirestoreData(item));
+  }
+
+  if (typeof data === 'object') {
+    const serialized: any = {};
+    for (const [key, value] of Object.entries(data)) {
+      serialized[key] = serializeFirestoreData(value);
+    }
+    return serialized;
+  }
+
+  return data;
+}
+
+/**
  * Obtener eventos elegibles para reventa (solo próximos)
  * SERVER-SIDE: Usa Admin SDK (sin Firestore Rules)
  */
@@ -27,11 +53,14 @@ export async function getUpcomingEventsForResale() {
 
     console.log('🔍 [Resale] Total eventos publicados:', eventsSnapshot.size);
 
-    // Convertir a array de objetos
-    const allEvents = eventsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    // Convertir a array de objetos y serializar
+    const allEvents = eventsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...serializeFirestoreData(data)
+      };
+    });
 
     // Filtrar solo eventos futuros
     const now = new Date();
