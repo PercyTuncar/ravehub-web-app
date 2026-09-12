@@ -123,7 +123,27 @@ export function InstallmentCard({
         return `Cuota #${installment.installmentNumber}`;
     };
 
-    const proofUrl = installment.userUploadedProofUrl || installment.proofUrl || installment.paymentProofUrl;
+    const proofUrl = installment.userUploadedProofUrl ||
+                     installment.paymentProofUrl ||
+                     installment.proofUrl ||
+                     installment.adminUploadedProofUrl ||
+                     null;
+
+    // ✅ DEBUG: Log para verificar en producción
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+        if (!proofUrl && (status === 'paid' || status === 'pending-approval')) {
+            console.log('⚠️ Cuota sin comprobante visible:', {
+                id: installment.id,
+                number: installment.installmentNumber,
+                status,
+                hasUserUpload: !!installment.userUploadedProofUrl,
+                hasPaymentProof: !!installment.paymentProofUrl,
+                hasProof: !!installment.proofUrl,
+                hasAdminUpload: !!installment.adminUploadedProofUrl,
+                allFields: Object.keys(installment)
+            });
+        }
+    }
 
     return (
         <div className="relative group">
