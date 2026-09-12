@@ -13,6 +13,9 @@ export default async function SellTicketPage() {
     // Cargar eventos en el servidor
     const events = await getUpcomingEventsForResale();
 
+    console.log('📊 [Page] Eventos recibidos:', events.length);
+    console.log('📊 [Page] Eventos:', events.map(e => e.name));
+
     return (
         <div className="min-h-screen bg-[#0A0A0A]">
             {/* Schema.org JSON-LD para SEO */}

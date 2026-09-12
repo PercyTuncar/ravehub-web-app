@@ -8,6 +8,8 @@ import { eventsCollection } from '@/lib/firebase/collections';
  */
 export async function getUpcomingEventsForResale() {
   try {
+    console.log('🔍 [Resale] Iniciando carga de eventos...');
+
     // Obtener todos los eventos publicados (con cache)
     const conditions = [{ field: 'eventStatus', operator: '==', value: 'published' }];
     const allEvents = await eventsCollection.queryCached(
@@ -18,6 +20,8 @@ export async function getUpcomingEventsForResale() {
       'events-resale-list' // cache key
     );
 
+    console.log('🔍 [Resale] Total eventos publicados:', allEvents.length);
+
     // Filtrar solo eventos futuros
     const now = new Date();
     const upcomingEvents = allEvents.filter(event => {
@@ -25,9 +29,12 @@ export async function getUpcomingEventsForResale() {
       return eventDate > now;
     });
 
+    console.log('🔍 [Resale] Eventos futuros:', upcomingEvents.length);
+    console.log('🔍 [Resale] Eventos:', upcomingEvents.map(e => ({ name: e.name, date: e.startDate })));
+
     return upcomingEvents;
   } catch (error) {
-    console.error('Error fetching upcoming events for resale:', error);
+    console.error('❌ [Resale] Error fetching upcoming events:', error);
     return [];
   }
 }
