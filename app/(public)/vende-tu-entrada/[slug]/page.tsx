@@ -129,12 +129,16 @@ export default function EventResaleDetailPage() {
             }
         }
 
+        // Obtener el nombre de la zona desde event.zones
+        const zoneInfo = event.zones?.find((z: any) => z.id === selectedZone.zoneId);
+        const zoneName = zoneInfo?.name || selectedZone.zoneId;
+
         setSubmitting(true);
         try {
             const result = await createResaleRequest({
                 eventId: event.id,
                 zoneId: selectedZone.zoneId,
-                zoneName: selectedZone.zoneName || selectedZone.zoneId,
+                zoneName: zoneName,
                 phaseId: selectedPhase.id,
                 phaseName: selectedPhase.name,
                 originalPrice: selectedZone.price,
@@ -161,7 +165,7 @@ export default function EventResaleDetailPage() {
                 const message = `🎫 *SOLICITUD DE VENTA DE ENTRADA*\n\n` +
                     `*Evento:* ${event.name}\n` +
                     `*Fecha:* ${format(parseLocalDate(event.startDate), "d 'de' MMMM, yyyy", { locale: es })}\n` +
-                    `*Zona:* ${selectedZone.zoneName || selectedZone.zoneId}\n` +
+                    `*Zona:* ${zoneName}\n` +
                     `*Fase:* ${selectedPhase.name}\n\n` +
                     `*Precio Original:* ${formatPrice(selectedZone.price, event.currency)}\n` +
                     `*Oferta RaveHub:* ${formatPrice(resaleCalc.currentValue, event.currency)}\n` +
@@ -310,24 +314,28 @@ export default function EventResaleDetailPage() {
                                         const zone = selectedPhase?.zonesPricing?.find((z: any) => z.zoneId === value);
                                         setSelectedZone(zone);
                                     }}>
-                                        {selectedPhase?.zonesPricing?.map((zone: any) => {
+                                        {selectedPhase?.zonesPricing?.map((zonePricing: any) => {
+                                            // Buscar el nombre de la zona en event.zones
+                                            const zoneInfo = event.zones?.find((z: any) => z.id === zonePricing.zoneId);
+                                            const zoneName = zoneInfo?.name || zonePricing.zoneId;
+
                                             const calc = calculateResaleValue(
-                                                zone.price,
+                                                zonePricing.price,
                                                 event.startDate,
                                                 event.createdAt || event.startDate
                                             );
 
                                             return (
-                                                <div key={zone.zoneId} className="flex items-center space-x-2 mb-3">
-                                                    <RadioGroupItem value={zone.zoneId} id={zone.zoneId} />
-                                                    <Label htmlFor={zone.zoneId} className="flex-1 cursor-pointer">
+                                                <div key={zonePricing.zoneId} className="flex items-center space-x-2 mb-3">
+                                                    <RadioGroupItem value={zonePricing.zoneId} id={zonePricing.zoneId} />
+                                                    <Label htmlFor={zonePricing.zoneId} className="flex-1 cursor-pointer">
                                                         <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-4 hover:border-purple-500/50 transition-colors">
                                                             <div>
                                                                 <p className="text-white font-medium">
-                                                                    {zone.zoneName || zone.zoneId}
+                                                                    {zoneName}
                                                                 </p>
                                                                 <p className="text-xs text-gray-500">
-                                                                    Precio original: {formatPrice(zone.price, event.currency)}
+                                                                    Precio original: {formatPrice(zonePricing.price, event.currency)}
                                                                 </p>
                                                             </div>
                                                             <div className="text-right">
