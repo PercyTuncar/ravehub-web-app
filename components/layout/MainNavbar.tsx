@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Music, User, LogIn, LogOut, ShoppingCart, Menu, X, Headphones, Trophy, Recycle } from 'lucide-react';
+import { Music, User, LogIn, LogOut, ShoppingCart, Menu, X, Headphones, Trophy, Recycle, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -276,6 +276,21 @@ export function MainNavbar() {
                       <div className="text-sm font-semibold mb-1">Ravehub Recycle</div>
                       <div className="text-xs text-[#53575A] group-hover/item:text-[#FAFDFF]/70">
                         Impulsamos una escena electrónica más sostenible
+                      </div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/vende-tu-entrada"
+                    className="flex items-start gap-3 px-3 py-3 rounded-lg text-[#FAFDFF] hover:bg-[#282D31] hover:text-[#FBA905] transition-all duration-200 group/item"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform">
+                      <DollarSign className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold mb-1">Vende tu Entrada</div>
+                      <div className="text-xs text-[#53575A] group-hover/item:text-[#FAFDFF]/70">
+                        Recupera hasta 90% de tu dinero
                       </div>
                     </div>
                   </Link>

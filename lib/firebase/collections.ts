@@ -317,6 +317,10 @@ export const storeBannersCollection = new FirestoreCollection('storeBanners');
 export const notificationsCollection = new FirestoreCollection('notifications');
 export const newsletterSubscribersCollection = new FirestoreCollection('newsletter_subscribers');
 export const newsletterFingerprintsCollection = new FirestoreCollection('newsletter_fingerprints');
+
+// Ticket Resale collections
+export const ticketResaleRequestsCollection = new FirestoreCollection('ticketResaleRequests');
+export const customResaleQuotesCollection = new FirestoreCollection('customResaleQuotes');
 export const configCollection = new FirestoreCollection('config');
 export const countriesCollection = new FirestoreCollection('countries');
 export const slugRedirectsCollection = new FirestoreCollection('slugRedirects');

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Calendar, Ticket, Plus, User, LogOut, Settings, ShoppingBag, Heart, X, ChevronUp, Headphones, Trophy, Recycle, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Home, Calendar, Ticket, Plus, User, LogOut, Settings, ShoppingBag, Heart, X, ChevronUp, Headphones, Trophy, Recycle, ChevronRight, ArrowLeft, DollarSign } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -71,6 +71,7 @@ export function MobileNavbar() {
     { icon: Headphones, label: 'DJs', href: '/djs', description: 'Descubre artistas y DJs' },
     { icon: Trophy, label: 'Ravehub Top Djs', href: '/programas/ravehub-top-djs', description: 'Rankings de DJs por país', hasSubmenu: true },
     { icon: Recycle, label: 'Ravehub Recycle', href: '/programas/ravehub-recycle', description: 'Escena sostenible' },
+    { icon: DollarSign, label: 'Vende tu Entrada', href: '/vende-tu-entrada', description: 'Recupera hasta 90%' },
   ];
 
   // Países para Ravehub Top Djs

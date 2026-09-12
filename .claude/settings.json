@@ -119,7 +119,10 @@
       "Bash(grep -r \"return { success: false, error:\" lib/actions.ts)",
       "Bash(chmod +x deploy.sh)",
       "Bash(xargs grep -l \"Manual.*Ticket\\\\|Assign.*Ticket\")",
-      "Bash(xargs grep -l \"installment\\\\|cuotas\")"
+      "Bash(xargs grep -l \"installment\\\\|cuotas\")",
+      "Bash(git commit -m 'feat: Sistema completo de cuotas con validación inteligente de fechas y mejoras de UX *)",
+      "Bash(git push *)",
+      "Bash(xargs grep -l \"InstallmentTimeline\")"
     ]
   }
 }
