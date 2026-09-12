@@ -124,7 +124,13 @@
       "Bash(git push *)",
       "Bash(xargs grep -l \"InstallmentTimeline\")",
       "Bash(git commit -m 'fix: Hacer eventos publicados accesibles sin autenticación para página de reventa *)",
-      "Bash(git commit -m 'fix: Convertir página de reventa a Server Component para resolver permisos Firestore *)"
+      "Bash(git commit -m 'fix: Convertir página de reventa a Server Component para resolver permisos Firestore *)",
+      "Bash(rm \"app/\\(public\\)/vende-tu-entrada/[slug]/page-part1.tsx\")",
+      "Bash(rm \"app/\\(public\\)/vende-tu-entrada/[slug]/page-new.tsx\")",
+      "Bash(git commit -m 'fix: Eliminar guardado en Firestore - Solo enviar por WhatsApp *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\tunca\\OneDrive\\Desktop\\Github\\ravehub-web-app\\app\\(public)\\vende-tu-entrada\\[slug]"
     ]
   }
 }

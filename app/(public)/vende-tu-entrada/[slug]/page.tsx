@@ -31,8 +31,10 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { createResaleRequest } from '@/lib/actions/ticket-resale';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { EventColorProvider, useEnhancedColorExtraction } from '@/components/events/EventColorContext';
+import { DynamicBackgroundGradients } from '@/components/events/DynamicBackgroundGradients';
 
-export default function EventResaleDetailPage() {
+function ResaleDetailContent() {
     const params = useParams();
     const router = useRouter();
     const { user } = useAuth();
@@ -52,6 +54,17 @@ export default function EventResaleDetailPage() {
     const [accountNumber, setAccountNumber] = useState('');
     const [cci, setCci] = useState('');
     const [accountHolderName, setAccountHolderName] = useState('');
+
+    // Extract colors from event image - ONLY when event is loaded
+    const imageUrl = event?.mainImageUrl || event?.bannerImageUrl || '';
+    useEnhancedColorExtraction(imageUrl);
+
+    // Debug: Log when colors are being extracted
+    useEffect(() => {
+        if (imageUrl) {
+            console.log('🎨 [Resale] Extracting colors from:', imageUrl);
+        }
+    }, [imageUrl]);
 
     useEffect(() => {
         loadEvent();
@@ -215,10 +228,15 @@ export default function EventResaleDetailPage() {
     const colors = resaleCalc ? getDepreciationColor(resaleCalc.valuePercentage) : null;
 
     return (
-        <div className="min-h-screen bg-[#0A0A0A] py-20">
-            <div className="container mx-auto px-4 max-w-6xl">
+        <div className="min-h-screen relative">
+            {/* Dynamic Gradient Background */}
+            <DynamicBackgroundGradients />
+
+            {/* Content */}
+            <div className="relative z-10 py-20">
+                <div className="container mx-auto px-4 max-w-6xl">
                 {/* Back button */}
-                <Link href="/vende-tu-entrada" className="inline-flex items-center text-gray-400 hover:text-white mb-6">
+                <Link href="/vende-tu-entrada" className="inline-flex items-center text-white/70 hover:text-white mb-6 transition-colors backdrop-blur-sm bg-white/5 px-4 py-2 rounded-full border border-white/10 hover:bg-white/10">
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Volver a eventos
                 </Link>
@@ -301,7 +319,7 @@ export default function EventResaleDetailPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
                     >
-                        <Card className="bg-white/5 border-white/10 sticky top-24">
+                        <Card className="bg-white/5 border-white/10 backdrop-blur-xl sticky top-24 shadow-2xl">
                             <CardContent className="p-6">
                                 <h2 className="text-2xl font-bold text-white mb-6">
                                     Vende tu Entrada
@@ -476,7 +494,7 @@ export default function EventResaleDetailPage() {
                                 <Button
                                     onClick={handleSubmit}
                                     disabled={submitting || !selectedZone}
-                                    className="w-full bg-purple-600 hover:bg-purple-700 text-lg py-6"
+                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-lg py-6 shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/70 transition-all duration-300"
                                 >
                                     {submitting ? (
                                         'Enviando...'
@@ -496,7 +514,16 @@ export default function EventResaleDetailPage() {
                         </Card>
                     </motion.div>
                 </div>
+                </div>
             </div>
         </div>
+    );
+}
+
+export default function EventResaleDetailPage() {
+    return (
+        <EventColorProvider>
+            <ResaleDetailContent />
+        </EventColorProvider>
     );
 }

@@ -7,6 +7,7 @@ import { calculateResaleValue } from '@/lib/utils/resale-calculator';
 
 /**
  * Crear solicitud de reventa de ticket
+ * SOLO GENERA ID - No guarda en base de datos
  */
 export async function createResaleRequest(data: {
   eventId: string;
@@ -27,53 +28,11 @@ export async function createResaleRequest(data: {
       return { success: false, error: 'No autenticado' };
     }
 
-    // Obtener datos del evento
-    const event = await eventsCollection.get(data.eventId);
-    if (!event) {
-      return { success: false, error: 'Evento no encontrado' };
-    }
+    // Generar ID único para tracking (sin guardar en DB)
+    const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-    // Calcular valor de reventa
-    const resaleCalc = calculateResaleValue(
-      data.originalPrice,
-      event.startDate,
-      event.createdAt || event.startDate // Fallback si no tiene createdAt
-    );
-
-    // Crear solicitud
-    const request: Omit<TicketResaleRequest, 'id'> = {
-      userId: currentUser.id,
-      userEmail: currentUser.email,
-      userName: `${currentUser.firstName} ${currentUser.lastName}`,
-      userPhone: `${currentUser.phonePrefix}${currentUser.phone}`,
-
-      eventId: data.eventId,
-      eventName: event.name,
-      eventDate: event.startDate,
-      eventSlug: event.slug,
-
-      zoneId: data.zoneId,
-      zoneName: data.zoneName,
-      phaseId: data.phaseId,
-      phaseName: data.phaseName,
-      originalPrice: data.originalPrice,
-      offerPrice: resaleCalc.currentValue,
-      depreciation: resaleCalc.depreciation,
-      daysUntilEvent: resaleCalc.daysUntilEvent,
-
-      paymentMethod: data.paymentMethod,
-      accountNumber: data.accountNumber,
-      phoneNumber: data.phoneNumber,
-      cci: data.cci,
-      accountHolderName: data.accountHolderName,
-
-      status: 'pending',
-      createdAt: new Date(),
-    };
-
-    const requestId = await ticketResaleRequestsCollection.create(request as any);
-
-    // Enviar a WhatsApp (se hará en el cliente con el link de WhatsApp)
+    // Solo retornar éxito con el ID
+    // El cliente abrirá WhatsApp con toda la información
     return { success: true, requestId };
   } catch (error: any) {
     console.error('Error creating resale request:', error);
@@ -83,6 +42,7 @@ export async function createResaleRequest(data: {
 
 /**
  * Crear cotización personalizada (evento no listado)
+ * SOLO GENERA ID - No guarda en base de datos
  */
 export async function createCustomQuote(data: {
   eventName: string;
@@ -96,23 +56,11 @@ export async function createCustomQuote(data: {
       return { success: false, error: 'No autenticado' };
     }
 
-    const quote: Omit<CustomResaleQuote, 'id'> = {
-      userId: currentUser.id,
-      userEmail: currentUser.email,
-      userName: `${currentUser.firstName} ${currentUser.lastName}`,
-      userPhone: `${currentUser.phonePrefix}${currentUser.phone}`,
+    // Generar ID único para tracking (sin guardar en DB)
+    const quoteId = `QUOTE-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-      eventName: data.eventName,
-      eventDate: data.eventDate,
-      eventLocation: data.eventLocation,
-      ticketZone: data.ticketZone,
-
-      status: 'pending',
-      createdAt: new Date(),
-    };
-
-    const quoteId = await customResaleQuotesCollection.create(quote as any);
-
+    // Solo retornar éxito con el ID
+    // El cliente abrirá WhatsApp con toda la información
     return { success: true, quoteId };
   } catch (error: any) {
     console.error('Error creating custom quote:', error);
