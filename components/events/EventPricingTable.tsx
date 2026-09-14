@@ -501,8 +501,8 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
               <Ticket className="h-7 w-7" style={{ color: dominantColor }} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-white">Entradas</h2>
-              <p className="mt-1 text-sm text-white/60">Elige una fase y continúa a la compra segura.</p>
+              <h2 className="text-2xl font-bold tracking-tight text-white">Elige tu entrada</h2>
+              <p className="mt-1 text-sm text-white/60">Selecciona una fase y luego una zona para comprar.</p>
             </div>
           </div>
           {event.allowInstallmentPayments && (
@@ -519,12 +519,15 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
           {/* Tabs List */}
           <div className="border-b border-white/10 bg-black/10 px-3 py-3 backdrop-blur-xl sm:px-5">
             <div className="overflow-x-auto pb-1">
+              <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-wider text-white/40 sm:hidden">
+                Desliza para ver todas las fases
+              </p>
               <TabsList className="flex h-auto w-max min-w-full justify-start gap-2 bg-transparent p-0">
               {pricingData.map(({ phase, status }, index) => (
                 <TabsTrigger
                   key={phase.id}
                   value={`phase-${index}`}
-                  className="relative h-auto min-w-[10rem] shrink-0 rounded-xl border border-white/10 bg-white/[0.045] px-4 py-3 text-left text-white/60 shadow-sm shadow-black/10 backdrop-blur-md transition-all hover:border-white/25 hover:bg-white/[0.10] hover:text-white data-[state=active]:bg-white/[0.13] data-[state=active]:text-white data-[state=active]:shadow-lg"
+                  className="relative h-auto min-w-[8.75rem] shrink-0 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-3 text-left text-white/60 shadow-sm shadow-black/10 backdrop-blur-md transition-all hover:border-white/25 hover:bg-white/[0.10] hover:text-white data-[state=active]:bg-white/[0.13] data-[state=active]:text-white data-[state=active]:shadow-lg sm:min-w-[10rem] sm:px-4"
                   style={{
                     borderColor:
                       activeTab === `phase-${index}`
@@ -582,6 +585,7 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                           key={zone.zoneId}
                           href={!isDisabled ? buyUrl : "#"}
                           onClick={(e) => isDisabled && e.preventDefault()}
+                          aria-label={`${isDisabled ? "Entrada no disponible" : "Comprar entrada"}: ${zone.zoneName}`}
                           className={`
                             group flex flex-col justify-between gap-4 rounded-2xl border p-4 transition-all duration-200 sm:flex-row sm:items-center sm:p-5
                             ${
@@ -593,8 +597,8 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                         >
                           {/* Left: Info */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-1 flex-wrap">
-                              <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <h3 className="text-lg font-bold leading-tight text-white group-hover:text-primary transition-colors">
                                 {zone.zoneName}
                               </h3>
                               {isZoneSoldOut && (
@@ -617,18 +621,11 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                                 />
                               )}
                             </div>
-                            <p className="text-sm text-zinc-400 line-clamp-1">
-                              {zone.description ||
-                                "Entrada general para el evento"}
-                            </p>
                           </div>
 
                           {/* Right: Price & CTA */}
                           <div className="flex items-center justify-between md:justify-end gap-6 text-right">
                             <div>
-                              <div className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">
-                                Precio
-                              </div>
                               <div className="text-xl font-bold text-white">
                                 <ZonePrice
                                   price={zone.price}
@@ -642,8 +639,8 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                             </div>
 
                             <div
-                              className={`
-                                                w-10 h-10 rounded-full flex items-center justify-center border transition-all
+                                className={`
+                                        flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 transition-all
                                                 ${isDisabled ? "border-white/10 bg-white/5 text-zinc-500" : "border-white/20 bg-white/10 text-white group-hover:bg-primary group-hover:border-primary"}
                                             `}
                               style={{
@@ -655,7 +652,10 @@ export function EventPricingTable({ event }: EventPricingTableProps) {
                               {isDisabled ? (
                                 <XCircle className="w-5 h-5" />
                               ) : (
-                                <ArrowRight className="w-5 h-5" />
+                                <>
+                                  <span className="hidden text-xs font-bold sm:inline">Comprar</span>
+                                  <ArrowRight className="w-5 h-5" />
+                                </>
                               )}
                             </div>
                           </div>

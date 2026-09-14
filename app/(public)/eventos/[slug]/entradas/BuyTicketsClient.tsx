@@ -389,7 +389,7 @@ function PhaseButton({
 
   // Mobile-specific classes
   const mobileContainerClass = mobile
-    ? "w-full flex items-start gap-3 p-4 rounded-xl border transition-all duration-300"
+    ? "w-full flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all duration-300"
     : "relative flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 text-left";
 
   return (
@@ -414,8 +414,8 @@ function PhaseButton({
         )}
       </div>
 
-      <div className="flex-1 space-y-1">
-        <div className="flex items-center justify-between gap-2">
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex items-center justify-between gap-3">
           <span
             className={`text-xs uppercase tracking-wider font-bold ${labelClass}`}
           >
@@ -428,12 +428,12 @@ function PhaseButton({
           )}
         </div>
         <span
-          className={`text-sm font-medium ${isSelected ? "text-white" : "text-zinc-300"}`}
+          className={`block truncate text-sm font-semibold ${isSelected ? "text-white" : "text-zinc-300"}`}
         >
           {phase.name}
         </span>
         {isSelected && status === "active" && mobile && (
-          <div className="mt-2">
+          <div className="mt-2 flex items-center">
             <Countdown targetDate={new Date(phase.endDate)} />
           </div>
         )}
@@ -1656,6 +1656,27 @@ function BuyTicketsContent({
               </div>
             )}
 
+            {/* 3. PHASE TIMELINE - Contexto antes de elegir entradas */}
+            {event.salesPhases && (
+              <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex shrink-0 items-center justify-center pt-0.5">
+                    <Clock className="h-5 w-5" style={{ color: colorPalette.primary }} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black text-white">Fases de venta</h2>
+                    <p className="mt-0.5 text-xs text-white/50">Conoce la fase activa antes de elegir tu zona.</p>
+                  </div>
+                </div>
+                <PhaseTimeline
+                  phases={resolvedPhases}
+                  activePhaseId={selectedPhase}
+                  onPhaseSelect={setSelectedPhase}
+                  disabled={allExpired}
+                />
+              </div>
+            )}
+
             {/* ALWAYS show ticket selection */}
             <>
             {/* 1. TICKETS GRID - PRIORIDAD #1 según UX best practices */}
@@ -1805,26 +1826,6 @@ function BuyTicketsContent({
                     )}
                   </AnimatePresence>
                 </div>
-              </div>
-            )}
-
-            {/* 3. PHASE TIMELINE - Contexto secundario */}
-            {event.salesPhases && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex shrink-0 items-center justify-center">
-                    <Clock className="w-6 h-6" style={{ color: colorPalette.primary }} />
-                  </div>
-                  <h2 className="text-xl font-black text-white">
-                    Fases de Venta
-                  </h2>
-                </div>
-                <PhaseTimeline
-                  phases={resolvedPhases}
-                  activePhaseId={selectedPhase}
-                  onPhaseSelect={setSelectedPhase}
-                  disabled={allExpired}
-                />
               </div>
             )}
 

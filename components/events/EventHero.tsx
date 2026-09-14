@@ -86,12 +86,12 @@ export default function EventHero({ event }: EventHeroProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="relative w-full bg-zinc-900/60 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-black/40"
+          className="relative w-full bg-zinc-900/60 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-black/40"
         >
           {/* Clickable wrapper - Goes to event details */}
           <Link href={`/eventos/${event.slug}`} className="block cursor-pointer">
             {/* Image Container */}
-            <div className="relative w-full h-[280px] overflow-hidden">
+            <div className="relative w-full h-[220px] sm:h-[280px] overflow-hidden">
               {event.bannerImageUrl || event.mainImageUrl ? (
                 <Image
                   src={event.bannerImageUrl || event.mainImageUrl!}
@@ -128,11 +128,11 @@ export default function EventHero({ event }: EventHeroProps) {
             </div>
 
             {/* Content Section - CLEAN HIERARCHY, NO SUB-CARDS */}
-            <div className="p-5 space-y-5">
+            <div className="p-4 sm:p-5 space-y-4 sm:space-y-5">
 
               {/* Title Section */}
               <div className="space-y-2">
-                <h2 className="text-[27px] font-black text-white leading-[1.1] tracking-tight">
+                <h2 className="text-[24px] sm:text-[27px] font-black text-white leading-[1.1] tracking-tight">
                   {event.name}
                 </h2>
 
@@ -174,8 +174,8 @@ export default function EventHero({ event }: EventHeroProps) {
           </Link>
 
           {/* Price + CTA Section - Outside Link (to prevent nested links) */}
-          <div className="px-5 pb-5">
-            <div className="relative bg-gradient-to-r from-zinc-800/40 via-zinc-800/20 to-transparent backdrop-blur-sm border border-white/10 rounded-2xl p-4 overflow-hidden">
+          <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+            <div className="relative bg-gradient-to-r from-zinc-800/40 via-zinc-800/20 to-transparent backdrop-blur-sm border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 overflow-hidden">
 
               {/* Subtle glow effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-50" />
@@ -192,7 +192,7 @@ export default function EventHero({ event }: EventHeroProps) {
                     <div className="h-10 w-28 bg-white/10 animate-pulse rounded-lg" />
                   ) : (
                     <div className="flex items-baseline gap-2">
-                      <p className="text-[36px] sm:text-[40px] font-black text-white leading-none tracking-tight">
+                      <p className="text-[32px] sm:text-[40px] font-black text-white leading-none tracking-tight">
                         {minPrice > 0
                           ? `${priceSymbol}${Math.floor(displayPrice).toLocaleString('es-ES')}`
                           : 'Gratis'}

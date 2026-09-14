@@ -162,10 +162,9 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
 
     return (
         <>
-            {/* MOBILE DESIGN - Previous clean design */}
+            {/* MOBILE DESIGN - Clear purchase path */}
             <div className="md:hidden relative w-full overflow-hidden bg-zinc-950">
-                {/* Mobile content - keeping it as is */}
-                <div className="relative w-full aspect-[4/5]">
+                <div className="relative h-[230px] w-full overflow-hidden">
                     {event.mainImageUrl || event.bannerImageUrl ? (
                         <Image
                             src={event.mainImageUrl || event.bannerImageUrl!}
@@ -179,7 +178,7 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                         <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900" />
                     )}
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
                     <button
                         onClick={handleShare}
@@ -188,53 +187,42 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                         <Share2 className="w-4 h-4 text-white" />
                     </button>
 
-                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <h1 className="text-3xl font-black text-white leading-tight mb-2">
-                            {event.name}
-                        </h1>
-                        {event.organizer && (
-                            <p className="text-sm text-white/70 font-medium">
-                                Por {event.organizer.name}
-                            </p>
-                        )}
-                    </div>
                 </div>
 
                 <div
-                    className="relative px-4 py-6 transition-all duration-1000 ease-out"
+                    className="relative px-4 pb-20 pt-5 transition-all duration-1000 ease-out"
                     style={{
                         background: `linear-gradient(to bottom, ${colorPalette.dominant}08, transparent 50%)`,
                     }}
                 >
-                    <div className="space-y-6">
-                        <div className="space-y-4">
-                            <div className="flex items-start gap-4">
-                                <div className="flex items-center justify-center flex-shrink-0 pt-1">
-                                    <Calendar className="w-7 h-7 transition-colors duration-1000 ease-out" style={{ color: colorPalette.dominant }} />
-                                </div>
-                                <div className="flex-1 pt-1">
-                                    <p className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1">Fecha y hora</p>
-                                    <p className="text-base font-bold text-white capitalize leading-tight">
-                                        {formattedDate}
-                                    </p>
-                                    <p className="text-sm text-white/60 mt-0.5">
-                                        {formattedTime} hrs
-                                    </p>
+                    <div className="space-y-5">
+                        <div>
+                            {event.organizer && (
+                                <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-white/50">
+                                    Por {event.organizer.name}
+                                </p>
+                            )}
+                            <h1 className="text-[30px] font-black leading-[1.05] tracking-tight text-white">
+                                {event.name}
+                            </h1>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3">
+                            <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                                <Calendar className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: colorPalette.dominant }} />
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">Fecha y hora</p>
+                                    <p className="mt-1 text-sm font-bold capitalize leading-tight text-white">{formattedDate}</p>
+                                    <p className="mt-0.5 text-xs text-white/60">{formattedTime} hrs</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-4">
-                                <div className="flex items-center justify-center flex-shrink-0 pt-1">
-                                    <MapPin className="w-7 h-7 transition-colors duration-1000 ease-out" style={{ color: colorPalette.accent }} />
-                                </div>
-                                <div className="flex-1 pt-1">
-                                    <p className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1">Ubicación</p>
-                                    <p className="text-base font-bold text-white leading-tight">
-                                        {event.location.venue}
-                                    </p>
-                                    <p className="text-sm text-white/60 mt-0.5">
-                                        {event.location.address || event.location.city}
-                                    </p>
+                            <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                                <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: colorPalette.accent }} />
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">Ubicación</p>
+                                    <p className="mt-1 text-sm font-bold leading-tight text-white">{event.location.venue}</p>
+                                    <p className="mt-0.5 text-xs leading-5 text-white/60">{event.location.address || event.location.city}</p>
                                 </div>
                             </div>
                         </div>
@@ -246,17 +234,19 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                             }}
                         />
 
-                        <div className="space-y-4">
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 shadow-xl shadow-black/20">
                             {minPrice > 0 && !isSoldOut && (
-                                <div>
-                                    <p className="text-xs font-bold text-white/40 uppercase tracking-wider mb-2">Entradas desde</p>
-                                    <div className="flex items-baseline gap-3">
+                                <div className="flex items-end justify-between gap-3">
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">Entradas desde</p>
                                         <p
-                                            className="text-5xl font-black leading-none transition-colors duration-1000 ease-out"
+                                            className="mt-1 text-4xl font-black leading-none transition-colors duration-1000 ease-out"
                                             style={{ color: colorPalette.dominant }}
                                         >
                                             S/ {Math.floor(minPrice)}
                                         </p>
+                                    </div>
+                                    <div className="flex items-baseline gap-3">
                                         {event.allowInstallmentPayments && (
                                             <Badge
                                                 className="text-xs font-semibold transition-all duration-1000 ease-out"
@@ -274,42 +264,44 @@ export default function EventDetailHero({ event }: EventDetailHeroProps) {
                             )}
 
                             {!isSoldOut && timeLeft.days > 0 && (
-                                <div className="flex items-center gap-2">
+                                <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
                                     <Clock className="w-4 h-4 text-white/40" />
-                                    <span className="text-sm text-white/60">
+                                    <span className="text-xs font-medium text-white/60">
                                         Quedan {timeLeft.days} días, {timeLeft.hours}h {timeLeft.minutes}m
                                     </span>
                                 </div>
                             )}
-                        </div>
 
-                        {event.sellTicketsOnPlatform && !isSoldOut ? (
-                            <Link href={`/eventos/${event.slug}/entradas`}>
-                                <Button
-                                    size="lg"
-                                    className="w-full h-14 text-base font-bold rounded-2xl text-white shadow-2xl transition-all duration-1000 ease-out hover:scale-[1.02]"
-                                    style={{
-                                        background: colorPalette.gradients.primary,
-                                        boxShadow: `0 20px 40px -12px ${colorPalette.dominant}60`,
-                                    }}
-                                >
-                                    <Ticket className="w-5 h-5 mr-2" />
-                                    Comprar Entradas
-                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                </Button>
-                            </Link>
-                        ) : isSoldOut ? (
-                            <Button size="lg" disabled className="w-full h-14 text-base font-bold rounded-2xl bg-zinc-800 text-zinc-500 cursor-not-allowed">
-                                Agotado
-                            </Button>
-                        ) : event.externalTicketUrl ? (
-                            <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer">
-                                <Button size="lg" className="w-full h-14 text-base font-bold rounded-2xl bg-white text-black hover:bg-gray-100 transition-all shadow-xl">
-                                    Comprar en Sitio Oficial
-                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                </Button>
-                            </a>
-                        ) : null}
+                            <div className="mt-4">
+                                {event.sellTicketsOnPlatform && !isSoldOut ? (
+                                    <Link href={`/eventos/${event.slug}/entradas`}>
+                                        <Button
+                                            size="lg"
+                                            className="h-13 w-full rounded-xl text-base font-bold text-white shadow-2xl transition-all duration-1000 ease-out hover:scale-[1.01]"
+                                            style={{
+                                                background: colorPalette.gradients.primary,
+                                                boxShadow: `0 20px 40px -12px ${colorPalette.dominant}60`,
+                                            }}
+                                        >
+                                            <Ticket className="mr-2 h-5 w-5" />
+                                            Comprar entradas
+                                            <ArrowRight className="ml-2 h-5 w-5" />
+                                        </Button>
+                                    </Link>
+                                ) : isSoldOut ? (
+                                    <Button size="lg" disabled className="h-13 w-full rounded-xl bg-zinc-800 text-base font-bold text-zinc-500">
+                                        Agotado
+                                    </Button>
+                                ) : event.externalTicketUrl ? (
+                                    <a href={event.externalTicketUrl} target="_blank" rel="noopener noreferrer">
+                                        <Button size="lg" className="h-13 w-full rounded-xl bg-white text-base font-bold text-black hover:bg-gray-100">
+                                            Comprar en sitio oficial
+                                            <ArrowRight className="ml-2 h-5 w-5" />
+                                        </Button>
+                                    </a>
+                                ) : null}
+                            </div>
+                        </div>
 
                         {event.shortDescription && (
                             <p className="text-sm text-white/70 leading-relaxed pt-2">
