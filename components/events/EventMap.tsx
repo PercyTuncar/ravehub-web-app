@@ -449,7 +449,7 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
     });
 
     try {
-      const orsKey = process.env.NEXT_PUBLIC_ORS_KEY;
+      const orsKey = process.env.NEXT_ORS_KEY;
       
       if (!orsKey) {
         console.warn('⚠️ No OpenRouteService API key found, trying HERE API...');
@@ -478,14 +478,14 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
       // Options can be added if needed for specific profiles, but must be valid parameters
       
       console.log('OpenRouteService API Request:', {
-        url: `https://api.openrouteservice.org/v2/directions/${profile}`,
+        url: `https://api.heigit.org/openrouteservice/v2/directions/${profile}`,
         profile,
         coordinates,
         hasKey: !!orsKey
       });
       
       const response = await fetch(
-        `https://api.openrouteservice.org/v2/directions/${profile}`,
+        `https://api.heigit.org/openrouteservice/v2/directions/${profile}`,
         {
           method: 'POST',
           headers: {
@@ -502,7 +502,7 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
       // Log response for debugging (always log to help diagnose)
       console.group('🔍 OpenRouteService API Debug');
       console.log('📤 Request Details:', {
-        url: `https://api.openrouteservice.org/v2/directions/${profile}`,
+        url: `https://api.heigit.org/openrouteservice/v2/directions/${profile}`,
         method: 'POST',
         profile,
         coordinates,
@@ -814,7 +814,7 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
 
     try {
       // Try OpenRouteService first if key is available
-      const orsKey = process.env.NEXT_PUBLIC_ORS_KEY;
+      const orsKey = process.env.NEXT_ORS_KEY;
       if (orsKey) {
         try {
           const timeoutId = setTimeout(() => {
@@ -822,7 +822,7 @@ export function EventMap({ lat, lng, venue, address }: EventMapProps) {
           }, 5000); // 5 second timeout
           
           const response = await fetch(
-            `https://api.openrouteservice.org/geocoding/reverse?api_key=${orsKey}&point.lon=${lng}&point.lat=${lat}&size=1`,
+            `https://api.heigit.org/pelias/v1/reverse?api_key=${orsKey}&point.lon=${lng}&point.lat=${lat}&size=1`,
             {
               headers: {
                 'Accept': 'application/json, application/geo+json',

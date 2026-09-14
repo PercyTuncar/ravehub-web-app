@@ -46,8 +46,8 @@ export function getAPIConfig(): APIConfig {
       usedQuota: 0,
     },
     openRouteService: {
-      enabled: !!process.env.NEXT_PUBLIC_ORS_KEY,
-      key: process.env.NEXT_PUBLIC_ORS_KEY,
+      enabled: !!process.env.NEXT_ORS_KEY,
+      key: process.env.NEXT_ORS_KEY,
       freeQuota: 2000, // 2K requests/day
       usedQuota: 0,
     },
@@ -200,7 +200,7 @@ export function generateEnvDebugInfo(): {
   }
 
   if (!config.openRouteService.enabled && !config.hereAPI.enabled) {
-    recommendations.push('Configure NEXT_PUBLIC_ORS_KEY or NEXT_PUBLIC_HERE_API_KEY for routing (recommended: https://openrouteservice.org/ or https://platform.here.com/)');
+    recommendations.push('Configure NEXT_ORS_KEY or NEXT_PUBLIC_HERE_API_KEY for routing (recommended: https://openrouteservice.org/ or https://platform.here.com/)');
   }
 
   if (!config.googleMaps.urlsEnabled) {

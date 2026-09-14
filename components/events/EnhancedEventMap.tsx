@@ -271,7 +271,7 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
 
   // OpenRouteService implementation
   const calculateRouteWithORS = async (origin: { lat: number; lng: number }): Promise<RouteInfo | null> => {
-    const orsKey = process.env.NEXT_PUBLIC_ORS_KEY;
+    const orsKey = process.env.NEXT_ORS_KEY;
     if (!orsKey) throw new Error('OpenRouteService API key not available');
 
     const profile = routeMode;
@@ -286,7 +286,7 @@ export function EnhancedEventMap({ lat, lng, venue, address, className }: Enhanc
     };
 
     const response = await fetch(
-      `https://api.openrouteservice.org/v2/directions/${profile}`,
+      `https://api.heigit.org/openrouteservice/v2/directions/${profile}`,
       {
         method: 'POST',
         headers: {
