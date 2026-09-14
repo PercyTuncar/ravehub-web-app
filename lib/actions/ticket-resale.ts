@@ -47,13 +47,17 @@ export async function createResaleRequest(data: {
 export async function createCustomQuote(data: {
   eventName: string;
   eventDate: string;
-  eventLocation?: string;
-  ticketZone?: string;
+  eventCountry: string;
+  ticketZone: string;
 }): Promise<{ success: boolean; quoteId?: string; error?: string }> {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
       return { success: false, error: 'No autenticado' };
+    }
+
+    if (!data.eventName.trim() || !data.eventDate || !data.eventCountry.trim() || !data.ticketZone.trim()) {
+      return { success: false, error: 'Completa todos los campos requeridos' };
     }
 
     // Generar ID único para tracking (sin guardar en DB)

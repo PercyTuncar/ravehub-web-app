@@ -22,8 +22,7 @@ export default function PageWrapper({ children }: { children: React.ReactNode })
 
     return (
         <div
-            className="pb-20 md:pb-0"
-            style={shouldRemovePadding ? {} : { paddingTop: 'var(--navbar-height)' }}
+            className={`pb-20 md:pb-0 ${shouldRemovePadding ? '' : 'pt-0 md:pt-[var(--navbar-height)]'}`}
         >
             {children}
         </div>

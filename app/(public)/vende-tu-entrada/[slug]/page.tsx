@@ -8,22 +8,18 @@ import {
     Calendar,
     MapPin,
     TrendingDown,
-    DollarSign,
-    AlertCircle,
     ChevronLeft,
-    CheckCircle,
-    Clock,
-    CreditCard,
-    MessageCircle
+    Clock
 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { eventsCollection } from '@/lib/firebase/collections';
-import { calculateResaleValue, calculateRealTimeResaleValue, getDaysUntilEvent, formatDaysUntilEvent, formatDepreciationMessage, getDepreciationColor, getValidResalePrice } from '@/lib/utils/resale-calculator';
+import { getEventForResaleBySlug } from '../actions';
+import { calculateRealTimeResaleValue, getDaysUntilEvent, formatDaysUntilEvent, getDepreciationColor, getValidResalePrice } from '@/lib/utils/resale-calculator';
 import { formatPrice } from '@/lib/utils/currency-converter';
 import { parseLocalDate } from '@/lib/utils/date-timezone';
 import { format } from 'date-fns';
@@ -57,7 +53,7 @@ function ResaleZoneOption({
 }) {
     const validPrice = getValidResalePrice(zonePricing.price);
     const zoneKey = `zone-${zonePricing.zoneId}`;
-    const calc = calculateResaleValue(
+    const calc = calculateRealTimeResaleValue(
         validPrice ?? 0,
         event.startDate,
         event.createdAt || event.startDate
@@ -251,17 +247,13 @@ function ResaleDetailContent() {
     const loadEvent = async () => {
         setLoading(true);
         try {
-            const events = await eventsCollection.query([
-                { field: 'slug', operator: '==', value: slug }
-            ]);
+            const eventData = await getEventForResaleBySlug(slug);
 
-            if (events.length === 0) {
+            if (!eventData) {
                 toast.error('Evento no encontrado');
                 router.push('/vende-tu-entrada');
                 return;
             }
-
-            const eventData = events[0];
 
             // Verificar que sea evento futuro
             const eventDate = new Date(eventData.startDate);
@@ -338,7 +330,7 @@ function ResaleDetailContent() {
 
             if (result.success) {
                 // Calcular valor de reventa
-                const resaleCalc = calculateResaleValue(
+                const resaleCalc = calculateRealTimeResaleValue(
                     selectedZone.price,
                     event.startDate,
                     event.createdAt || event.startDate
@@ -394,7 +386,7 @@ function ResaleDetailContent() {
     if (!event) return null;
 
     const daysUntil = getDaysUntilEvent(event.startDate);
-    const resaleCalc = selectedZone ? calculateResaleValue(
+    const resaleCalc = selectedZone ? calculateRealTimeResaleValue(
         selectedZone.price,
         event.startDate,
         event.createdAt || event.startDate
@@ -407,7 +399,7 @@ function ResaleDetailContent() {
             <DynamicBackgroundGradients />
 
             {/* Content */}
-            <div className="relative z-10 py-20">
+            <div className="relative z-10 pt-4 pb-20 md:py-20">
                 <div className="container mx-auto px-4 max-w-6xl">
                 {/* Back button */}
                 <Link href="/vende-tu-entrada" className="inline-flex items-center text-white/70 hover:text-white mb-6 transition-colors backdrop-blur-sm bg-white/5 px-4 py-2 rounded-full border border-white/10 hover:bg-white/10">
@@ -464,21 +456,44 @@ function ResaleDetailContent() {
 
                             {/* Depreciation Alert */}
                             {resaleCalc && (
-                                <Card className={`${colors?.bg} border ${colors?.border}`}>
+                                <Card className={`${colors?.bg} border ${colors?.border} shadow-xl`}>
                                     <CardContent className="p-6">
                                         <div className="flex items-start gap-4">
                                             <TrendingDown className={`w-6 h-6 ${colors?.text} flex-shrink-0 mt-1`} />
                                             <div>
                                                 <h3 className={`font-semibold ${colors?.text} mb-2`}>
-                                                    {resaleCalc.daysUntilEvent <= 7 ? '⚠️ ¡Actúa rápido!' : '📉 Tu entrada pierde valor cada día'}
+                                                    {resaleCalc.daysUntilEvent <= 7 ? 'Vende hoy: queda poco tiempo' : 'Tu entrada pierde valor con el tiempo'}
                                                 </h3>
                                                 <p className="text-sm text-white/80">
-                                                    {formatDepreciationMessage(resaleCalc)}
+                                                    Hoy puedes recuperar el {resaleCalc.valuePercentage.toFixed(0)}% del precio original.
+                                                    La oferta se actualiza mientras el evento se acerca.
                                                 </p>
                                                 <p className="text-xs text-white/60 mt-2">
-                                                    Faltan {resaleCalc.daysUntilEvent} días para el evento.
-                                                    Tu entrada vale {resaleCalc.valuePercentage.toFixed(0)}% de su precio original.
+                                                    Ya ha bajado {resaleCalc.depreciation.toFixed(0)}% desde el valor original.
+                                                    Faltan {resaleCalc.daysUntilEvent} días.
                                                 </p>
+                                                <div className="mt-5">
+                                                    <div className="mb-2 flex items-center justify-between text-xs text-white/60">
+                                                        <span>Valor que conserva tu entrada</span>
+                                                        <span className={`font-semibold ${colors?.text}`}>{resaleCalc.valuePercentage.toFixed(0)}%</span>
+                                                    </div>
+                                                    <div
+                                                        className="h-2 overflow-hidden rounded-full bg-black/25"
+                                                        role="progressbar"
+                                                        aria-label="Valor actual de la entrada"
+                                                        aria-valuemin={10}
+                                                        aria-valuemax={90}
+                                                        aria-valuenow={Math.round(resaleCalc.valuePercentage)}
+                                                    >
+                                                        <motion.div
+                                                            key={selectedZone?.zoneId}
+                                                            initial={{ width: '100%' }}
+                                                            animate={{ width: `${((resaleCalc.valuePercentage - 10) / 80) * 100}%` }}
+                                                            transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
+                                                            className="h-full rounded-full bg-current"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </CardContent>
@@ -642,7 +657,8 @@ function ResaleDetailContent() {
                                     >
                                         {/* Countdown Timer */}
                                         <div className="mb-4 pb-4 border-b" style={{ borderColor: `${colorPalette.dominant}20` }}>
-                                            <p className="text-xs text-gray-400 mb-2 text-center">⏰ Tiempo restante para el evento</p>
+                                            <p className="text-sm font-semibold text-white mb-1 text-center">Tu oferta baja mientras pasa el tiempo</p>
+                                            <p className="text-xs text-gray-400 mb-3 text-center">Tiempo restante para vender con el valor actual</p>
                                             <div className="grid grid-cols-4 gap-2">
                                                 <div className="text-center">
                                                     <div
@@ -693,16 +709,19 @@ function ResaleDetailContent() {
                                                     <p className="text-xs text-gray-500 mt-1">seg</p>
                                                 </div>
                                             </div>
-                                            {timeLeft.days <= 7 && (
-                                                <p className="text-xs text-center mt-3 font-semibold" style={{ color: colorPalette.accent }}>
-                                                    ⚠️ ¡Tu entrada pierde valor cada día que pasa!
-                                                </p>
-                                            )}
+                                            <p className="text-xs text-center mt-3 font-semibold" style={{ color: colorPalette.accent }}>
+                                                {timeLeft.days <= 7
+                                                    ? 'Vende ahora para aprovechar el valor disponible hoy.'
+                                                    : 'Cada día que esperas puede reducir el valor de tu oferta.'}
+                                            </p>
                                         </div>
 
                                         {/* Amount Summary */}
                                         <div className="flex items-center justify-between">
-                                            <span className="text-gray-400">Recibirás:</span>
+                                            <div>
+                                                <span className="block text-sm font-semibold text-white">Oferta actual</span>
+                                                <span className="text-xs text-gray-400">Lo que puedes recibir hoy</span>
+                                            </div>
                                             <span
                                                 className="text-3xl font-bold tabular-nums transition-all duration-100"
                                                 style={{
@@ -721,7 +740,7 @@ function ResaleDetailContent() {
                                             </span>
                                         </div>
                                         <p className="text-xs text-gray-500 text-right mt-1">
-                                            {resaleCalc.valuePercentage.toFixed(2)}% del valor original · {animatingKeys.has('main') ? '🎰 Calculando...' : '⏱️ Bajando en tiempo real'}
+                                            {resaleCalc.valuePercentage.toFixed(2)}% del valor original · Se actualiza en tiempo real
                                         </p>
                                     </div>
                                 )}
@@ -740,8 +759,8 @@ function ResaleDetailContent() {
                                         'Enviando...'
                                     ) : (
                                         <>
-                                            <MessageCircle className="w-5 h-5 mr-2" />
-                                            Continuar por WhatsApp
+                                            <FaWhatsapp className="h-5 w-5 mr-2" aria-hidden="true" />
+                                            Enviar solicitud ahora
                                         </>
                                     )}
                                 </Button>

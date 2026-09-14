@@ -80,3 +80,28 @@ export async function getUpcomingEventsForResale(): Promise<Array<Event & { id: 
     return [];
   }
 }
+
+/** Obtener un evento público de reventa por slug usando Admin SDK. */
+export async function getEventForResaleBySlug(slug: string): Promise<(Event & { id: string }) | null> {
+  try {
+    const db = await getAdminDb();
+    if (!db) return null;
+
+    const snapshot = await db
+      .collection('events')
+      .where('slug', '==', slug)
+      .limit(1)
+      .get();
+
+    const document = snapshot.docs[0];
+    if (!document) return null;
+
+    return {
+      id: document.id,
+      ...serializeFirestoreData(document.data()),
+    } as Event & { id: string };
+  } catch (error) {
+    console.error('❌ [Resale] Error fetching event by slug:', error);
+    return null;
+  }
+}
