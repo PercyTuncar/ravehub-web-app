@@ -121,6 +121,7 @@ async function sendTikTokPurchase(context: MarketingConversionContext): Promise<
     },
     body: JSON.stringify({
       pixel_code: pixelCode,
+      event_source: 'web',
       event: TIKTOK_EVENT_NAME,
       event_id: context.purchaseEventId,
       timestamp: new Date().toISOString(),

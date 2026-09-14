@@ -16,15 +16,15 @@ export const dynamic = 'force-static';
 export const dynamicParams = true;
 
 interface EventsPageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     page?: string;
     tipo?: string;
     region?: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ searchParams }: EventsPageProps): Promise<Metadata> {
-  const params = searchParams || {};
+  const params = searchParams ? await searchParams : {};
   const { page: pageParam, tipo, region } = params;
 
   const currentPage = Math.max(1, parseInt(pageParam || '1', 10));
@@ -262,7 +262,7 @@ async function EventsContent({ searchParams }: { searchParams?: { tipo?: string;
 }
 
 export default async function EventsPage({ searchParams }: EventsPageProps) {
-  const params = searchParams || {};
+  const params = searchParams ? await searchParams : {};
   const { tipo, region } = params;
 
   return (

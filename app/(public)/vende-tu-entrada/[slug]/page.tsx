@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { eventsCollection } from '@/lib/firebase/collections';
-import { calculateResaleValue, calculateRealTimeResaleValue, getDaysUntilEvent, formatDaysUntilEvent, formatDepreciationMessage, getDepreciationColor } from '@/lib/utils/resale-calculator';
+import { calculateResaleValue, calculateRealTimeResaleValue, getDaysUntilEvent, formatDaysUntilEvent, formatDepreciationMessage, getDepreciationColor, getValidResalePrice } from '@/lib/utils/resale-calculator';
 import { formatPrice } from '@/lib/utils/currency-converter';
 import { parseLocalDate } from '@/lib/utils/date-timezone';
 import { format } from 'date-fns';
@@ -33,6 +33,80 @@ import { createResaleRequest } from '@/lib/actions/ticket-resale';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { EventColorProvider, useEnhancedColorExtraction, useEventColors } from '@/components/events/EventColorContext';
 import { DynamicBackgroundGradients } from '@/components/events/DynamicBackgroundGradients';
+
+function ResaleZoneOption({
+    zonePricing,
+    zoneName,
+    event,
+    selectedZone,
+    realTimePrice,
+    animatedPrices,
+    animatingKeys,
+    hasAnimated,
+    animatePrice,
+}: {
+    zonePricing: any;
+    zoneName: string;
+    event: any;
+    selectedZone: any;
+    realTimePrice: number | null;
+    animatedPrices: Map<string, number>;
+    animatingKeys: Set<string>;
+    hasAnimated: boolean;
+    animatePrice: (key: string, targetPrice: number) => void;
+}) {
+    const validPrice = getValidResalePrice(zonePricing.price);
+    const zoneKey = `zone-${zonePricing.zoneId}`;
+    const calc = calculateResaleValue(
+        validPrice ?? 0,
+        event.startDate,
+        event.createdAt || event.startDate
+    );
+
+    useEffect(() => {
+        if (!hasAnimated && validPrice !== null) {
+            animatePrice(zoneKey, calc.currentValue);
+        }
+    }, [animatePrice, calc.currentValue, hasAnimated, validPrice, zoneKey]);
+
+    const isSelected = selectedZone?.zoneId === zonePricing.zoneId;
+    const isAnimatingThis = animatingKeys.has(zoneKey);
+    const animatedValue = animatedPrices.get(zoneKey);
+    const displayPrice = isAnimatingThis && animatedValue !== undefined
+        ? animatedValue
+        : (isSelected && realTimePrice !== null ? realTimePrice : calc.currentValue);
+
+    return (
+        <div className="flex items-center space-x-2 mb-3">
+            <RadioGroupItem value={zonePricing.zoneId} id={zonePricing.zoneId} disabled={validPrice === null} />
+            <Label htmlFor={zonePricing.zoneId} className="flex-1 cursor-pointer">
+                <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-4 hover:border-purple-500/50 transition-colors">
+                    <div>
+                        <p className="text-white font-medium">{zoneName}</p>
+                        <p className="text-xs text-gray-500">
+                            Precio original: {validPrice === null ? 'No disponible' : formatPrice(validPrice, event.currency)}
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <p
+                            className="text-xl font-bold text-green-400 tabular-nums transition-all duration-100"
+                            style={{
+                                textShadow: isAnimatingThis ? '0 0 15px rgba(74, 222, 128, 0.5)' : 'none'
+                            }}
+                        >
+                            {validPrice === null
+                                ? 'No disponible'
+                                : `${event.currencySymbol || event.currency} ${displayPrice.toFixed(2)}`}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                            {validPrice === null ? '--' : `${calc.valuePercentage.toFixed(0)}%`}
+                        </p>
+                    </div>
+                </div>
+            </Label>
+        </div>
+    );
+}
 
 function ResaleDetailContent() {
     const params = useParams();
@@ -82,7 +156,7 @@ function ResaleDetailContent() {
     }, [imageUrl]);
 
     // Función para animar un precio específico
-    const animatePrice = (key: string, targetPrice: number) => {
+    const animatePrice = useCallback((key: string, targetPrice: number) => {
         if (hasAnimated) return; // Solo animar la primera vez
 
         const duration = 2000; // 2 segundos
@@ -113,7 +187,7 @@ function ResaleDetailContent() {
         };
 
         requestAnimationFrame(animate);
-    };
+    }, [hasAnimated]);
 
     // Trigger animation on first load
     useEffect(() => {
@@ -135,7 +209,7 @@ function ResaleDetailContent() {
             const eventTime = new Date(event.startDate).getTime();
             const distance = eventTime - now;
 
-            if (distance < 0) {
+            if (!Number.isFinite(eventTime) || distance < 0) {
                 setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
                 setRealTimePrice(null);
                 return;
@@ -162,10 +236,6 @@ function ResaleDetailContent() {
 
         return () => clearInterval(interval);
     }, [event, selectedZone]);
-
-    useEffect(() => {
-        loadEvent();
-    }, [slug]);
 
     useEffect(() => {
         loadEvent();
@@ -205,9 +275,12 @@ function ResaleDetailContent() {
 
             // Auto-seleccionar primera zona y fase activa
             const activePhase = eventData.salesPhases?.find((p: any) => p.status === 'active');
-            if (activePhase && activePhase.zonesPricing && activePhase.zonesPricing.length > 0) {
+            const firstValidZone = activePhase?.zonesPricing?.find(
+                (zone: any) => getValidResalePrice(zone.price) !== null
+            );
+            if (activePhase && firstValidZone) {
                 setSelectedPhase(activePhase);
-                setSelectedZone(activePhase.zonesPricing[0]);
+                setSelectedZone(firstValidZone);
             }
         } catch (error) {
             console.error('Error loading event:', error);
@@ -437,62 +510,19 @@ function ResaleDetailContent() {
                                             // Buscar el nombre de la zona en event.zones
                                             const zoneInfo = event.zones?.find((z: any) => z.id === zonePricing.zoneId);
                                             const zoneName = zoneInfo?.name || zonePricing.zoneId;
-
-                                            const calc = calculateResaleValue(
-                                                zonePricing.price,
-                                                event.startDate,
-                                                event.createdAt || event.startDate
-                                            );
-
-                                            // Key única para esta zona
-                                            const zoneKey = `zone-${zonePricing.zoneId}`;
-
-                                            // Animar este precio al cargar (solo primera vez)
-                                            useEffect(() => {
-                                                if (!hasAnimated && event && selectedPhase) {
-                                                    animatePrice(zoneKey, calc.currentValue);
-                                                }
-                                            }, [hasAnimated, event, selectedPhase]);
-
-                                            // Mostrar precio animado o real
-                                            const isSelected = selectedZone?.zoneId === zonePricing.zoneId;
-                                            const isAnimatingThis = animatingKeys.has(zoneKey);
-                                            const animatedValue = animatedPrices.get(zoneKey);
-
-                                            const displayPrice = isAnimatingThis && animatedValue !== undefined
-                                                ? animatedValue
-                                                : (isSelected && realTimePrice !== null ? realTimePrice : calc.currentValue);
-
                                             return (
-                                                <div key={zonePricing.zoneId} className="flex items-center space-x-2 mb-3">
-                                                    <RadioGroupItem value={zonePricing.zoneId} id={zonePricing.zoneId} />
-                                                    <Label htmlFor={zonePricing.zoneId} className="flex-1 cursor-pointer">
-                                                        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-4 hover:border-purple-500/50 transition-colors">
-                                                            <div>
-                                                                <p className="text-white font-medium">
-                                                                    {zoneName}
-                                                                </p>
-                                                                <p className="text-xs text-gray-500">
-                                                                    Precio original: {formatPrice(zonePricing.price, event.currency)}
-                                                                </p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p
-                                                                    className="text-xl font-bold text-green-400 tabular-nums transition-all duration-100"
-                                                                    style={{
-                                                                        textShadow: isAnimatingThis ? '0 0 15px rgba(74, 222, 128, 0.5)' : 'none'
-                                                                    }}
-                                                                >
-                                                                    {event.currencySymbol || event.currency}{' '}
-                                                                    {displayPrice.toFixed(2)}
-                                                                </p>
-                                                                <p className="text-xs text-gray-500">
-                                                                    {calc.valuePercentage.toFixed(0)}%
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </Label>
-                                                </div>
+                                                <ResaleZoneOption
+                                                    key={zonePricing.zoneId}
+                                                    zonePricing={zonePricing}
+                                                    zoneName={zoneName}
+                                                    event={event}
+                                                    selectedZone={selectedZone}
+                                                    realTimePrice={realTimePrice}
+                                                    animatedPrices={animatedPrices}
+                                                    animatingKeys={animatingKeys}
+                                                    hasAnimated={hasAnimated}
+                                                    animatePrice={animatePrice}
+                                                />
                                             );
                                         })}
                                     </RadioGroup>

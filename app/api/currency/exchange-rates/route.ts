@@ -135,6 +135,32 @@ async function tryCurrencyFreaks() {
   }
 }
 
+async function tryExchangeRateHost() {
+  try {
+    const response = await fetchWithTimeout('https://open.er-api.com/v6/latest/USD');
+
+    if (!response.ok) {
+      throw new Error(`ExchangeRate Host API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.result !== 'success' || !data.rates) {
+      throw new Error('ExchangeRate Host: Invalid response');
+    }
+
+    return {
+      base: data.base_code || 'USD',
+      rates: data.rates,
+      timestamp: data.time_last_update_unix * 1000 || Date.now(),
+      provider: 'ExchangeRate Host',
+    };
+  } catch (error) {
+    console.warn('[API] ExchangeRate Host failed:', error instanceof Error ? error.message : error);
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Verificar cache del servidor
@@ -155,6 +181,7 @@ export async function GET(request: NextRequest) {
       { name: 'OpenExchangeRates', fn: tryOpenExchangeRates },
       { name: 'ExchangeRate-API', fn: () => tryExchangeRateAPI('USD') },
       { name: 'CurrencyFreaks', fn: tryCurrencyFreaks },
+      { name: 'ExchangeRate Host', fn: tryExchangeRateHost },
     ];
 
     for (const provider of providers) {
@@ -180,11 +207,20 @@ export async function GET(request: NextRequest) {
 
     // Si todos fallan, devolver tasas por defecto
     console.warn('[API] All providers failed, using default rates');
+    const fallbackCurrencies = [
+      'USD', 'EUR', 'GBP', 'CAD', 'MXN', 'CRC', 'GTQ', 'HNL', 'NIO', 'PAB', 'DOP',
+      'ARS', 'BOB', 'BRL', 'CLP', 'COP', 'PEN', 'PYG', 'UYU', 'VES',
+    ];
     const defaultRates = {
       base: 'USD',
-      rates: { USD: 1, EUR: 1, GBP: 1, PEN: 1, CLP: 1, COP: 1, ARS: 1, BRL: 1, MXN: 1 },
+      rates: Object.fromEntries(fallbackCurrencies.map((currency) => [currency, 1])),
       timestamp: Date.now(),
       provider: 'default',
+    };
+
+    serverRatesCache = {
+      rates: defaultRates,
+      timestamp: Date.now(),
     };
 
     return NextResponse.json({

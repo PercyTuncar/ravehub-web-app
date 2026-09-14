@@ -128,7 +128,8 @@ export async function sendTikTokEvent(data: TikTokEventData): Promise<boolean> {
     // Build request payload
     const payload = {
       pixel_code: pixelCode,
-      event_source_id: process.env.TIKTOK_EVENT_SOURCE_ID || pixelCode, // Required by TikTok API
+      event_source: 'web',
+      event_source_id: process.env.TIKTOK_EVENT_SOURCE_ID || pixelCode,
       event: data.eventName,
       event_id: data.eventId,
       timestamp: data.timestamp.toString(),

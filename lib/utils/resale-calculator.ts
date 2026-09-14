@@ -17,17 +17,54 @@ export interface DepreciationResult {
   totalDays: number; // Días desde publicación hasta evento
 }
 
+/** Devuelve un precio positivo y finito, o null si el dato no es utilizable. */
+export function getValidResalePrice(value: unknown): number | null {
+  const numericValue = typeof value === 'string'
+    ? Number(value.replace(',', '.'))
+    : Number(value);
+
+  return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : null;
+}
+
+function getValidDate(value: unknown, fallback: Date): Date {
+  if (value && typeof value === 'object') {
+    const timestamp = value as {
+      seconds?: number;
+      nanoseconds?: number;
+      _seconds?: number;
+      _nanoseconds?: number;
+      toDate?: () => Date;
+    };
+
+    if (typeof timestamp.toDate === 'function') {
+      const date = timestamp.toDate();
+      if (date instanceof Date && !Number.isNaN(date.getTime())) return date;
+    }
+
+    const seconds = timestamp.seconds ?? timestamp._seconds;
+    const nanoseconds = timestamp.nanoseconds ?? timestamp._nanoseconds ?? 0;
+    if (typeof seconds === 'number' && Number.isFinite(seconds)) {
+      const date = new Date(seconds * 1000 + nanoseconds / 1_000_000);
+      if (!Number.isNaN(date.getTime())) return date;
+    }
+  }
+
+  const date = new Date(value as string | number | Date);
+  return Number.isNaN(date.getTime()) ? fallback : date;
+}
+
 /**
  * Calcula el valor de reventa de un ticket según días restantes
  */
 export function calculateResaleValue(
   originalPrice: number,
-  eventDate: Date | string,
-  eventPublishDate: Date | string
+  eventDate: unknown,
+  eventPublishDate: unknown
 ): DepreciationResult {
   const now = new Date();
-  const event = new Date(eventDate);
-  const published = new Date(eventPublishDate);
+  const event = getValidDate(eventDate, now);
+  const published = getValidDate(eventPublishDate, event);
+  const safeOriginalPrice = getValidResalePrice(originalPrice) ?? 0;
 
   // Días hasta el evento
   const msUntilEvent = event.getTime() - now.getTime();
@@ -48,11 +85,11 @@ export function calculateResaleValue(
   const depreciation = 100 - valuePercentage;
 
   // Valor actual que pagaremos
-  const currentValue = Math.round((originalPrice * valuePercentage) / 100);
+  const currentValue = Math.round((safeOriginalPrice * valuePercentage) / 100);
 
   return {
     currentValue,
-    originalPrice,
+    originalPrice: safeOriginalPrice,
     depreciation,
     valuePercentage,
     daysUntilEvent,
@@ -66,12 +103,13 @@ export function calculateResaleValue(
  */
 export function calculateRealTimeResaleValue(
   originalPrice: number,
-  eventDate: Date | string,
-  eventPublishDate: Date | string
+  eventDate: unknown,
+  eventPublishDate: unknown
 ): DepreciationResult {
   const now = new Date();
-  const event = new Date(eventDate);
-  const published = new Date(eventPublishDate);
+  const event = getValidDate(eventDate, now);
+  const published = getValidDate(eventPublishDate, event);
+  const safeOriginalPrice = getValidResalePrice(originalPrice) ?? 0;
 
   // Milisegundos hasta el evento (PRECISIÓN EXACTA)
   const msUntilEvent = Math.max(0, event.getTime() - now.getTime());
@@ -90,11 +128,11 @@ export function calculateRealTimeResaleValue(
   const depreciation = 100 - valuePercentage;
 
   // Valor actual CON DECIMALES (centavos que bajan en tiempo real)
-  const currentValue = (originalPrice * valuePercentage) / 100;
+  const currentValue = (safeOriginalPrice * valuePercentage) / 100;
 
   return {
     currentValue, // Ya NO redondeado - tiene decimales
-    originalPrice,
+    originalPrice: safeOriginalPrice,
     depreciation,
     valuePercentage,
     daysUntilEvent,
@@ -182,6 +220,7 @@ export function getDaysUntilEvent(eventDate: Date | string): number {
   const now = new Date();
   const event = new Date(eventDate);
   const ms = event.getTime() - now.getTime();
+  if (!Number.isFinite(ms)) return 0;
   return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
 }
 

@@ -7,7 +7,7 @@ import { Calendar, MapPin, DollarSign, MessageCircle, ArrowRight } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { calculateResaleValue, getDaysUntilEvent, formatDaysUntilEvent, getDepreciationColor } from '@/lib/utils/resale-calculator';
+import { calculateResaleValue, getDaysUntilEvent, formatDaysUntilEvent, getDepreciationColor, getValidResalePrice } from '@/lib/utils/resale-calculator';
 import { formatPrice } from '@/lib/utils/currency-converter';
 import { parseLocalDate } from '@/lib/utils/date-timezone';
 import { format } from 'date-fns';
@@ -216,15 +216,17 @@ function EventResaleCard({ event }: { event: any }) {
 
     // Calcular valor promedio de reventa (usando fase activa)
     const activePhase = event.salesPhases?.find((p: any) => p.status === 'active');
-    const avgPrice = activePhase?.zonesPricing?.[0]?.price || 100;
+    const avgPrice = activePhase?.zonesPricing
+        ?.map((zone: any) => getValidResalePrice(zone.price))
+        .find((price: number | null): price is number => price !== null) ?? null;
 
-    const resaleCalc = calculateResaleValue(
+    const resaleCalc = avgPrice === null ? null : calculateResaleValue(
         avgPrice,
         event.startDate,
         event.createdAt || event.startDate
     );
 
-    const colors = getDepreciationColor(resaleCalc.valuePercentage);
+    const colors = resaleCalc ? getDepreciationColor(resaleCalc.valuePercentage) : getDepreciationColor(10);
 
     return (
         <motion.div
@@ -245,7 +247,7 @@ function EventResaleCard({ event }: { event: any }) {
 
                     {/* Badge de días restantes */}
                     <div className="absolute top-3 right-3">
-                        <Badge className={`${colors.bg} ${colors.text} border-0`}>
+                            <Badge className={`${colors.bg} ${colors.text} border-0`}>
                             {formatDaysUntilEvent(daysUntil)}
                         </Badge>
                     </div>
@@ -253,7 +255,7 @@ function EventResaleCard({ event }: { event: any }) {
                     {/* Badge de recuperación */}
                     <div className="absolute bottom-3 left-3">
                         <Badge className="bg-green-500/20 text-green-400 border-0">
-                            Recupera {resaleCalc.valuePercentage.toFixed(0)}%
+                            {resaleCalc ? `Recupera ${resaleCalc.valuePercentage.toFixed(0)}%` : 'Precio no disponible'}
                         </Badge>
                     </div>
                 </div>
@@ -281,7 +283,7 @@ function EventResaleCard({ event }: { event: any }) {
                         <div>
                             <p className="text-xs text-gray-500">Hasta</p>
                             <p className="text-xl font-bold text-green-400">
-                                {formatPrice(resaleCalc.currentValue, event.currency || 'PEN')}
+                                {resaleCalc ? formatPrice(resaleCalc.currentValue, event.currency || 'PEN') : 'Precio no disponible'}
                             </p>
                         </div>
 
