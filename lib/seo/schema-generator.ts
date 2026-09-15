@@ -1,6 +1,7 @@
 import { BlogPost } from '@/lib/types';
 import { getLanguageCodeFromCountry, getTimezoneOffset } from '@/lib/utils/country-language';
 import { getReadableFirebaseUrl } from '@/lib/utils/url-helpers';
+import { markdownToPlainText } from '@/lib/markdown/event-description';
 interface SchemaInput {
   type: 'blog' | 'news' | 'festival' | 'concert' | 'product' | 'dj';
   data: any;
@@ -630,7 +631,7 @@ export class SchemaGenerator {
       '@id': `${eventUrl}/#event`,
       name: eventData.name,
       url: eventUrl,
-      description: eventData.seoDescription || eventData.shortDescription || eventData.description,
+      description: eventData.seoDescription || eventData.shortDescription || markdownToPlainText(eventData.description),
       inLanguage: normalizeLanguage(eventData.inLanguage),
       eventStatus: SchemaGenerator.mapEventStatus(eventData.eventStatus || 'published'),
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
@@ -1057,7 +1058,7 @@ export class SchemaGenerator {
         '@id': eventId,
         name: eventData.name,
         url: eventUrl,
-        description: eventData.seoDescription || eventData.shortDescription || eventData.description,
+        description: eventData.seoDescription || eventData.shortDescription || markdownToPlainText(eventData.description),
         inLanguage: normalizeLanguage(eventData.inLanguage),
         mainEntityOfPage: { '@id': pageId },
         eventStatus: SchemaGenerator.mapEventStatus(eventData.eventStatus || 'published'),

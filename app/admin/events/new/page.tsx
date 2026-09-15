@@ -29,6 +29,7 @@ import { syncEventWithDjs } from '@/lib/utils/dj-events-sync';
 import { formatDateForInput, formatTimeForInput, getMinDate, isDateInPast, isEndDateBeforeStart, isEventInPast, getEventDateTime } from '@/lib/utils/date-timezone';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { revalidateEventsListing } from '@/lib/revalidate';
+import { EventMarkdown } from '@/components/events/EventMarkdown';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -701,10 +702,21 @@ export default function NewEventPage() {
                 <Textarea
                   value={eventData.description || ''}
                   onChange={(e) => updateEventData('description', e.target.value)}
-                  placeholder="Descripción detallada del evento, historia, concepto..."
-                  rows={6}
-                  className="resize-none transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                  placeholder="Usa Markdown: ## Sección, **negrita**, *cursiva*, listas y [enlaces](https://ejemplo.com). El título # principal ya está reservado para el nombre del evento."
+                  rows={8}
+                  className="resize-y transition-all duration-200 focus:ring-2 focus:ring-purple-500/20 font-mono text-sm"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Markdown permitido: encabezados ##–######, negrita, cursiva, listas, citas, código, tablas y enlaces. No uses # porque el nombre del evento ya es el único H1.
+                </p>
+                {eventData.description && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Vista previa</p>
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <EventMarkdown content={eventData.description} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 p-6 rounded-xl border border-purple-200/50 dark:border-purple-800/50">

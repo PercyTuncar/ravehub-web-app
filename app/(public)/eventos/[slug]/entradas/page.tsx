@@ -361,7 +361,7 @@ export default async function BuyTicketsPage({ params }: { params: Promise<{ slu
               </div>
               <h3 className="font-bold text-white text-lg">Compra Segura</h3>
               <p className="text-sm text-zinc-400">
-                Somos punto de venta oficial. Tus entradas están 100% garantizadas y protegidas por Ravehub.
+                Plataforma verificada con protección al comprador. Tus entradas están 100% garantizadas por Ravehub.
               </p>
             </div>
           </div>

@@ -7,6 +7,8 @@ import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FileText, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { markdownToPlainText } from '@/lib/markdown/event-description';
+import { EventMarkdown } from './EventMarkdown';
 import { useEventColors } from './EventColorContext';
 
 interface EventDetailsProps {
@@ -27,8 +29,9 @@ export function EventDetails({
   const { colorPalette } = useEventColors();
   const dominantColor = colorPalette?.dominant || '#FBA905';
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const descriptionPreview = description.slice(0, 300);
-  const shouldTruncate = description.length > 300;
+  const plainDescription = markdownToPlainText(description);
+  const descriptionPreview = plainDescription.slice(0, 300).trimEnd();
+  const shouldTruncate = plainDescription.length > 300;
 
   return (
     <div className="space-y-12">
@@ -50,35 +53,37 @@ export function EventDetails({
             </h2>
           </div>
           
-          <div className="prose prose-lg prose-invert max-w-none text-gray-300 leading-relaxed">
-              {shouldTruncate ? (
-                <>
-                  <p className="whitespace-pre-line">
-                    {isDescriptionExpanded ? description : `${descriptionPreview}...`}
-                  </p>
-                  <button
-                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                    className="mt-4 hover:underline flex items-center gap-2 font-medium text-sm"
-                    style={{
-                      color: dominantColor,
-                      transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                  >
-                    {isDescriptionExpanded ? (
-                      <>
-                        Ver menos <ChevronUp className="h-4 w-4" />
-                      </>
-                    ) : (
-                      <>
-                        Leer descripción completa <ChevronDown className="h-4 w-4" />
-                      </>
-                    )}
-                  </button>
-                </>
-              ) : (
-                <p className="whitespace-pre-line">{description}</p>
-              )}
-            </div>
+          <div className="prose prose-lg prose-invert max-w-none prose-headings:text-white prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-h4:text-lg prose-h4:mt-4 prose-h4:mb-2 prose-p:text-gray-300 prose-p:leading-relaxed prose-p:my-4 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-white prose-strong:font-semibold prose-em:text-gray-300 prose-ul:text-gray-300 prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6 prose-ol:text-gray-300 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6 prose-li:my-2 prose-li:leading-relaxed prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-400 prose-blockquote:my-6 prose-code:text-primary prose-code:bg-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-black/30 prose-pre:border prose-pre:border-white/10 prose-pre:rounded-lg prose-pre:p-4 prose-pre:overflow-x-auto prose-table:w-full prose-table:border-collapse prose-table:my-6 prose-thead:border-b-2 prose-thead:border-white/20 prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:font-semibold prose-th:text-white prose-td:px-4 prose-td:py-3 prose-td:text-gray-300 prose-td:border-t prose-td:border-white/10 prose-hr:border-white/20 prose-hr:my-8">
+            {shouldTruncate ? (
+              <>
+                {isDescriptionExpanded ? (
+                  <EventMarkdown content={description} />
+                ) : (
+                  <p>{descriptionPreview}…</p>
+                )}
+                <button
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  className="mt-4 hover:underline flex items-center gap-2 font-medium text-sm"
+                  style={{
+                    color: dominantColor,
+                    transition: 'color 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  {isDescriptionExpanded ? (
+                    <>
+                      Ver menos <ChevronUp className="h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      Leer descripción completa <ChevronDown className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </>
+            ) : (
+              <EventMarkdown content={description} />
+            )}
+          </div>
         </section>
       )}
 
