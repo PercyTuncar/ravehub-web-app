@@ -621,6 +621,31 @@ export interface TicketTransaction {
 
   // ✅ NUEVO: Warning sobre última cuota ajustada
   lastInstallmentWarning?: string; // Aviso si la última cuota fue ajustada por la fecha del evento
+
+  // Mercado Pago Orders API fields
+  mercadoPagoOrderId?: string;         // ID de Order en Mercado Pago
+  mercadoPagoStatus?: string;          // Estado de MP: approved, rejected, pending, etc.
+  mercadoPagoStatusDetail?: string;    // Detalle del estado de MP
+  paymentId?: string;                  // ID del Payment (para idempotencia)
+
+  // Detalles del pago aprobado
+  paymentDetails?: {
+    transactionAmount: number;
+    paymentTypeId: string;             // credit_card, debit_card, etc.
+    paymentMethodId: string;           // visa, master, amex, etc.
+    cardLastFourDigits?: string;
+    installments?: number;
+    approvedAt?: string;
+  };
+
+  // Conversión de moneda (si el evento no está en PEN)
+  originalCurrency?: string;           // Moneda del evento (CLP, USD, COP, etc.)
+  originalAmount?: number;             // Monto en moneda original
+  paidCurrency?: string;               // PEN (Mercado Pago Perú solo acepta PEN)
+  paidAmount?: number;                 // Monto pagado en PEN
+  exchangeRate?: number;               // Tasa de conversión usada
+  exchangeRateProvider?: string;       // Proveedor de tasa (OpenExchangeRates, etc.)
+  exchangeRateTimestamp?: string;      // Cuándo se obtuvo la tasa
 }
 
 // Payment Installment types

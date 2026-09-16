@@ -35,6 +35,7 @@ import {
   createEventId,
   trackMarketingEvent,
 } from '@/lib/analytics/client';
+import { CardPaymentModal } from './CardPaymentModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -166,6 +167,10 @@ export function CheckoutPaymentModal({
   const [submitting, setSubmitting] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
 
+  // Estados para pago online con tarjeta
+  const [showCardModal, setShowCardModal] = useState(false);
+  const [onlineTransactionId, setOnlineTransactionId] = useState<string | null>(null);
+
   const symbol = event.currency === 'USD' ? '$' : event.currency === 'CLP' ? '$' : 'S/';
   const amountToPay = isInstallmentMode ? totalReservation : totalAmount;
 
@@ -269,6 +274,69 @@ export function CheckoutPaymentModal({
     setStep('pagar-ahora');
   };
 
+  /**
+   * "Pagar ahora +5%" — requires auth, creates transaction and opens card modal
+   */
+  const handlePayOnline = async () => {
+    if (authLoading) return;
+    if (!user) {
+      const returnUrl = encodeURIComponent(pathname ?? '/');
+      onClose();
+      router.push(`/login?returnUrl=${returnUrl}`);
+      toast.info('Inicia sesión para pagar con tarjeta.');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      // Crear transaction con paymentMethod: 'online'
+      const totalWithSurcharge = totalAmount * 1.05; // +5% recargo
+
+      const body = {
+        eventId: event.id,
+        tickets: selectedTickets.map((t) => ({
+          zoneId: t.zoneId,
+          zoneName: t.zoneName,
+          phaseId: t.phaseId,
+          phaseName: t.phaseName,
+          quantity: t.quantity,
+          pricePerTicket: t.price,
+        })),
+        paymentMethod: 'online',
+        paymentType: isInstallmentMode ? 'installment' : 'full',
+        installments: isInstallmentMode ? installments : 1,
+        userId: user.id,
+        totalAmount: totalWithSurcharge,
+        currency: event.currency,
+        reservationFee: isInstallmentMode ? totalReservation : 0,
+        trackingContext: createConversionTrackingContext(createEventId()),
+      };
+
+      const resp = await fetch('/api/tickets/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || 'Error al crear la transacción');
+      }
+
+      // Guardar transactionId y abrir modal de tarjeta
+      setOnlineTransactionId(data.transactionId);
+      setShowCardModal(true);
+
+    } catch (err: any) {
+      console.error('Online payment error:', err);
+      toast.error(err.message || 'Error al iniciar el pago');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   /** After user uploads proof → submit order to API */
   const handleSubmitOrder = async () => {
     if (!proofUrl) {
@@ -343,7 +411,8 @@ export function CheckoutPaymentModal({
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !submitting && onClose()}>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !submitting && onClose()}>
       <DialogContent
         className="border border-white/[0.15] text-white sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl shadow-black/40"
         style={{
@@ -398,7 +467,42 @@ export function CheckoutPaymentModal({
                 </div>
               </button>
 
-              {/* Option B — Pagar Ahora */}
+              {/* Option B — Pagar ahora +5% (Online con tarjeta) — NUEVO */}
+              <button
+                type="button"
+                onClick={handlePayOnline}
+                disabled={submitting}
+                className="w-full text-left p-6 rounded-2xl border border-blue-500/30 bg-blue-500/[0.09] hover:bg-blue-500/[0.14] hover:border-blue-500/50 transition-all group shadow-lg shadow-blue-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0 group-hover:bg-blue-500/30 transition-colors shadow-sm">
+                    <CreditCard className="w-7 h-7 text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="font-bold text-white text-lg">Pagar ahora +5%</p>
+                      <Badge variant="secondary" className="text-xs">
+                        Tarjeta
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-white/70 leading-relaxed mb-2">
+                      Pago inmediato con tarjeta de crédito/débito.
+                    </p>
+                    <p className="text-sm font-semibold text-blue-400">
+                      Total: {symbol} {(totalAmount * 1.05).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    {!user && (
+                      <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
+                        <LogIn className="w-3 h-3" />
+                        Requiere iniciar sesión
+                      </p>
+                    )}
+                  </div>
+                  <CreditCard className="w-5 h-5 text-blue-400/60 mt-1 shrink-0" />
+                </div>
+              </button>
+
+              {/* Option C — Pagar Ahora (Offline) */}
               <button
                 type="button"
                 onClick={handlePayAhora}
@@ -717,6 +821,36 @@ export function CheckoutPaymentModal({
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Modal de pago con tarjeta */}
+    {showCardModal && onlineTransactionId && user && (
+      <CardPaymentModal
+        isOpen={showCardModal}
+        onClose={() => setShowCardModal(false)}
+        transactionId={onlineTransactionId}
+        totalAmount={totalAmount * 1.05}
+        currency={event.currency}
+        currencySymbol={symbol}
+        event={event}
+        user={{
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          documentType: user.documentType,
+          documentNumber: user.documentNumber,
+        }}
+        onSuccess={(paymentId) => {
+          console.log('Payment successful:', paymentId);
+          setShowCardModal(false);
+          onClose();
+        }}
+        onError={(error) => {
+          console.error('Payment error:', error);
+          // Modal se queda abierto para que usuario reintente
+        }}
+      />
+    )}
+    </>
   );
 }
 

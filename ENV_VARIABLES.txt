@@ -18,6 +18,35 @@ FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your_project_id.iam.gserviceaccoun
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----\n"
 
 # ====================================
+# MERCADO PAGO (Checkout API vía Orders API)
+# ====================================
+
+# Mercado Pago - Server Side (Access Token privado)
+# Obtener desde: https://www.mercadopago.com.pe/settings/account/credentials
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-XXXXXXXXXXXX-XXXXXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-XXXXXXXXX
+
+# Mercado Pago - Client Side (Public Key para tokenización)
+# La Public Key es necesaria para MercadoPago.js (tokenización de tarjetas)
+# Obtener desde: https://www.mercadopago.com.pe/settings/account/credentials
+NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY=APP_USR-XXXXXXXX-XXXXXX-XXXX-XXXX-XXXXXXXXXXXX
+
+# Mercado Pago - Webhook Secret (para validación HMAC)
+# Obtener desde: https://www.mercadopago.com.pe/developers/panel/app
+# Configurar webhook en: https://www.mercadopago.com.pe/developers/panel/app/{app_id}/webhooks
+MERCADOPAGO_WEBHOOK_SECRET=your_webhook_secret_here
+
+# Mercado Pago - Webhook URL (opcional, se construye automáticamente si no se define)
+# Solo definir si difiere de NEXT_PUBLIC_SITE_URL/api/mercadopago/webhook
+# MP_WEBHOOK_URL=https://ravehub.com/api/mercadopago/webhook
+
+# Nota importante sobre las credenciales:
+# - Usa credenciales de SANDBOX para desarrollo/testing
+# - Usa credenciales de PRODUCCIÓN solo en ambiente productivo
+# - NUNCA commitees estas credenciales al repositorio
+# - La Public Key puede ser expuesta al cliente (es pública por diseño)
+# - El Access Token NUNCA debe exponerse al cliente
+
+# ====================================
 # GEOLOCATION APIs (Sistema de Conversión de Divisas)
 # ====================================
 
