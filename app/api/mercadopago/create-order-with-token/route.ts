@@ -42,7 +42,13 @@ async function convertToSoles(amount: number, fromCurrency: string): Promise<{ a
 }
 
 export async function POST(request: NextRequest) {
+  console.log('[MP Order] === REQUEST START ===');
+
   try {
+    console.log('[MP Order] Step 1: Parse request body');
+    const body = await request.json();
+    console.log('[MP Order] Request body received:', JSON.stringify(body, null, 2));
+
     const {
       transactionId,
       token,
@@ -50,27 +56,35 @@ export async function POST(request: NextRequest) {
       identificationType,
       identificationNumber,
       paymentMethodId
-    } = await request.json();
+    } = body;
 
     console.log('[MP Order] Received request:', { transactionId, paymentMethodId });
 
     // 1. Autenticación
+    console.log('[MP Order] Step 2: Authentication');
     const currentUser = await getCurrentUser();
     if (!currentUser) {
+      console.log('[MP Order] Error: No authenticated user');
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
+    console.log('[MP Order] User authenticated:', currentUser.id);
 
     // 2. Obtener transaction
+    console.log('[MP Order] Step 3: Get transaction');
     const transaction = await ticketTransactionsCollection.get(transactionId);
     if (!transaction) {
+      console.log('[MP Order] Error: Transaction not found:', transactionId);
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
+    console.log('[MP Order] Transaction found:', transactionId);
 
     if (transaction.userId !== currentUser.id) {
+      console.log('[MP Order] Error: Unauthorized - user mismatch');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     if (transaction.paymentMethod !== 'online') {
+      console.log('[MP Order] Error: Invalid payment method:', transaction.paymentMethod);
       return NextResponse.json({
         error: 'Invalid payment method',
         message: 'Esta transacción no es para pago online'
@@ -78,6 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (transaction.paymentStatus !== 'pending') {
+      console.log('[MP Order] Error: Invalid transaction state:', transaction.paymentStatus);
       return NextResponse.json({
         error: 'Invalid transaction state',
         message: 'Esta transacción ya fue procesada'
@@ -85,6 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Obtener evento y usuario
+    console.log('[MP Order] Step 4: Get event and user data');
     const event = await eventsCollection.get(transaction.eventId);
     const user = await usersCollection.get(currentUser.id);
 
@@ -239,7 +255,15 @@ export async function POST(request: NextRequest) {
     console.error('[MP Order] Error status:', error.status);
     console.error('[MP Order] Error message:', error.message);
     console.error('[MP Order] Error cause:', JSON.stringify(error.cause, null, 2));
-    console.error('[MP Order] Full error:', JSON.stringify(error, null, 2));
+    console.error('[MP Order] Error causes array:', error.causes);
+    console.error('[MP Order] Error response:', error.response);
+    console.error('[MP Order] Error apiResponse:', error.apiResponse);
+    console.error('[MP Order] All error keys:', Object.keys(error));
+
+    // Intentar extraer más detalles
+    if (error.causes && error.causes.length > 0) {
+      console.error('[MP Order] Detailed causes:', JSON.stringify(error.causes, null, 2));
+    }
 
     // Errores específicos de Mercado Pago
     if (error.status === 400) {
@@ -250,7 +274,8 @@ export async function POST(request: NextRequest) {
         mpError: {
           status: error.status,
           message: error.message,
-          cause: error.cause,
+          causes: error.causes,
+          allKeys: Object.keys(error),
         },
       }, { status: 400 });
     }
