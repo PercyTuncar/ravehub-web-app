@@ -147,11 +147,7 @@ export async function POST(request: NextRequest) {
     const orderData = {
       type: 'online' as const,
       processing_mode: 'automatic' as const,
-      config: {
-        online: {
-          callback_url: webhookUrl, // ✅ Orders API usa callback_url, NO notification_url
-        },
-      },
+      notification_url: webhookUrl, // Para automatic mode, va en el root
       transactions: {
         payments: [
           {
