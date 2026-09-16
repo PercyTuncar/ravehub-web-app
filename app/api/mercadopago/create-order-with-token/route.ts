@@ -131,6 +131,11 @@ export async function POST(request: NextRequest) {
     const orderData = {
       type: 'online' as const,
       processing_mode: 'automatic' as const,
+      config: {
+        online: {
+          callback_url: webhookUrl, // ✅ Orders API usa callback_url, NO notification_url
+        },
+      },
       transactions: {
         payments: [
           {
@@ -154,7 +159,6 @@ export async function POST(request: NextRequest) {
         },
       },
       external_reference: transactionId,
-      notification_url: webhookUrl,
     };
 
     console.log('[MP Order] Creating order with amount:', finalAmount, 'PEN');
