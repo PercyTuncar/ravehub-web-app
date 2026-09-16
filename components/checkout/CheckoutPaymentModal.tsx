@@ -428,9 +428,6 @@ export function CheckoutPaymentModal({
               <DialogTitle className="text-lg font-bold text-[#FAFDFF]">
                 ¿Cómo quieres continuar?
               </DialogTitle>
-              <DialogDescription className="text-xs text-white/60">
-                Elige cómo deseas gestionar tu pedido para {event.name}.
-              </DialogDescription>
             </DialogHeader>
 
             {/* Order summary */}
@@ -467,29 +464,29 @@ export function CheckoutPaymentModal({
                 </div>
               </button>
 
-              {/* Option B — Pagar ahora +5% (Online con tarjeta) — NUEVO */}
+              {/* Option B — Pagar con Yape/Plin */}
               <button
                 type="button"
-                onClick={handlePayOnline}
-                disabled={submitting}
-                className="w-full text-left p-6 rounded-2xl border border-blue-500/30 bg-blue-500/[0.09] hover:bg-blue-500/[0.14] hover:border-blue-500/50 transition-all group shadow-lg shadow-blue-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handlePayAhora}
+                className="w-full text-left p-6 rounded-2xl border border-purple-500/30 bg-purple-500/[0.09] hover:bg-purple-500/[0.14] hover:border-purple-500/50 transition-all group shadow-lg shadow-purple-500/10"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0 group-hover:bg-blue-500/30 transition-colors shadow-sm">
-                    <CreditCard className="w-7 h-7 text-blue-400" />
+                  <div className="w-14 h-14 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0 group-hover:bg-purple-500/30 transition-colors shadow-sm">
+                    <img
+                      src="https://res.cloudinary.com/amadodedios/image/upload/v1786821754/03_Landing_Interoperabilidad_Marzo24_Icono02_uw03wp.png"
+                      alt="Yape/Plin"
+                      className="w-8 h-8 object-contain"
+                    />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <p className="font-bold text-white text-lg">Pagar ahora +5%</p>
-                      <Badge variant="secondary" className="text-xs">
-                        Tarjeta
+                      <p className="font-bold text-white text-lg">Pagar con Yape/Plin</p>
+                      <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-300 border-purple-500/30">
+                        Instantáneo
                       </Badge>
                     </div>
-                    <p className="text-sm text-white/70 leading-relaxed mb-2">
-                      Pago inmediato con tarjeta de crédito/débito.
-                    </p>
-                    <p className="text-sm font-semibold text-blue-400">
-                      Total: {symbol} {(totalAmount * 1.05).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <p className="text-sm text-white/70 leading-relaxed">
+                      Paga y sube tu comprobante
                     </p>
                     {!user && (
                       <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
@@ -498,34 +495,34 @@ export function CheckoutPaymentModal({
                       </p>
                     )}
                   </div>
-                  <CreditCard className="w-5 h-5 text-blue-400/60 mt-1 shrink-0" />
                 </div>
               </button>
 
-              {/* Option C — Pagar Ahora (Offline) */}
-              <button
-                type="button"
-                onClick={handlePayAhora}
-                className="w-full text-left p-5 rounded-2xl border bg-white/[0.045] hover:bg-white/[0.08] transition-all group border-white/[0.12] hover:border-white/25"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 group-hover:opacity-90 transition-colors" style={{ backgroundColor: `${dominantColor}20` }}>
-                    <CreditCard className="w-6 h-6" style={{ color: dominantColor }} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-white text-base mb-1.5">Pagar Ahora</p>
-                    <p className="text-sm text-white/60 leading-relaxed">
-                      Sube tu comprobante en la plataforma y recibe seguimiento automático.
-                    </p>
-                    {!user && (
-                      <p className="text-xs text-yellow-400/80 mt-2.5 flex items-center gap-1.5">
-                        <LogIn className="w-3 h-3" />
-                        Requiere iniciar sesión
+              {/* Option C — Pagar con tarjeta +5% (TEMPORALMENTE DESACTIVADO) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  disabled
+                  className="w-full text-left p-6 rounded-2xl border border-gray-500/20 bg-gray-500/[0.05] cursor-not-allowed opacity-60"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-gray-500/10 border border-gray-500/20 flex items-center justify-center shrink-0">
+                      <CreditCard className="w-7 h-7 text-gray-400" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="font-bold text-gray-400 text-lg">Pagar con tarjeta +5%</p>
+                        <Badge variant="secondary" className="text-xs bg-red-500/20 text-red-300 border-red-500/30">
+                          No disponible
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-500 leading-relaxed">
+                        Pago inmediato con tarjeta de crédito/débito.
                       </p>
-                    )}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -533,21 +530,15 @@ export function CheckoutPaymentModal({
         {/* ── STEP: PAGAR AHORA ────────────────────────────────────── */}
         {step === 'pagar-ahora' && (
           <div className="space-y-6">
-            <DialogHeader className="space-y-0">
+            <DialogHeader className="space-y-0 pb-2">
               <button
                 type="button"
                 onClick={() => setStep('choice')}
-                className="flex items-center gap-2 text-white/50 hover:text-white text-sm transition-colors w-fit mb-4"
+                className="flex items-center gap-2 text-white/50 hover:text-white text-sm transition-colors w-fit"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Volver
               </button>
-              <DialogTitle className="text-lg font-bold text-[#FAFDFF]">
-                Realiza el pago
-              </DialogTitle>
-              <DialogDescription className="mt-1.5 text-xs text-white/60">
-                Transfiere el monto y adjunta el comprobante para confirmar tu pedido.
-              </DialogDescription>
             </DialogHeader>
 
             {/* Amount to pay - Highlighted section */}
@@ -579,74 +570,50 @@ export function CheckoutPaymentModal({
               </div>
 
               {/* PLIN */}
-              <div className="rounded-xl border border-white/[0.10] bg-white/[0.045] p-4 backdrop-blur-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-white/95 border border-[#6B3FA0]/30 flex items-center justify-center overflow-hidden shadow-sm shadow-[#6B3FA0]/20">
-                      <img
-                        src="https://res.cloudinary.com/amadodedios/image/upload/v1786821754/03_Landing_Interoperabilidad_Marzo24_Icono02_uw03wp.png"
-                        alt="Plin"
-                        className="w-8 h-8 object-contain"
-                      />
+              <div className="rounded-xl border border-white/[0.10] bg-white/[0.045] p-5 backdrop-blur-md">
+                <div className="flex flex-col sm:flex-row items-center gap-5">
+                  {/* Left side: QR Code */}
+                  <div className="shrink-0">
+                    <div className="relative group">
+                      <div className="absolute -inset-1 bg-gradient-to-r from-[#6B3FA0] to-[#A78BFA] rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
+                      <div className="relative w-32 h-32 rounded-xl bg-white p-2 shadow-lg">
+                        <img
+                          src="https://res.cloudinary.com/amadodedios/image/upload/v1789601476/WhatsApp_Image_2026-09-16_at_6.27.03_PM_vh2adr.jpg"
+                          alt="QR Plin"
+                          className="w-full h-full object-contain rounded-lg"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-xs text-white/45">PLIN / Yape</p>
+                    <p className="text-[10px] text-center text-white/40 mt-2 uppercase tracking-wide">
+                      Escanea para pagar
+                    </p>
+                  </div>
+
+                  {/* Right side: Info and copy */}
+                  <div className="flex-1 w-full">
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-3">
                         <span className="rounded-full border border-[#A78BFA]/30 bg-[#6B3FA0]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#C4B5FD]">
                           Seleccionar Plin
                         </span>
                       </div>
-                      <p className="font-bold text-white font-mono text-lg tracking-wider">
-                        944 784 488
+                      <p className="text-xs text-white/50 mb-3">
+                        O copia el número manualmente:
                       </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard('944784488', 'Número PLIN')}
-                    className="px-3 py-2 rounded-lg border border-white/[0.10] bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
-                  >
-                    <Copy className="w-4 h-4 text-white/60" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Interbank */}
-              <div className="rounded-xl border border-white/[0.10] bg-white/[0.045] p-4 backdrop-blur-md">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-11 h-11 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-white/90 text-base">Interbank</p>
-                    <p className="text-xs text-white/45">Cuenta en Soles</p>
-                  </div>
-                </div>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
-                    <span className="text-xs text-white/45 uppercase tracking-wide">Cuenta</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-white font-medium">076 3129312815</span>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard('0763129312815', 'Número de cuenta')}
-                        className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
-                      >
-                        <Copy className="w-3.5 h-3.5 text-white/50" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
-                    <span className="text-xs text-white/45 uppercase tracking-wide">CCI</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-white/80 text-xs">00307601312931281576</span>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard('00307601312931281576', 'CCI')}
-                        className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
-                      >
-                        <Copy className="w-3.5 h-3.5 text-white/50" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 px-4 py-3 rounded-lg bg-white/[0.03] border border-white/[0.08]">
+                          <p className="font-bold text-white font-mono text-lg tracking-wider">
+                            944 784 488
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard('944784488', 'Número PLIN')}
+                          className="px-4 py-3 rounded-lg border border-white/[0.10] bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
+                        >
+                          <Copy className="w-4 h-4 text-white/60" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -662,10 +629,6 @@ export function CheckoutPaymentModal({
                 </p>
                 <div className="h-px flex-1 bg-white/[0.08]" />
               </div>
-              <p className="text-xs text-white/50 text-center leading-relaxed">
-                Sube una captura de pantalla o foto de la transferencia<br/>
-                (JPG, PNG o PDF — máximo 5 MB)
-              </p>
               {proofUrl ? (
                 <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/25 rounded-xl p-4">
                   <div className="w-10 h-10 rounded-lg bg-green-500/15 flex items-center justify-center shrink-0">
@@ -694,6 +657,7 @@ export function CheckoutPaymentModal({
                   accept="image/*,application/pdf"
                   maxSize={5}
                   variant="default"
+                  compact={true}
                 />
               )}
             </div>
