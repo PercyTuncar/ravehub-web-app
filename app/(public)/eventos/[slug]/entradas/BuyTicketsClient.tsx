@@ -79,7 +79,7 @@ const WHATSAPP_GROUPS = [
     country: "Perú",
     flag: "🇵🇪",
     name: "Ravehub Perú",
-    url: "https://chat.whatsapp.com/GFzqTRZtajX0J8RBEWT8Sr",
+    url: "https://chat.whatsapp.com/HKg7kLPcGTQHWbnIMCejbh?s=cl&p=a&mlu=4&ilr=4",
   },
   {
     id: "army",
