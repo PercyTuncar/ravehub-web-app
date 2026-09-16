@@ -60,6 +60,15 @@ export async function POST(request: NextRequest) {
 
     console.log('[MP Order] Received request:', { transactionId, paymentMethodId });
 
+    // Validar que paymentMethodId exista
+    if (!paymentMethodId) {
+      console.log('[MP Order] Error: Missing payment method ID');
+      return NextResponse.json({
+        error: 'Payment method ID is required',
+        message: 'No se pudo identificar el tipo de tarjeta'
+      }, { status: 400 });
+    }
+
     // 1. Autenticación
     console.log('[MP Order] Step 2: Authentication');
     const currentUser = await getCurrentUser();
@@ -153,8 +162,7 @@ export async function POST(request: NextRequest) {
           {
             amount: finalAmount.toFixed(2),
             payment_method: {
-              // Solo incluir 'id' si paymentMethodId está definido
-              ...(paymentMethodId && { id: paymentMethodId }),
+              id: paymentMethodId, // REQUERIDO: visa, master, amex, etc.
               type: 'credit_card' as const,
               token: token,
               installments: 1,

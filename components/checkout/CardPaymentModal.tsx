@@ -161,7 +161,27 @@ export function CardPaymentModal({
 
       console.log('[MP] Token created successfully');
       console.log('[MP] Token data:', JSON.stringify(response, null, 2));
-      return response;
+
+      // Obtener payment method ID usando el BIN si no viene en el token
+      let paymentMethodId = response.payment_method_id;
+
+      if (!paymentMethodId && response.first_six_digits) {
+        console.log('[MP] Getting payment method from BIN:', response.first_six_digits);
+        try {
+          const paymentMethods = await mp.getPaymentMethods({ bin: response.first_six_digits });
+          if (paymentMethods?.results?.[0]?.id) {
+            paymentMethodId = paymentMethods.results[0].id;
+            console.log('[MP] Payment method identified:', paymentMethodId);
+          }
+        } catch (error) {
+          console.error('[MP] Error getting payment method from BIN:', error);
+        }
+      }
+
+      return {
+        ...response,
+        payment_method_id: paymentMethodId,
+      };
     } catch (error: any) {
       console.error('[MP] Error creating token:', error);
 
