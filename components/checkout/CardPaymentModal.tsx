@@ -160,6 +160,7 @@ export function CardPaymentModal({
       }
 
       console.log('[MP] Token created successfully');
+      console.log('[MP] Token data:', JSON.stringify(response, null, 2));
       return response;
     } catch (error: any) {
       console.error('[MP] Error creating token:', error);
@@ -214,6 +215,8 @@ export function CardPaymentModal({
 
       // 2. Enviar al backend para crear Order
       console.log('[Payment] Sending token to backend...');
+      console.log('[Payment] Token data received:', tokenData);
+      console.log('[Payment] Payment method ID:', tokenData.payment_method_id);
 
       const response = await fetch('/api/mercadopago/create-order-with-token', {
         method: 'POST',

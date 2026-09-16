@@ -157,7 +157,8 @@ export async function POST(request: NextRequest) {
           {
             amount: finalAmount.toFixed(2),
             payment_method: {
-              id: paymentMethodId, // visa, master, amex, etc.
+              // Solo incluir 'id' si paymentMethodId está definido
+              ...(paymentMethodId && { id: paymentMethodId }),
               type: 'credit_card' as const,
               token: token,
               installments: 1,
