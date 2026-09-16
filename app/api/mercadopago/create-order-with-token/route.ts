@@ -162,6 +162,7 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('[MP Order] Creating order with amount:', finalAmount, 'PEN');
+    console.log('[MP Order] Order data:', JSON.stringify(orderData, null, 2));
 
     // 6. Crear Order en Mercado Pago
     const order = await orderClient.create({ body: orderData });
@@ -235,8 +236,25 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('[MP Order] Error:', error);
+    console.error('[MP Order] Error status:', error.status);
+    console.error('[MP Order] Error message:', error.message);
+    console.error('[MP Order] Error cause:', JSON.stringify(error.cause, null, 2));
+    console.error('[MP Order] Full error:', JSON.stringify(error, null, 2));
 
     // Errores específicos de Mercado Pago
+    if (error.status === 400) {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid request to Mercado Pago',
+        message: error.message || 'Los datos enviados a Mercado Pago no son válidos',
+        mpError: {
+          status: error.status,
+          message: error.message,
+          cause: error.cause,
+        },
+      }, { status: 400 });
+    }
+
     if (error.cause) {
       const mpError = error.cause;
       console.error('[MP Order] Mercado Pago error:', mpError);
