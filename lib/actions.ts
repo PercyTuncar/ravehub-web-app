@@ -644,7 +644,19 @@ export async function countTicketsForEvent(eventId: string): Promise<{
 /**
  * Get all tickets for admin with related data (events and users)
  */
-export async function getTicketsForAdmin(): Promise<{
+/**
+ * Get tickets for admin with optional server-side filtering
+ * ✅ OPTIMIZADO: Soporta filtros server-side para búsquedas eficientes
+ */
+export async function getTicketsForAdmin(filters?: {
+  searchTerm?: string;
+  statusFilter?: string;
+  paymentFilter?: string;
+  eventFilter?: string;
+  deliveryFilter?: string;
+  proofFilter?: string;
+  limit?: number;
+}): Promise<{
   success: boolean;
   tickets: any[];
   error?: string;
@@ -654,35 +666,118 @@ export async function getTicketsForAdmin(): Promise<{
   try {
     await requireAdmin();
 
-    // Fetch last 100 tickets
+    // Build Firestore query conditions based on filters
+    const conditions: Array<{ field: string; operator: any; value: any }> = [];
+
+    // Status filter (exact match)
+    if (filters?.statusFilter && filters.statusFilter !== 'all') {
+      conditions.push({
+        field: 'paymentStatus',
+        operator: '==',
+        value: filters.statusFilter
+      });
+    }
+
+    // Payment method filter (exact match)
+    if (filters?.paymentFilter && filters.paymentFilter !== 'all') {
+      conditions.push({
+        field: 'paymentMethod',
+        operator: '==',
+        value: filters.paymentFilter
+      });
+    }
+
+    // Event filter (exact match)
+    if (filters?.eventFilter && filters.eventFilter !== 'all') {
+      conditions.push({
+        field: 'eventId',
+        operator: '==',
+        value: filters.eventFilter
+      });
+    }
+
+    // Delivery status filter
+    if (filters?.deliveryFilter && filters.deliveryFilter !== 'all') {
+      if (filters.deliveryFilter === 'pending') {
+        // Sin archivos o pending
+        conditions.push({
+          field: 'ticketDeliveryStatus',
+          operator: 'in',
+          value: ['pending', null]
+        });
+      } else if (filters.deliveryFilter === 'available') {
+        // Archivos subidos
+        conditions.push({
+          field: 'ticketDeliveryStatus',
+          operator: 'in',
+          value: ['available', 'delivered']
+        });
+      }
+    }
+
+    // Proof filter (has payment proof or not)
+    if (filters?.proofFilter && filters.proofFilter !== 'all') {
+      if (filters.proofFilter === 'hasProof') {
+        conditions.push({
+          field: 'paymentProofUrl',
+          operator: '!=',
+          value: null
+        });
+      }
+      // Note: 'noProof' filter is handled client-side as Firestore doesn't support "== null" well
+    }
+
+    // Determine limit: default 500 tickets, or custom limit
+    const queryLimit = filters?.limit || 500;
+
+    // Fetch tickets with conditions
     const allTickets = await ticketTransactionsCollection.query(
-      [],
+      conditions,
       'createdAt',
       'desc',
-      100
+      queryLimit
     );
+
+    // Client-side filtering for search term and proof filter
+    let filteredTickets = allTickets;
+
+    // Search filter (client-side for flexibility)
+    if (filters?.searchTerm && filters.searchTerm.trim() !== '') {
+      const searchLower = filters.searchTerm.toLowerCase();
+      filteredTickets = filteredTickets.filter(ticket =>
+        ticket.eventName?.toLowerCase().includes(searchLower) ||
+        ticket.userEmail?.toLowerCase().includes(searchLower) ||
+        ticket.userName?.toLowerCase().includes(searchLower) ||
+        ticket.id?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // 'noProof' filter (client-side)
+    if (filters?.proofFilter === 'noProof') {
+      filteredTickets = filteredTickets.filter(ticket => !ticket.paymentProofUrl);
+    }
 
     // Collect unique event and user IDs
     const eventIds = new Set<string>();
     const userIds = new Set<string>();
 
-    allTickets.forEach(ticket => {
+    filteredTickets.forEach(ticket => {
       if (ticket.eventId) eventIds.add(ticket.eventId);
       if (ticket.userId) userIds.add(ticket.userId);
     });
 
-    // Batch fetch events and users
+    // ✅ OPTIMIZACIÓN: Usar getByIds() para batch queries (máximo 30 por batch)
     const [events, users] = await Promise.all([
-      Promise.all(Array.from(eventIds).map(id => eventsCollection.get(id).catch(() => null))),
-      Promise.all(Array.from(userIds).map(id => usersCollection.get(id).catch(() => null)))
+      eventsCollection.getByIds(Array.from(eventIds)),
+      usersCollection.getByIds(Array.from(userIds))
     ]);
 
     // Create lookup maps
-    const eventMap = new Map(events.filter(Boolean).map(e => [e!.id, e]));
-    const userMap = new Map(users.filter(Boolean).map(u => [u!.id, u]));
+    const eventMap = new Map(events.map(e => [e.id, e]));
+    const userMap = new Map(users.map(u => [u.id, u]));
 
     // Enrich tickets with event and user data
-    const enrichedTickets = allTickets.map(ticket => ({
+    const enrichedTickets = filteredTickets.map(ticket => ({
       ...ticket,
       eventName: eventMap.get(ticket.eventId)?.name || 'Evento desconocido',
       userEmail: userMap.get(ticket.userId)?.email || 'Usuario desconocido',
@@ -723,22 +818,25 @@ export async function getTicketStats(): Promise<{
   try {
     await requireAdmin();
 
-    // Fetch ALL tickets from database (no limit) to get accurate stats
-    const allTickets = await ticketTransactionsCollection.query([]);
+    // ✅ OPTIMIZACIÓN: Usar count() para totales sin traer todos los documentos
+    // Hacer queries en paralelo para cada estado
+    const [totalCount, pendingTickets, approvedTickets, rejectedTickets] = await Promise.all([
+      ticketTransactionsCollection.count([]),
+      ticketTransactionsCollection.query([{ field: 'paymentStatus', operator: '==', value: 'pending' }]),
+      ticketTransactionsCollection.query([{ field: 'paymentStatus', operator: '==', value: 'approved' }]),
+      ticketTransactionsCollection.query([{ field: 'paymentStatus', operator: '==', value: 'rejected' }])
+    ]);
+
+    // Calcular ventas totales solo con tickets aprobados (ya filtrados)
+    const totalSales = approvedTickets.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
 
     const stats = {
-      total: allTickets.length,
-      pending: allTickets.filter(t => t.paymentStatus === 'pending').length,
-      approved: allTickets.filter(t => t.paymentStatus === 'approved').length,
-      rejected: allTickets.filter(t => t.paymentStatus === 'rejected').length,
-      totalSales: allTickets.reduce((sum, t) => {
-        // Only count approved tickets for total sales
-        if (t.paymentStatus === 'approved') {
-          return sum + (t.totalAmount || 0);
-        }
-        return sum;
-      }, 0),
-      currency: 'PEN' // Most common currency
+      total: totalCount,
+      pending: pendingTickets.length,
+      approved: approvedTickets.length,
+      rejected: rejectedTickets.length,
+      totalSales,
+      currency: 'PEN'
     };
 
     return {
@@ -838,6 +936,54 @@ export async function getTicketInstallments(transactionId: string): Promise<{
     return { success: true, installments: sorted };
   } catch (error: any) {
     console.error('Error fetching installments:', error);
+    return { success: false, error: error.message || 'Error al cargar las cuotas' };
+  }
+}
+
+/**
+ * ✅ NUEVA FUNCIÓN: Get installments for multiple tickets at once (optimized)
+ * Carga todas las cuotas de múltiples tickets en una sola query
+ */
+export async function getBulkTicketInstallments(transactionIds: string[]): Promise<{
+  success: boolean;
+  installments?: any[];
+  error?: string;
+}> {
+  'use server';
+
+  try {
+    await requireAdmin();
+
+    if (transactionIds.length === 0) {
+      return { success: true, installments: [] };
+    }
+
+    // Firestore 'in' operator límite: 30 valores
+    // Si hay más de 30 tickets, dividir en batches
+    const batchSize = 30;
+    const allInstallments: any[] = [];
+
+    for (let i = 0; i < transactionIds.length; i += batchSize) {
+      const batchIds = transactionIds.slice(i, i + batchSize);
+
+      const batchInstallments = await paymentInstallmentsCollection.query([
+        { field: 'transactionId', operator: 'in', value: batchIds }
+      ]);
+
+      allInstallments.push(...batchInstallments);
+    }
+
+    // Sort by transactionId and installmentNumber
+    const sorted = allInstallments.sort((a, b) => {
+      if (a.transactionId !== b.transactionId) {
+        return a.transactionId.localeCompare(b.transactionId);
+      }
+      return a.installmentNumber - b.installmentNumber;
+    });
+
+    return { success: true, installments: sorted };
+  } catch (error: any) {
+    console.error('Error fetching bulk installments:', error);
     return { success: false, error: error.message || 'Error al cargar las cuotas' };
   }
 }

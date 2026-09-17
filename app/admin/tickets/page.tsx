@@ -33,7 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AuthGuard } from '@/components/admin/AuthGuard';
-import { updateTicketPaymentStatus, deleteTicketTransaction, getTicketsForAdmin, getTicketStats, getTicketInstallments, approveInstallmentProof, rejectInstallmentProof } from '@/lib/actions';
+import { updateTicketPaymentStatus, deleteTicketTransaction, getTicketsForAdmin, getTicketStats, getTicketInstallments, approveInstallmentProof, rejectInstallmentProof, getBulkTicketInstallments } from '@/lib/actions';
 import { usersCollection } from '@/lib/firebase/collections';
 import { ManualTicketAssignmentModal } from '@/components/admin/tickets/ManualTicketAssignmentModal';
 import { TicketFileUploadModal } from '@/components/admin/tickets/TicketFileUploadModal';
@@ -71,11 +71,21 @@ function TicketsAdminContent() {
     const [tickets, setTickets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [paymentFilter, setPaymentFilter] = useState<string>('all');
     const [deliveryFilter, setDeliveryFilter] = useState<string>('all');
     const [proofFilter, setProofFilter] = useState<string>('all');
     const [eventFilter, setEventFilter] = useState<string>('all');
+
+    // ✅ Debounce search term to avoid excessive queries
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 500); // Wait 500ms after user stops typing
+
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
     // Real-time stats from database
     const [realStats, setRealStats] = useState({
@@ -171,16 +181,25 @@ function TicketsAdminContent() {
         }
     };
 
+    // ✅ OPTIMIZACIÓN: Reload tickets when filters change (with debounced search)
     useEffect(() => {
         loadTickets();
-    }, []);
+    }, [debouncedSearchTerm, statusFilter, paymentFilter, eventFilter, deliveryFilter, proofFilter]);
 
     const loadTickets = async () => {
         setLoading(true);
         try {
-            // Load tickets and stats in parallel
+            // ✅ OPTIMIZACIÓN: Load tickets with server-side filtering
             const [ticketsResult, statsResult] = await Promise.all([
-                getTicketsForAdmin(),
+                getTicketsForAdmin({
+                    searchTerm: debouncedSearchTerm,
+                    statusFilter,
+                    paymentFilter,
+                    eventFilter,
+                    deliveryFilter,
+                    proofFilter,
+                    limit: 500 // Increase limit to 500 tickets
+                }),
                 getTicketStats()
             ]);
 
@@ -192,19 +211,15 @@ function TicketsAdminContent() {
 
                 setTickets(sortedTickets);
 
-                // Load installments for all tickets with installment payment type
+                // ✅ OPTIMIZACIÓN: Load installments for all tickets with installment payment type in ONE query
                 const installmentTickets = sortedTickets.filter((t: any) => t.paymentType === 'installment');
                 if (installmentTickets.length > 0) {
-                    const allInstallments = await Promise.all(
-                        installmentTickets.map((ticket: any) => getTicketInstallments(ticket.id))
-                    );
+                    const transactionIds = installmentTickets.map((t: any) => t.id);
+                    const bulkResult = await getBulkTicketInstallments(transactionIds);
 
-                    // Flatten and combine all installments
-                    const combinedInstallments = allInstallments
-                        .filter(result => result.success)
-                        .flatMap(result => result.installments || []);
-
-                    setInstallments(combinedInstallments);
+                    if (bulkResult.success && bulkResult.installments) {
+                        setInstallments(bulkResult.installments);
+                    }
                 }
             } else {
                 toast.error(ticketsResult.error || 'Error al cargar tickets');
@@ -467,28 +482,8 @@ function TicketsAdminContent() {
         }
     };
 
-    // Filters
-    const filteredTickets = tickets.filter(ticket => {
-        const matchesSearch =
-            ticket.eventName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.userEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.id?.toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesStatus = statusFilter === 'all' || ticket.paymentStatus === statusFilter;
-        const matchesPayment = paymentFilter === 'all' || ticket.paymentMethod === paymentFilter;
-        const matchesEvent = eventFilter === 'all' || ticket.eventId === eventFilter;
-
-        const matchesDelivery = deliveryFilter === 'all' ||
-            (deliveryFilter === 'pending' && (!ticket.ticketDeliveryStatus || ticket.ticketDeliveryStatus === 'pending')) ||
-            (deliveryFilter === 'available' && (ticket.ticketDeliveryStatus === 'available' || ticket.ticketDeliveryStatus === 'delivered'));
-
-        const matchesProof = proofFilter === 'all' ||
-            (proofFilter === 'hasProof' && ticket.paymentProofUrl) ||
-            (proofFilter === 'noProof' && !ticket.paymentProofUrl);
-
-        return matchesSearch && matchesStatus && matchesPayment && matchesEvent && matchesDelivery && matchesProof;
-    });
+    // ✅ OPTIMIZACIÓN: Filtrado ya se hace server-side, solo usamos los tickets directamente
+    const filteredTickets = tickets;
 
     // Pagination
     const totalPages = Math.ceil(filteredTickets.length / ITEMS_PER_PAGE);
