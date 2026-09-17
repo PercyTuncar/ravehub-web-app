@@ -256,14 +256,16 @@ function EventResaleCard({ event }: { event: any }) {
     const router = useRouter();
     const daysUntil = getDaysUntilEvent(event.startDate);
 
-    // Calcular valor promedio de reventa (usando fase activa)
+    // Calcular valor de reventa usando el precio MÁS ALTO de todas las zonas (zona más cara)
     const activePhase = event.salesPhases?.find((p: any) => p.status === 'active');
-    const avgPrice = activePhase?.zonesPricing
+    const validPrices = activePhase?.zonesPricing
         ?.map((zone: any) => getValidResalePrice(zone.price))
-        .find((price: number | null): price is number => price !== null) ?? null;
+        .filter((price: number | null): price is number => price !== null) ?? [];
 
-    const resaleCalc = avgPrice === null ? null : calculateResaleValue(
-        avgPrice,
+    const maxPrice = validPrices.length > 0 ? Math.max(...validPrices) : null;
+
+    const resaleCalc = maxPrice === null ? null : calculateResaleValue(
+        maxPrice,
         event.startDate,
         event.createdAt || event.startDate
     );

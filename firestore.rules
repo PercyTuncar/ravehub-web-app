@@ -45,11 +45,31 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
     }
 
-    // DJ suggestions - read for admins, write for authenticated users
+    // Legacy DJ suggestions - server/admin only. The annual Top DJs flow uses
+    // server-validated API routes so clients cannot forge counters or eligibility.
     match /djSuggestions/{suggestionId} {
       allow read: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
-      allow write: if request.auth != null;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Annual Top DJs collections are exclusively accessed through server APIs.
+    // Firebase Admin validates dates, uniqueness, thresholds, ballots and roles.
+    match /topDjsCycles/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /topDjsCandidates/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /topDjsNominations/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /topDjsBallots/{documentId} {
+      allow read, write: if false;
     }
 
     // DJs collection - read for all, write for admins

@@ -1,6 +1,8 @@
 ﻿﻿'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { QueryDocumentSnapshot } from 'firebase/firestore';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, EyeOff, Music, Star, Instagram, Globe, Calendar, Users, Award, Filter, CheckCircle, ExternalLink, Upload, Download, FileText, AlertCircle, CheckCircle2, XCircle, Loader2, Share2, Image, X, MoreHorizontal, RefreshCw } from 'lucide-react';
@@ -51,8 +53,17 @@ async function revalidateSitemap() {
   }
 }
 
+const DJ_PAGE_SIZE = 24;
+type DjPage = { data: EventDj[]; hasMore: boolean; lastDoc?: QueryDocumentSnapshot };
+
 export default function DjManagementPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [pageIndex, setPageIndex] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const pages = useRef(new Map<number, DjPage>());
+  const requestInProgress = useRef(false);
   const [djs, setDjs] = useState<EventDj[]>([]);
   const [filteredDjs, setFilteredDjs] = useState<EventDj[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +71,7 @@ export default function DjManagementPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'pending'>('all');
   const [genreFilter, setGenreFilter] = useState('all');
   const [selectedDj, setSelectedDj] = useState<EventDj | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [countries, setCountries] = useState<Country[]>([]);
@@ -119,27 +131,57 @@ export default function DjManagementPage() {
     }
   }, [editForm.imageUrl]);
 
+  const loadPage = useCallback(async (index: number) => {
+    if (requestInProgress.current) return;
+    const previous = index > 0 ? pages.current.get(index - 1) : undefined;
+    if (index > 0 && (!previous?.hasMore || !previous.lastDoc)) return;
+    requestInProgress.current = true;
+    setLoading(true);
+    setLoadError(false);
+    try {
+      let page = pages.current.get(index);
+      if (!page) {
+        const result = await eventDjsCollection.paginate(
+          [], 'name', 'asc', DJ_PAGE_SIZE, previous?.lastDoc,
+        );
+        page = { ...result, data: result.data as EventDj[] };
+        pages.current.set(index, page);
+      }
+      setDjs(page.data);
+      setPageIndex(index);
+      setHasMore(page.hasMore);
+    } catch (error) {
+      console.error('Error loading DJs:', error);
+      setLoadError(true);
+      toast.error('Error al cargar DJs. Intenta actualizar la lista.');
+    } finally {
+      requestInProgress.current = false;
+      setLoading(false);
+    }
+  }, []);
+
+  const loadDjs = async () => {
+    if (requestInProgress.current) return;
+    pages.current.clear();
+    setPageIndex(0);
+    setHasMore(false);
+    setDjs([]);
+    await loadPage(0);
+  };
+
   useEffect(() => {
-    loadDjs();
+    if (!authLoading && user && ['admin', 'moderator'].includes(user.role)) {
+      void loadPage(0);
+    }
+  }, [authLoading, user?.id, user?.role, loadPage]);
+
+  useEffect(() => {
     loadCountries();
   }, []);
 
   useEffect(() => {
     filterDjs();
   }, [djs, searchTerm, statusFilter, genreFilter]);
-
-  const loadDjs = async () => {
-    try {
-      setLoading(true);
-      const djData = await eventDjsCollection.getAll();
-      setDjs(djData as EventDj[]);
-    } catch (error) {
-      console.error('Error loading DJs:', error);
-      toast.error('Error al cargar DJs');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const loadCountries = async () => {
     try {
@@ -153,29 +195,54 @@ export default function DjManagementPage() {
     }
   };
 
-  const filterDjs = () => {
-    let filtered = [...djs];
+  const filterDjs = async () => {
+    // Si hay búsqueda activa, cargar todos los DJs
+    if (searchTerm.trim()) {
+      setIsSearching(true);
+      try {
+        const allDjs = await eventDjsCollection.getAll();
+        let filtered = allDjs as EventDj[];
 
-    if (searchTerm) {
-      filtered = filtered.filter(dj =>
-        dj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        dj.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        dj.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        dj.country.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+        filtered = filtered.filter(dj =>
+          dj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          dj.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          dj.genres.some(genre => genre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          dj.country.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        if (statusFilter === 'approved') {
+          filtered = filtered.filter(dj => dj.approved);
+        } else if (statusFilter === 'pending') {
+          filtered = filtered.filter(dj => !dj.approved);
+        }
+
+        if (genreFilter !== 'all') {
+          filtered = filtered.filter(dj => dj.genres.includes(genreFilter));
+        }
+
+        setFilteredDjs(filtered);
+      } catch (error) {
+        console.error('Error searching DJs:', error);
+        toast.error('Error al buscar DJs');
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      // Sin búsqueda, usar solo la página actual
+      let filtered = [...djs];
+
+      if (statusFilter === 'approved') {
+        filtered = filtered.filter(dj => dj.approved);
+      } else if (statusFilter === 'pending') {
+        filtered = filtered.filter(dj => !dj.approved);
+      }
+
+      if (genreFilter !== 'all') {
+        filtered = filtered.filter(dj => dj.genres.includes(genreFilter));
+      }
+
+      setFilteredDjs(filtered);
     }
-
-    if (statusFilter === 'approved') {
-      filtered = filtered.filter(dj => dj.approved);
-    } else if (statusFilter === 'pending') {
-      filtered = filtered.filter(dj => !dj.approved);
-    }
-
-    if (genreFilter !== 'all') {
-      filtered = filtered.filter(dj => dj.genres.includes(genreFilter));
-    }
-
-    setFilteredDjs(filtered);
   };
 
   const handleCreateDj = () => {
@@ -509,14 +576,17 @@ export default function DjManagementPage() {
     if (jsonFile) handleFileUpload(jsonFile);
   };
 
-  const allGenres = Array.from(new Set(djs.flatMap(dj => dj.genres))).sort();
+  const allGenres = Array.from(new Set([
+    ...djs.flatMap(dj => dj.genres),
+    ...(genreFilter !== 'all' ? [genreFilter] : []),
+  ])).sort();
 
   // Stats
   const stats = {
       total: djs.length,
       approved: djs.filter(d => d.approved).length,
       pending: djs.filter(d => !d.approved).length,
-      genres: allGenres.length
+      genres: new Set(djs.flatMap(dj => dj.genres)).size
   };
 
   return (
@@ -572,6 +642,16 @@ export default function DjManagementPage() {
              </TabsList>
 
              <TabsContent value="djs" className="space-y-6">
+                 {searchTerm.trim() ? (
+                   <p className="text-sm text-white/60">
+                     Mostrando resultados de búsqueda en toda la base de datos.
+                   </p>
+                 ) : (
+                   <p className="text-sm text-white/60">
+                     Página {pageIndex + 1} · Hasta {DJ_PAGE_SIZE} DJs por página, ordenados por nombre.
+                     Los indicadores, la búsqueda y los filtros corresponden a esta página.
+                   </p>
+                 )}
                  {/* Stats */}
                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {loading ? (
@@ -581,7 +661,7 @@ export default function DjManagementPage() {
                     <Card className="bg-white/5 backdrop-blur-xl border-white/10">
                         <CardContent className="p-6 !pt-6 flex justify-between items-center">
                             <div>
-                                <p className="text-sm text-white/60">Total DJs</p>
+                                <p className="text-sm text-white/60">DJs en esta página</p>
                                 <p className="text-2xl font-bold text-white">{stats.total}</p>
                             </div>
                             <Users className="h-8 w-8 text-primary" />
@@ -626,8 +706,10 @@ export default function DjManagementPage() {
                     <CardContent className="p-6 !pt-6 flex flex-col md:flex-row gap-4">
                         <div className="relative flex-1">
                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                             <Input 
-                                placeholder="Buscar DJ..." 
+                             {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary animate-spin" />}
+                             <Input
+                                placeholder="Buscar en todos los DJs..."
+                                aria-label="Buscar DJs en toda la base de datos"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-10 bg-black/20 border-white/10 text-white"
@@ -648,14 +730,28 @@ export default function DjManagementPage() {
                                 {allGenres.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                              </SelectContent>
                         </Select>
-                         <Button onClick={loadDjs} variant="outline" className="border-white/10 text-white hover:bg-white/5"><RefreshCw className="w-4 h-4" /></Button>
+                         <Button onClick={loadDjs} disabled={loading} aria-label="Actualizar lista desde la primera página" variant="outline" className="border-white/10 text-white hover:bg-white/5"><RefreshCw className="w-4 h-4" /></Button>
                     </CardContent>
                  </Card>
                  )}
 
                  {/* Grid */}
+                 {loadError && (
+                   <p role="alert" className="text-sm text-red-300">
+                     No se pudo cargar la página solicitada. Utiliza Actualizar para volver a intentarlo.
+                   </p>
+                 )}
+                 {!loading && !loadError && !isSearching && filteredDjs.length === 0 && (
+                   <p role="status" className="rounded-xl border border-white/10 p-8 text-center text-white/60">
+                     {searchTerm.trim()
+                       ? 'No se encontraron DJs que coincidan con tu búsqueda.'
+                       : djs.length === 0
+                         ? 'Todavía no hay DJs registrados.'
+                         : 'No hay coincidencias en esta página. Puedes cambiar los filtros o consultar otra página.'}
+                   </p>
+                 )}
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {loading ? (
+                    {(loading || isSearching) ? (
                         Array.from({ length: 6 }, (_, index) => <DjCardSkeleton key={index} />)
                     ) : filteredDjs.map((dj) => (
                         <Card key={dj.id} className="group overflow-hidden border-white/10 bg-white/5 backdrop-blur-xl shadow-lg shadow-black/10 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10">
@@ -742,6 +838,28 @@ export default function DjManagementPage() {
                         </Card>
                     ))}
                  </div>
+                 {!searchTerm.trim() && (
+                   <nav aria-label="Paginación de DJs" className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
+                     <p role="status" className="text-sm text-white/60">
+                       Página {pageIndex + 1} · {loading ? 'Cargando...' : `${filteredDjs.length} de ${djs.length} DJs visibles`}
+                     </p>
+                     <div className="flex gap-3">
+                       <Button variant="outline" disabled={loading || pageIndex === 0} onClick={() => loadPage(pageIndex - 1)}>
+                         Anterior
+                       </Button>
+                       <Button variant="outline" disabled={loading || !hasMore} onClick={() => loadPage(pageIndex + 1)}>
+                         Siguiente
+                       </Button>
+                     </div>
+                   </nav>
+                 )}
+                 {searchTerm.trim() && (
+                   <div className="flex justify-center pt-5">
+                     <p className="text-sm text-white/60">
+                       Mostrando {filteredDjs.length} resultado{filteredDjs.length !== 1 ? 's' : ''} de búsqueda
+                     </p>
+                   </div>
+                 )}
              </TabsContent>
 
              <TabsContent value="bulk-upload">

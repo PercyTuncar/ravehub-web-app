@@ -337,3 +337,7 @@ export const marketingAnalyticsEventsCollection = new AdminFirestoreCollection<M
 export const marketingConversionContextsCollection = new AdminFirestoreCollection<MarketingConversionContext>('marketingConversionContexts');
 export const djSuggestionsCollection = new AdminFirestoreCollection('djSuggestions');
 export const djsCollection = new AdminFirestoreCollection('djs');
+export const topDjsCyclesCollection = new AdminFirestoreCollection('topDjsCycles');
+export const topDjsCandidatesCollection = new AdminFirestoreCollection('topDjsCandidates');
+export const topDjsNominationsCollection = new AdminFirestoreCollection('topDjsNominations');
+export const topDjsBallotsCollection = new AdminFirestoreCollection('topDjsBallots');

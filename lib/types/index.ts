@@ -977,3 +977,85 @@ export interface Dj {
   createdBy?: string;
   updatedAt: Date;
 }
+
+// Ravehub Top DJs annual ranking
+export type TopDjsStage = 'scheduled' | 'suggestions' | 'intermission' | 'voting' | 'review' | 'published' | 'paused';
+
+export interface TopDjsCycle {
+  id: string;
+  countrySlug: string;
+  countryCode: string;
+  countryName: string;
+  flag: string;
+  year: number;
+  timezone: string;
+  suggestionOpensAt: string;
+  suggestionClosesAt: string;
+  votingOpensAt: string;
+  votingClosesAt: string;
+  resultsPublishedAt?: string;
+  minSuggestions: number;
+  maxBallotChoices: number;
+  statusOverride?: 'automatic' | 'paused' | 'published';
+  heroEyebrow?: string;
+  heroTitle?: string;
+  heroDescription?: string;
+  createdAt?: Date | { seconds: number; nanoseconds: number };
+  updatedAt?: Date | { seconds: number; nanoseconds: number };
+}
+
+export interface TopDjsTrack {
+  title: string;
+  url?: string;
+}
+
+export interface TopDjsCandidateProfile {
+  tagline?: string;
+  bio?: string;
+  city?: string;
+  imageUrl?: string;
+  coverImageUrl?: string;
+  genres?: string[];
+  tracks?: TopDjsTrack[];
+  highlights?: string[];
+  socialLinks?: {
+    instagram?: string;
+    spotify?: string;
+    soundcloud?: string;
+    youtube?: string;
+    website?: string;
+  };
+}
+
+export type TopDjsCandidateStatus = 'suggested' | 'eligible' | 'rejected' | 'disqualified' | 'merged' | 'published';
+
+export interface TopDjsCandidate {
+  id: string;
+  cycleId: string;
+  countrySlug: string;
+  year: number;
+  name: string;
+  normalizedKey: string;
+  instagramHandle: string;
+  instagramUrl: string;
+  suggestionCount: number;
+  status: TopDjsCandidateStatus;
+  profile?: TopDjsCandidateProfile;
+  votePoints?: number;
+  ballotCount?: number;
+  rank?: number;
+  previousRank?: number;
+  adminNotes?: string;
+  createdAt?: Date | { seconds: number; nanoseconds: number };
+  updatedAt?: Date | { seconds: number; nanoseconds: number };
+}
+
+export interface TopDjsBallot {
+  id: string;
+  cycleId: string;
+  userId: string;
+  choices: string[];
+  points: Record<string, number>;
+  createdAt?: Date | { seconds: number; nanoseconds: number };
+  updatedAt?: Date | { seconds: number; nanoseconds: number };
+}
