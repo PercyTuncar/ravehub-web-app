@@ -85,7 +85,7 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
 
         {/* Buttons with enhanced design */}
         <div className="space-y-2.5">
-          {/* Join WhatsApp Group Button */}
+          {/* Join WhatsApp Group Button - Direct link */}
           <Button
             asChild
             className="relative h-auto w-full overflow-hidden rounded-xl px-5 py-3.5 text-sm font-semibold shadow-lg shadow-black/15 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/80 group/button"
@@ -96,7 +96,7 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
             }}
           >
             <a
-              href="https://www.ravehublatam.com/go"
+              href="https://chat.whatsapp.com/HKg7kLPcGTQHWbnIMCejbh?s=cl&p=a&mlu=4&ilr=4"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-3 relative z-10"

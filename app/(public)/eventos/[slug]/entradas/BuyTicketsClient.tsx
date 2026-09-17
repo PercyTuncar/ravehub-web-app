@@ -1396,16 +1396,18 @@ function BuyTicketsContent({
               </div>
             </div>
 
-            {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE */}
+            {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE - Direct link */}
             <div className="lg:hidden w-full md:w-auto">
-              <button
+              <a
+                href="https://chat.whatsapp.com/HKg7kLPcGTQHWbnIMCejbh?s=cl&p=a&mlu=4&ilr=4"
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => {
                   trackClickWhatsApp({
                     eventId: event.id,
                     eventName: event.name,
-                    action: 'open_groups',
+                    action: 'open_direct_group',
                   });
-                  setShowWhatsAppDrawer(true);
                 }}
                 className="relative overflow-hidden flex items-center justify-center gap-2 w-full md:w-auto px-5 py-3.5 rounded-xl bg-gradient-to-br from-[#25D366]/20 via-[#25D366]/10 to-[#128C7E]/10 border border-[#25D366]/30 hover:border-[#25D366]/50 active:scale-[0.98] transition-all group backdrop-blur-sm shadow-lg shadow-[#25D366]/10"
               >
@@ -1420,7 +1422,7 @@ function BuyTicketsContent({
                 <span className="font-bold text-[#25D366] relative z-10 text-sm md:text-base">
                   Unirme al Grupo WhatsApp
                 </span>
-              </button>
+              </a>
             </div>
           </div>
         </div>
