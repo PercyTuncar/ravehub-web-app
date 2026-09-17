@@ -169,14 +169,20 @@ export function trackSelectPaymentMethod(params: {
 export function trackClickWhatsApp(params: {
   eventId: string;
   eventName: string;
-  action: 'open_groups' | 'request_tickets';
+  action: 'open_groups' | 'request_tickets' | 'open_direct_group';
 }) {
   const marketingEventId = createEventId();
+
+  const actionTitle = params.action === 'open_groups'
+    ? 'Ver Grupos'
+    : params.action === 'open_direct_group'
+    ? 'Ir al Grupo Principal'
+    : 'Pedir Tickets';
 
   trackMarketingEvent({
     eventId: marketingEventId,
     name: 'click_whatsapp',
-    title: `Click WhatsApp — ${params.action === 'open_groups' ? 'Ver Grupos' : 'Pedir Tickets'} — ${params.eventName}`,
+    title: `Click WhatsApp — ${actionTitle} — ${params.eventName}`,
     contentType: 'product',
     contentIds: [params.eventId],
     metadata: {
