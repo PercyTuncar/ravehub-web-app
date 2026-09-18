@@ -279,31 +279,30 @@ export function CardPaymentModal({
 
         // Polling para verificar resultado (el webhook actualizará el estado)
         // El usuario será redirigido a purchase-success cuando webhook confirme
-        toast.info('Completa la verificación y espera la confirmación');
+        onClose();
+        router.push(`/purchase-pending?transactionId=${transactionId}`);
 
       } else if (data.status === 'approved' || data.status === 'processed') {
-        // Pago aprobado inmediatamente (Orders API usa "processed")
-        toast.success('¡Pago aprobado!');
+        // Pago aprobado - Redirigir inmediatamente sin toast
         onSuccess(data.paymentId);
         onClose();
         router.push(`/purchase-success?transactionId=${transactionId}`);
 
-      } else if (data.status === 'rejected') {
-        // Pago rechazado
-        const reason = data.statusDetail || 'Pago rechazado por el procesador';
-        throw new Error(reason);
+      } else if (data.status === 'rejected' || data.status === 'failed') {
+        // Pago rechazado - Redirigir inmediatamente sin toast
+        const reason = data.statusDetail || 'default';
+        onClose();
+        router.push(`/purchase-failure?transactionId=${transactionId}&reason=${reason}`);
 
       } else if (data.status === 'pending' || data.status === 'in_process') {
-        // Pago pendiente
-        toast.info('Pago en proceso. Recibirás una notificación cuando se confirme.');
+        // Pago pendiente - Redirigir inmediatamente
         onClose();
         router.push(`/purchase-pending?transactionId=${transactionId}`);
 
       } else {
-        // Estado desconocido
-        toast.warning('El pago está siendo procesado. Revisa el estado en "Mis Tickets".');
+        // Estado desconocido - Redirigir a pending por seguridad
         onClose();
-      }
+        router.push(`/purchase-pending?transactionId=${transactionId}`);
 
     } catch (error: any) {
       console.error('[Payment] Error:', error);

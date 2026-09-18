@@ -4,7 +4,7 @@ import { ticketTransactionsCollection, eventsCollection } from '@/lib/firebase/a
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { transactionId: string } }
+  { params }: { params: Promise<{ transactionId: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser();
@@ -12,7 +12,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { transactionId } = params;
+    const { transactionId } = await params;
 
     const transaction = await ticketTransactionsCollection.get(transactionId);
 
