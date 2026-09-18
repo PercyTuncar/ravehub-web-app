@@ -1957,25 +1957,47 @@ function BuyTicketsContent({
                         </Label>
                       )}
 
-                      <div className="relative opacity-60">
-                        <div className="absolute inset-0 z-10 cursor-not-allowed" />
-                        <Label className="flex items-start gap-3 p-4 rounded-xl border border-white/10 bg-white/[0.05] relative z-0">
-                          <RadioGroupItem
-                            value="online"
-                            id="online"
-                            disabled
-                            className="mt-1"
-                          />
-                          <div>
-                            <div className="font-bold text-zinc-400 mb-1">
+                      <Label
+                        className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all relative overflow-hidden group/payment
+                                            ${
+                                              paymentMethod === "online"
+                                                ? "bg-blue-500/10 border-blue-500/50 shadow-lg shadow-blue-500/10"
+                                                : "bg-white/[0.05] border-white/10 hover:bg-white/[0.08] hover:border-white/20"
+                                            }
+                                        `}
+                        style={
+                          paymentMethod === "online"
+                            ? {
+                                backgroundColor: `${colorPalette.dominant}10`,
+                                borderColor: `${colorPalette.dominant}50`,
+                                boxShadow: `0 0 20px ${colorPalette.dominant}20`,
+                              }
+                            : undefined
+                        }
+                      >
+                        <RadioGroupItem
+                          value="online"
+                          id="online"
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <CreditCard className="w-4 h-4 text-blue-500" />
+                            <div className="font-bold text-white">
                               Pago Online
                             </div>
-                            <div className="text-xs text-zinc-500">
-                              Tarjeta de crédito/débito. (Próximamente)
-                            </div>
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-green-500/10 text-green-500 border-green-500/30"
+                            >
+                              Disponible
+                            </Badge>
                           </div>
-                        </Label>
-                      </div>
+                          <div className="text-xs text-zinc-400">
+                            Tarjeta de crédito/débito. Pago seguro procesado por MercadoPago.
+                          </div>
+                        </div>
+                      </Label>
                     </div>
                   </RadioGroup>
 
