@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       type: 'online' as const,
       processing_mode: 'automatic' as const,
       total_amount: finalAmount.toFixed(2), // REQUERIDO: debe ser igual a la suma de payments
-      notification_url: webhookUrl,
+      // notification_url: se elimina - Orders API no lo soporta, se configura en dashboard MP
       transactions: {
         payments: [
           {
@@ -195,6 +195,59 @@ export async function POST(request: NextRequest) {
 
     // 6. Crear Order en Mercado Pago con Idempotency Key
     const idempotencyKey = `order-${transactionId}-${Date.now()}`;
+
+    console.log('[MP Order] Attempting to create order with SDK...');
+    console.log('[MP Order] Access Token present:', !!process.env.MERCADOPAGO_ACCESS_TOKEN);
+    console.log('[MP Order] Access Token prefix:', process.env.MERCADOPAGO_ACCESS_TOKEN?.substring(0, 10));
+
+    // Intentar con llamada directa a la API para obtener más detalles del error
+    try {
+      const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+      const apiUrl = 'https://api.mercadopago.com/v1/orders';
+
+      console.log('[MP Order] Making direct API call to:', apiUrl);
+
+      const apiResponse = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const responseText = await apiResponse.text();
+      console.log('[MP Order] API Response status:', apiResponse.status);
+      console.log('[MP Order] API Response headers:', Object.fromEntries(apiResponse.headers.entries()));
+      console.log('[MP Order] API Response body:', responseText);
+
+      if (!apiResponse.ok) {
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = { raw: responseText };
+        }
+        console.log('[MP Order] Error details:', JSON.stringify(errorData, null, 2));
+
+        return NextResponse.json({
+          success: false,
+          error: 'MercadoPago API error',
+          details: errorData,
+          status: apiResponse.status,
+        }, { status: 400 });
+      }
+
+      const order = JSON.parse(responseText);
+      console.log('[MP Order] Order created successfully:', order.id);
+
+    } catch (apiError: any) {
+      console.error('[MP Order] Direct API call error:', apiError);
+      throw apiError;
+    }
+
+    // Si llegamos aquí, usar el SDK normalmente
     const order = await orderClient.create({
       body: orderData,
       requestOptions: {
@@ -229,16 +282,17 @@ export async function POST(request: NextRequest) {
       };
 
       // Mapear estado del pago
-      if (payment.status === 'approved') {
+      // Orders API usa "processed" para pagos aprobados
+      if (payment.status === 'approved' || payment.status === 'processed') {
         updateData.paymentStatus = 'approved';
         updateData.paymentDetails = {
-          transactionAmount: payment.transaction_amount,
-          paymentTypeId: payment.payment_type_id,
-          paymentMethodId: payment.payment_method_id,
-          installments: payment.installments,
+          transactionAmount: payment.paid_amount || payment.amount,
+          paymentTypeId: payment.payment_method?.type,
+          paymentMethodId: payment.payment_method?.id,
+          installments: payment.payment_method?.installments || 1,
           approvedAt: new Date().toISOString(),
         };
-      } else if (payment.status === 'rejected') {
+      } else if (payment.status === 'rejected' || payment.status === 'failed') {
         updateData.paymentStatus = 'rejected';
       } else if (payment.status === 'pending' || payment.status === 'in_process') {
         updateData.paymentStatus = 'pending';

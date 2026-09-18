@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
 
       switch (paymentData.status) {
         case 'approved':
+        case 'processed': // Orders API usa "processed" para pagos exitosos
           newStatus = 'payment_approved';
           paymentStatus = 'approved';
           statusNote = `Pago aprobado por Mercado Pago. ID: ${paymentId}`;
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
 
         case 'rejected':
         case 'cancelled':
+        case 'failed': // Orders API usa "failed" para pagos rechazados
           newStatus = 'cancelled';
           paymentStatus = 'rejected';
           statusNote = `Pago rechazado: ${paymentData.status_detail}. ID: ${paymentId}`;
