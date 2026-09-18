@@ -18,11 +18,18 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
     const [palette, setPalette] = useState<ColorPalette | null>(null);
     const [loadingPalette, setLoadingPalette] = useState(true);
 
-    const eventDate = new Date(ticket.eventDate).toLocaleDateString('es-CL', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-    });
+    // Formatear fecha del evento con timezone UTC (las fechas se guardan en UTC)
+    const eventDate = (() => {
+        const validDate = getValidDate(ticket.eventDate);
+        if (!validDate) return 'Fecha no disponible';
+
+        return validDate.toLocaleDateString('es', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'UTC' // ✅ Importante: fechas en DB están en UTC
+        });
+    })();
 
 
 
@@ -307,17 +314,82 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                     <div className="mt-4 flex flex-col sm:flex-row gap-3 items-center pt-4 border-t border-dashed border-white/10">
                         {isFullyPaid ? (
                             <>
-                                <Link
-                                    href={`/profile/tickets/${ticket.id}`}
-                                    className="w-full sm:w-auto"
-                                >
-                                    <Button
-                                        className="w-full bg-white text-black hover:bg-white/90 shadow-[0_0_20px_rgba(255,255,255,0.1)] border-0"
-                                    >
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Descargar E-Ticket
-                                    </Button>
-                                </Link>
+                                {(() => {
+                                    // Verificar fecha de disponibilidad de descarga
+                                    const downloadDate = ticket.ticketsDownloadAvailableDate || ticket.ticketDownloadAvailableDate;
+
+                                    if (!downloadDate) {
+                                        // Sin restricción de fecha
+                                        return (
+                                            <Link
+                                                href={`/profile/tickets/${ticket.id}`}
+                                                className="w-full sm:w-auto"
+                                            >
+                                                <Button
+                                                    className="w-full bg-[#FBA905] hover:bg-[#FBA905]/90 text-black font-bold shadow-[0_0_20px_rgba(251,169,5,0.3)]"
+                                                >
+                                                    <Download className="w-4 h-4 mr-2" />
+                                                    Descargar E-Ticket
+                                                </Button>
+                                            </Link>
+                                        );
+                                    }
+
+                                    // Comparar fechas en UTC (como lo hace page.tsx)
+                                    const availableDate = getValidDate(downloadDate);
+                                    if (!availableDate) {
+                                        // Fecha inválida, asumir disponible
+                                        return (
+                                            <Link
+                                                href={`/profile/tickets/${ticket.id}`}
+                                                className="w-full sm:w-auto"
+                                            >
+                                                <Button
+                                                    className="w-full bg-[#FBA905] hover:bg-[#FBA905]/90 text-black font-bold shadow-[0_0_20px_rgba(251,169,5,0.3)]"
+                                                >
+                                                    <Download className="w-4 h-4 mr-2" />
+                                                    Descargar E-Ticket
+                                                </Button>
+                                            </Link>
+                                        );
+                                    }
+
+                                    const now = new Date();
+                                    const isAvailable = availableDate <= now;
+
+                                    if (!isAvailable) {
+                                        const formattedDate = availableDate.toLocaleDateString('es', {
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric',
+                                            timeZone: 'UTC'
+                                        });
+
+                                        return (
+                                            <Button
+                                                disabled
+                                                className="w-full bg-zinc-800 text-zinc-400 border border-zinc-700 cursor-not-allowed"
+                                            >
+                                                <Download className="w-4 h-4 mr-2" />
+                                                Disponible el {formattedDate}
+                                            </Button>
+                                        );
+                                    }
+
+                                    return (
+                                        <Link
+                                            href={`/profile/tickets/${ticket.id}`}
+                                            className="w-full sm:w-auto"
+                                        >
+                                            <Button
+                                                className="w-full bg-[#FBA905] hover:bg-[#FBA905]/90 text-black font-bold shadow-[0_0_20px_rgba(251,169,5,0.3)]"
+                                            >
+                                                <Download className="w-4 h-4 mr-2" />
+                                                Descargar E-Ticket
+                                            </Button>
+                                        </Link>
+                                    );
+                                })()}
                                 <Link href={`/profile/tickets/${ticket.id}`} className="w-full sm:w-auto">
                                     <Button
                                         variant="ghost"
