@@ -291,6 +291,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                     </Card>
                   )}
 
+                  {/* Stage Map */}
+                  {event.stageMapUrl && (
+                    <div className="w-full max-w-full overflow-hidden">
+                      <h2 className="text-2xl font-bold text-white mb-6">Mapa del Lugar</h2>
+                      <EventStageMap
+                        stageMapUrl={event.stageMapUrl}
+                        specifications={event.specifications}
+                      />
+                    </div>
+                  )}
+
                   {/* Event Details */}
                   <div className="w-full max-w-full overflow-hidden">
                     <h2 className="text-2xl font-bold text-white mb-6">Sobre el Evento</h2>
@@ -308,17 +319,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                     <div className="w-full max-w-full overflow-hidden">
                       <h2 className="text-2xl font-bold text-white mb-6">Lineup</h2>
                       <LineupTimeline artistLineup={event.artistLineup} eventDjs={eventDjs} />
-                    </div>
-                  )}
-
-                  {/* Stage Map */}
-                  {event.stageMapUrl && (
-                    <div className="w-full max-w-full overflow-hidden">
-                      <h2 className="text-2xl font-bold text-white mb-6">Mapa del Lugar</h2>
-                      <EventStageMap
-                        stageMapUrl={event.stageMapUrl}
-                        specifications={event.specifications}
-                      />
                     </div>
                   )}
 
