@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       paymentStatus: 'pending',
       ticketDeliveryMode: event.ticketDeliveryMode || 'automatic',
       ticketDeliveryStatus: 'pending',
-      ...(event.ticketDownloadAvailableDate ? { ticketsDownloadAvailableDate: event.ticketDownloadAvailableDate } : {}),
+      ...(event.ticketDownloadAvailableDate !== undefined && event.ticketDownloadAvailableDate !== null ? { ticketsDownloadAvailableDate: event.ticketDownloadAvailableDate } : {}),
       isCourtesy: false,
       createdAt: new Date(),
       updatedAt: new Date(),

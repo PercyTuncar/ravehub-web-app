@@ -94,15 +94,22 @@ export function CardPaymentModal({
             locale: 'es-PE',
           });
 
-          // ✅ Generar Device ID (Device Session ID) para antifraude
-          // Esto es CRÍTICO para evitar PA_UNAUTHORIZED_RESULT_FROM_POLICIES
-          const generatedDeviceId = mercadopago.getDeviceId();
-          setDeviceId(generatedDeviceId);
-          console.log('[MP] Device ID generated:', generatedDeviceId);
-
           setMp(mercadopago);
           setMpLoaded(true);
           console.log('[MP] SDK loaded successfully');
+
+          // ✅ Device ID (Device Session ID) para antifraude
+          // El SDK genera automáticamente una variable global MP_DEVICE_SESSION_ID
+          // Esperamos un momento para que se genere
+          setTimeout(() => {
+            const generatedDeviceId = (window as any).MP_DEVICE_SESSION_ID;
+            if (generatedDeviceId) {
+              setDeviceId(generatedDeviceId);
+              console.log('[MP] Device ID captured:', generatedDeviceId);
+            } else {
+              console.warn('[MP] Device ID not found - may affect approval rate');
+            }
+          }, 500);
         } else {
           console.error('[MP] Public key not configured');
           toast.error('Error de configuración. Contacta a soporte.');
