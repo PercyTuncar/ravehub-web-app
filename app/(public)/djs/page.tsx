@@ -50,17 +50,33 @@ export async function generateMetadata({ searchParams }: DJsPageProps): Promise<
       keywords: ['DJs', 'artistas', 'música electrónica', 'techno', 'house', 'trance', 'Latinoamérica', 'rankings'],
       alternates: { canonical: canonicalUrl },
       // Add noindex for repetitive filters to prevent thousands of URLs
-      robots: isRepetitiveFilter ? 'noindex, follow' : 'index, follow',
+      robots: isRepetitiveFilter ? {
+        index: false,
+        follow: true,
+      } : {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      },
       openGraph: {
         title,
         description,
         type: 'website',
         url: canonicalUrl,
+        siteName: 'Ravehub',
+        locale: 'es_ES',
       },
       twitter: {
         card: 'summary_large_image',
         title,
         description,
+        site: '@ravehublatam',
       },
     };
   } catch (error) {

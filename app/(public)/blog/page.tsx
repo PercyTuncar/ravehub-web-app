@@ -2,13 +2,11 @@ import { Metadata } from 'next';
 import { BlogHeader } from '@/components/blog/BlogHeader';
 import { BlogSearchClient } from '@/components/blog/BlogSearchClient';
 import { getBlogPosts } from '@/lib/data-fetching';
+import { blogCategoriesCollection, blogTagsCollection } from '@/lib/firebase/collections';
 
-// Mark as dynamic since we use searchParams
-export const dynamic = 'force-dynamic';
+// Use ISR instead of force-dynamic to allow proper caching
+export const revalidate = 600; // Revalidate every 10 minutes
 export const dynamicParams = true;
-
-// Revalidate every 10 minutes
-export const revalidate = 600;
 
 interface BlogPageProps {
   searchParams: Promise<{
@@ -21,38 +19,87 @@ interface BlogPageProps {
 
 export async function generateMetadata({ searchParams }: BlogPageProps): Promise<Metadata> {
   try {
-    const { category, tag } = await searchParams;
+    const params = await searchParams;
+    const { category, tag } = params;
 
-    let total = 0;
-    try {
-      // Get published posts count for description
-      const result = await getBlogPosts({
-        category,
-        tag,
-        status: 'published',
-        limit: 1, // Just to get total count
-      });
-      total = result.total || 0;
-    } catch (error) {
-      console.error('Error fetching blog posts for metadata:', error);
+    let title = 'Blog de Música Electrónica';
+    let description = 'Descubre las últimas noticias, entrevistas, tutoriales y reseñas sobre música electrónica en Latinoamérica. Mantente al día con los mejores eventos, DJs y productores.';
+    let canonical = '/blog';
+
+    // Get category or tag details for better SEO
+    if (category) {
+      try {
+        const categories = await blogCategoriesCollection.query([
+          { field: 'slug', operator: '==', value: category }
+        ]);
+        if (categories.length > 0) {
+          const cat = categories[0];
+          title = cat.seoTitle || `${cat.name} - Blog de Música Electrónica`;
+          description = cat.seoDescription || cat.description || `Lee artículos sobre ${cat.name.toLowerCase()} en el blog de Ravehub.`;
+          canonical = `/blog?category=${category}`;
+        }
+      } catch (error) {
+        console.error('Error fetching category:', error);
+      }
+    } else if (tag) {
+      try {
+        const tags = await blogTagsCollection.query([
+          { field: 'slug', operator: '==', value: tag }
+        ]);
+        if (tags.length > 0) {
+          const tagDoc = tags[0];
+          title = `${tagDoc.name} - Blog`;
+          description = `Artículos etiquetados con ${tagDoc.name} en el blog de Ravehub.`;
+          canonical = `/blog?tag=${tag}`;
+        }
+      } catch (error) {
+        console.error('Error fetching tag:', error);
+      }
     }
 
-    const pageTitle = category || tag ? `Blog - ${category || tag}` : 'Blog';
-    const description = `Explora las últimas noticias, entrevistas y guías sobre música electrónica en Latinoamérica. ${total > 0 ? `${total} artículos disponibles.` : ''}`;
-
     return {
-      title: `${pageTitle} | Ravehub`,
+      title: `${title} | Ravehub`,
       description,
+      keywords: category || tag ? [category || tag, 'música electrónica', 'blog', 'noticias', 'latinoamérica'].filter(Boolean).join(', ') : 'música electrónica, blog, noticias, EDM, techno, house, latinoamérica',
+      alternates: {
+        canonical,
+      },
       openGraph: {
-        title: `${pageTitle} | Ravehub`,
+        title: `${title} | Ravehub`,
         description,
+        type: 'website',
+        url: `https://www.ravehublatam.com${canonical}`,
+        siteName: 'Ravehub',
+        locale: 'es_ES',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${title} | Ravehub`,
+        description,
+        site: '@ravehublatam',
+      },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
       },
     };
   } catch (error) {
+    console.error('Error generating blog metadata:', error);
     return {
-      title: 'Blog | Ravehub',
-      description: 'Noticias y cultura electrónica.'
-    }
+      title: 'Blog de Música Electrónica | Ravehub',
+      description: 'Noticias, entrevistas y cultura electrónica en Latinoamérica.',
+      robots: {
+        index: true,
+        follow: true,
+      },
+    };
   }
 }
 

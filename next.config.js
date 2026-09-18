@@ -93,6 +93,36 @@ const nextConfig = {
           },
         ],
       },
+      // Blog listing page - cacheable and indexable
+      {
+        source: '/blog',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=1800, stale-while-revalidate=3600'
+          },
+        ],
+      },
+      // DJs listing page - cacheable and indexable
+      {
+        source: '/djs',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400'
+          },
+        ],
+      },
+      // DJ profile pages - cacheable and indexable
+      {
+        source: '/djs/:slug*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400'
+          },
+        ],
+      },
       // Events pages - cacheable and indexable
       {
         source: '/eventos/:slug*',
