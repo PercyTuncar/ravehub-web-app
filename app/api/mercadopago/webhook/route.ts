@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
-import { ordersCollection } from '@/lib/firebase/admin-collections';
-import { notifyOrderStatusChange } from '@/lib/utils/notifications';
+import { ordersCollection, usersCollection, eventsCollection } from '@/lib/firebase/admin-collections';
+import { notifyOrderStatusChange, createNotification } from '@/lib/utils/notifications';
 import { sendConfirmedPurchaseForEntity } from '@/lib/analytics/server-events';
 
 // Configurar Mercado Pago
@@ -141,6 +141,43 @@ export async function POST(request: NextRequest) {
 
       if (paymentData.status === 'approved' && order.paymentStatus !== 'approved') {
         await sendConfirmedPurchaseForEntity('order', orderId);
+
+        // 🔔 Notificar al admin sobre el pago con tarjeta aprobado
+        try {
+          // Obtener información del usuario y evento para la notificación
+          const user = await usersCollection.get(order.userId);
+          const event = order.eventId ? await eventsCollection.get(order.eventId) : null;
+
+          const userName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Usuario';
+          const userEmail = user?.email || 'email no disponible';
+          const eventName = event?.name || 'Evento';
+          const totalAmount = order.totalAmount || 0;
+          const currency = order.currency || 'PEN';
+          const currencySymbol = currency === 'USD' ? '$' : currency === 'MXN' ? 'MX$' : 'S/';
+
+          // Obtener todos los admins
+          const admins = await usersCollection.query([
+            { field: 'role', operator: '==', value: 'admin' }
+          ]);
+
+          // Crear notificación para cada admin
+          const notificationPromises = admins.map(admin =>
+            createNotification({
+              userId: admin.id,
+              title: '💳 Nuevo Pago con Tarjeta',
+              body: `${userName} pagó ${currencySymbol}${totalAmount.toFixed(2)} para "${eventName}" - ${userEmail}`,
+              type: 'payment',
+              orderId,
+            })
+          );
+
+          await Promise.all(notificationPromises);
+
+          console.log(`🔔 [WEBHOOK] Notificación enviada a ${admins.length} admin(s)`);
+        } catch (notifError) {
+          console.error('⚠️ [WEBHOOK] Error al notificar admins:', notifError);
+          // No fallar el webhook por error de notificación
+        }
       }
 
       console.log(`✅ [WEBHOOK] Orden ${orderId} actualizada: ${newStatus}`);
