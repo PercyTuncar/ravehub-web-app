@@ -30,9 +30,11 @@ export default function TicketsPage() {
 
       try {
         setLoading(true);
-        const transactions = await ticketTransactionsCollection.query([
-          { field: 'userId', operator: '==', value: user.id }
-        ]);
+        const transactions = await ticketTransactionsCollection.query(
+          [{ field: 'userId', operator: '==', value: user.id }],
+          'createdAt',
+          'desc'
+        );
 
         const ticketsWithDetails = await Promise.all(transactions.map(async (t) => {
           let eventData: any = {};
@@ -56,8 +58,12 @@ export default function TicketsPage() {
           return { ...t, ...eventData, ticketItems: t.ticketItems || [] };
         }));
 
-        // Sort by date (newest first)
-        ticketsWithDetails.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Sort by date (newest first) - la compra más reciente aparece primero
+        ticketsWithDetails.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA; // Más reciente primero
+        });
 
         // Filter out expired offline tickets older than 10 days
         // Also filter out rejected tickets older than 24 hours
