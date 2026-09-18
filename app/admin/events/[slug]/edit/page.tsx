@@ -34,6 +34,10 @@ import toast from 'react-hot-toast';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { revalidateSitemap } from '@/lib/revalidate';
 import { EventMarkdown } from '@/components/events/EventMarkdown';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical } from 'lucide-react';
 
 const STEPS = [
   {
@@ -108,6 +112,105 @@ const STEPS = [
   },
 ];
 
+// Componente para zona sortable
+function SortableZoneItem({ zone, index, eventData, updateEventData }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: zone.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Card ref={setNodeRef} style={style} className={isDragging ? 'shadow-lg' : ''}>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          {/* Drag Handle */}
+          <button
+            className="cursor-grab active:cursor-grabbing p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors mt-6"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-5 w-5 text-gray-400" />
+          </button>
+
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="block text-sm font-medium mb-2">Nombre de Zona</Label>
+              <Input
+                value={zone.name}
+                onChange={(e) => {
+                  const newZones = [...(eventData.zones || [])];
+                  newZones[index] = { ...zone, name: e.target.value };
+                  updateEventData('zones', newZones);
+                }}
+                placeholder="VIP, General, etc."
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium mb-2">Capacidad</Label>
+              <Input
+                type="number"
+                value={zone.capacity}
+                onChange={(e) => {
+                  const newZones = [...(eventData.zones || [])];
+                  newZones[index] = { ...zone, capacity: parseInt(e.target.value) || 0 };
+                  updateEventData('zones', newZones);
+                }}
+                placeholder="100"
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium mb-2">Descripción</Label>
+              <Input
+                value={zone.description || ''}
+                onChange={(e) => {
+                  const newZones = [...(eventData.zones || [])];
+                  newZones[index] = { ...zone, description: e.target.value };
+                  updateEventData('zones', newZones);
+                }}
+                placeholder="Descripción opcional"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              const zoneToRemove = eventData.zones?.[index];
+              const newZones = (eventData.zones || []).filter((_: any, i: number) => i !== index);
+              updateEventData('zones', newZones);
+
+              // También eliminar las referencias de esta zona en todas las fases de venta
+              if (zoneToRemove && eventData.salesPhases) {
+                const updatedPhases = eventData.salesPhases.map((phase: any) => ({
+                  ...phase,
+                  zonesPricing: (phase.zonesPricing || []).filter(
+                    (zp: any) => zp.zoneId !== zoneToRemove.id
+                  )
+                }));
+                updateEventData('salesPhases', updatedPhases);
+              }
+            }}
+          >
+            Eliminar Zona
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function EditEventPage() {
   const params = useParams();
   const router = useRouter();
@@ -132,6 +235,14 @@ export default function EditEventPage() {
   const [syncTicketsDate, setSyncTicketsDate] = useState(false);
   const [ticketCount, setTicketCount] = useState<{ total: number; withOverrides: number }>({ total: 0, withOverrides: 0 });
   const [loadingTicketCount, setLoadingTicketCount] = useState(false);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Load countries on component mount
   useEffect(() => {
@@ -336,6 +447,21 @@ export default function EditEventPage() {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const zones = eventData.zones || [];
+      const oldIndex = zones.findIndex((zone) => zone.id === active.id);
+      const newIndex = zones.findIndex((zone) => zone.id === over.id);
+
+      const newZones = arrayMove(zones, oldIndex, newIndex);
+      updateEventData('zones', newZones);
+
+      toast.success('Orden actualizado');
+    }
   };
 
   const generateSlugFromName = () => {
@@ -1893,81 +2019,32 @@ export default function EditEventPage() {
             <div>
               <h3 className="text-lg font-medium mb-4">Zonas y Capacidad</h3>
               <p className="text-muted-foreground mb-6">
-                Define las zonas del evento y su capacidad máxima.
+                Define las zonas del evento y su capacidad máxima. Arrastra las zonas para reordenarlas.
               </p>
             </div>
 
             {/* Zone Management */}
             <div className="space-y-4">
-              {eventData.zones?.map((zone, index) => (
-                <Card key={zone.id}>
-                  <CardContent className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label className="block text-sm font-medium mb-2">Nombre de Zona</Label>
-                        <Input
-                          value={zone.name}
-                          onChange={(e) => {
-                            const newZones = [...(eventData.zones || [])];
-                            newZones[index] = { ...zone, name: e.target.value };
-                            updateEventData('zones', newZones);
-                          }}
-                          placeholder="VIP, General, etc."
-                        />
-                      </div>
-                      <div>
-                        <Label className="block text-sm font-medium mb-2">Capacidad</Label>
-                        <Input
-                          type="number"
-                          value={zone.capacity}
-                          onChange={(e) => {
-                            const newZones = [...(eventData.zones || [])];
-                            newZones[index] = { ...zone, capacity: parseInt(e.target.value) || 0 };
-                            updateEventData('zones', newZones);
-                          }}
-                          placeholder="100"
-                        />
-                      </div>
-                      <div>
-                        <Label className="block text-sm font-medium mb-2">Descripción</Label>
-                        <Input
-                          value={zone.description || ''}
-                          onChange={(e) => {
-                            const newZones = [...(eventData.zones || [])];
-                            newZones[index] = { ...zone, description: e.target.value };
-                            updateEventData('zones', newZones);
-                          }}
-                          placeholder="Descripción opcional"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-4 flex justify-end">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          const zoneToRemove = eventData.zones?.[index];
-                          const newZones = (eventData.zones || []).filter((_, i) => i !== index);
-                          updateEventData('zones', newZones);
-                          
-                          // También eliminar las referencias de esta zona en todas las fases de venta
-                          if (zoneToRemove && eventData.salesPhases) {
-                            const updatedPhases = eventData.salesPhases.map(phase => ({
-                              ...phase,
-                              zonesPricing: (phase.zonesPricing || []).filter(
-                                zp => zp.zoneId !== zoneToRemove.id
-                              )
-                            }));
-                            updateEventData('salesPhases', updatedPhases);
-                          }
-                        }}
-                      >
-                        Eliminar Zona
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={eventData.zones?.map(z => z.id) || []}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {eventData.zones?.map((zone, index) => (
+                    <SortableZoneItem
+                      key={zone.id}
+                      zone={zone}
+                      index={index}
+                      eventData={eventData}
+                      updateEventData={updateEventData}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
 
               <Button
                 variant="outline"
