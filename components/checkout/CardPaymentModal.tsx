@@ -345,180 +345,258 @@ export function CardPaymentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !submitting && onClose()}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5" />
-            Pagar con tarjeta
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-slate-800/50 p-0">
+        {/* Header con glassmorphism - NO STICKY */}
+        <div className="backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/50 px-6 py-4">
+          <DialogTitle className="flex items-center gap-3 text-white">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+              <CreditCard className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">Pagar con tarjeta</h2>
+              <p className="text-xs text-slate-400 font-normal">Pago seguro con Mercado Pago</p>
+            </div>
           </DialogTitle>
-          <DialogDescription>
-            Ingresa los datos de tu tarjeta de crédito o débito
-          </DialogDescription>
-        </DialogHeader>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          {/* Total a pagar */}
-          <div className="bg-primary/10 p-4 rounded-lg">
-            <p className="text-sm text-muted-foreground">Total a pagar</p>
-            <p className="text-2xl font-bold">
-              {currencySymbol} {totalAmount.toFixed(2)} {currency}
-            </p>
-            {conversionInfo && currency !== 'PEN' && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Incluye recargo +5%
-              </p>
-            )}
-          </div>
+        <div className="px-6 py-6 space-y-6">
+          {/* Tarjeta 3D Animada */}
+          <div className="relative w-full h-52 perspective-1000">
+            <div className="relative w-full h-full transition-transform duration-700 transform-style-3d hover:rotate-y-180">
+              {/* Frente de la tarjeta */}
+              <div className="absolute w-full h-full backface-hidden">
+                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 p-6 shadow-2xl border border-slate-600/30 relative overflow-hidden">
+                  {/* Efectos de fondo */}
+                  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40"></div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-full blur-3xl"></div>
 
-          {/* Advertencia de conversión */}
-          {conversionInfo && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-500 mt-0.5" />
-                <div className="flex-1 text-sm">
-                  <p className="font-medium text-yellow-800 dark:text-yellow-400">
-                    Conversión a Soles (PEN)
-                  </p>
-                  <p className="text-yellow-700 dark:text-yellow-500 mt-1">
-                    {conversionInfo.originalCurrency} {conversionInfo.originalAmount.toFixed(2)} ≈ S/ {conversionInfo.penAmount.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-600 mt-1">
-                    Tasa: 1 {conversionInfo.originalCurrency} = {conversionInfo.exchangeRate.toFixed(4)} PEN
-                  </p>
+                  {/* Chip */}
+                  <div className="relative">
+                    <div className="w-12 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 mb-4"></div>
+
+                    {/* Número de tarjeta */}
+                    <div className="mt-6 mb-4">
+                      <p className="text-white text-xl font-mono tracking-wider">
+                        {cardNumber || '•••• •••• •••• ••••'}
+                      </p>
+                    </div>
+
+                    {/* Nombre y vencimiento */}
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">Titular</p>
+                        <p className="text-white text-sm font-medium uppercase tracking-wide">
+                          {cardholderName || 'NOMBRE APELLIDO'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">Vence</p>
+                        <p className="text-white text-sm font-mono">
+                          {expirationDate || 'MM/YY'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Logo Visa/Mastercard */}
+                  <div className="absolute bottom-4 right-6">
+                    <img
+                      src="https://res.cloudinary.com/amadodedios/image/upload/v1789722018/Visa-Simbolo_dmghke.png"
+                      alt="Visa"
+                      className="w-16 h-16 object-contain opacity-80"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Número de tarjeta */}
-          <div className="space-y-2">
-            <Label htmlFor="cardNumber">Número de tarjeta</Label>
-            <Input
-              id="cardNumber"
-              type="text"
-              placeholder="1234 5678 9012 3456"
-              maxLength={19}
-              value={cardNumber}
-              onChange={(e) => handleCardNumberChange(e.target.value)}
-              required
-              disabled={submitting}
-            />
           </div>
 
-          {/* Nombre del titular */}
-          <div className="space-y-2">
-            <Label htmlFor="cardholderName">Nombre del titular</Label>
-            <Input
-              id="cardholderName"
-              type="text"
-              placeholder="NOMBRE APELLIDO"
-              value={cardholderName}
-              onChange={(e) => setCardholderName(e.target.value.toUpperCase())}
-              required
-              disabled={submitting}
-            />
-          </div>
-
-          {/* Fecha de vencimiento y CVV */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="expirationDate">Vencimiento</Label>
-              <Input
-                id="expirationDate"
-                type="text"
-                placeholder="MM/YY"
-                maxLength={5}
-                value={expirationDate}
-                onChange={(e) => handleExpirationChange(e.target.value)}
-                required
-                disabled={submitting}
-              />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Total a pagar con glassmorphism */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500/10 via-orange-500/10 to-orange-600/10 backdrop-blur-xl border border-slate-700/50 p-5">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-orange-600/5"></div>
+              <div className="relative">
+                <p className="text-sm text-slate-400 mb-1">Total a pagar</p>
+                <p className="text-3xl font-bold text-white">
+                  {currencySymbol} {totalAmount.toFixed(2)}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">{currency} • Incluye comisión +5%</p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="securityCode">CVV</Label>
-              <Input
-                id="securityCode"
-                type="text"
-                placeholder="123"
-                maxLength={4}
-                value={securityCode}
-                onChange={(e) => setSecurityCode(e.target.value.replace(/\D/g, ''))}
-                required
-                disabled={submitting}
-              />
-            </div>
-          </div>
 
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="tu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={submitting}
-            />
-          </div>
-
-          {/* Documento */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="docType">Tipo</Label>
-              <select
-                id="docType"
-                value={docType}
-                onChange={(e) => setDocType(e.target.value)}
-                className="w-full h-10 px-3 border rounded-md"
-                disabled={submitting}
-              >
-                <option value="DNI">DNI</option>
-                <option value="CE">CE</option>
-                <option value="RUC">RUC</option>
-                <option value="PASS">Pasaporte</option>
-              </select>
-            </div>
-            <div className="col-span-2 space-y-2">
-              <Label htmlFor="docNumber">Número</Label>
-              <Input
-                id="docNumber"
-                type="text"
-                placeholder="12345678"
-                value={docNumber}
-                onChange={(e) => setDocNumber(e.target.value.replace(/\D/g, ''))}
-                required
-                disabled={submitting}
-              />
-            </div>
-          </div>
-
-          {/* Botón de pago */}
-          <Button
-            type="submit"
-            className="w-full h-12 text-base"
-            disabled={submitting || !mpLoaded}
-          >
-            {submitting ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Procesando pago...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Lock className="w-4 h-4" />
-                Pagar {currencySymbol} {totalAmount.toFixed(2)}
-              </span>
+            {/* Advertencia de conversión */}
+            {conversionInfo && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 backdrop-blur-sm">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium text-yellow-400 text-sm">
+                      Conversión a Soles (PEN)
+                    </p>
+                    <p className="text-yellow-300/80 text-sm mt-1">
+                      {conversionInfo.originalCurrency} {conversionInfo.originalAmount.toFixed(2)} ≈ S/ {conversionInfo.penAmount.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-yellow-500/60 mt-1">
+                      Tasa: 1 {conversionInfo.originalCurrency} = {conversionInfo.exchangeRate.toFixed(4)} PEN
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
-          </Button>
 
-          {/* Seguridad */}
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <Lock className="w-3 h-3" />
-            <span>Pago seguro procesado por Mercado Pago</span>
-          </div>
-        </form>
+            {/* Número de tarjeta */}
+            <div className="space-y-2">
+              <Label htmlFor="cardNumber" className="text-slate-300 text-sm font-medium">
+                Número de tarjeta
+              </Label>
+              <div className="relative">
+                <Input
+                  id="cardNumber"
+                  type="text"
+                  placeholder="1234 5678 9012 3456"
+                  maxLength={19}
+                  value={cardNumber}
+                  onChange={(e) => handleCardNumberChange(e.target.value)}
+                  required
+                  disabled={submitting}
+                  className="h-12 bg-slate-900/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                />
+                <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+              </div>
+            </div>
+
+            {/* Nombre del titular */}
+            <div className="space-y-2">
+              <Label htmlFor="cardholderName" className="text-slate-300 text-sm font-medium">
+                Nombre del titular
+              </Label>
+              <Input
+                id="cardholderName"
+                type="text"
+                placeholder="NOMBRE APELLIDO"
+                value={cardholderName}
+                onChange={(e) => setCardholderName(e.target.value.toUpperCase())}
+                required
+                disabled={submitting}
+                className="h-12 bg-slate-900/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all uppercase"
+              />
+            </div>
+
+            {/* Fecha de vencimiento y CVV */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="expirationDate" className="text-slate-300 text-sm font-medium">
+                  Vencimiento
+                </Label>
+                <Input
+                  id="expirationDate"
+                  type="text"
+                  placeholder="MM/YY"
+                  maxLength={5}
+                  value={expirationDate}
+                  onChange={(e) => handleExpirationChange(e.target.value)}
+                  required
+                  disabled={submitting}
+                  className="h-12 bg-slate-900/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="securityCode" className="text-slate-300 text-sm font-medium">
+                  CVV
+                </Label>
+                <Input
+                  id="securityCode"
+                  type="text"
+                  placeholder="123"
+                  maxLength={4}
+                  value={securityCode}
+                  onChange={(e) => setSecurityCode(e.target.value.replace(/\D/g, ''))}
+                  required
+                  disabled={submitting}
+                  className="h-12 bg-slate-900/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-slate-300 text-sm font-medium">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={submitting}
+                className="h-12 bg-slate-900/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              />
+            </div>
+
+            {/* Documento */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="docType" className="text-slate-300 text-sm font-medium">
+                  Tipo
+                </Label>
+                <select
+                  id="docType"
+                  value={docType}
+                  onChange={(e) => setDocType(e.target.value)}
+                  className="w-full h-12 px-3 bg-slate-900/50 border border-slate-700/50 text-white rounded-md focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                  disabled={submitting}
+                >
+                  <option value="DNI">DNI</option>
+                  <option value="CE">CE</option>
+                  <option value="RUC">RUC</option>
+                  <option value="PASS">Pasaporte</option>
+                </select>
+              </div>
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="docNumber" className="text-slate-300 text-sm font-medium">
+                  Número
+                </Label>
+                <Input
+                  id="docNumber"
+                  type="text"
+                  placeholder="12345678"
+                  value={docNumber}
+                  onChange={(e) => setDocNumber(e.target.value.replace(/\D/g, ''))}
+                  required
+                  disabled={submitting}
+                  className="h-12 bg-slate-900/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Botón de pago con gradiente */}
+            <Button
+              type="submit"
+              className="w-full h-14 text-base font-semibold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-orange-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={submitting || !mpLoaded}
+            >
+              {submitting ? (
+                <span className="flex items-center gap-3">
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Procesando pago...
+                </span>
+              ) : (
+                <span className="flex items-center gap-3">
+                  <Lock className="w-5 h-5" />
+                  Pagar {currencySymbol} {totalAmount.toFixed(2)}
+                </span>
+              )}
+            </Button>
+
+            {/* Seguridad */}
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-2">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Pago seguro procesado por Mercado Pago</span>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1534,3 +1534,34 @@ img {
 .animate-shimmer {
   animation: shimmer 2s infinite;
 }
+
+/* 3D Card Effects for Payment Modal */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Smooth card animations */
+@keyframes cardFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-card-float {
+  animation: cardFloat 3s ease-in-out infinite;
+}
