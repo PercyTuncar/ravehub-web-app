@@ -1028,9 +1028,6 @@ function BuyTicketsContent({
   );
 
   const [isInstallmentMode, setIsInstallmentMode] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"online" | "offline">(
-    "offline",
-  );
   const [installments, setInstallments] = useState<number>(2); // Default to 2 installments when using installment mode
   const [acceptTerms, setAcceptTerms] = useState(true);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -1177,9 +1174,9 @@ function BuyTicketsContent({
     trackSelectPaymentMethod({
       eventId: event.id,
       eventName: event.name,
-      paymentMethod,
+      paymentMethod: "offline",
     });
-  }, [paymentMethod, event.id, event.name]);
+  }, [event.id, event.name]);
 
   // Track installments selection
   useEffect(() => {
@@ -1902,107 +1899,8 @@ function BuyTicketsContent({
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent blur-sm opacity-50" />
 
                 <div className="p-6 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex shrink-0 items-center justify-center">
-                      <CreditCard className="w-6 h-6" style={{ color: colorPalette.primary }} />
-                    </div>
-                    <h3 className="font-black text-white text-lg">Método de Pago</h3>
-                  </div>
-
-                  <RadioGroup
-                    value={paymentMethod}
-                    onValueChange={(v) =>
-                      setPaymentMethod(v as "online" | "offline")
-                    }
-                  >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {event.allowOfflinePayments && (
-                        <Label
-                          htmlFor="offline"
-                          className={`
-                                            flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all relative overflow-hidden group/payment
-                                            ${
-                                              paymentMethod === "offline"
-                                                ? "bg-orange-500/10 border-orange-500/50 shadow-lg shadow-orange-500/10"
-                                                : "bg-white/[0.05] border-white/10 hover:bg-white/[0.08] hover:border-white/20"
-                                            }
-                                        `}
-                          style={
-                            paymentMethod === "offline"
-                              ? {
-                                  backgroundColor: `${colorPalette.dominant}10`,
-                                  borderColor: `${colorPalette.dominant}50`,
-                                  boxShadow: `0 0 20px ${colorPalette.dominant}20`
-                                }
-                              : undefined
-                          }
-                        >
-                          {/* Shine effect on hover */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover/payment:opacity-100 transition-opacity duration-300 -translate-x-full group-hover/payment:translate-x-full" />
-
-                          <RadioGroupItem
-                            value="offline"
-                            id="offline"
-                            className="mt-1 relative z-10"
-                          />
-                          <div className="relative z-10">
-                            <div className="font-bold text-white mb-1">
-                              Pago Offline
-                            </div>
-                            <div className="text-xs text-zinc-400">
-                              Transferencia o depósito bancario. Confirmación
-                              vía WhatsApp.
-                            </div>
-                          </div>
-                        </Label>
-                      )}
-
-                      <Label
-                        className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all relative overflow-hidden group/payment
-                                            ${
-                                              paymentMethod === "online"
-                                                ? "bg-blue-500/10 border-blue-500/50 shadow-lg shadow-blue-500/10"
-                                                : "bg-white/[0.05] border-white/10 hover:bg-white/[0.08] hover:border-white/20"
-                                            }
-                                        `}
-                        style={
-                          paymentMethod === "online"
-                            ? {
-                                backgroundColor: `${colorPalette.dominant}10`,
-                                borderColor: `${colorPalette.dominant}50`,
-                                boxShadow: `0 0 20px ${colorPalette.dominant}20`,
-                              }
-                            : undefined
-                        }
-                      >
-                        <RadioGroupItem
-                          value="online"
-                          id="online"
-                          className="mt-1"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <CreditCard className="w-4 h-4 text-blue-500" />
-                            <div className="font-bold text-white">
-                              Pago Online
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className="text-xs bg-green-500/10 text-green-500 border-green-500/30"
-                            >
-                              Disponible
-                            </Badge>
-                          </div>
-                          <div className="text-xs text-zinc-400">
-                            Tarjeta de crédito/débito. Pago seguro procesado por MercadoPago.
-                          </div>
-                        </div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-
                   {/* Terms */}
-                  <div className="flex items-start gap-3 mt-6 pt-6 border-t border-white/10">
+                  <div className="flex items-start gap-3 pt-6 border-t border-white/10">
                     <Checkbox
                       id="terms"
                       checked={acceptTerms}
