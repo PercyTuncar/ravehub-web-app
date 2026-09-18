@@ -1,0 +1,33 @@
+// Firestore Security Rules - Add to your firestore.rules file
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ... existing rules ...
+
+    // Libro de Reclamaciones - Complaints Collection
+    match /complaints/{complaintId} {
+      // Allow anyone to create a complaint (public form submission)
+      allow create: if request.auth != null || request.auth == null;
+
+      // Allow admins to read all complaints
+      allow read: if isAdmin();
+
+      // Allow admins to update complaint status and responses
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'adminResponse', 'updatedAt']);
+
+      // Prevent deletion (keep records for legal compliance)
+      allow delete: if false;
+    }
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}

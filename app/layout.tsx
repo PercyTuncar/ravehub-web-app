@@ -8,6 +8,7 @@ import { CurrencyProvider } from '@/lib/contexts/CurrencyContext'
 import { NotificationsProvider } from '@/lib/contexts/NotificationsContext'
 import { MainNavbar } from '@/components/layout/MainNavbar'
 import { MobileNavbar } from '@/components/layout/MobileNavbar'
+import { Footer } from '@/components/layout/Footer'
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Toaster } from 'react-hot-toast'
@@ -105,6 +106,7 @@ export default function RootLayout({
                     <PageWrapper>
                       {children}
                     </PageWrapper>
+                    <Footer />
                   </VerificationGuard>
                 </CartProvider>
               </CurrencyProvider>
