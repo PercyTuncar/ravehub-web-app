@@ -54,8 +54,8 @@ export function TicketDownload({
   };
 
   const getStatusInfo = () => {
-    // Priority 1: Payment must be fully approved
-    if (!canDeliverTickets || paymentStatus !== 'approved') {
+    // Priority 1: Payment must be approved
+    if (paymentStatus !== 'approved') {
       return {
         icon: Clock,
         text: paymentType === 'installment'
@@ -65,6 +65,12 @@ export function TicketDownload({
         bgColor: 'bg-yellow-50',
         canDownload: false,
       };
+    }
+
+    // Si el pago está aprobado pero canDeliverTickets es false, es un problema de backend
+    // Pero no debemos mostrar "esperando aprobación" porque YA está aprobado
+    if (!canDeliverTickets) {
+      console.warn('[TicketDownload] Payment approved but canDeliverTickets is false');
     }
 
     // Priority 2: Manual upload mode requires admin to upload files
@@ -117,8 +123,8 @@ export function TicketDownload({
   // Final download permission: status allows AND files exist (for manual mode)
   const canDownload = statusInfo.canDownload && (deliveryMode === 'automatic' || hasAvailableFiles);
 
-  // Show status card if payment not fully approved or files pending
-  if (!canDeliverTickets || paymentStatus !== 'approved') {
+  // Show status card if payment not approved or files pending
+  if (paymentStatus !== 'approved') {
     return (
       <Card>
         <CardContent className="p-4">
