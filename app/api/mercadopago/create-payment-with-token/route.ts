@@ -246,18 +246,13 @@ export async function POST(request: NextRequest) {
     console.log('[MP Payment] Payment email:', paymentEmail);
     console.log('[MP Payment] Payment data:', JSON.stringify(paymentData, null, 2));
 
-    // 6. Crear Payment con Idempotency Key
-    const idempotencyKey = `payment-${transactionId}-${Date.now()}`;
-
+    // 6. Crear Payment
     console.log('[MP Payment] Attempting to create payment...');
     console.log('[MP Payment] Access Token present:', !!process.env.MERCADOPAGO_ACCESS_TOKEN);
     console.log('[MP Payment] Access Token prefix:', process.env.MERCADOPAGO_ACCESS_TOKEN?.substring(0, 10));
 
     const payment = await paymentClient.create({
       body: paymentData,
-      requestOptions: {
-        idempotencyKey: idempotencyKey,
-      },
     });
 
     console.log('[MP Payment] Payment created:', {
