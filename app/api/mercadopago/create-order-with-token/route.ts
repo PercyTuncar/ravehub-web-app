@@ -100,12 +100,23 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    if (transaction.paymentStatus !== 'pending') {
+    if (transaction.paymentStatus !== 'pending' && transaction.paymentStatus !== 'rejected') {
       console.log('[MP Order] Error: Invalid transaction state:', transaction.paymentStatus);
       return NextResponse.json({
         error: 'Invalid transaction state',
-        message: 'Esta transacción ya fue procesada'
+        message: 'Esta transacción ya fue procesada o no puede ser re-intentada'
       }, { status: 400 });
+    }
+
+    // Si la transacción está rechazada, permitir re-intento
+    if (transaction.paymentStatus === 'rejected') {
+      console.log('[MP Order] Allowing retry for rejected transaction');
+      // Resetear estado a pending para el re-intento
+      await ticketTransactionsCollection.update(transactionId, {
+        paymentStatus: 'pending',
+        retryAttempt: (transaction.retryAttempt || 0) + 1,
+        lastRetryAt: new Date().toISOString(),
+      });
     }
 
     // 3. Obtener evento y usuario
