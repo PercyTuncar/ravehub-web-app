@@ -156,7 +156,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       'desc'
     );
 
-    const now = new Date();
     posts.forEach((post: any) => {
       const publishDate = toValidDate(post.publishDate || post.createdAt);
       const lastModified = toValidDate(post.updatedDate || post.updatedAt);
