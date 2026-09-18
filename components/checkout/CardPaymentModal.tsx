@@ -303,6 +303,7 @@ export function CardPaymentModal({
         // Estado desconocido - Redirigir a pending por seguridad
         onClose();
         router.push(`/purchase-pending?transactionId=${transactionId}`);
+      }
 
     } catch (error: any) {
       console.error('[Payment] Error:', error);
