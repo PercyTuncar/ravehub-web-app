@@ -243,6 +243,33 @@ export async function POST(request: NextRequest) {
         }
         console.log('[MP Order] Error details:', JSON.stringify(errorData, null, 2));
 
+        // Status 402 = Payment Required - El pago falló pero la Order se creó
+        if (apiResponse.status === 402 && errorData.data) {
+          const order = errorData.data;
+          const payment = order.transactions?.payments?.[0];
+
+          // Actualizar transacción con el fallo
+          await ticketTransactionsCollection.update(transactionId, {
+            mercadoPagoOrderId: order.id,
+            mercadoPagoStatus: order.status,
+            paymentId: payment?.id?.toString(),
+            paymentStatus: 'rejected',
+            mercadoPagoStatusDetail: payment?.status_detail || 'failed',
+            updatedAt: new Date().toISOString(),
+            rejectedAt: new Date().toISOString(),
+          });
+
+          // Retornar con status failed para que frontend redirija a página de error
+          return NextResponse.json({
+            success: false,
+            status: payment?.status || 'failed',
+            statusDetail: payment?.status_detail || 'rejected_by_issuer',
+            orderId: order.id,
+            message: 'Pago rechazado',
+          }, { status: 200 }); // 200 para que frontend pueda leer el JSON
+        }
+
+        // Otros errores
         return NextResponse.json({
           success: false,
           error: 'MercadoPago API error',

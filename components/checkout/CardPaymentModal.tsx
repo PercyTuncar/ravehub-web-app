@@ -253,12 +253,20 @@ export function CardPaymentModal({
 
       const data = await response.json();
 
-      if (!response.ok || !data.success) {
+      console.log('[Payment] Response:', data);
+
+      // Si el response no es ok Y no tiene data de status (error real)
+      if (!response.ok && !data.status) {
         throw new Error(data.error || data.message || 'Error al procesar el pago');
       }
 
-      console.log('[Payment] Order created:', data.orderId);
-      console.log('[Payment] Payment status:', data.status);
+      // Si success=false pero tiene status, es un pago rechazado (manejarlo abajo)
+      if (!data.success && data.status) {
+        console.log('[Payment] Payment failed:', data.status, data.statusDetail);
+      } else if (data.success) {
+        console.log('[Payment] Order created:', data.orderId);
+        console.log('[Payment] Payment status:', data.status);
+      }
 
       // 3. Manejar respuesta según estado
       if (data.requires3DS && data.redirectUrl) {
