@@ -29,7 +29,7 @@ const GROUPS: WhatsAppGroup[] = [
     country: "Perú",
     flag: "🇵🇪",
     name: "Ravehub Perú",
-    url: "https://chat.whatsapp.com/HKg7kLPcGTQHWbnIMCejbh?s=cl&p=a&mlu=4&ilr=4",
+    url: "https://chat.whatsapp.com/Fo0jlbl9mp5CWalvlmZaS3?s=cl&p=i&mlu=4&ilr=4",
   },
   {
     id: "army",

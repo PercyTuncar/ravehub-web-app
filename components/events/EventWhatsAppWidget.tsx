@@ -96,7 +96,7 @@ export function EventWhatsAppWidget({ event }: EventWhatsAppWidgetProps) {
             }}
           >
             <a
-              href="https://chat.whatsapp.com/HKg7kLPcGTQHWbnIMCejbh?s=cl&p=a&mlu=4&ilr=4"
+              href="https://chat.whatsapp.com/Fo0jlbl9mp5CWalvlmZaS3?s=cl&p=i&mlu=4&ilr=4"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-3 relative z-10"

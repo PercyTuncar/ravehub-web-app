@@ -79,7 +79,7 @@ const WHATSAPP_GROUPS = [
     country: "Perú",
     flag: "🇵🇪",
     name: "Ravehub Perú",
-    url: "https://chat.whatsapp.com/HKg7kLPcGTQHWbnIMCejbh?s=cl&p=a&mlu=4&ilr=4",
+    url: "https://chat.whatsapp.com/Fo0jlbl9mp5CWalvlmZaS3?s=cl&p=i&mlu=4&ilr=4",
   },
   {
     id: "army",
@@ -1399,7 +1399,7 @@ function BuyTicketsContent({
             {/* Mobile/Tablet CTA for WhatsApp - ALWAYS VISIBLE - Direct link */}
             <div className="lg:hidden w-full md:w-auto">
               <a
-                href="https://chat.whatsapp.com/HKg7kLPcGTQHWbnIMCejbh?s=cl&p=a&mlu=4&ilr=4"
+                href="https://chat.whatsapp.com/Fo0jlbl9mp5CWalvlmZaS3?s=cl&p=i&mlu=4&ilr=4"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => {
