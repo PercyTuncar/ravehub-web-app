@@ -278,17 +278,17 @@ export function ImageZoomModal({
         }
       }}
     >
-      {/* Close button */}
+      {/* Close button - Con margen superior para evitar navbar */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 rounded-full bg-white/10 p-2 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
+        className="absolute top-20 right-4 sm:top-20 z-10 rounded-full bg-white/10 p-2 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-110"
         aria-label="Cerrar"
       >
         <X className="h-6 w-6 text-white" />
       </button>
 
-      {/* Zoom controls */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+      {/* Zoom controls - Con margen superior para evitar navbar */}
+      <div className="absolute top-20 left-4 sm:top-20 z-10 flex flex-col gap-2">
         <Button
           onClick={handleZoomIn}
           disabled={scale >= MAX_SCALE}
@@ -330,13 +330,13 @@ export function ImageZoomModal({
         </Button>
       </div>
 
-      {/* Zoom level indicator */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 rounded-full bg-white/10 px-4 py-2 backdrop-blur-md">
+      {/* Zoom level indicator - Con margen inferior para evitar menú móvil */}
+      <div className="absolute bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 z-10 rounded-full bg-white/10 px-4 py-2 backdrop-blur-md">
         <span className="text-sm font-medium text-white">{Math.round(scale * 100)}%</span>
       </div>
 
-      {/* Instructions */}
-      <div className="absolute bottom-4 right-4 z-10 max-w-xs rounded-lg bg-white/10 px-3 py-2 backdrop-blur-md hidden sm:block">
+      {/* Instructions - Con margen inferior para evitar menú móvil */}
+      <div className="absolute bottom-20 sm:bottom-4 right-4 z-10 max-w-xs rounded-lg bg-white/10 px-3 py-2 backdrop-blur-md hidden sm:block">
         <p className="text-xs text-white/80">
           {scale > MIN_SCALE
             ? '🖱️ Arrastra para mover • Rueda para zoom'
@@ -344,10 +344,10 @@ export function ImageZoomModal({
         </p>
       </div>
 
-      {/* Image container */}
+      {/* Image container - Con padding para evitar navbar y menú móvil */}
       <div
         ref={containerRef}
-        className="relative h-full w-full overflow-hidden cursor-grab active:cursor-grabbing"
+        className="relative h-full w-full overflow-hidden cursor-grab active:cursor-grabbing pt-24 pb-24 sm:pt-20 sm:pb-8"
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
