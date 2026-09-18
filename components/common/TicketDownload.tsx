@@ -144,15 +144,35 @@ export function TicketDownload({
     );
   }
 
-  // Payment approved but waiting for upload
-  if (deliveryMode === 'manualUpload' && !hasAvailableFiles) {
+  // Si el pago está aprobado, verificar si realmente hay algo que mostrar
+  if (paymentStatus === 'approved') {
+    const hasManualUploadPending = deliveryMode === 'manualUpload' && !hasAvailableFiles;
+    const hasFutureDateRestriction = downloadAvailableDate && new Date() < new Date(downloadAvailableDate);
+
+    // Si no hay archivos Y tampoco hay fecha futura, no mostrar nada
+    // El caso de manual upload sin archivos SÍ debería mostrar "en preparación"
+    // PERO solo si el deliveryStatus indica que se esperan archivos
+    if (!hasManualUploadPending && !hasFutureDateRestriction && !hasAvailableFiles) {
+      return null; // No hay nada que descargar ni esperar
+    }
+
+    // Si es manual upload pero el deliveryStatus no indica que habrá archivos, ocultar
+    if (hasManualUploadPending && deliveryStatus === 'pending') {
+      // "pending" puede significar que aún no se decide si habrá descarga
+      // Por ahora, no mostrar nada si no hay archivos disponibles
+      return null;
+    }
+  }
+
+  // Payment approved but waiting for manual upload
+  if (deliveryMode === 'manualUpload' && !hasAvailableFiles && paymentStatus === 'approved') {
     return (
       <Card>
         <CardContent className="p-4">
           <div className="flex items-start gap-2">
-            <StatusIcon className={`w-5 h-5 ${statusInfo.color} flex-shrink-0 mt-0.5`} />
+            <Clock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium mb-1">{statusInfo.text}</p>
+              <p className="text-sm font-medium mb-1">Pago aprobado - Tickets en preparación</p>
               <p className="text-sm text-muted-foreground">
                 Tu pago ha sido aprobado. Recibirás una notificación cuando tus tickets estén listos.
               </p>
@@ -169,11 +189,16 @@ export function TicketDownload({
       <Card>
         <CardContent className="p-4">
           <div className="flex items-start gap-2">
-            <StatusIcon className={`w-5 h-5 ${statusInfo.color} flex-shrink-0 mt-0.5`} />
+            <Clock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium mb-1">{statusInfo.text}</p>
+              <p className="text-sm font-medium mb-1">Pago Completado</p>
               <p className="text-sm text-muted-foreground">
-                Tu pago ha sido aprobado. Los tickets estarán disponibles en la fecha programada.
+                Los tickets estarán disponibles para descarga a partir del{' '}
+                {new Date(downloadAvailableDate).toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
               </p>
             </div>
           </div>

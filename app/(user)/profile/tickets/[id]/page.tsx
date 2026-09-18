@@ -960,11 +960,7 @@ export default function TicketDetailPage() {
                                                 </Button>
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
-                                            Ticket pagado en su totalidad. No requiere gestión de cuotas.
-                                        </div>
-                                    )}
+                                    ) : null}
                                 </>
                             )}
                         </div>
