@@ -448,25 +448,41 @@ export function CheckoutPaymentModal({
             {/* Options */}
             <div className="grid gap-3 mt-4">
 
-              {/* Option 1 — Pagar con tarjeta (PRIMERO) +5% */}
+              {/* Option 1 — Pagar con tarjeta */}
               <button
                 type="button"
                 onClick={handlePayOnline}
                 disabled={!user || submitting}
-                className={`w-full text-left p-6 rounded-2xl border transition-all ${
+                className={`group relative w-full text-left rounded-xl transition-all duration-200 overflow-hidden ${
                   !user || submitting
-                    ? 'border-gray-500/20 bg-gray-500/[0.05] cursor-not-allowed opacity-60'
-                    : 'border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/50'
+                    ? 'opacity-60 cursor-not-allowed'
+                    : 'hover:-translate-y-0.5 active:translate-y-0'
                 }`}
               >
-                <div className="flex items-start gap-4">
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
+                {/* Fondo simple */}
+                <div className={`absolute inset-0 transition-colors duration-200 ${
+                  !user || submitting
+                    ? 'bg-slate-800/30'
+                    : 'bg-slate-800/40 group-hover:bg-slate-800/50'
+                }`} />
+
+                {/* Border */}
+                <div className={`absolute inset-0 rounded-xl transition-all duration-200 ${
+                  !user || submitting
+                    ? 'ring-1 ring-inset ring-slate-700/40'
+                    : 'ring-1 ring-inset ring-slate-600/50 group-hover:ring-slate-500/60'
+                }`} />
+
+                {/* Contenido */}
+                <div className="relative p-5 flex items-center gap-4">
+                  {/* Icono */}
+                  <div className={`w-14 h-14 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200 ${
                     !user || submitting
-                      ? 'bg-gray-500/10 border border-gray-500/20'
-                      : 'bg-white/95 border border-blue-500/30'
+                      ? 'bg-slate-700/30'
+                      : 'bg-white shadow-sm group-hover:shadow-md'
                   }`}>
                     {submitting ? (
-                      <div className="w-7 h-7 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                      <div className="w-7 h-7 border-2 border-slate-600 border-t-slate-400 rounded-full animate-spin" />
                     ) : (
                       <img
                         src="https://res.cloudinary.com/amadodedios/image/upload/v1789722018/Visa-Simbolo_dmghke.png"
@@ -475,100 +491,175 @@ export function CheckoutPaymentModal({
                       />
                     )}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className={`font-bold text-lg ${!user || submitting ? 'text-gray-400' : 'text-white'}`}>
-                        Pagar con tarjeta
-                      </p>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs ${
-                          submitting
-                            ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 animate-pulse'
-                            : !user
-                            ? 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-                            : 'bg-green-500/20 text-green-400 border-green-500/30'
-                        }`}
-                      >
-                        {submitting ? 'Cargando...' : !user ? 'Requiere login' : 'Comisión +5% +S/1'}
-                      </Badge>
+
+                  {/* Texto */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className={`font-semibold text-base ${!user || submitting ? 'text-slate-400' : 'text-white'}`}>
+                        Tarjeta de crédito o débito
+                      </h3>
+                      {!user && !submitting && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-300 ring-1 ring-inset ring-amber-500/30">
+                          Requiere login
+                        </span>
+                      )}
                     </div>
-                    <p className={`text-sm leading-relaxed ${!user || submitting ? 'text-gray-500' : 'text-gray-300'}`}>
+
+                    <p className={`text-xs leading-relaxed mb-2 ${!user || submitting ? 'text-slate-500' : 'text-slate-400'}`}>
                       {submitting
-                        ? 'Preparando formulario de pago seguro...'
-                        : 'Pago inmediato con tarjeta de crédito/débito. Procesado por MercadoPago.'
+                        ? 'Preparando pago seguro...'
+                        : 'Pago instantáneo y seguro con cualquier tarjeta'
                       }
                     </p>
+
+                    {/* Badges en la misma línea */}
+                    <div className="flex items-center gap-2 text-[10px]">
+                      <span className={`flex items-center gap-1 px-2 py-0.5 rounded ${
+                        !user || submitting
+                          ? 'bg-slate-700/40 text-slate-500'
+                          : 'bg-slate-700/60 text-slate-300'
+                      }`}>
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+                        </svg>
+                        Seguro
+                      </span>
+                      <span className={`px-2 py-0.5 rounded font-medium ${
+                        !user || submitting
+                          ? 'bg-slate-700/40 text-slate-500'
+                          : 'bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-500/20'
+                      }`}>
+                        Comisión: +5% +S/1
+                      </span>
+                      {user && !submitting && (
+                        <span className="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-500/20 font-medium">
+                          Inmediato
+                        </span>
+                      )}
+                    </div>
+
                     {!user && !submitting && (
-                      <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
+                      <p className="text-xs text-amber-400/80 mt-2 flex items-center gap-1 font-medium">
                         <LogIn className="w-3 h-3" />
-                        Inicia sesión para usar este método de pago
+                        Inicia sesión para continuar
                       </p>
                     )}
                   </div>
+
+                  {/* Flecha */}
+                  {user && !submitting && (
+                    <svg className="w-4 h-4 text-slate-500 group-hover:text-slate-400 group-hover:translate-x-0.5 transition-all duration-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
                 </div>
               </button>
 
-              {/* Option 2 — WhatsApp (SEGUNDO) */}
+              {/* Option 2 — WhatsApp */}
               <button
                 type="button"
                 onClick={handleWhatsAppOrder}
-                className="w-full text-left p-6 rounded-2xl border border-[#25D366]/30 bg-[#25D366]/[0.09] hover:bg-[#25D366]/[0.14] hover:border-[#25D366]/50 transition-all group shadow-lg shadow-[#25D366]/10"
+                className="group relative w-full text-left rounded-xl transition-all duration-200 overflow-hidden hover:-translate-y-0.5 active:translate-y-0"
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-[#25D366]/20 border border-[#25D366]/30 flex items-center justify-center shrink-0 group-hover:bg-[#25D366]/30 transition-colors shadow-sm">
+                {/* Fondo */}
+                <div className="absolute inset-0 bg-[#25D366]/8 group-hover:bg-[#25D366]/12 transition-colors duration-200" />
+
+                {/* Border */}
+                <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-[#25D366]/20 group-hover:ring-[#25D366]/30 transition-all duration-200" />
+
+                {/* Contenido */}
+                <div className="relative p-5 flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-lg bg-[#25D366]/15 ring-1 ring-inset ring-[#25D366]/25 flex items-center justify-center shrink-0 group-hover:bg-[#25D366]/20 transition-all duration-200">
                     <FaWhatsapp className="w-7 h-7 text-[#25D366]" />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="font-bold text-white text-lg">Pedir por WhatsApp</p>
-                      <Badge className="bg-green-500/10 text-green-400 border-green-500/20 text-xs px-2 py-0">
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-base text-white">Pedir por WhatsApp</h3>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-500/25">
                         Sin comisión
-                      </Badge>
+                      </span>
                     </div>
-                    <p className="text-sm text-white/70 leading-relaxed">
-                      Coordina el pago directamente con nuestro equipo. Rápido, fácil y sin complicaciones.
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Coordina con nuestro equipo de forma rápida y personalizada
                     </p>
                   </div>
-                  <ExternalLink className="w-5 h-5 text-[#25D366]/60 mt-1 shrink-0" />
+
+                  <ExternalLink className="w-4 h-4 text-[#25D366]/50 group-hover:text-[#25D366]/70 group-hover:translate-x-0.5 transition-all duration-200 shrink-0" />
                 </div>
               </button>
 
-            {/* Option 3 — Pagar con Yape/Plin (TERCERO) */}
+              {/* Option 3 — Yape/Plin */}
               <button
                 type="button"
                 onClick={handlePayAhora}
-                className="w-full text-left p-6 rounded-2xl border border-purple-500/30 bg-purple-500/[0.09] hover:bg-purple-500/[0.14] hover:border-purple-500/50 transition-all group shadow-lg shadow-purple-500/10"
+                disabled={!user}
+                className={`group relative w-full text-left rounded-xl transition-all duration-200 overflow-hidden ${
+                  !user ? 'opacity-60 cursor-not-allowed' : 'hover:-translate-y-0.5 active:translate-y-0'
+                }`}
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0 group-hover:bg-purple-500/30 transition-colors shadow-sm">
+                {/* Fondo */}
+                <div className={`absolute inset-0 transition-colors duration-200 ${
+                  !user
+                    ? 'bg-slate-800/30'
+                    : 'bg-purple-500/8 group-hover:bg-purple-500/12'
+                }`} />
+
+                {/* Border */}
+                <div className={`absolute inset-0 rounded-xl transition-all duration-200 ${
+                  !user
+                    ? 'ring-1 ring-inset ring-slate-700/40'
+                    : 'ring-1 ring-inset ring-purple-500/20 group-hover:ring-purple-500/30'
+                }`} />
+
+                {/* Contenido */}
+                <div className="relative p-5 flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200 ${
+                    !user
+                      ? 'bg-slate-700/30'
+                      : 'bg-purple-500/15 ring-1 ring-inset ring-purple-500/25 group-hover:bg-purple-500/20'
+                  }`}>
                     <img
                       src="https://res.cloudinary.com/amadodedios/image/upload/v1786821754/03_Landing_Interoperabilidad_Marzo24_Icono02_uw03wp.png"
                       alt="Yape/Plin"
                       className="w-8 h-8 object-contain"
                     />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="font-bold text-white text-lg">Pagar con Yape/Plin</p>
-                      <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-300 border-purple-500/30">
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className={`font-semibold text-base ${!user ? 'text-slate-400' : 'text-white'}`}>
+                        Yape o Plin
+                      </h3>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${
+                        !user
+                          ? 'bg-slate-700/40 text-slate-500'
+                          : 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-500/25'
+                      }`}>
                         Sin comisión
-                      </Badge>
+                      </span>
                     </div>
-                    <p className="text-sm text-white/70 leading-relaxed">
-                      Paga y sube tu comprobante
+                    <p className={`text-xs leading-relaxed ${!user ? 'text-slate-500' : 'text-slate-400'}`}>
+                      Transfiere y sube tu comprobante de pago
                     </p>
+
                     {!user && (
-                      <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
+                      <p className="text-xs text-amber-400/80 mt-2 flex items-center gap-1 font-medium">
                         <LogIn className="w-3 h-3" />
                         Requiere iniciar sesión
                       </p>
                     )}
                   </div>
+
+                  {user && (
+                    <svg className="w-4 h-4 text-slate-500 group-hover:text-slate-400 group-hover:translate-x-0.5 transition-all duration-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
                 </div>
               </button>
 
-              </div>
+            </div>
           </>
         )}
 

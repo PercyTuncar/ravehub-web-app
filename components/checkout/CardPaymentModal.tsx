@@ -344,18 +344,8 @@ export function CardPaymentModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !submitting && onClose()}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-slate-800/50 p-0">
-        {/* Header con glassmorphism - NO STICKY */}
-        <div className="backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/50 px-6 py-4">
-          <DialogTitle className="flex items-center gap-3 text-white">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-              <CreditCard className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold">Pagar con tarjeta</h2>
-              <p className="text-xs text-slate-400 font-normal">Pago seguro con Mercado Pago</p>
-            </div>
-          </DialogTitle>
-        </div>
+        {/* Título oculto para accesibilidad */}
+        <DialogTitle className="sr-only">Pagar con tarjeta</DialogTitle>
 
         <div className="px-6 py-6 space-y-6">
 
@@ -368,7 +358,7 @@ export function CardPaymentModal({
                 <p className="text-3xl font-bold text-white">
                   {currencySymbol} {totalAmount.toFixed(2)}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">{currency} • Incluye comisión +5%</p>
+                <p className="text-xs text-slate-500 mt-1">{currency} • Incluye comisión +5% + S/1</p>
               </div>
             </div>
 
@@ -524,7 +514,7 @@ export function CardPaymentModal({
             {/* Seguridad */}
             <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-2">
               <Lock className="w-3.5 h-3.5" />
-              <span>Pago seguro procesado por Mercado Pago</span>
+              <span>Pago 100% seguro y encriptado</span>
             </div>
           </form>
         </div>
