@@ -153,10 +153,17 @@ export async function POST(request: NextRequest) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const webhookUrl = process.env.MP_WEBHOOK_URL || `${siteUrl}/api/mercadopago/webhook`;
 
+    // En sandbox, el email DEBE contener @testuser.com
+    const isProduction = process.env.MP_ACCESS_TOKEN?.startsWith('APP_');
+    const orderEmail = isProduction
+      ? payerEmail
+      : `test_user_${identificationNumber}@testuser.com`;
+
     const orderData = {
       type: 'online' as const,
       processing_mode: 'automatic' as const,
-      notification_url: webhookUrl, // Para automatic mode, va en el root
+      total_amount: finalAmount.toFixed(2), // REQUERIDO: debe ser igual a la suma de payments
+      notification_url: webhookUrl,
       transactions: {
         payments: [
           {
@@ -171,7 +178,7 @@ export async function POST(request: NextRequest) {
         ],
       },
       payer: {
-        email: payerEmail,
+        email: orderEmail, // Usa email de prueba en sandbox
         first_name: user.firstName,
         last_name: user.lastName,
         identification: {
@@ -183,10 +190,17 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('[MP Order] Creating order with amount:', finalAmount, 'PEN');
+    console.log('[MP Order] Order email:', orderEmail);
     console.log('[MP Order] Order data:', JSON.stringify(orderData, null, 2));
 
-    // 6. Crear Order en Mercado Pago
-    const order = await orderClient.create({ body: orderData });
+    // 6. Crear Order en Mercado Pago con Idempotency Key
+    const idempotencyKey = `order-${transactionId}-${Date.now()}`;
+    const order = await orderClient.create({
+      body: orderData,
+      requestOptions: {
+        idempotencyKey: idempotencyKey,
+      },
+    });
 
     console.log('[MP Order] Order created:', {
       orderId: order.id,

@@ -189,7 +189,8 @@ export async function POST(request: NextRequest) {
 
     if (trackingContext?.consent === 'accepted' && typeof trackingContext.purchaseEventId === 'string') {
       try {
-        await createConversionContext({
+        // Filtrar valores undefined para evitar error de Firestore
+        const conversionData: any = {
           entityType: 'ticket',
           entityId: transactionId,
           userId: finalUserId,
@@ -200,13 +201,17 @@ export async function POST(request: NextRequest) {
           quantities: selectedTickets.map((ticket: any) => ticket.quantity),
           value: calculatedAdjustedTotal,
           currency: transactionCurrency,
-          eventSourceUrl: trackingContext.landingPage,
-          referrer: trackingContext.referrer,
-          fbBrowserId: trackingContext.fbBrowserId,
-          fbClickId: trackingContext.fbClickId,
-          tiktokBrowserId: trackingContext.tiktokBrowserId,
-          tiktokClickId: trackingContext.tiktokClickId,
-        });
+        };
+
+        // Solo agregar campos que no sean undefined
+        if (trackingContext.landingPage) conversionData.eventSourceUrl = trackingContext.landingPage;
+        if (trackingContext.referrer) conversionData.referrer = trackingContext.referrer;
+        if (trackingContext.fbBrowserId) conversionData.fbBrowserId = trackingContext.fbBrowserId;
+        if (trackingContext.fbClickId) conversionData.fbClickId = trackingContext.fbClickId;
+        if (trackingContext.tiktokBrowserId) conversionData.tiktokBrowserId = trackingContext.tiktokBrowserId;
+        if (trackingContext.tiktokClickId) conversionData.tiktokClickId = trackingContext.tiktokClickId;
+
+        await createConversionContext(conversionData);
       } catch (error) {
         console.error('Failed to record ticket conversion context', error);
       }
