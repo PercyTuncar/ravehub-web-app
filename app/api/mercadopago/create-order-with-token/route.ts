@@ -172,6 +172,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Validar monto mínimo de MercadoPago (3.00 PEN en Perú)
+    const MINIMUM_AMOUNT_PEN = 3.00;
+    if (finalAmount < MINIMUM_AMOUNT_PEN) {
+      console.log(`[MP Order] Error: Amount ${finalAmount} PEN is below minimum ${MINIMUM_AMOUNT_PEN} PEN`);
+      return NextResponse.json({
+        error: 'amount_too_low',
+        message: `El monto mínimo para pagar con tarjeta es S/ ${MINIMUM_AMOUNT_PEN.toFixed(2)}. Tu monto actual (incluyendo comisión) es S/ ${finalAmount.toFixed(2)}.`,
+        minimumAmount: MINIMUM_AMOUNT_PEN,
+        currentAmount: finalAmount,
+      }, { status: 400 });
+    }
+
     // 5. Construir datos de la Order para Mercado Pago
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const webhookUrl = process.env.MP_WEBHOOK_URL || `${siteUrl}/api/mercadopago/webhook`;

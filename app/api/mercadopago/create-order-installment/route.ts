@@ -96,6 +96,18 @@ export async function POST(request: NextRequest) {
       currency,
     });
 
+    // Validar monto mínimo de MercadoPago (3.00 PEN en Perú)
+    const MINIMUM_AMOUNT_PEN = 3.00;
+    if (finalAmount < MINIMUM_AMOUNT_PEN) {
+      console.log(`[MP Installment] Error: Amount ${finalAmount} PEN is below minimum ${MINIMUM_AMOUNT_PEN} PEN`);
+      return NextResponse.json({
+        error: 'amount_too_low',
+        message: `El monto mínimo para pagar con tarjeta es S/ ${MINIMUM_AMOUNT_PEN.toFixed(2)}. El monto de esta cuota (incluyendo comisión) es S/ ${finalAmount.toFixed(2)}.`,
+        minimumAmount: MINIMUM_AMOUNT_PEN,
+        currentAmount: finalAmount,
+      }, { status: 400 });
+    }
+
     // 6. Crear pago en MercadoPago
     const paymentData = {
       transaction_amount: finalAmount,
