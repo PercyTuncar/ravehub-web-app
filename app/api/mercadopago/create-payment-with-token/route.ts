@@ -48,15 +48,13 @@ export async function POST(request: NextRequest) {
       transactionId,
       token,
       payerEmail,
-      payerPhone,
       identificationType,
       identificationNumber,
       paymentMethodId,
-      deviceId,
       issuer_id,
     } = body;
 
-    console.log('[MP Payment] Received request:', { transactionId, paymentMethodId, deviceId, hasPhone: !!payerPhone });
+    console.log('[MP Payment] Received request:', { transactionId, paymentMethodId });
 
     if (!paymentMethodId) {
       console.log('[MP Payment] Error: Missing payment method ID');
@@ -64,14 +62,6 @@ export async function POST(request: NextRequest) {
         error: 'Payment method ID is required',
         message: 'No se pudo identificar el tipo de tarjeta'
       }, { status: 400 });
-    }
-
-    if (!deviceId) {
-      console.log('[MP Payment] Warning: Missing Device ID - this may cause payment rejection');
-    }
-
-    if (!payerPhone) {
-      console.log('[MP Payment] Warning: Missing phone number - this may cause payment rejection');
     }
 
     // 1. Autenticación
@@ -139,11 +129,20 @@ export async function POST(request: NextRequest) {
     // 4. Calcular montos
     let finalCurrency = 'PEN';
     let baseAmount = transaction.totalAmount;
-    let finalAmount = baseAmount * 1.05; // +5% recargo
+
+    // Calcular recargo: 5% + S/1 fijo
+    const surchargePercentage = baseAmount * 0.05;
+    const surchargeFixed = 1.00; // S/1 cargo fijo
+    const totalSurcharge = surchargePercentage + surchargeFixed;
+    let finalAmount = baseAmount + totalSurcharge; // Base + 5% + S/1
+
     let conversionRate = 1;
 
     console.log(`[MP Payment] Base amount: ${baseAmount} ${event.currency}`);
-    console.log(`[MP Payment] Amount with 5% surcharge: ${finalAmount} ${event.currency}`);
+    console.log(`[MP Payment] Surcharge 5%: ${surchargePercentage.toFixed(2)} ${event.currency}`);
+    console.log(`[MP Payment] Surcharge fixed: ${surchargeFixed.toFixed(2)} PEN`);
+    console.log(`[MP Payment] Total surcharge: ${totalSurcharge.toFixed(2)}`);
+    console.log(`[MP Payment] Amount with surcharge (5% + S/1): ${finalAmount.toFixed(2)} ${event.currency}`);
 
     // Convertir a PEN si es necesario
     if (event.currency !== 'PEN') {
@@ -160,13 +159,15 @@ export async function POST(request: NextRequest) {
         paidAmount: finalAmount,
         exchangeRate: conversionRate,
         exchangeRateTimestamp: new Date().toISOString(),
-        surchargeAmount: baseAmount * 0.05,
-        surchargePercentage: 5,
+        surchargePercentage: surchargePercentage,
+        surchargeFixed: surchargeFixed,
+        surchargeTotal: totalSurcharge,
       });
     } else {
       await ticketTransactionsCollection.update(transactionId, {
-        surchargeAmount: baseAmount * 0.05,
-        surchargePercentage: 5,
+        surchargePercentage: surchargePercentage,
+        surchargeFixed: surchargeFixed,
+        surchargeTotal: totalSurcharge,
       });
     }
 
@@ -210,36 +211,6 @@ export async function POST(request: NextRequest) {
     // Agregar issuer_id si viene
     if (issuer_id) {
       paymentData.issuer_id = issuer_id;
-    }
-
-    // Agregar teléfono si viene
-    if (payerPhone) {
-      paymentData.payer.phone = {
-        area_code: '',
-        number: payerPhone,
-      };
-    }
-
-    // Agregar info adicional
-    if (deviceId) {
-      paymentData.additional_info = {
-        ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-        items: [
-          {
-            id: transactionId,
-            title: event.name,
-            description: `Entrada para ${event.name}`,
-            category_id: 'tickets',
-            quantity: 1,
-            unit_price: finalAmount.toFixed(2),
-          },
-        ],
-      };
-
-      // Device ID para antifraude
-      paymentData.metadata = {
-        device_id: deviceId,
-      };
     }
 
     console.log('[MP Payment] Creating payment with amount:', finalAmount, 'PEN');

@@ -291,7 +291,10 @@ export function CheckoutPaymentModal({
 
     try {
       // Crear transaction con paymentMethod: 'online'
-      const totalWithSurcharge = totalAmount * 1.05; // +5% recargo
+      // Calcular recargo: 5% + S/1 fijo
+      const surchargePercentage = totalAmount * 0.05;
+      const surchargeFixed = 1.00; // S/1 cargo fijo
+      const totalWithSurcharge = totalAmount + surchargePercentage + surchargeFixed;
 
       const body = {
         eventId: event.id,
@@ -487,7 +490,7 @@ export function CheckoutPaymentModal({
                             : 'bg-green-500/20 text-green-400 border-green-500/30'
                         }`}
                       >
-                        {submitting ? 'Cargando...' : !user ? 'Requiere login' : 'Comisión +5%'}
+                        {submitting ? 'Cargando...' : !user ? 'Requiere login' : 'Comisión +5% +S/1'}
                       </Badge>
                     </div>
                     <p className={`text-sm leading-relaxed ${!user || submitting ? 'text-gray-500' : 'text-gray-300'}`}>
@@ -836,8 +839,8 @@ export function CheckoutPaymentModal({
         transactionId={onlineTransactionId}
         totalAmount={
           isInstallmentMode
-            ? totalReservation * 1.05  // En cuotas: solo adelanto + 5%
-            : totalAmount * 1.05        // Pago completo: total + 5%
+            ? totalReservation * 1.05 + 1  // En cuotas: adelanto + 5% + S/1
+            : totalAmount * 1.05 + 1        // Pago completo: total + 5% + S/1
         }
         currency={event.currency}
         currencySymbol={symbol}

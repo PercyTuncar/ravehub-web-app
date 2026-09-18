@@ -69,17 +69,14 @@ export function CardPaymentModal({
   const [mp, setMp] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [mpLoaded, setMpLoaded] = useState(false);
-  const [deviceId, setDeviceId] = useState<string>(''); // ✅ NUEVO: Device ID para antifraude
 
-  // Estados del formulario
+  // Estados del formulario - simplificado
   const [cardNumber, setCardNumber] = useState('');
   const [cardholderName, setCardholderName] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
   const [securityCode, setSecurityCode] = useState('');
-  const [email, setEmail] = useState(user.email);
   const [docType, setDocType] = useState(user.documentType || 'DNI');
-  const [docNumber, setDocNumber] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState(''); // ✅ NUEVO: Teléfono requerido para antifraude
+  const [docNumber, setDocNumber] = useState(user.documentNumber || '');
 
   // Cargar MercadoPago.js
   useEffect(() => {
@@ -98,19 +95,6 @@ export function CardPaymentModal({
           setMp(mercadopago);
           setMpLoaded(true);
           console.log('[MP] SDK loaded successfully');
-
-          // ✅ Device ID (Device Session ID) para antifraude
-          // El SDK genera automáticamente una variable global MP_DEVICE_SESSION_ID
-          // Esperamos un momento para que se genere
-          setTimeout(() => {
-            const generatedDeviceId = (window as any).MP_DEVICE_SESSION_ID;
-            if (generatedDeviceId) {
-              setDeviceId(generatedDeviceId);
-              console.log('[MP] Device ID captured:', generatedDeviceId);
-            } else {
-              console.warn('[MP] Device ID not found - may affect approval rate');
-            }
-          }, 500);
         } else {
           console.error('[MP] Public key not configured');
           toast.error('Error de configuración. Contacta a soporte.');
@@ -239,12 +223,6 @@ export function CardPaymentModal({
       return;
     }
 
-    // ✅ NUEVO: Validar teléfono (requerido para antifraude)
-    if (!phoneNumber || phoneNumber.length < 9) {
-      toast.error('Número de teléfono inválido (mínimo 9 dígitos)');
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -255,11 +233,10 @@ export function CardPaymentModal({
         throw new Error('No se pudo generar el token de pago');
       }
 
-      // 2. Enviar al backend para crear Order
+      // 2. Enviar al backend para crear Payment
       console.log('[Payment] Sending token to backend...');
       console.log('[Payment] Token data received:', tokenData);
       console.log('[Payment] Payment method ID:', tokenData.payment_method_id);
-      console.log('[Payment] Device ID:', deviceId);
 
       // ✅ Usar endpoint diferente según si es cuota o pago completo
       const endpoint = installmentId
@@ -275,23 +252,19 @@ export function CardPaymentModal({
                 // Payload para cuota individual
                 installmentId,
                 token: tokenData.id,
-                payerEmail: email,
-                payerPhone: phoneNumber, // ✅ NUEVO: Teléfono para antifraude
+                payerEmail: user.email, // ✅ Usar email del usuario autenticado
                 identificationType: docType,
                 identificationNumber: docNumber,
                 paymentMethodId: tokenData.payment_method_id,
-                deviceId, // ✅ CRÍTICO: Device ID para antifraude
               }
             : {
                 // Payload para pago completo
                 transactionId,
                 token: tokenData.id,
-                payerEmail: email,
-                payerPhone: phoneNumber, // ✅ NUEVO: Teléfono para antifraude
+                payerEmail: user.email, // ✅ Usar email del usuario autenticado
                 identificationType: docType,
                 identificationNumber: docNumber,
                 paymentMethodId: tokenData.payment_method_id,
-                deviceId, // ✅ CRÍTICO: Device ID para antifraude
               }
         ),
       });
@@ -491,42 +464,6 @@ export function CardPaymentModal({
                   className="h-12 bg-slate-900/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all"
                 />
               </div>
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300 text-sm font-medium">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={submitting}
-                className="h-12 bg-slate-900/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
-              />
-            </div>
-
-            {/* Teléfono - ✅ NUEVO: Requerido para antifraude de MercadoPago */}
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber" className="text-slate-300 text-sm font-medium">
-                Teléfono <span className="text-orange-400">*</span>
-              </Label>
-              <Input
-                id="phoneNumber"
-                type="tel"
-                placeholder="987654321"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                required
-                maxLength={15}
-                disabled={submitting}
-                className="h-12 bg-slate-900/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20 transition-all"
-              />
-              <p className="text-xs text-slate-500">Requerido para validación de seguridad</p>
             </div>
 
             {/* Documento */}
