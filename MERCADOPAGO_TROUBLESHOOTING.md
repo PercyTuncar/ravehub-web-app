@@ -19,18 +19,25 @@ El webhook ahora maneja correctamente este escenario:
 ## Problema 2: Error 403 PA_UNAUTHORIZED_RESULT_FROM_POLICIES ✅ RESUELTO
 
 ### Causa Principal
-Este error ocurre cuando el **sistema antifraude de Mercado Pago bloquea el pago**. La causa más común es la **falta del Device ID (Device Session ID)**, que es **OBLIGATORIO** para que MercadoPago apruebe pagos.
+Este error ocurre cuando el **sistema antifraude de Mercado Pago bloquea el pago**. Según la [documentación oficial de Orders API](https://www.mercadopago.com.mx/developers/en/reference/online-payments/checkout-api/create-order/post), faltan campos **críticos** para que el antifraude apruebe el pago.
 
-Según la documentación oficial:
-- [MercadoPago - Recommendations to improve payments approval](https://www.mercadopago.com.mx/developers/en/docs/checkout-api-payments/how-tos/improve-payment-approval)
-- [Integrate the Device ID](https://www.mercadopago.com.mx/developers/en/docs/wallet-connect-legacy/payment-flow/capture-payment/device-id)
+**Campos requeridos/recomendados para antifraude:**
+1. **Device ID** (Device Session ID) - CRÍTICO ⚠️
+2. **Teléfono del payer** (`payer.phone`) - MUY IMPORTANTE ⚠️
+3. **Items** (`additional_info.items`) - IMPORTANTE
+4. **Dirección del payer** (`payer.address`) - Opcional pero ayuda
+
+Según la [documentación de mejora de aprobación](https://www.mercadopago.com.mx/developers/en/docs/checkout-api-orders/payment-management/improve-payment-approval/industry-data):
+- [Applications and online platforms - Additional fields](https://www.mercadopago.com.mx/developers/en/docs/checkout-bricks/additional-content/industry-data/applications-online-platforms)
 
 ### Otras Causas Comunes
 1. **Falta del Device ID** ⚠️ (la más importante)
-2. IP sospechosa o uso de VPN
-3. Patrones de fraude detectados
-4. Cuenta nueva sin historial
-5. Datos del payer incompletos o inconsistentes
+2. **Falta del teléfono** ⚠️ (muy importante)
+3. **Falta de información de items** (qué está comprando)
+4. IP sospechosa o uso de VPN
+5. Patrones de fraude detectados
+6. Cuenta nueva sin historial
+7. Datos del payer incompletos o inconsistentes
 
 ### Solución Implementada
 
@@ -64,21 +71,63 @@ script.onload = () => {
 
 **⚠️ IMPORTANTE:** No existe un método `mercadopago.getDeviceId()`. El Device ID se genera automáticamente como variable global.
 
-El Device ID se envía junto con el token de la tarjeta al backend.
+#### 2. Frontend - Agregar campo de teléfono
+**Archivo:** `components/checkout/CardPaymentModal.tsx`
 
-#### 2. Backend - Enviar Device ID a MercadoPago
+Se agregó un campo obligatorio de teléfono en el formulario de pago:
+
+```tsx
+<Input
+  id="phoneNumber"
+  type="tel"
+  placeholder="987654321"
+  value={phoneNumber}
+  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+  required
+  maxLength={15}
+/>
+```
+
+El teléfono se envía junto con el token y el Device ID al backend.
+
+#### 3. Backend - Enviar todos los campos a MercadoPago
 **Archivos modificados:**
 - `app/api/mercadopago/create-order-with-token/route.ts`
 - `app/api/mercadopago/create-order-installment/route.ts`
 
-Se agregó el Device ID en el objeto de la orden/pago:
+Se agregaron todos los campos recomendados en el objeto de la orden/pago:
 
 ```typescript
 const orderData = {
-  // ... otros campos
+  // ... otros campos básicos
+  payer: {
+    email: orderEmail,
+    first_name: user.firstName,
+    last_name: user.lastName,
+    identification: {
+      type: identificationType,
+      number: identificationNumber,
+    },
+    // ✅ CRÍTICO: Teléfono para sistema antifraude
+    phone: {
+      number: payerPhone,
+    },
+  },
+  // ✅ CRÍTICO: Device ID y items
   additional_info: {
     ip_address: request.headers.get('x-forwarded-for') || 'unknown',
-    device_id: deviceId, // ✅ CRÍTICO
+    device_id: deviceId,
+    // ✅ Items: Información de lo que se está comprando
+    items: [
+      {
+        id: transactionId,
+        title: event.name,
+        description: `Entrada para ${event.name}`,
+        category_id: 'tickets',
+        quantity: 1,
+        unit_price: finalAmount.toFixed(2),
+      },
+    ],
   },
 };
 ```

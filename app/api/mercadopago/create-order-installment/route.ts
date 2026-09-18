@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       installmentId,
       token,
       payerEmail,
+      payerPhone, // ✅ NUEVO: Teléfono para antifraude
       identificationType,
       identificationNumber,
       paymentMethodId,
@@ -122,6 +123,12 @@ export async function POST(request: NextRequest) {
           type: identificationType,
           number: identificationNumber,
         },
+        // ✅ CRÍTICO: Teléfono para sistema antifraude
+        ...(payerPhone && {
+          phone: {
+            number: payerPhone,
+          },
+        }),
       },
       metadata: {
         installment_id: installmentId,

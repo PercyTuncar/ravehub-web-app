@@ -53,13 +53,14 @@ export async function POST(request: NextRequest) {
       transactionId,
       token,
       payerEmail,
+      payerPhone, // ✅ NUEVO: Teléfono para antifraude
       identificationType,
       identificationNumber,
       paymentMethodId,
       deviceId // ✅ NUEVO: Device ID para antifraude
     } = body;
 
-    console.log('[MP Order] Received request:', { transactionId, paymentMethodId, deviceId });
+    console.log('[MP Order] Received request:', { transactionId, paymentMethodId, deviceId, hasPhone: !!payerPhone });
 
     // Validar que paymentMethodId exista
     if (!paymentMethodId) {
@@ -74,6 +75,11 @@ export async function POST(request: NextRequest) {
     if (!deviceId) {
       console.log('[MP Order] Warning: Missing Device ID - this may cause payment rejection');
       // No bloquear, pero advertir
+    }
+
+    // ✅ Validar teléfono (IMPORTANTE para antifraude)
+    if (!payerPhone) {
+      console.log('[MP Order] Warning: Missing phone number - this may cause payment rejection');
     }
 
     // 1. Autenticación
@@ -227,6 +233,12 @@ export async function POST(request: NextRequest) {
           type: identificationType,
           number: identificationNumber,
         },
+        // ✅ CRÍTICO: Teléfono para sistema antifraude
+        ...(payerPhone && {
+          phone: {
+            number: payerPhone,
+          },
+        }),
       },
       external_reference: transactionId,
       // ✅ CRÍTICO: Device ID para el sistema antifraude de Mercado Pago
@@ -234,6 +246,17 @@ export async function POST(request: NextRequest) {
         additional_info: {
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
           device_id: deviceId,
+          // ✅ Items: Información de lo que se está comprando (mejora aprobación)
+          items: [
+            {
+              id: transactionId,
+              title: event.name,
+              description: `Entrada para ${event.name}`,
+              category_id: 'tickets',
+              quantity: 1,
+              unit_price: finalAmount.toFixed(2),
+            },
+          ],
         },
       }),
     };
