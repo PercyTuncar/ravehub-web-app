@@ -281,8 +281,8 @@ export function CardPaymentModal({
         // El usuario será redirigido a purchase-success cuando webhook confirme
         toast.info('Completa la verificación y espera la confirmación');
 
-      } else if (data.status === 'approved') {
-        // Pago aprobado inmediatamente
+      } else if (data.status === 'approved' || data.status === 'processed') {
+        // Pago aprobado inmediatamente (Orders API usa "processed")
         toast.success('¡Pago aprobado!');
         onSuccess(data.paymentId);
         onClose();

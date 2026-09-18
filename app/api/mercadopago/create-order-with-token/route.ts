@@ -121,31 +121,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // 4. Determinar moneda y monto
+    // 4. Determinar moneda y monto (CON EL +5% INCLUIDO)
     let finalCurrency = 'PEN';
-    let finalAmount = transaction.totalAmount;
+    let baseAmount = transaction.totalAmount; // Monto base sin recargo
+    let finalAmount = baseAmount * 1.05; // +5% recargo para pago con tarjeta
     let conversionRate = 1;
     let originalCurrency = event.currency;
     let originalAmount = transaction.totalAmount;
+
+    console.log(`[MP Order] Base amount: ${baseAmount} ${event.currency}`);
+    console.log(`[MP Order] Amount with 5% surcharge: ${finalAmount} ${event.currency}`);
 
     // Si el evento NO está en PEN, convertir
     if (event.currency !== 'PEN') {
       console.log(`[MP Order] Converting ${event.currency} to PEN`);
 
-      const conversion = await convertToSoles(transaction.totalAmount, event.currency);
+      const conversion = await convertToSoles(finalAmount, event.currency);
       finalAmount = conversion.amount;
       conversionRate = conversion.rate;
 
-      console.log(`[MP Order] Conversion: ${event.currency} ${originalAmount} → PEN ${finalAmount} (rate: ${conversionRate})`);
+      console.log(`[MP Order] Conversion: ${event.currency} ${finalAmount / conversionRate} → PEN ${finalAmount} (rate: ${conversionRate})`);
 
       // Guardar conversión en la transaction
       await ticketTransactionsCollection.update(transactionId, {
         originalCurrency: event.currency,
-        originalAmount: transaction.totalAmount,
+        originalAmount: baseAmount,
         paidCurrency: 'PEN',
         paidAmount: finalAmount,
         exchangeRate: conversionRate,
         exchangeRateTimestamp: new Date().toISOString(),
+        surchargeAmount: baseAmount * 0.05, // Guardar el monto del recargo
+        surchargePercentage: 5,
+      });
+    } else {
+      // Ya está en PEN, solo guardar el recargo
+      await ticketTransactionsCollection.update(transactionId, {
+        surchargeAmount: baseAmount * 0.05,
+        surchargePercentage: 5,
       });
     }
 
