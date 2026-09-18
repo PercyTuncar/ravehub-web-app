@@ -14,6 +14,7 @@ interface InstallmentCardProps {
     currency: string;
     onUploadProof?: () => void;
     onViewProof?: (url: string) => void;
+    onPayWithCard?: () => void; // ✅ NUEVO
     isLast?: boolean;
     isAdmin?: boolean;
     onRevert?: () => void;
@@ -25,6 +26,7 @@ export function InstallmentCard({
     currency,
     onUploadProof,
     onViewProof,
+    onPayWithCard, // ✅ NUEVO
     isLast = false,
     isAdmin = false,
     onRevert
@@ -353,15 +355,32 @@ export function InstallmentCard({
                 )}
 
                 {status === 'active' && (
-                    <Button
-                        type="button"
-                        size="sm"
-                        className="w-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 border border-blue-400/20"
-                        onClick={onUploadProof}
-                    >
-                        <UploadIcon className="w-4 h-4 mr-2" />
-                        Subir Comprobante
-                    </Button>
+                    <div className="space-y-2">
+                        {/* Botón Pagar con Tarjeta */}
+                        {onPayWithCard && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                className="w-full bg-[#FBA905] hover:bg-[#FBA905]/90 text-black font-bold shadow-[0_0_20px_rgba(251,169,5,0.3)]"
+                                onClick={onPayWithCard}
+                            >
+                                <CreditCard className="w-4 h-4 mr-2" />
+                                Pagar con Tarjeta (+5%)
+                            </Button>
+                        )}
+
+                        {/* Botón Subir Comprobante */}
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="w-full border-white/10 text-white/80 hover:bg-white/5 hover:text-white"
+                            onClick={onUploadProof}
+                        >
+                            <UploadIcon className="w-4 h-4 mr-2" />
+                            Subir Comprobante
+                        </Button>
+                    </div>
                 )}
 
                 {status === 'future' && (

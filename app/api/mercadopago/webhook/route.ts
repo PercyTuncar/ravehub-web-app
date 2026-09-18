@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
-import { ordersCollection, usersCollection, eventsCollection } from '@/lib/firebase/admin-collections';
+import { ordersCollection, usersCollection, eventsCollection, ticketTransactionsCollection } from '@/lib/firebase/admin-collections';
 import { notifyOrderStatusChange, createNotification } from '@/lib/utils/notifications';
 import { sendConfirmedPurchaseForEntity } from '@/lib/analytics/server-events';
+import { getAdminDb } from '@/lib/firebase/admin';
 
 // Configurar Mercado Pago
 const client = new MercadoPagoConfig({
@@ -36,6 +37,70 @@ export async function POST(request: NextRequest) {
       console.log('💳 [WEBHOOK] Estado del pago:', paymentData.status);
       console.log('💰 [WEBHOOK] Monto:', paymentData.transaction_amount, paymentData.currency_id);
       console.log('🆔 [WEBHOOK] Order ID:', paymentData.external_reference);
+      console.log('📋 [WEBHOOK] Metadata:', paymentData.metadata);
+
+      // ✅ Detectar si es pago de cuota individual
+      const isInstallmentPayment = paymentData.metadata?.payment_type === 'installment';
+      const installmentId = paymentData.metadata?.installment_id;
+
+      if (isInstallmentPayment && installmentId) {
+        console.log('📦 [WEBHOOK] Pago de CUOTA detectado:', installmentId);
+
+        // Manejar pago de cuota (ya se actualizó en create-order-installment)
+        // Solo notificar a admins si fue aprobado
+        if (paymentData.status === 'approved') {
+          try {
+            const db = await getAdminDb();
+            if (db) {
+              const installmentDoc = await db.collection('installments').doc(installmentId).get();
+              if (installmentDoc.exists) {
+                const installment = installmentDoc.data();
+                const transactionId = installment?.transactionId;
+
+                if (transactionId) {
+                  const transaction = await ticketTransactionsCollection.get(transactionId);
+                  const user = transaction ? await usersCollection.get(transaction.userId) : null;
+                  const event = transaction?.eventId ? await eventsCollection.get(transaction.eventId) : null;
+
+                  const userName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Usuario';
+                  const userEmail = user?.email || 'email no disponible';
+                  const eventName = event?.name || 'Evento';
+                  const amount = installment?.amount || 0;
+                  const currency = event?.currency || 'PEN';
+                  const currencySymbol = currency === 'USD' ? '$' : currency === 'MXN' ? 'MX$' : 'S/';
+                  const installmentNumber = installment?.installmentNumber || 0;
+
+                  // Notificar a admins
+                  const admins = await usersCollection.query([
+                    { field: 'role', operator: '==', value: 'admin' }
+                  ]);
+
+                  const notificationPromises = admins.map(admin =>
+                    createNotification({
+                      userId: admin.id,
+                      title: '💳 Cuota Pagada con Tarjeta',
+                      body: `${userName} pagó cuota #${installmentNumber} (${currencySymbol}${amount.toFixed(2)}) para "${eventName}" - ${userEmail}`,
+                      type: 'payment',
+                      orderId: transactionId,
+                    })
+                  );
+
+                  await Promise.all(notificationPromises);
+                  console.log(`🔔 [WEBHOOK] Admins notificados sobre pago de cuota`);
+                }
+              }
+            }
+          } catch (notifError) {
+            console.error('⚠️ [WEBHOOK] Error notificando admins:', notifError);
+          }
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: 'Installment payment webhook processed',
+          installmentId,
+        });
+      }
 
       const orderId = paymentData.external_reference;
       

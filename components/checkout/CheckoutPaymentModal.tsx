@@ -444,7 +444,69 @@ export function CheckoutPaymentModal({
 
             {/* Options */}
             <div className="grid gap-3 mt-4">
-              {/* Option A — WhatsApp (destacado arriba) */}
+
+              {/* Option 1 — Pagar con tarjeta (PRIMERO) +5% */}
+              <button
+                type="button"
+                onClick={handlePayOnline}
+                disabled={!user || submitting}
+                className={`w-full text-left p-6 rounded-2xl border transition-all ${
+                  !user || submitting
+                    ? 'border-gray-500/20 bg-gray-500/[0.05] cursor-not-allowed opacity-60'
+                    : 'border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/50'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
+                    !user || submitting
+                      ? 'bg-gray-500/10 border border-gray-500/20'
+                      : 'bg-white/95 border border-blue-500/30'
+                  }`}>
+                    {submitting ? (
+                      <div className="w-7 h-7 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                    ) : (
+                      <img
+                        src="https://res.cloudinary.com/amadodedios/image/upload/v1789722018/Visa-Simbolo_dmghke.png"
+                        alt="Visa"
+                        className="w-10 h-10 object-contain"
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className={`font-bold text-lg ${!user || submitting ? 'text-gray-400' : 'text-white'}`}>
+                        Pagar con tarjeta
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${
+                          submitting
+                            ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 animate-pulse'
+                            : !user
+                            ? 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                            : 'bg-green-500/20 text-green-400 border-green-500/30'
+                        }`}
+                      >
+                        {submitting ? 'Cargando...' : !user ? 'Requiere login' : 'Comisión +5%'}
+                      </Badge>
+                    </div>
+                    <p className={`text-sm leading-relaxed ${!user || submitting ? 'text-gray-500' : 'text-gray-300'}`}>
+                      {submitting
+                        ? 'Preparando formulario de pago seguro...'
+                        : 'Pago inmediato con tarjeta de crédito/débito. Procesado por MercadoPago.'
+                      }
+                    </p>
+                    {!user && !submitting && (
+                      <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
+                        <LogIn className="w-3 h-3" />
+                        Inicia sesión para usar este método de pago
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              {/* Option 2 — WhatsApp (SEGUNDO) */}
               <button
                 type="button"
                 onClick={handleWhatsAppOrder}
@@ -455,7 +517,12 @@ export function CheckoutPaymentModal({
                     <FaWhatsapp className="w-7 h-7 text-[#25D366]" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-white text-lg mb-2">Pedir por WhatsApp</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="font-bold text-white text-lg">Pedir por WhatsApp</p>
+                      <Badge className="bg-green-500/10 text-green-400 border-green-500/20 text-xs px-2 py-0">
+                        Sin comisión
+                      </Badge>
+                    </div>
                     <p className="text-sm text-white/70 leading-relaxed">
                       Coordina el pago directamente con nuestro equipo. Rápido, fácil y sin complicaciones.
                     </p>
@@ -464,7 +531,7 @@ export function CheckoutPaymentModal({
                 </div>
               </button>
 
-              {/* Option B — Pagar con Yape/Plin */}
+            {/* Option 3 — Pagar con Yape/Plin (TERCERO) */}
               <button
                 type="button"
                 onClick={handlePayAhora}
@@ -482,7 +549,7 @@ export function CheckoutPaymentModal({
                     <div className="flex items-center gap-2 mb-2">
                       <p className="font-bold text-white text-lg">Pagar con Yape/Plin</p>
                       <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-300 border-purple-500/30">
-                        Instantáneo
+                        Sin comisión
                       </Badge>
                     </div>
                     <p className="text-sm text-white/70 leading-relaxed">
@@ -498,54 +565,7 @@ export function CheckoutPaymentModal({
                 </div>
               </button>
 
-              {/* Option C — Pagar con tarjeta +5% */}
-              <button
-                type="button"
-                onClick={handlePayOnline}
-                disabled={!user}
-                className={`w-full text-left p-6 rounded-2xl border transition-all ${
-                  !user
-                    ? 'border-gray-500/20 bg-gray-500/[0.05] cursor-not-allowed opacity-60'
-                    : 'border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/50'
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
-                    !user
-                      ? 'bg-gray-500/10 border border-gray-500/20'
-                      : 'bg-blue-500/10 border border-blue-500/30'
-                  }`}>
-                    <CreditCard className={`w-7 h-7 ${!user ? 'text-gray-400' : 'text-blue-400'}`} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className={`font-bold text-lg ${!user ? 'text-gray-400' : 'text-white'}`}>
-                        Pagar con tarjeta +5%
-                      </p>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs ${
-                          !user
-                            ? 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-                            : 'bg-green-500/20 text-green-400 border-green-500/30'
-                        }`}
-                      >
-                        {!user ? 'Requiere login' : 'Disponible'}
-                      </Badge>
-                    </div>
-                    <p className={`text-sm leading-relaxed ${!user ? 'text-gray-500' : 'text-gray-300'}`}>
-                      Pago inmediato con tarjeta de crédito/débito. Procesado por MercadoPago.
-                    </p>
-                    {!user && (
-                      <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
-                        <LogIn className="w-3 h-3" />
-                        Inicia sesión para usar este método de pago
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </button>
-            </div>
+              </div>
           </>
         )}
 
@@ -814,7 +834,11 @@ export function CheckoutPaymentModal({
         isOpen={showCardModal}
         onClose={() => setShowCardModal(false)}
         transactionId={onlineTransactionId}
-        totalAmount={totalAmount * 1.05}
+        totalAmount={
+          isInstallmentMode
+            ? totalReservation * 1.05  // En cuotas: solo adelanto + 5%
+            : totalAmount * 1.05        // Pago completo: total + 5%
+        }
         currency={event.currency}
         currencySymbol={symbol}
         event={event}

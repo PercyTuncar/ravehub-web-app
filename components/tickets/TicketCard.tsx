@@ -174,30 +174,39 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
                                 #{ticket.id.slice(0, 8).toUpperCase()}
                             </Badge>
 
-                            {isFullyPaid ? (
-                                <Badge
-                                    className="bg-green-500 text-white border-0 backdrop-blur-sm font-bold"
-                                >
-                                    <CheckCircle className="w-3 h-3 mr-1.5" />
-                                    <span>CONFIRMADO</span>
-                                </Badge>
-                            ) : ticket.paymentStatus === 'rejected' ? (
-                                <Badge className="bg-red-500/10 text-red-500 border-red-500/20 backdrop-blur-sm">
-                                    <span>RECHAZADO</span>
-                                </Badge>
-                            ) : isExpired ? (
-                                <Badge className="bg-red-500/10 text-red-500 border-red-500/20 backdrop-blur-sm">
-                                    <span>ANULADO (EXPIRADO)</span>
-                                </Badge>
-                            ) : isOfflinePending ? (
-                                <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 backdrop-blur-sm animate-pulse">
-                                    <span>ESPERANDO PAGO</span>
-                                </Badge>
-                            ) : (
-                                <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 backdrop-blur-sm">
-                                    <span>Pago en Progreso</span>
-                                </Badge>
-                            )}
+                            <div className="flex gap-2">
+                                {isFullyPaid ? (
+                                    <Badge
+                                        className="bg-green-500 text-white border-0 backdrop-blur-sm font-bold"
+                                    >
+                                        <CheckCircle className="w-3 h-3 mr-1.5" />
+                                        <span>CONFIRMADO</span>
+                                    </Badge>
+                                ) : ticket.paymentStatus === 'rejected' ? (
+                                    <Badge className="bg-red-500/10 text-red-500 border-red-500/20 backdrop-blur-sm">
+                                        <span>RECHAZADO</span>
+                                    </Badge>
+                                ) : isExpired ? (
+                                    <Badge className="bg-red-500/10 text-red-500 border-red-500/20 backdrop-blur-sm">
+                                        <span>ANULADO (EXPIRADO)</span>
+                                    </Badge>
+                                ) : isOfflinePending ? (
+                                    <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 backdrop-blur-sm animate-pulse">
+                                        <span>ESPERANDO PAGO</span>
+                                    </Badge>
+                                ) : (
+                                    <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 backdrop-blur-sm">
+                                        <span>Pago en Progreso</span>
+                                    </Badge>
+                                )}
+
+                                {/* ✅ Badge adicional para tickets en cuotas */}
+                                {ticket.paymentType === 'installment' && (
+                                    <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 backdrop-blur-sm">
+                                        <span>EN CUOTAS</span>
+                                    </Badge>
+                                )}
+                            </div>
                         </div>
 
                         <div>

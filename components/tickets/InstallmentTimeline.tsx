@@ -14,6 +14,7 @@ interface InstallmentTimelineProps {
     ticketId: string;
     eventCurrency: string;
     onProofUploaded: () => void;
+    onPayWithCard?: (installment: any) => void; // ✅ NUEVO
     isAdmin?: boolean;
 }
 
@@ -22,6 +23,7 @@ export function InstallmentTimeline({
     ticketId,
     eventCurrency,
     onProofUploaded,
+    onPayWithCard, // ✅ NUEVO
     isAdmin = false
 }: InstallmentTimelineProps) {
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -234,6 +236,7 @@ export function InstallmentTimeline({
                             currency={eventCurrency}
                             onUploadProof={() => handleUploadClick(installment)}
                             onViewProof={handleViewProof}
+                            onPayWithCard={onPayWithCard ? () => onPayWithCard(installment) : undefined}
                             isLast={index === installments.length - 1}
                             isAdmin={isAdmin}
                             onRevert={() => handleRevertPayment(installment.id)}

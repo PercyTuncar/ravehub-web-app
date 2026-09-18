@@ -51,6 +51,7 @@ export default function TicketDetailPage() {
     const [showQRStates, setShowQRStates] = useState<{[key: number]: boolean}>({}); // Estado para cada ticket
     const [paymentAggregate, setPaymentAggregate] = useState<any>(null); // Server-calculated payment state
     const [showCardModal, setShowCardModal] = useState(false); // Modal de pago con tarjeta
+    const [selectedInstallment, setSelectedInstallment] = useState<any>(null); // ✅ NUEVO: Cuota seleccionada para pagar
 
     // Display states (converted currency)
     const [displayTotal, setDisplayTotal] = useState<string>('');
@@ -795,6 +796,10 @@ export default function TicketDetailPage() {
                                                 const result = await getTicketInstallments(ticket.id);
                                                 if (result.success && result.installments) setInstallments(result.installments);
                                             }}
+                                            onPayWithCard={(installment) => {
+                                                setSelectedInstallment(installment);
+                                                setShowCardModal(true);
+                                            }}
                                         />
                                     )}
                                 </div>
@@ -1159,9 +1164,17 @@ export default function TicketDetailPage() {
             {showCardModal && ticket && user && (
                 <CardPaymentModal
                     isOpen={showCardModal}
-                    onClose={() => setShowCardModal(false)}
+                    onClose={() => {
+                        setShowCardModal(false);
+                        setSelectedInstallment(null);
+                    }}
                     transactionId={ticket.id}
-                    totalAmount={ticket.totalAmount * 1.05} // +5% recargo
+                    installmentId={selectedInstallment?.id} // ✅ NUEVO: ID de cuota si aplica
+                    totalAmount={
+                        selectedInstallment
+                            ? selectedInstallment.amount * 1.05 // Cuota + 5%
+                            : ticket.totalAmount * 1.05 // Total + 5%
+                    }
                     currency={ticket.eventCurrency || 'PEN'}
                     currencySymbol={ticket.eventCurrency === 'USD' ? '$' : ticket.eventCurrency === 'MXN' ? 'MX$' : 'S/'}
                     event={{
@@ -1178,6 +1191,7 @@ export default function TicketDetailPage() {
                     onSuccess={(paymentId) => {
                         console.log('[Ticket] Payment successful:', paymentId);
                         setShowCardModal(false);
+                        setSelectedInstallment(null);
                         // Recargar datos del ticket
                         window.location.reload();
                     }}

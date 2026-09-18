@@ -26,6 +26,7 @@ export interface CardPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   transactionId: string;
+  installmentId?: string; // ✅ NUEVO: Para pagos de cuotas individuales
   totalAmount: number;
   currency: string;
   currencySymbol: string;
@@ -54,6 +55,7 @@ export function CardPaymentModal({
   isOpen,
   onClose,
   transactionId,
+  installmentId, // ✅ NUEVO
   totalAmount,
   currency,
   currencySymbol,
@@ -238,17 +240,35 @@ export function CardPaymentModal({
       console.log('[Payment] Token data received:', tokenData);
       console.log('[Payment] Payment method ID:', tokenData.payment_method_id);
 
-      const response = await fetch('/api/mercadopago/create-order-with-token', {
+      // ✅ Usar endpoint diferente según si es cuota o pago completo
+      const endpoint = installmentId
+        ? '/api/mercadopago/create-order-installment'
+        : '/api/mercadopago/create-order-with-token';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transactionId,
-          token: tokenData.id,
-          payerEmail: email,
-          identificationType: docType,
-          identificationNumber: docNumber,
-          paymentMethodId: tokenData.payment_method_id,
-        }),
+        body: JSON.stringify(
+          installmentId
+            ? {
+                // Payload para cuota individual
+                installmentId,
+                token: tokenData.id,
+                payerEmail: email,
+                identificationType: docType,
+                identificationNumber: docNumber,
+                paymentMethodId: tokenData.payment_method_id,
+              }
+            : {
+                // Payload para pago completo
+                transactionId,
+                token: tokenData.id,
+                payerEmail: email,
+                identificationType: docType,
+                identificationNumber: docNumber,
+                paymentMethodId: tokenData.payment_method_id,
+              }
+        ),
       });
 
       const data = await response.json();
