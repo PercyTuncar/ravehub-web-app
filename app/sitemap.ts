@@ -149,20 +149,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     });
 
-    // Add blog posts
+    // Add blog posts with dynamic priority based on freshness
     const posts = await blogCollection.query(
       [{ field: 'status', operator: '==', value: 'published' }],
       'publishDate',
       'desc'
     );
 
+    const now = new Date();
     posts.forEach((post: any) => {
+      const publishDate = toValidDate(post.publishDate || post.createdAt);
       const lastModified = toValidDate(post.updatedDate || post.updatedAt);
+
+      // Calculate age of the post
+      const daysOld = publishDate
+        ? Math.floor((now.getTime() - publishDate.getTime()) / (1000 * 60 * 60 * 24))
+        : 999;
+
+      // Dynamic priority and change frequency based on freshness
+      let priority = 0.6;
+      let changeFrequency: 'daily' | 'weekly' | 'monthly' = 'monthly';
+
+      if (daysOld <= 7) {
+        priority = 0.9; // High priority for posts less than 1 week old
+        changeFrequency = 'daily';
+      } else if (daysOld <= 30) {
+        priority = 0.75; // Medium-high priority for posts less than 1 month old
+        changeFrequency = 'weekly';
+      } else if (daysOld <= 90) {
+        priority = 0.65; // Medium priority for posts less than 3 months old
+        changeFrequency = 'weekly';
+      }
+
       sitemap.push({
         url: `${baseUrl}/blog/${post.slug}`,
         lastModified,
-        changeFrequency: 'monthly',
-        priority: 0.6,
+        changeFrequency,
+        priority,
       });
     });
 
