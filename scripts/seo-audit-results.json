@@ -1,0 +1,364 @@
+[
+  {
+    "url": "https://www.ravehublatam.com/blog/ultra-peru-2025",
+    "timestamp": "2026-09-18T14:49:28.936433",
+    "status_code": 404,
+    "issues": [
+      "❌ Status HTTP 404 - La página no está accesible"
+    ],
+    "warnings": [],
+    "passed": [],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/blog/[slug]"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.53
+  },
+  {
+    "url": "https://www.ravehublatam.com/blog?category=interviews",
+    "timestamp": "2026-09-18T14:49:32.468776",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 25725 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/blog"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.69
+  },
+  {
+    "url": "https://www.ravehublatam.com/blog?category=news",
+    "timestamp": "2026-09-18T14:49:36.166709",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 20540 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/blog"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.34
+  },
+  {
+    "url": "https://www.ravehublatam.com/blog?category=reviews",
+    "timestamp": "2026-09-18T14:49:39.509922",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 24334 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/blog"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.23
+  },
+  {
+    "url": "https://www.ravehublatam.com/blog?category=tutorials",
+    "timestamp": "2026-09-18T14:49:42.743228",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 23276 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/blog"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.43
+  },
+  {
+    "url": "https://www.ravehublatam.com/blog?tag=peru",
+    "timestamp": "2026-09-18T14:49:46.177927",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 25984 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/blog"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.29
+  },
+  {
+    "url": "https://www.ravehublatam.com/djs/above-and-beyond",
+    "timestamp": "2026-09-18T14:49:49.471283",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 8901 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/djs/[slug]"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.21
+  },
+  {
+    "url": "https://www.ravehublatam.com/djs/andrea-zapata",
+    "timestamp": "2026-09-18T14:49:52.680978",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 6439 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/djs/[slug]"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.45
+  },
+  {
+    "url": "https://www.ravehublatam.com/djs/anhedonia",
+    "timestamp": "2026-09-18T14:49:56.137477",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 7245 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/djs/[slug]"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 0.97
+  },
+  {
+    "url": "https://www.ravehublatam.com/djs/artbat",
+    "timestamp": "2026-09-18T14:49:59.107002",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 5885 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/djs/[slug]"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.21
+  },
+  {
+    "url": "https://www.ravehublatam.com/djs/carl-cox",
+    "timestamp": "2026-09-18T14:50:02.322271",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 7960 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/djs/[slug]"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 1.07
+  },
+  {
+    "url": "https://www.ravehublatam.com/djs/vintage-culture",
+    "timestamp": "2026-09-18T14:50:05.394875",
+    "status_code": 200,
+    "issues": [
+      "❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate",
+      "   → Google puede tener problemas para cachear y rastrear la página",
+      "❌ Sin tag <title>"
+    ],
+    "warnings": [
+      "⚠️ Sin tag canonical definido",
+      "⚠️ Sin meta description"
+    ],
+    "passed": [
+      "✅ Status HTTP 200 OK",
+      "✅ Sin X-Robots-Tag bloqueando",
+      "✅ Sin meta robots bloqueando (por defecto indexable)",
+      "✅ Contenido adecuado: 7774 caracteres"
+    ],
+    "headers": {
+      "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "x-frame-options": "DENY",
+      "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+      "x-matched-path": "/djs/[slug]"
+    },
+    "meta_robots": null,
+    "canonical": null,
+    "indexable": false,
+    "response_time": 0.99
+  }
+]

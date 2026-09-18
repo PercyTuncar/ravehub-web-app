@@ -1,0 +1,307 @@
+================================================================================
+🔍 AUDITORÍA SEO - RAVEHUB
+================================================================================
+Analizando por qué las páginas no están siendo indexadas por Google
+================================================================================
+
+🤖 Verificando robots.txt...
+✅ robots.txt encontrado
+
+Contenido:
+--------------------------------------------------
+User-Agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /user/
+Disallow: /tienda/carrito
+Disallow: /tienda/checkout
+Disallow: /*?ENABLE_ANALYTICS=*
+Disallow: /eventos/*?*
+
+User-Agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /user/
+Disallow: /tienda/carrito
+Disallow: /tienda/checkout
+
+Sitemap: https://www.ravehublatam.com/sitemap.xml
+
+--------------------------------------------------
+
+🗺️ Verificando sitemap.xml...
+✅ sitemap.xml encontrado
+   📊 URLs de DJs en sitemap: 96
+   📊 URLs de Blog en sitemap: 6
+   ✅ https://www.ravehublatam.com/djs/above-and-beyond está en el sitemap
+   ✅ https://www.ravehublatam.com/blog?category=news está en el sitemap
+
+🎯 Analizando 12 URLs problemáticas...
+================================================================================
+
+[1/12] 
+🔍 Analizando: https://www.ravehublatam.com/blog/ultra-peru-2025
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.53s
+
+🚨 PROBLEMAS:
+   ❌ Status HTTP 404 - La página no está accesible
+
+[2/12] 
+🔍 Analizando: https://www.ravehublatam.com/blog?category=interviews
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.69s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[3/12] 
+🔍 Analizando: https://www.ravehublatam.com/blog?category=news
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.34s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[4/12] 
+🔍 Analizando: https://www.ravehublatam.com/blog?category=reviews
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.23s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[5/12] 
+🔍 Analizando: https://www.ravehublatam.com/blog?category=tutorials
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.43s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[6/12] 
+🔍 Analizando: https://www.ravehublatam.com/blog?tag=peru
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.29s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[7/12] 
+🔍 Analizando: https://www.ravehublatam.com/djs/above-and-beyond
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.21s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[8/12] 
+🔍 Analizando: https://www.ravehublatam.com/djs/andrea-zapata
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.45s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[9/12] 
+🔍 Analizando: https://www.ravehublatam.com/djs/anhedonia
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 0.97s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[10/12] 
+🔍 Analizando: https://www.ravehublatam.com/djs/artbat
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.21s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[11/12] 
+🔍 Analizando: https://www.ravehublatam.com/djs/carl-cox
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 1.07s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+[12/12] 
+🔍 Analizando: https://www.ravehublatam.com/djs/vintage-culture
+
+📋 Resultado: ❌ NO INDEXABLE
+⏱️ Tiempo de respuesta: 0.99s
+
+🚨 PROBLEMAS:
+   ❌ CRÍTICO: Cache-Control restrictivo: private, no-cache, no-store, max-age=0, must-revalidate
+      → Google puede tener problemas para cachear y rastrear la página
+   ❌ Sin tag <title>
+
+⚠️ ADVERTENCIAS:
+   ⚠️ Sin tag canonical definido
+   ⚠️ Sin meta description
+
+✅ CHECKS PASADOS:
+   ✅ Status HTTP 200 OK
+   ✅ Sin X-Robots-Tag bloqueando
+   ✅ Sin meta robots bloqueando (por defecto indexable)
+
+================================================================================
+📊 RESUMEN DE AUDITORÍA SEO
+================================================================================
+
+📈 Total de URLs analizadas: 12
+✅ Indexables: 0
+❌ No indexables: 12
+
+🚨 PROBLEMAS CRÍTICOS ENCONTRADOS:
+--------------------------------------------------------------------------------
+   ❌ CRÍTICO: 11 páginas afectadas
+   → Google puede tener problemas para cachear y rastrear la página: 11 páginas afectadas
+   ❌ Sin tag <title>: 11 páginas afectadas
+   ❌ Status HTTP 404 - La página no está accesible: 1 páginas afectadas
+
+================================================================================
+
+💾 Resultados guardados en: seo-audit-results.json
+
+================================================================================
+🎯 DIAGNÓSTICO Y RECOMENDACIONES
+================================================================================
+
+🚨 PROBLEMA PRINCIPAL IDENTIFICADO: Cache-Control restrictivo
+
+📝 El problema está en next.config.js:
+   - Las páginas de DJs y Blog tienen Cache-Control: private, no-cache, no-store
+   - Esto impide que Google cachee y indexe correctamente las páginas
+
+✅ SOLUCIÓN:
+   1. Modificar next.config.js para permitir cache público en páginas de DJs
+   2. Agregar headers para /djs/:slug* similar a /blog/:slug*
+   3. Cambiar a: 'public, s-maxage=3600, stale-while-revalidate=86400'
