@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Ticket, Calendar, MapPin, Download, History, ChevronRight, Loader2, QrCode } from 'lucide-react';
+import { Ticket, Calendar, MapPin, Download, History, ChevronRight, Loader2, QrCode, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -176,11 +176,10 @@ export function TicketCard({ ticket, status, isFullyPaid }: TicketCardProps) {
 
                             {isFullyPaid ? (
                                 <Badge
-                                    className="bg-green-500/20 text-green-400 border-green-500/20 backdrop-blur-sm"
-                                    style={{ borderColor: palette?.success ? `${palette.success}30` : undefined, color: palette?.success }}
+                                    className="bg-green-500 text-white border-0 backdrop-blur-sm font-bold"
                                 >
-                                    <QrCode className="w-3 h-3 mr-1.5" />
-                                    <span>Acceso Listo</span>
+                                    <CheckCircle className="w-3 h-3 mr-1.5" />
+                                    <span>CONFIRMADO</span>
                                 </Badge>
                             ) : ticket.paymentStatus === 'rejected' ? (
                                 <Badge className="bg-red-500/10 text-red-500 border-red-500/20 backdrop-blur-sm">
