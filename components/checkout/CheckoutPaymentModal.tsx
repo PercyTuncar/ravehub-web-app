@@ -498,31 +498,53 @@ export function CheckoutPaymentModal({
                 </div>
               </button>
 
-              {/* Option C — Pagar con tarjeta +5% (TEMPORALMENTE DESACTIVADO) */}
-              <div className="relative">
-                <button
-                  type="button"
-                  disabled
-                  className="w-full text-left p-6 rounded-2xl border border-gray-500/20 bg-gray-500/[0.05] cursor-not-allowed opacity-60"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-gray-500/10 border border-gray-500/20 flex items-center justify-center shrink-0">
-                      <CreditCard className="w-7 h-7 text-gray-400" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <p className="font-bold text-gray-400 text-lg">Pagar con tarjeta +5%</p>
-                        <Badge variant="secondary" className="text-xs bg-red-500/20 text-red-300 border-red-500/30">
-                          No disponible
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-500 leading-relaxed">
-                        Pago inmediato con tarjeta de crédito/débito.
-                      </p>
-                    </div>
+              {/* Option C — Pagar con tarjeta +5% */}
+              <button
+                type="button"
+                onClick={handlePayOnline}
+                disabled={!user}
+                className={`w-full text-left p-6 rounded-2xl border transition-all ${
+                  !user
+                    ? 'border-gray-500/20 bg-gray-500/[0.05] cursor-not-allowed opacity-60'
+                    : 'border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/50'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
+                    !user
+                      ? 'bg-gray-500/10 border border-gray-500/20'
+                      : 'bg-blue-500/10 border border-blue-500/30'
+                  }`}>
+                    <CreditCard className={`w-7 h-7 ${!user ? 'text-gray-400' : 'text-blue-400'}`} />
                   </div>
-                </button>
-              </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className={`font-bold text-lg ${!user ? 'text-gray-400' : 'text-white'}`}>
+                        Pagar con tarjeta +5%
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${
+                          !user
+                            ? 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                            : 'bg-green-500/20 text-green-400 border-green-500/30'
+                        }`}
+                      >
+                        {!user ? 'Requiere login' : 'Disponible'}
+                      </Badge>
+                    </div>
+                    <p className={`text-sm leading-relaxed ${!user ? 'text-gray-500' : 'text-gray-300'}`}>
+                      Pago inmediato con tarjeta de crédito/débito. Procesado por MercadoPago.
+                    </p>
+                    {!user && (
+                      <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
+                        <LogIn className="w-3 h-3" />
+                        Inicia sesión para usar este método de pago
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </button>
             </div>
           </>
         )}
