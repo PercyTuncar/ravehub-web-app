@@ -72,14 +72,12 @@ export function CardPaymentModal({
 
   // Estados del formulario
   const [cardNumber, setCardNumber] = useState('');
-  const [cardholderName, setCardholderName] = useState(
-    `${user.firstName} ${user.lastName}`.toUpperCase()
-  );
+  const [cardholderName, setCardholderName] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
   const [securityCode, setSecurityCode] = useState('');
   const [email, setEmail] = useState(user.email);
   const [docType, setDocType] = useState(user.documentType || 'DNI');
-  const [docNumber, setDocNumber] = useState(user.documentNumber || '');
+  const [docNumber, setDocNumber] = useState('');
 
   // Cargar MercadoPago.js
   useEffect(() => {
@@ -360,56 +358,6 @@ export function CardPaymentModal({
         </div>
 
         <div className="px-6 py-6 space-y-6">
-          {/* Tarjeta 3D Animada */}
-          <div className="relative w-full h-52 perspective-1000">
-            <div className="relative w-full h-full transition-transform duration-700 transform-style-3d hover:rotate-y-180">
-              {/* Frente de la tarjeta */}
-              <div className="absolute w-full h-full backface-hidden">
-                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 p-6 shadow-2xl border border-slate-600/30 relative overflow-hidden">
-                  {/* Efectos de fondo */}
-                  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40"></div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-full blur-3xl"></div>
-
-                  {/* Chip */}
-                  <div className="relative">
-                    <div className="w-12 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 mb-4"></div>
-
-                    {/* Número de tarjeta */}
-                    <div className="mt-6 mb-4">
-                      <p className="text-white text-xl font-mono tracking-wider">
-                        {cardNumber || '•••• •••• •••• ••••'}
-                      </p>
-                    </div>
-
-                    {/* Nombre y vencimiento */}
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">Titular</p>
-                        <p className="text-white text-sm font-medium uppercase tracking-wide">
-                          {cardholderName || 'NOMBRE APELLIDO'}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">Vence</p>
-                        <p className="text-white text-sm font-mono">
-                          {expirationDate || 'MM/YY'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Logo Visa/Mastercard */}
-                  <div className="absolute bottom-4 right-6">
-                    <img
-                      src="https://res.cloudinary.com/amadodedios/image/upload/v1789722018/Visa-Simbolo_dmghke.png"
-                      alt="Visa"
-                      className="w-16 h-16 object-contain opacity-80"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Total a pagar con glassmorphism */}
