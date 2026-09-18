@@ -69,6 +69,7 @@ export function CardPaymentModal({
   const [mp, setMp] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [mpLoaded, setMpLoaded] = useState(false);
+  const [deviceId, setDeviceId] = useState<string>(''); // ✅ NUEVO: Device ID para antifraude
 
   // Estados del formulario
   const [cardNumber, setCardNumber] = useState('');
@@ -92,6 +93,13 @@ export function CardPaymentModal({
           const mercadopago = new window.MercadoPago(publicKey, {
             locale: 'es-PE',
           });
+
+          // ✅ Generar Device ID (Device Session ID) para antifraude
+          // Esto es CRÍTICO para evitar PA_UNAUTHORIZED_RESULT_FROM_POLICIES
+          const generatedDeviceId = mercadopago.getDeviceId();
+          setDeviceId(generatedDeviceId);
+          console.log('[MP] Device ID generated:', generatedDeviceId);
+
           setMp(mercadopago);
           setMpLoaded(true);
           console.log('[MP] SDK loaded successfully');
@@ -237,6 +245,7 @@ export function CardPaymentModal({
       console.log('[Payment] Sending token to backend...');
       console.log('[Payment] Token data received:', tokenData);
       console.log('[Payment] Payment method ID:', tokenData.payment_method_id);
+      console.log('[Payment] Device ID:', deviceId);
 
       // ✅ Usar endpoint diferente según si es cuota o pago completo
       const endpoint = installmentId
@@ -256,6 +265,7 @@ export function CardPaymentModal({
                 identificationType: docType,
                 identificationNumber: docNumber,
                 paymentMethodId: tokenData.payment_method_id,
+                deviceId, // ✅ CRÍTICO: Device ID para antifraude
               }
             : {
                 // Payload para pago completo
@@ -265,6 +275,7 @@ export function CardPaymentModal({
                 identificationType: docType,
                 identificationNumber: docNumber,
                 paymentMethodId: tokenData.payment_method_id,
+                deviceId, // ✅ CRÍTICO: Device ID para antifraude
               }
         ),
       });

@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
       identificationType,
       identificationNumber,
       paymentMethodId,
+      deviceId, // ✅ NUEVO: Device ID para antifraude
     } = body;
 
     console.log('[MP Installment] Payment for installment:', installmentId);
@@ -130,6 +131,20 @@ export async function POST(request: NextRequest) {
         installment_number: installment.installmentNumber,
         payment_type: 'installment',
       },
+      // ✅ CRÍTICO: Device ID para el sistema antifraude de Mercado Pago
+      ...(deviceId && {
+        additional_info: {
+          ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+          items: [{
+            id: installmentId,
+            title: `Cuota ${installment.installmentNumber}`,
+            description: event.name,
+            quantity: 1,
+            unit_price: finalAmount,
+          }],
+        },
+        device_id: deviceId,
+      }),
     };
 
     console.log('[MP Installment] Creating payment...');

@@ -32,7 +32,22 @@ export async function POST(request: NextRequest) {
       console.log(`🔍 [WEBHOOK] Buscando información del pago: ${paymentId}`);
 
       // Obtener información del pago con la nueva API v3
-      const paymentData = await paymentClient.get({ id: paymentId });
+      let paymentData;
+      try {
+        paymentData = await paymentClient.get({ id: paymentId });
+      } catch (paymentError: any) {
+        // Si el pago no existe (404), puede ser una notificación de prueba
+        if (paymentError.status === 404) {
+          console.warn(`⚠️ [WEBHOOK] Payment ID ${paymentId} not found (404). This is normal for test notifications with fake IDs like "123456".`);
+          return NextResponse.json({
+            success: true,
+            message: 'Test notification acknowledged (payment not found)',
+            paymentId
+          }, { status: 200 });
+        }
+        // Re-lanzar otros errores
+        throw paymentError;
+      }
 
       console.log('💳 [WEBHOOK] Estado del pago:', paymentData.status);
       console.log('💰 [WEBHOOK] Monto:', paymentData.transaction_amount, paymentData.currency_id);

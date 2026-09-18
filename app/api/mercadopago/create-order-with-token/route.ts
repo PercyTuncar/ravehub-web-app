@@ -55,10 +55,11 @@ export async function POST(request: NextRequest) {
       payerEmail,
       identificationType,
       identificationNumber,
-      paymentMethodId
+      paymentMethodId,
+      deviceId // ✅ NUEVO: Device ID para antifraude
     } = body;
 
-    console.log('[MP Order] Received request:', { transactionId, paymentMethodId });
+    console.log('[MP Order] Received request:', { transactionId, paymentMethodId, deviceId });
 
     // Validar que paymentMethodId exista
     if (!paymentMethodId) {
@@ -67,6 +68,12 @@ export async function POST(request: NextRequest) {
         error: 'Payment method ID is required',
         message: 'No se pudo identificar el tipo de tarjeta'
       }, { status: 400 });
+    }
+
+    // ✅ Validar Device ID (CRÍTICO para antifraude)
+    if (!deviceId) {
+      console.log('[MP Order] Warning: Missing Device ID - this may cause payment rejection');
+      // No bloquear, pero advertir
     }
 
     // 1. Autenticación
@@ -222,6 +229,13 @@ export async function POST(request: NextRequest) {
         },
       },
       external_reference: transactionId,
+      // ✅ CRÍTICO: Device ID para el sistema antifraude de Mercado Pago
+      ...(deviceId && {
+        additional_info: {
+          ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+          device_id: deviceId,
+        },
+      }),
     };
 
     console.log('[MP Order] Creating order with amount:', finalAmount, 'PEN');
