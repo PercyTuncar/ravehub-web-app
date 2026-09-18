@@ -264,7 +264,7 @@ export function CardPaymentModal({
       // ✅ Usar endpoint diferente según si es cuota o pago completo
       const endpoint = installmentId
         ? '/api/mercadopago/create-order-installment'
-        : '/api/mercadopago/create-order-with-token';
+        : '/api/mercadopago/create-payment-with-token'; // ✅ CAMBIADO: Ahora usa Payments API
 
       const response = await fetch(endpoint, {
         method: 'POST',
