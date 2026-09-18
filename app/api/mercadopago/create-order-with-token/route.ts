@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
     const webhookUrl = process.env.MP_WEBHOOK_URL || `${siteUrl}/api/mercadopago/webhook`;
 
     // En sandbox, el email DEBE contener @testuser.com
-    const isProduction = process.env.MP_ACCESS_TOKEN?.startsWith('APP_');
+    const isProduction = process.env.MERCADOPAGO_ACCESS_TOKEN?.startsWith('APP_USR');
     const orderEmail = isProduction
       ? payerEmail
       : `test_user_${identificationNumber}@testuser.com`;
