@@ -25,8 +25,20 @@ declare global {
 export interface CardPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  transactionId: string;
-  installmentId?: string; // ✅ NUEVO: Para pagos de cuotas individuales
+  transactionId?: string; // ✅ OPCIONAL: solo para pagos de cuotas existentes
+  installmentId?: string; // ✅ Para pagos de cuotas individuales
+  // ✅ NUEVO: Datos para crear ticket DESPUÉS del pago
+  purchaseData?: {
+    eventId: string;
+    tickets: Array<{
+      zoneId: string;
+      zoneName: string;
+      phaseId: string;
+      phaseName: string;
+      quantity: number;
+      pricePerTicket: number;
+    }>;
+  };
   totalAmount: number;
   currency: string;
   currencySymbol: string;
@@ -55,7 +67,8 @@ export function CardPaymentModal({
   isOpen,
   onClose,
   transactionId,
-  installmentId, // ✅ NUEVO
+  installmentId,
+  purchaseData, // ✅ NUEVO
   totalAmount,
   currency,
   currencySymbol,
@@ -238,30 +251,36 @@ export function CardPaymentModal({
       console.log('[Payment] Token data received:', tokenData);
       console.log('[Payment] Payment method ID:', tokenData.payment_method_id);
 
-      // ✅ Usar endpoint diferente según si es cuota o pago completo
-      const endpoint = installmentId
+      // ✅ Determinar si es pago de cuota existente o pago nuevo
+      const isInstallmentPayment = !!installmentId;
+      const isNewPurchase = !!purchaseData && !transactionId;
+
+      const endpoint = isInstallmentPayment
         ? '/api/mercadopago/create-order-installment'
-        : '/api/mercadopago/create-payment-with-token'; // ✅ CAMBIADO: Ahora usa Payments API
+        : '/api/mercadopago/create-payment-with-token';
 
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
-          installmentId
+          isInstallmentPayment
             ? {
                 // Payload para cuota individual
                 installmentId,
                 token: tokenData.id,
-                payerEmail: user.email, // ✅ Usar email del usuario autenticado
+                payerEmail: user.email,
                 identificationType: docType,
                 identificationNumber: docNumber,
                 paymentMethodId: tokenData.payment_method_id,
               }
             : {
                 // Payload para pago completo
-                transactionId,
+                // ✅ NOTA: Si es pago nuevo, transactionId puede ser undefined aquí
+                // El backend create-payment-with-token necesita el transactionId para actualizar
+                // Pero para pagos nuevos, lo crearemos DESPUÉS
+                ...(transactionId && { transactionId }), // Solo si existe
                 token: tokenData.id,
-                payerEmail: user.email, // ✅ Usar email del usuario autenticado
+                payerEmail: user.email,
                 identificationType: docType,
                 identificationNumber: docNumber,
                 paymentMethodId: tokenData.payment_method_id,
