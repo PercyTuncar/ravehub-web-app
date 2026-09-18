@@ -287,57 +287,18 @@ export function CheckoutPaymentModal({
       return;
     }
 
-    setSubmitting(true);
+    // ✅ NUEVO FLUJO: NO crear transacción aquí
+    // Solo abrir el modal de pago con los datos necesarios
+    // El ticket se creará DESPUÉS de procesar el pago
 
-    try {
-      // Crear transaction con paymentMethod: 'online'
-      // Calcular recargo: 5% + S/1 fijo
-      const surchargePercentage = totalAmount * 0.05;
-      const surchargeFixed = 1.00; // S/1 cargo fijo
-      const totalWithSurcharge = totalAmount + surchargePercentage + surchargeFixed;
+    // Calcular recargo: 5% + S/1 fijo
+    const surchargePercentage = totalAmount * 0.05;
+    const surchargeFixed = 1.00; // S/1 cargo fijo
+    const totalWithSurcharge = totalAmount + surchargePercentage + surchargeFixed;
 
-      const body = {
-        eventId: event.id,
-        tickets: selectedTickets.map((t) => ({
-          zoneId: t.zoneId,
-          zoneName: t.zoneName,
-          phaseId: t.phaseId,
-          phaseName: t.phaseName,
-          quantity: t.quantity,
-          pricePerTicket: t.price,
-        })),
-        paymentMethod: 'online',
-        paymentType: isInstallmentMode ? 'installment' : 'full',
-        installments: isInstallmentMode ? installments : 1,
-        userId: user.id,
-        totalAmount: totalWithSurcharge,
-        currency: event.currency,
-        reservationFee: isInstallmentMode ? totalReservation : 0,
-        trackingContext: createConversionTrackingContext(createEventId()),
-      };
-
-      const resp = await fetch('/api/tickets/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      const data = await resp.json();
-
-      if (!resp.ok || !data.success) {
-        throw new Error(data.error || 'Error al crear la transacción');
-      }
-
-      // Guardar transactionId y abrir modal de tarjeta
-      setOnlineTransactionId(data.transactionId);
-      setShowCardModal(true);
-
-    } catch (err: any) {
-      console.error('Online payment error:', err);
-      toast.error(err.message || 'Error al iniciar el pago');
-    } finally {
-      setSubmitting(false);
-    }
+    // ID temporal para el modal (no es un ticket real todavía)
+    setOnlineTransactionId('temp-' + Date.now());
+    setShowCardModal(true);
   };
 
   /** After user uploads proof → submit order to API */
@@ -923,11 +884,21 @@ export function CheckoutPaymentModal({
     </Dialog>
 
     {/* Modal de pago con tarjeta */}
-    {showCardModal && onlineTransactionId && user && (
+    {showCardModal && user && (
       <CardPaymentModal
         isOpen={showCardModal}
         onClose={() => setShowCardModal(false)}
-        transactionId={onlineTransactionId}
+        purchaseData={{
+          eventId: event.id,
+          tickets: selectedTickets.map((t) => ({
+            zoneId: t.zoneId,
+            zoneName: t.zoneName,
+            phaseId: t.phaseId || '',
+            phaseName: t.phaseName || '',
+            quantity: t.quantity,
+            pricePerTicket: t.price,
+          })),
+        }}
         totalAmount={
           isInstallmentMode
             ? totalReservation * 1.05 + 1  // En cuotas: adelanto + 5% + S/1

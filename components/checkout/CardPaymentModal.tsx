@@ -301,8 +301,39 @@ export function CardPaymentModal({
       if (!data.success && data.status) {
         console.log('[Payment] Payment failed:', data.status, data.statusDetail);
       } else if (data.success) {
-        console.log('[Payment] Order created:', data.orderId);
         console.log('[Payment] Payment status:', data.status);
+      }
+
+      // ✅ Si es pago nuevo (purchaseData existe), crear ticket AHORA según el resultado
+      let finalTransactionId = transactionId;
+
+      if (isNewPurchase && purchaseData) {
+        console.log('[Payment] Creating ticket from payment result...');
+        console.log('[Payment] Payment status:', data.status);
+
+        const createTicketResponse = await fetch('/api/tickets/create-from-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId: purchaseData.eventId,
+            tickets: purchaseData.tickets,
+            paymentId: data.paymentId,
+            paymentStatus: data.status, // 'approved', 'rejected', 'pending'
+            paymentMethod: 'online',
+            totalAmount,
+            currency,
+            mercadoPagoResponse: data,
+          }),
+        });
+
+        const ticketData = await createTicketResponse.json();
+
+        if (!createTicketResponse.ok) {
+          throw new Error(ticketData.error || ticketData.message || 'Error al crear el ticket');
+        }
+
+        finalTransactionId = ticketData.transactionId;
+        console.log('[Payment] Ticket created:', finalTransactionId);
       }
 
       // 3. Manejar respuesta según estado
@@ -325,29 +356,29 @@ export function CardPaymentModal({
         // Polling para verificar resultado (el webhook actualizará el estado)
         // El usuario será redirigido a purchase-success cuando webhook confirme
         onClose();
-        router.push(`/purchase-pending?transactionId=${transactionId}`);
+        router.push(`/purchase-pending?transactionId=${finalTransactionId}`);
 
       } else if (data.status === 'approved' || data.status === 'processed') {
         // Pago aprobado - Redirigir inmediatamente sin toast
         onSuccess(data.paymentId);
         onClose();
-        router.push(`/purchase-success?transactionId=${transactionId}`);
+        router.push(`/purchase-success?transactionId=${finalTransactionId}`);
 
       } else if (data.status === 'rejected' || data.status === 'failed') {
         // Pago rechazado - Redirigir inmediatamente sin toast
         const reason = data.statusDetail || 'default';
         onClose();
-        router.push(`/purchase-failure?transactionId=${transactionId}&reason=${reason}`);
+        router.push(`/purchase-failure?transactionId=${finalTransactionId}&reason=${reason}`);
 
       } else if (data.status === 'pending' || data.status === 'in_process') {
         // Pago pendiente - Redirigir inmediatamente
         onClose();
-        router.push(`/purchase-pending?transactionId=${transactionId}`);
+        router.push(`/purchase-pending?transactionId=${finalTransactionId}`);
 
       } else {
         // Estado desconocido - Redirigir a pending por seguridad
         onClose();
-        router.push(`/purchase-pending?transactionId=${transactionId}`);
+        router.push(`/purchase-pending?transactionId=${finalTransactionId}`);
       }
 
     } catch (error: any) {
