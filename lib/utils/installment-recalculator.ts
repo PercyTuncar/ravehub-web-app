@@ -128,6 +128,12 @@ async function getCurrentActivePhase(event: Event): Promise<SalesPhase | null> {
  * Check if an installment is overdue and if the price phase has changed
  * If so, recalculate all remaining installments with new pricing
  *
+ * REGLA DE NEGOCIO:
+ * 1. Al vencer sin pagar → Ajusta a la fase ACTIVA HOY
+ * 2. Al pagar → Congela ese precio por 1 mes hasta la siguiente cuota
+ * 3. Al vencer la siguiente sin pagar → Vuelve a ajustar a la fase activa
+ * 4. Si el admin perdona → Vuelve al precio original
+ *
  * IMPORTANT: This function should ONLY be called for OVERDUE installments.
  * Do NOT call this for paid or pending installments - it's meant for morosos only.
  *
@@ -144,6 +150,9 @@ export async function checkAndAdjustPriceForOverdueInstallment(
   affectedInstallments?: number;
   reason?: string;
   error?: string;
+  phaseName?: string;
+  oldPhaseName?: string;
+  priceIncrease?: number;
 }> {
   try {
     // Get the transaction
@@ -328,7 +337,10 @@ Paga tus cuotas antes de la fecha de vencimiento para mantener el precio origina
       adjusted: true,
       newAmount: roundedAmount,
       affectedInstallments: updates.length,
-      reason: `Ajustado de fase "${event.salesPhases?.find((p: any) => p.id === originalPhaseId)?.name}" a "${currentPhase.name}"`
+      reason: `Ajustado de fase "${originalPhaseName}" a "${currentPhase.name}"`,
+      phaseName: currentPhase.name,
+      oldPhaseName: originalPhaseName,
+      priceIncrease: currentPricePerTicket - originalPricePerTicket
     };
   } catch (error: any) {
     console.error('Error adjusting price for overdue installment:', error);

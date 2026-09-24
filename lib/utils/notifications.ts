@@ -136,6 +136,12 @@ export const InstallmentNotifications = {
     type: 'payment',
     orderId: ticketId,
   }),
+
+  priceForgiven: (eventName: string, amountSaved: number, currency: string): Omit<CreateNotificationParams, 'userId'> => ({
+    title: '🎉 ¡Ajuste de Precio Perdonado!',
+    body: `El administrador ha revertido el ajuste de precio en tu ticket para "${eventName}". Se han restaurado los precios originales. Ahorro: ${currency} ${amountSaved.toFixed(2)}`,
+    type: 'general',
+  }),
 };
 
 /**
