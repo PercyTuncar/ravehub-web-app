@@ -214,7 +214,15 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
             return;
         }
 
+        // ✅ PROTECCIÓN: Prevenir múltiples clics
+        if (isSubmitting) {
+            console.warn('⚠️ [MANUAL_TICKET_MODAL] Ya hay una creación en progreso, ignorando clic duplicado');
+            return;
+        }
+
         setIsSubmitting(true);
+        console.log('🎫 [MANUAL_TICKET_MODAL] Iniciando creación de ticket...');
+
         try {
             // Determine Status and Payment Method
             // IMPORTANT: All manual ticket assignments by admin are automatically approved
@@ -228,6 +236,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
             // Note: For all manual assignments (sale with full/installment payment, or courtesy),
             // the status is 'approved' since the admin is consciously creating the assignment
 
+            console.log('📤 [MANUAL_TICKET_MODAL] Enviando datos al servidor...');
             const result = await createManualTicketTransaction({
                 userId: selectedUserId,
                 eventId: selectedEventId,
@@ -253,8 +262,11 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 installmentProofs: (assignmentType === 'sale' && paymentType === 'installment') ? installmentProofs : undefined
             });
 
+            console.log('📥 [MANUAL_TICKET_MODAL] Respuesta del servidor:', result);
+
             if (result.success) {
                 toast.success('Ticket asignado correctamente');
+                console.log('✅ [MANUAL_TICKET_MODAL] Ticket creado exitosamente:', result.ticketId);
                 onSuccess();
                 onClose();
                 // Reset form
@@ -264,13 +276,15 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 setAssignmentType('sale');
                 setIsPaid(false);
             } else {
+                console.error('❌ [MANUAL_TICKET_MODAL] Error del servidor:', result.error);
                 toast.error(result.error || 'Error al asignar ticket');
             }
         } catch (error) {
-            console.error(error);
+            console.error('❌ [MANUAL_TICKET_MODAL] Error inesperado:', error);
             toast.error('Ocurrió un error inesperado');
         } finally {
             setIsSubmitting(false);
+            console.log('🏁 [MANUAL_TICKET_MODAL] Proceso finalizado');
         }
     };
 

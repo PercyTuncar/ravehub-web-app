@@ -1292,7 +1292,10 @@ function TicketsAdminContent() {
                                     </div>
 
                                     {/* Installments Table */}
-                                    {installments.length > 0 ? (
+                                    {(() => {
+                                        // ✅ CORRECCIÓN CRÍTICA: Filtrar solo las cuotas de ESTE ticket
+                                        const ticketInstallments = installments.filter(inst => inst.transactionId === selectedTicket.id);
+                                        return ticketInstallments.length > 0 ? (
                                         <div className="rounded-lg border border-white/10 overflow-hidden">
                                             <Table>
                                                 <TableHeader>
@@ -1306,7 +1309,7 @@ function TicketsAdminContent() {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {installments.map((inst, idx) => {
+                                                    {ticketInstallments.map((inst, idx) => {
                                                         const isPaid = inst.status === 'paid' && inst.adminApproved;
                                                         const isPending = inst.userUploadedProofUrl && !inst.adminApproved && inst.status !== 'rejected';
                                                         const isRejected = inst.status === 'rejected';
@@ -1423,7 +1426,8 @@ function TicketsAdminContent() {
                                             <Clock className="w-8 h-8 mx-auto mb-2" />
                                             <p className="text-sm">Cargando cuotas...</p>
                                         </div>
-                                    )}
+                                    );
+                                    })()}
 
                                     {/* Ver como Cliente Button */}
                                     <Button

@@ -416,6 +416,21 @@ export async function createManualTicketTransaction(data: {
   paidInstallmentsIndices?: number[]; // -1 for reservation, 0+ for installments
   installmentProofs?: Record<number, string>; // { -1: "url1", 0: "url2", ... }
 }): Promise<{ success: boolean; error?: string; ticketId?: string }> {
+  const startTime = Date.now();
+  const callId = Math.random().toString(36).substring(7);
+  console.log(`\n${'='.repeat(80)}`);
+  console.log(`🎫 [CREATE_MANUAL_TICKET ${callId}] Inicio de creación de ticket manual`);
+  console.log(`⏰ Timestamp: ${new Date().toISOString()}`);
+  console.log(`👤 Usuario: ${data.userId}`);
+  console.log(`🎉 Evento: ${data.eventId}`);
+  console.log(`💰 Monto Total: ${data.totalAmount}`);
+  console.log(`📋 Tipo de Pago: ${data.paymentType}`);
+  if (data.paymentType === 'installment') {
+    console.log(`📊 Cuotas: ${data.installmentsCount}`);
+    console.log(`💵 Adelanto: ${data.reservationAmount}`);
+  }
+  console.log(`${'='.repeat(80)}\n`);
+
   try {
     await requireAdmin();
 
@@ -471,9 +486,12 @@ export async function createManualTicketTransaction(data: {
     }
 
     const ticketId = await createAdminDocumentId('ticketTransactions');
+    console.log(`📝 [CREATE_MANUAL_TICKET ${callId}] Ticket ID generado: ${ticketId}`);
+
     const operations: Array<{ collection: string; id?: string; data: Record<string, any> }> = [
       { collection: 'ticketTransactions', id: ticketId, data: ticketData },
     ];
+    console.log(`📦 [CREATE_MANUAL_TICKET ${callId}] Operación de ticket agregada al batch`);
 
     if (data.paymentType === 'installment') {
       const { calculateInstallmentPlan } = await import('@/lib/utils/admin-ticket-calculator');
@@ -490,9 +508,12 @@ export async function createManualTicketTransaction(data: {
       }
 
       const now = new Date().toISOString();
+      console.log(`💳 [CREATE_MANUAL_TICKET ${callId}] Creando cuotas...`);
+
       if (data.reservationAmount && data.reservationAmount > 0) {
         const isReservationPaid = data.paidInstallmentsIndices?.includes(-1) ?? false;
         const reservationProof = data.installmentProofs?.[-1];
+        console.log(`   💰 Adelanto Inicial (#0): ${data.reservationAmount} ${eventCurrency} - ${isReservationPaid ? 'PAGADO' : 'PENDIENTE'}`);
         operations.push({
           collection: 'paymentInstallments',
           data: {
@@ -513,6 +534,7 @@ export async function createManualTicketTransaction(data: {
       for (const [index, installment] of plan.installments.entries()) {
         const isPaid = data.paidInstallmentsIndices?.includes(index) ?? false;
         const proof = data.installmentProofs?.[index];
+        console.log(`   💳 Cuota #${installment.installmentNumber}: ${installment.amount} ${eventCurrency} - ${isPaid ? 'PAGADO' : 'PENDIENTE'}`);
         operations.push({
           collection: 'paymentInstallments',
           data: {
@@ -530,9 +552,12 @@ export async function createManualTicketTransaction(data: {
           },
         });
       }
+      console.log(`✅ [CREATE_MANUAL_TICKET ${callId}] Total de operaciones de cuotas: ${operations.length - 1}`);
     }
 
+    console.log(`🚀 [CREATE_MANUAL_TICKET ${callId}] Ejecutando batch con ${operations.length} operaciones...`);
     await commitAdminBatch(operations);
+    console.log(`✅ [CREATE_MANUAL_TICKET ${callId}] Batch ejecutado exitosamente`);
 
     if (data.paymentType === 'installment') {
       const { syncTransactionFromSchedule } = await import('@/lib/payments/ticket-payment-state');
@@ -566,11 +591,21 @@ export async function createManualTicketTransaction(data: {
       orderId: ticketId
     });
 
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    console.log(`\n${'='.repeat(80)}`);
+    console.log(`✅ [CREATE_MANUAL_TICKET ${callId}] Ticket creado exitosamente`);
+    console.log(`📝 Ticket ID: ${ticketId}`);
+    console.log(`⏱️  Duración: ${duration}ms`);
+    console.log(`${'='.repeat(80)}\n`);
+
     return { success: true, ticketId };
   } catch (error: any) {
-    console.error('❌ [CREATE_MANUAL_TICKET] Error creating manual ticket:', error);
+    console.error(`\n${'='.repeat(80)}`);
+    console.error(`❌ [CREATE_MANUAL_TICKET ${callId}] Error creating manual ticket:`, error);
     console.error('❌ [CREATE_MANUAL_TICKET] Error stack:', error.stack);
     console.error('❌ [CREATE_MANUAL_TICKET] Input data:', JSON.stringify(data, null, 2));
+    console.error(`${'='.repeat(80)}\n`);
     return { success: false, error: error.message || 'Error al crear el ticket' };
   }
 }
