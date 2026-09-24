@@ -75,7 +75,8 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
     // Installments Config
     const [reservationAmount, setReservationAmount] = useState(50);
     const [installmentsCount, setInstallmentsCount] = useState(3);
-    const [firstPaymentDate, setFirstPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [reservationDate, setReservationDate] = useState<string>(new Date().toISOString().split('T')[0]); // ✅ Fecha del adelanto
+    const [firstPaymentDate, setFirstPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]); // ✅ Deprecated, usar reservationDate
     const [installmentPlan, setInstallmentPlan] = useState<CalculationResult | null>(null);
 
     // Ticket Delivery Config
@@ -140,13 +141,13 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
 
     // Calcular plan de cuotas automáticamente cuando cambian los parámetros
     useEffect(() => {
-        if (paymentType === 'installment' && totalAmount > 0 && reservationAmount > 0 && installmentsCount > 0 && firstPaymentDate) {
+        if (paymentType === 'installment' && totalAmount > 0 && reservationAmount > 0 && installmentsCount > 0 && reservationDate) {
             try {
                 const plan = calculateInstallmentPlan(
                     totalAmount,
                     reservationAmount,
                     installmentsCount,
-                    parseLocalDate(firstPaymentDate)
+                    parseLocalDate(reservationDate) // ✅ Usar fecha de reserva como punto de inicio
                 );
                 setInstallmentPlan(plan);
             } catch (error) {
@@ -157,7 +158,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
             // Reset plan si cambia a pago completo o faltan datos
             setInstallmentPlan(null);
         }
-    }, [paymentType, totalAmount, reservationAmount, installmentsCount, firstPaymentDate]);
+    }, [paymentType, totalAmount, reservationAmount, installmentsCount, reservationDate]);
 
     const loadInitialData = async () => {
         setLoadingUsers(true);
@@ -253,7 +254,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 reservationAmountPerTicket: (assignmentType === 'sale' && paymentType === 'installment') ? configuredReservationPerTicket : undefined,
                 reservationSubtotal: (assignmentType === 'sale' && paymentType === 'installment') ? reservationAmount : undefined,
                 installmentsCount: (assignmentType === 'sale' && paymentType === 'installment') ? installmentsCount : undefined,
-                firstInstallmentDate: (assignmentType === 'sale' && paymentType === 'installment') ? firstPaymentDate : undefined,
+                firstInstallmentDate: (assignmentType === 'sale' && paymentType === 'installment') ? reservationDate : undefined, // ✅ Enviar fecha de reserva
                 paymentStatus: finalStatus,
                 ticketsDownloadAvailableDate: ticketsDownloadAvailableDate || undefined,
 
@@ -588,12 +589,15 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                         />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <Label className="text-xs">Fecha 1ra Cuota</Label>
+                                                        <Label className="text-xs">Fecha del Adelanto</Label>
                                                         <Input
                                                             type="date"
-                                                            value={firstPaymentDate}
-                                                            onChange={(e) => setFirstPaymentDate(e.target.value)}
+                                                            value={reservationDate}
+                                                            onChange={(e) => setReservationDate(e.target.value)}
                                                         />
+                                                        <p className="text-[10px] text-muted-foreground">
+                                                            Las cuotas se calculan desde esta fecha
+                                                        </p>
                                                     </div>
                                                 </div>
 
@@ -612,7 +616,13 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                             <TableBody>
                                                                 <TableRow>
                                                                     <TableCell className="py-2 text-xs font-medium">Adelanto inicial</TableCell>
-                                                                    <TableCell className="py-2 text-xs">Hoy</TableCell>
+                                                                    <TableCell className="py-2 text-xs">
+                                                                        {new Date(reservationDate).toLocaleDateString('es-ES', {
+                                                                            day: '2-digit',
+                                                                            month: '2-digit',
+                                                                            year: 'numeric'
+                                                                        })}
+                                                                    </TableCell>
                                                                     <TableCell className="py-2 text-xs text-right font-medium">
                                                                         {selectedEvent.currency} {Number(installmentPlan.reservationAmount).toFixed(2)}
                                                                     </TableCell>
