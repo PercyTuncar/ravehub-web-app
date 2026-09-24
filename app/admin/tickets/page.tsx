@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Ticket,
     Search,
@@ -181,12 +181,8 @@ function TicketsAdminContent() {
         }
     };
 
-    // ✅ OPTIMIZACIÓN: Reload tickets when filters change (with debounced search)
-    useEffect(() => {
-        loadTickets();
-    }, [debouncedSearchTerm, statusFilter, paymentFilter, eventFilter, deliveryFilter, proofFilter]);
-
-    const loadTickets = async () => {
+    // ✅ Función de carga de tickets - usando useCallback para evitar dependencias circulares
+    const loadTickets = useCallback(async () => {
         setLoading(true);
         try {
             // ✅ OPTIMIZACIÓN: Load tickets with server-side filtering
@@ -236,7 +232,13 @@ function TicketsAdminContent() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [debouncedSearchTerm, statusFilter, paymentFilter, eventFilter, deliveryFilter, proofFilter]);
+
+    // ✅ OPTIMIZACIÓN: Reload tickets when filters change (with debounced search)
+    useEffect(() => {
+        loadTickets();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedSearchTerm, statusFilter, paymentFilter, eventFilter, deliveryFilter, proofFilter]);
 
     const handleStatusUpdate = async (ticketId: string, newStatus: 'approved' | 'rejected') => {
         setActionLoading(true);
