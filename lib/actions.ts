@@ -776,15 +776,36 @@ export async function getTicketsForAdmin(filters?: {
     // Client-side filtering for search term and proof filter
     let filteredTickets = allTickets;
 
-    // Search filter (client-side for flexibility)
+    // Search filter (client-side for flexibility - searches across multiple fields)
     if (filters?.searchTerm && filters.searchTerm.trim() !== '') {
-      const searchLower = filters.searchTerm.toLowerCase();
-      filteredTickets = filteredTickets.filter(ticket =>
-        ticket.eventName?.toLowerCase().includes(searchLower) ||
-        ticket.userEmail?.toLowerCase().includes(searchLower) ||
-        ticket.userName?.toLowerCase().includes(searchLower) ||
-        ticket.id?.toLowerCase().includes(searchLower)
-      );
+      const searchLower = filters.searchTerm.toLowerCase().trim();
+      filteredTickets = filteredTickets.filter(ticket => {
+        // Get user data for additional search fields
+        const user = userMap.get(ticket.userId);
+
+        return (
+          // Search by ticket ID
+          ticket.id?.toLowerCase().includes(searchLower) ||
+          // Search by event name
+          ticket.eventName?.toLowerCase().includes(searchLower) ||
+          // Search by user email
+          ticket.userEmail?.toLowerCase().includes(searchLower) ||
+          // Search by user name
+          ticket.userName?.toLowerCase().includes(searchLower) ||
+          // Search by user first name
+          user?.firstName?.toLowerCase().includes(searchLower) ||
+          // Search by user last name
+          user?.lastName?.toLowerCase().includes(searchLower) ||
+          // Search by full name (firstName + lastName)
+          `${user?.firstName || ''} ${user?.lastName || ''}`.toLowerCase().includes(searchLower) ||
+          // Search by document number (DNI, etc.)
+          user?.documentNumber?.toLowerCase().includes(searchLower) ||
+          // Search by phone number
+          user?.phone?.toLowerCase().includes(searchLower) ||
+          // Search by phone with prefix
+          `${user?.phonePrefix || ''}${user?.phone || ''}`.toLowerCase().replace(/\s/g, '').includes(searchLower.replace(/\s/g, ''))
+        );
+      });
     }
 
     // 'noProof' filter (client-side)

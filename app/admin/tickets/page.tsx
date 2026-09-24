@@ -71,6 +71,7 @@ function TicketsAdminContent() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+    const [searchType, setSearchType] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [paymentFilter, setPaymentFilter] = useState<string>('all');
     const [deliveryFilter, setDeliveryFilter] = useState<string>('all');
@@ -678,20 +679,57 @@ function TicketsAdminContent() {
                 ) : (
                 <Card className="bg-white/5 backdrop-blur-xl border-white/10 mb-6">
                     <CardContent className="p-6 !pt-6">
-                        <div className="flex flex-col lg:flex-row gap-4">
-                            {/* Search */}
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                                <Input
-                                    placeholder="Buscar por ID, evento o usuario..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50"
-                                />
+                        <div className="flex flex-col gap-4">
+                            {/* Search Section - Full Width */}
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                {/* Search Type Selector */}
+                                <Select value={searchType} onValueChange={setSearchType}>
+                                    <SelectTrigger className="w-full sm:w-[200px] bg-black/20 border-white/10 text-white">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">🔍 Buscar en todo</SelectItem>
+                                        <SelectItem value="email">📧 Email</SelectItem>
+                                        <SelectItem value="name">👤 Nombre</SelectItem>
+                                        <SelectItem value="document">🆔 DNI/Doc</SelectItem>
+                                        <SelectItem value="phone">📱 Teléfono</SelectItem>
+                                        <SelectItem value="ticketId">🎫 ID Ticket</SelectItem>
+                                        <SelectItem value="event">🎉 Evento</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                {/* Search Input - Larger and more visible */}
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                                    <Input
+                                        placeholder={
+                                            searchType === 'email' ? 'Buscar por email...' :
+                                            searchType === 'name' ? 'Buscar por nombre o apellido...' :
+                                            searchType === 'document' ? 'Buscar por DNI o documento...' :
+                                            searchType === 'phone' ? 'Buscar por teléfono...' :
+                                            searchType === 'ticketId' ? 'Buscar por ID de ticket...' :
+                                            searchType === 'event' ? 'Buscar por nombre del evento...' :
+                                            'Buscar por email, nombre, DNI, teléfono, ID...'
+                                        }
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-12 pr-4 h-12 bg-black/20 border-white/10 text-white text-base placeholder:text-white/40 focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                                    />
+                                    {searchTerm && (
+                                        <button
+                                            onClick={() => setSearchTerm('')}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                                        >
+                                            <XCircle className="w-5 h-5" />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* Filters */}
-                            <Select value={eventFilter} onValueChange={setEventFilter}>
+                            {/* Filters Row */}
+                            <div className="flex flex-col lg:flex-row gap-3 flex-wrap">
+                                {/* Event Filter */}
+                                <Select value={eventFilter} onValueChange={setEventFilter}>
                                 <SelectTrigger className="w-full lg:w-[220px] bg-black/20 border-white/10 text-white">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -761,52 +799,56 @@ function TicketsAdminContent() {
                                         setDeliveryFilter('all');
                                         setProofFilter('all');
                                         setSearchTerm('');
+                                        setSearchType('all');
                                     }}
                                     variant="outline"
                                     className="border-red-500/30 text-red-400 hover:bg-red-500/10"
                                 >
                                     <XCircle className="w-4 h-4 mr-2" />
-                                    Limpiar Filtros
+                                    Limpiar
                                 </Button>
                             )}
 
-                            <Button
-                                onClick={loadTickets}
-                                variant="outline"
-                                className="border-white/10 text-white hover:bg-white/5"
-                            >
-                                <RefreshCw className="w-4 h-4 mr-2" />
-                                Actualizar
-                            </Button>
-
-                            <Button
-                                onClick={handleCheckAvailability}
-                                variant="outline"
-                                disabled={actionLoading}
-                                className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
-                            >
-                                <Clock className="w-4 h-4 mr-2" />
-                                {actionLoading ? 'Verificando...' : 'Verificar Disponibilidad'}
-                            </Button>
-
-                            <Button
-                                onClick={() => setManualAssignModalOpen(true)}
-                                className="bg-gradient-to-r from-primary to-orange-600 hover:from-primary/90 hover:to-orange-700 text-white shadow-[0_0_20px_-5px_var(--primary)]"
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Nueva Asignación
-                            </Button>
-
-                            {selectedTicketIds.size > 0 && (
+                            <div className="flex flex-wrap gap-3 ml-auto">
                                 <Button
-                                    onClick={() => setBulkDeleteModalOpen(true)}
+                                    onClick={loadTickets}
                                     variant="outline"
-                                    className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                    className="border-white/10 text-white hover:bg-white/5"
                                 >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Eliminar Seleccionados ({selectedTicketIds.size})
+                                    <RefreshCw className="w-4 h-4 mr-2" />
+                                    Actualizar
                                 </Button>
-                            )}
+
+                                <Button
+                                    onClick={handleCheckAvailability}
+                                    variant="outline"
+                                    disabled={actionLoading}
+                                    className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                                >
+                                    <Clock className="w-4 h-4 mr-2" />
+                                    {actionLoading ? 'Verificando...' : 'Verificar Disponibilidad'}
+                                </Button>
+
+                                <Button
+                                    onClick={() => setManualAssignModalOpen(true)}
+                                    className="bg-gradient-to-r from-primary to-orange-600 hover:from-primary/90 hover:to-orange-700 text-white shadow-[0_0_20px_-5px_var(--primary)]"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Nueva Asignación
+                                </Button>
+                            </div>
+
+                                {selectedTicketIds.size > 0 && (
+                                    <Button
+                                        onClick={() => setBulkDeleteModalOpen(true)}
+                                        variant="outline"
+                                        className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Eliminar Seleccionados ({selectedTicketIds.size})
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
