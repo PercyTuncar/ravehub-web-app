@@ -34,7 +34,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { FileUpload } from '@/components/common/FileUpload';
 import { toast } from 'sonner';
 
-import { parseLocalDate } from '@/lib/utils/date';
+import { parseLocalDate } from '@/lib/utils/date-timezone';
 import { eventsCollection, usersCollection } from '@/lib/firebase/collections';
 import { createManualTicketTransaction } from '@/lib/actions';
 import { calculateInstallmentPlan, CalculationResult } from '@/lib/utils/admin-ticket-calculator';
@@ -617,7 +617,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                                 <TableRow>
                                                                     <TableCell className="py-2 text-xs font-medium">Adelanto inicial</TableCell>
                                                                     <TableCell className="py-2 text-xs">
-                                                                        {new Date(reservationDate).toLocaleDateString('es-ES', {
+                                                                        {parseLocalDate(reservationDate).toLocaleDateString('es-ES', {
                                                                             day: '2-digit',
                                                                             month: '2-digit',
                                                                             year: 'numeric'
