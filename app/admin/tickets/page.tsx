@@ -34,6 +34,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AuthGuard } from '@/components/admin/AuthGuard';
 import { updateTicketPaymentStatus, deleteTicketTransaction, getTicketsForAdmin, getTicketStats, getTicketInstallments, approveInstallmentProof, rejectInstallmentProof, getBulkTicketInstallments } from '@/lib/actions';
+import { adminUploadInstallmentProof } from '@/lib/admin-installment-actions';
 import { usersCollection } from '@/lib/firebase/collections';
 import { ManualTicketAssignmentModal } from '@/components/admin/tickets/ManualTicketAssignmentModal';
 import { TicketFileUploadModal } from '@/components/admin/tickets/TicketFileUploadModal';
@@ -43,8 +44,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { TicketFiltersSkeleton, TicketRowSkeleton, TicketStatSkeleton } from '@/components/admin/TicketLoadingSkeletons';
-import { db } from '@/lib/firebase/config';
-import { doc, updateDoc } from 'firebase/firestore';
 
 // Helper to parse dates
 const parseDate = (date: any) => {
@@ -414,15 +413,14 @@ function TicketsAdminContent() {
 
         setActionLoading(true);
         try {
-            // Update installment with the uploaded proof
-            const installmentRef = doc(db, 'paymentInstallments', selectedInstallment.id);
+            // ✅ CORRECCIÓN: Usar Server Action en lugar de updateDoc directo
+            // Las reglas de Firestore no permiten que admins escriban desde el cliente
+            const uploadResult = await adminUploadInstallmentProof(selectedInstallment.id, url, 'admin');
 
-            await updateDoc(installmentRef, {
-                paymentProofUrl: url,
-                proofUrl: url,
-                uploadedAt: new Date().toISOString(),
-                uploadedBy: 'admin',
-            });
+            if (!uploadResult.success) {
+                toast.error(uploadResult.error || 'Error al subir comprobante');
+                return;
+            }
 
             // If auto-approve is checked, approve immediately with the payment date
             if (autoApproveInstallment) {
