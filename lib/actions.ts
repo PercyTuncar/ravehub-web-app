@@ -773,6 +773,17 @@ export async function getTicketsForAdmin(filters?: {
       queryLimit
     );
 
+    // ✅ CORRECCIÓN: Cargar usuarios ANTES de filtrar para poder buscar por sus campos
+    // Collect unique user IDs from all tickets
+    const userIds = new Set<string>();
+    allTickets.forEach(ticket => {
+      if (ticket.userId) userIds.add(ticket.userId);
+    });
+
+    // Load users in batch
+    const users = await usersCollection.getByIds(Array.from(userIds));
+    const userMap = new Map(users.map(u => [u.id, u]));
+
     // Client-side filtering for search term and proof filter
     let filteredTickets = allTickets;
 
@@ -813,24 +824,17 @@ export async function getTicketsForAdmin(filters?: {
       filteredTickets = filteredTickets.filter(ticket => !ticket.paymentProofUrl);
     }
 
-    // Collect unique event and user IDs
+    // Collect unique event IDs from filtered tickets
     const eventIds = new Set<string>();
-    const userIds = new Set<string>();
-
     filteredTickets.forEach(ticket => {
       if (ticket.eventId) eventIds.add(ticket.eventId);
-      if (ticket.userId) userIds.add(ticket.userId);
     });
 
-    // ✅ OPTIMIZACIÓN: Usar getByIds() para batch queries (máximo 30 por batch)
-    const [events, users] = await Promise.all([
-      eventsCollection.getByIds(Array.from(eventIds)),
-      usersCollection.getByIds(Array.from(userIds))
-    ]);
+    // ✅ Load events for filtered tickets only
+    const events = await eventsCollection.getByIds(Array.from(eventIds));
 
     // Create lookup maps
     const eventMap = new Map(events.map(e => [e.id, e]));
-    const userMap = new Map(users.map(u => [u.id, u]));
 
     // Enrich tickets with event and user data
     const enrichedTickets = filteredTickets.map(ticket => ({
