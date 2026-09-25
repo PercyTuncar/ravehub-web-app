@@ -85,8 +85,8 @@ export function MobileNavbar() {
     { flag: '🇪🇨', name: 'Ecuador', href: '/programas/ravehub-top-djs/ecuador' },
   ];
 
-  // Don't render on admin pages or login/register pages
-  if (pathname.startsWith('/admin') || pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/go')) {
+  // Don't render on admin pages or go pages
+  if (pathname.startsWith('/admin') || pathname.startsWith('/go')) {
     return null;
   }
 

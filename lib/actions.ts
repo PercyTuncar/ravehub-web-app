@@ -1546,3 +1546,224 @@ export async function recalculateTicketInstallments(ticketId: string) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Get user tickets summary for admin badges
+ * Returns quick stats about user's tickets
+ */
+export async function getUserTicketsSummary(userId: string): Promise<{
+  success: boolean;
+  summary?: {
+    totalTickets: number;
+    pendingPayments: number;
+    upcomingEvents: number;
+    totalSpent: number;
+    currency: string;
+    preferredPaymentMethod: 'online' | 'offline' | 'mixed';
+  };
+  error?: string;
+}> {
+  'use server';
+
+  try {
+    await requireAdmin();
+
+    // Get all tickets for this user
+    const tickets = await ticketTransactionsCollection.query([
+      { field: 'userId', operator: '==', value: userId }
+    ]);
+
+    if (tickets.length === 0) {
+      return {
+        success: true,
+        summary: {
+          totalTickets: 0,
+          pendingPayments: 0,
+          upcomingEvents: 0,
+          totalSpent: 0,
+          currency: 'PEN',
+          preferredPaymentMethod: 'mixed'
+        }
+      };
+    }
+
+    // Count total tickets (individual entries)
+    const totalTickets = tickets.reduce((acc, t) => {
+      const quantity = t.ticketItems?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
+      return acc + quantity;
+    }, 0);
+
+    // Count pending payments
+    const pendingPayments = tickets.filter(t => t.paymentStatus === 'pending').length;
+
+    // Get unique event IDs
+    const eventIds = [...new Set(tickets.map(t => t.eventId))];
+
+    // Load events to check which are upcoming
+    const events = await eventsCollection.getByIds(eventIds);
+    const now = new Date();
+    const upcomingEvents = events.filter(e => {
+      if (!e.startDate) return false;
+      const eventDate = new Date(e.startDate);
+      return eventDate > now;
+    }).length;
+
+    // Calculate total spent (only approved tickets)
+    const approvedTickets = tickets.filter(t => t.paymentStatus === 'approved');
+    const totalSpent = approvedTickets.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+    const currency = tickets[0]?.currency || 'PEN';
+
+    // Determine preferred payment method
+    const onlineCount = tickets.filter(t => t.paymentMethod === 'online').length;
+    const offlineCount = tickets.filter(t => t.paymentMethod === 'offline').length;
+    let preferredPaymentMethod: 'online' | 'offline' | 'mixed' = 'mixed';
+
+    if (onlineCount > offlineCount * 2) {
+      preferredPaymentMethod = 'online';
+    } else if (offlineCount > onlineCount * 2) {
+      preferredPaymentMethod = 'offline';
+    }
+
+    return {
+      success: true,
+      summary: {
+        totalTickets,
+        pendingPayments,
+        upcomingEvents,
+        totalSpent,
+        currency,
+        preferredPaymentMethod
+      }
+    };
+
+  } catch (error: any) {
+    console.error('Error fetching user tickets summary:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al cargar resumen de tickets'
+    };
+  }
+}
+
+/**
+ * Get all tickets for a specific user with full details
+ * Used in the dedicated user tickets page
+ */
+export async function getUserTickets(userId: string): Promise<{
+  success: boolean;
+  tickets?: any[];
+  events?: any[];
+  installments?: any[];
+  error?: string;
+}> {
+  'use server';
+
+  try {
+    await requireAdmin();
+
+    // Get all tickets for this user
+    const tickets = await ticketTransactionsCollection.query([
+      { field: 'userId', operator: '==', value: userId }
+    ], 'createdAt', 'desc');
+
+    if (tickets.length === 0) {
+      return {
+        success: true,
+        tickets: [],
+        events: [],
+        installments: []
+      };
+    }
+
+    // Get unique event IDs
+    const eventIds = [...new Set(tickets.map(t => t.eventId).filter(Boolean))];
+
+    // Load events
+    const events = await eventsCollection.getByIds(eventIds);
+    const eventMap = new Map(events.map(e => [e.id, e]));
+
+    // Get all installments for installment tickets
+    const installmentTicketIds = tickets
+      .filter(t => t.paymentType === 'installment')
+      .map(t => t.id);
+
+    let allInstallments: any[] = [];
+    if (installmentTicketIds.length > 0) {
+      // Load installments for all tickets at once
+      const installmentPromises = installmentTicketIds.map(ticketId =>
+        paymentInstallmentsCollection.query([
+          { field: 'transactionId', operator: '==', value: ticketId }
+        ], 'installmentNumber', 'asc')
+      );
+      const installmentResults = await Promise.all(installmentPromises);
+      allInstallments = installmentResults.flat();
+    }
+
+    // Enrich tickets with event data
+    const enrichedTickets = tickets.map(ticket => {
+      const event = eventMap.get(ticket.eventId);
+      return {
+        ...ticket,
+        eventName: event?.name || 'Evento desconocido',
+        eventDate: event?.startDate,
+        eventLocation: event?.location?.venue,
+        eventImage: event?.mainImageUrl
+      };
+    });
+
+    return {
+      success: true,
+      tickets: enrichedTickets,
+      events,
+      installments: allInstallments
+    };
+
+  } catch (error: any) {
+    console.error('Error fetching user tickets:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al cargar tickets del usuario'
+    };
+  }
+}
+
+/**
+ * Update user profile with expanded fields
+ */
+export async function updateUserProfileExpanded(
+  userId: string,
+  data: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    phonePrefix?: string;
+    documentType?: 'dni' | 'passport' | 'rut';
+    documentNumber?: string;
+    country?: string;
+    preferredCurrency?: string;
+    role?: 'user' | 'admin' | 'moderator';
+    isActive?: boolean;
+    emailVerified?: boolean;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  'use server';
+
+  try {
+    await requireAdmin();
+
+    // Update user document
+    await usersCollection.update(userId, {
+      ...data,
+      updatedAt: new Date()
+    });
+
+    return { success: true };
+
+  } catch (error: any) {
+    console.error('Error updating user profile:', error);
+    return {
+      success: false,
+      error: error.message || 'Error al actualizar perfil de usuario'
+    };
+  }
+}

@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Search, 
-  Shield, 
-  Mail, 
+import {
+  Users,
+  Search,
+  Shield,
+  Mail,
   Calendar,
   MoreHorizontal,
   Edit,
@@ -25,7 +25,8 @@ import {
   Copy,
   Clock,
   MapPin,
-  Info
+  Info,
+  Ticket
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,6 +58,8 @@ import { AuthGuard } from '@/components/admin/AuthGuard';
 import { usersCollection } from '@/lib/firebase/collections';
 import { User } from '@/lib/types';
 import { QueryDocumentSnapshot } from 'firebase/firestore';
+import { getUserTicketsSummary } from '@/lib/actions';
+import { useRouter } from 'next/navigation';
 
 const PAGE_SIZE = 10;
 
@@ -83,10 +86,11 @@ function InfoRow({ label, value, icon, highlight }: { label: string, value: any,
 }
 
 function UsersAdminContent() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Pagination State
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | undefined>(undefined);
   const [hasMore, setHasMore] = useState(false);
@@ -106,8 +110,17 @@ function UsersAdminContent() {
     firstName: '',
     lastName: '',
     phone: '',
+    phonePrefix: '',
+    documentType: 'dni' as 'dni' | 'passport' | 'rut',
+    documentNumber: '',
+    country: '',
+    preferredCurrency: '',
+    emailVerified: false,
   });
   const [saving, setSaving] = useState(false);
+
+  // Tickets Summary State
+  const [userTicketsSummary, setUserTicketsSummary] = useState<Map<string, any>>(new Map());
 
   useEffect(() => {
     loadUsers(true);
@@ -174,11 +187,38 @@ function UsersAdminContent() {
       setLastDoc(result.lastDoc);
       setHasMore(result.hasMore);
 
+      // Load tickets summary for each user in parallel
+      loadTicketsSummaries(result.data as User[]);
+
     } catch (error) {
       console.error('Error loading users:', error);
       toast.error('Error al cargar usuarios. Intenta buscar por email exacto.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTicketsSummaries = async (usersList: User[]) => {
+    try {
+      // Load tickets summary for each user in parallel
+      const summaryPromises = usersList.map(user =>
+        getUserTicketsSummary(user.id)
+      );
+
+      const summaries = await Promise.all(summaryPromises);
+
+      // Create a map of userId -> summary
+      const summaryMap = new Map();
+      usersList.forEach((user, index) => {
+        if (summaries[index].success && summaries[index].summary) {
+          summaryMap.set(user.id, summaries[index].summary);
+        }
+      });
+
+      setUserTicketsSummary(summaryMap);
+    } catch (error) {
+      console.error('Error loading tickets summaries:', error);
+      // Don't show error to user, just log it
     }
   };
 
@@ -270,6 +310,12 @@ function UsersAdminContent() {
       firstName: user.firstName || '',
       lastName: user.lastName || '',
       phone: user.phone || '',
+      phonePrefix: user.phonePrefix || '',
+      documentType: user.documentType || 'dni',
+      documentNumber: user.documentNumber || '',
+      country: user.country || '',
+      preferredCurrency: user.preferredCurrency || '',
+      emailVerified: user.emailVerified ?? false,
     });
     setIsEditOpen(true);
   };
@@ -284,8 +330,14 @@ function UsersAdminContent() {
         firstName: editForm.firstName,
         lastName: editForm.lastName,
         phone: editForm.phone,
+        phonePrefix: editForm.phonePrefix,
+        documentType: editForm.documentType,
+        documentNumber: editForm.documentNumber,
+        country: editForm.country,
+        preferredCurrency: editForm.preferredCurrency,
+        emailVerified: editForm.emailVerified,
       });
-      
+
       toast.success('Usuario actualizado correctamente');
       setIsEditOpen(false);
       // Refresh current list locally
@@ -426,9 +478,10 @@ function UsersAdminContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 md:gap-8 justify-between md:justify-end">
-                    <div className="flex items-center gap-2">
-                      <Badge 
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+                    {/* Badges Column */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge
                         variant={user.isActive ? 'default' : 'secondary'}
                         className={user.isActive ? "bg-green-500/10 text-green-600 hover:bg-green-500/20" : "bg-gray-500/10 text-gray-600"}
                       >
@@ -437,35 +490,120 @@ function UsersAdminContent() {
                       <Badge variant="outline" className="capitalize min-w-[70px] justify-center">
                         {user.role || 'user'}
                       </Badge>
+
+                      {/* Tickets Summary Badges */}
+                      {(() => {
+                        const summary = userTicketsSummary.get(user.id);
+                        if (summary) {
+                          return (
+                            <>
+                              {summary.totalTickets > 0 && (
+                                <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+                                  <Ticket className="h-3 w-3 mr-1" />
+                                  {summary.totalTickets} ticket{summary.totalTickets !== 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                              {summary.pendingPayments > 0 && (
+                                <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {summary.pendingPayments} pendiente{summary.pendingPayments !== 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                              {summary.upcomingEvents > 0 && (
+                                <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/20">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {summary.upcomingEvents} próximo{summary.upcomingEvents !== 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                              {summary.preferredPaymentMethod === 'online' && (
+                                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                                  <CreditCard className="h-3 w-3 mr-1" />
+                                  Online
+                                </Badge>
+                              )}
+                              {summary.preferredPaymentMethod === 'offline' && (
+                                <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20">
+                                  <CreditCard className="h-3 w-3 mr-1" />
+                                  Offline
+                                </Badge>
+                              )}
+                              {/* Profile completeness */}
+                              {!user.firstName || !user.lastName || !user.phone || !user.documentNumber ? (
+                                <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  Perfil incompleto
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Perfil completo
+                                </Badge>
+                              )}
+                            </>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
 
-                    <div className="text-xs text-muted-foreground hidden lg:block text-right min-w-[120px]">
-                      <p>Registrado:</p>
-                      <p>{formatDate(user.createdAt).split(',')[0]}</p>
-                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Ver Tickets Button */}
+                      {(() => {
+                        const summary = userTicketsSummary.get(user.id);
+                        if (summary && summary.totalTickets > 0) {
+                          return (
+                            <Button
+                              onClick={() => router.push(`/admin/users/${user.id}/tickets`)}
+                              variant="outline"
+                              size="sm"
+                              className="border-primary/30 text-primary hover:bg-primary/10"
+                            >
+                              <Ticket className="h-4 w-4 mr-1" />
+                              Ver Tickets
+                            </Button>
+                          );
+                        }
+                        return null;
+                      })()}
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewUser(user)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Ver Detalles
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => handleDeleteUser(user.id)}>
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {(() => {
+                            const summary = userTicketsSummary.get(user.id);
+                            if (summary && summary.totalTickets > 0) {
+                              return (
+                                <>
+                                  <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}/tickets`)}>
+                                    <Ticket className="h-4 w-4 mr-2" />
+                                    Ver Tickets
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              );
+                            }
+                            return null;
+                          })()}
+                          <DropdownMenuItem onClick={() => handleViewUser(user)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver Detalles
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => handleDeleteUser(user.id)}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -631,71 +769,275 @@ function UsersAdminContent() {
         </Dialog>
       )}
 
-      {/* Edit Dialog */}
+      {/* Edit Dialog - Expandido con Tabs */}
       {userToEdit && (
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#1A1D21]">
             <DialogHeader>
-              <DialogTitle>Editar Usuario</DialogTitle>
+              <DialogTitle className="text-foreground">Editar Usuario</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Actualiza la información del usuario. Los campos marcados con * son obligatorios.
+              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Nombre</Label>
-                  <Input 
-                    value={editForm.firstName} 
-                    onChange={(e) => setEditForm(prev => ({ ...prev, firstName: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Apellidos</Label>
-                  <Input 
-                    value={editForm.lastName} 
-                    onChange={(e) => setEditForm(prev => ({ ...prev, lastName: e.target.value }))}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Teléfono</Label>
-                <Input 
-                  value={editForm.phone} 
-                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
-                />
-              </div>
 
-              <div className="space-y-2">
-                <Label>Rol</Label>
-                <Select 
-                  value={editForm.role} 
-                  onValueChange={(value) => setEditForm(prev => ({ ...prev, role: value }))}
+            <Tabs defaultValue="personal" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 bg-muted">
+                <TabsTrigger
+                  value="personal"
+                  className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">Usuario</SelectItem>
-                    <SelectItem value="moderator">Moderador</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  Información Personal
+                </TabsTrigger>
+                <TabsTrigger
+                  value="contact"
+                  className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
+                >
+                  Contacto y Documento
+                </TabsTrigger>
+                <TabsTrigger
+                  value="account"
+                  className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
+                >
+                  Configuración
+                </TabsTrigger>
+              </TabsList>
 
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <Label className="cursor-pointer" htmlFor="active-mode">
-                  Estado Activo
-                </Label>
-                <Switch 
-                  id="active-mode"
-                  checked={editForm.isActive}
-                  onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, isActive: checked }))}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancelar</Button>
+              {/* Tab 1: Información Personal */}
+              <TabsContent value="personal" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-foreground">Nombre *</Label>
+                    <Input
+                      id="firstName"
+                      value={editForm.firstName}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, firstName: e.target.value }))}
+                      placeholder="Nombre del usuario"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-foreground">Apellidos *</Label>
+                    <Input
+                      id="lastName"
+                      value={editForm.lastName}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, lastName: e.target.value }))}
+                      placeholder="Apellidos del usuario"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="country" className="text-foreground">País</Label>
+                  <Select
+                    value={editForm.country}
+                    onValueChange={(value) => setEditForm(prev => ({ ...prev, country: value }))}
+                  >
+                    <SelectTrigger id="country">
+                      <SelectValue placeholder="Seleccionar país" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Chile">Chile</SelectItem>
+                      <SelectItem value="Perú">Perú</SelectItem>
+                      <SelectItem value="Colombia">Colombia</SelectItem>
+                      <SelectItem value="Argentina">Argentina</SelectItem>
+                      <SelectItem value="México">México</SelectItem>
+                      <SelectItem value="España">España</SelectItem>
+                      <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
+                      <SelectItem value="Brasil">Brasil</SelectItem>
+                      <SelectItem value="Ecuador">Ecuador</SelectItem>
+                      <SelectItem value="Venezuela">Venezuela</SelectItem>
+                      <SelectItem value="Uruguay">Uruguay</SelectItem>
+                      <SelectItem value="Paraguay">Paraguay</SelectItem>
+                      <SelectItem value="Bolivia">Bolivia</SelectItem>
+                      <SelectItem value="Otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="preferredCurrency" className="text-foreground">Moneda Preferida</Label>
+                  <Select
+                    value={editForm.preferredCurrency}
+                    onValueChange={(value) => setEditForm(prev => ({ ...prev, preferredCurrency: value }))}
+                  >
+                    <SelectTrigger id="preferredCurrency">
+                      <SelectValue placeholder="Seleccionar moneda" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CLP">CLP - Peso Chileno</SelectItem>
+                      <SelectItem value="PEN">PEN - Sol Peruano</SelectItem>
+                      <SelectItem value="COP">COP - Peso Colombiano</SelectItem>
+                      <SelectItem value="ARS">ARS - Peso Argentino</SelectItem>
+                      <SelectItem value="MXN">MXN - Peso Mexicano</SelectItem>
+                      <SelectItem value="USD">USD - Dólar Estadounidense</SelectItem>
+                      <SelectItem value="EUR">EUR - Euro</SelectItem>
+                      <SelectItem value="BRL">BRL - Real Brasileño</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+
+              {/* Tab 2: Contacto y Documento */}
+              <TabsContent value="contact" className="space-y-4 mt-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phonePrefix" className="text-foreground">Prefijo</Label>
+                    <Input
+                      id="phonePrefix"
+                      value={editForm.phonePrefix}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, phonePrefix: e.target.value }))}
+                      placeholder="+56"
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="phone" className="text-foreground">Teléfono *</Label>
+                    <Input
+                      id="phone"
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="912345678"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="documentType" className="text-foreground">Tipo de Documento</Label>
+                  <Select
+                    value={editForm.documentType}
+                    onValueChange={(value) => setEditForm(prev => ({ ...prev, documentType: value as 'dni' | 'passport' | 'rut' }))}
+                  >
+                    <SelectTrigger id="documentType">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dni">DNI</SelectItem>
+                      <SelectItem value="passport">Pasaporte</SelectItem>
+                      <SelectItem value="rut">RUT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="documentNumber" className="text-foreground">Número de Documento</Label>
+                  <Input
+                    id="documentNumber"
+                    value={editForm.documentNumber}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, documentNumber: e.target.value }))}
+                    placeholder="12345678"
+                  />
+                </div>
+
+                {userToEdit.email && (
+                  <div className="p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-foreground">Email:</span>
+                      <span className="text-muted-foreground">{userToEdit.email}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      El email no se puede editar desde aquí
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Tab 3: Configuración de Cuenta */}
+              <TabsContent value="account" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="role" className="text-foreground">Rol</Label>
+                  <Select
+                    value={editForm.role}
+                    onValueChange={(value) => setEditForm(prev => ({ ...prev, role: value }))}
+                  >
+                    <SelectTrigger id="role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">Usuario</SelectItem>
+                      <SelectItem value="moderator">Moderador</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="cursor-pointer text-foreground" htmlFor="active-mode">
+                      Estado Activo
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Desactivar impide que el usuario inicie sesión
+                    </p>
+                  </div>
+                  <Switch
+                    id="active-mode"
+                    checked={editForm.isActive}
+                    onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, isActive: checked }))}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="cursor-pointer text-foreground" htmlFor="email-verified">
+                      Email Verificado
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Marcar como verificado manualmente
+                    </p>
+                  </div>
+                  <Switch
+                    id="email-verified"
+                    checked={editForm.emailVerified}
+                    onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, emailVerified: checked }))}
+                  />
+                </div>
+
+                {/* Info sobre proveedor de autenticación */}
+                {userToEdit.authProvider && (
+                  <div className="p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-foreground">Proveedor de autenticación:</span>
+                      <Badge variant="outline" className="capitalize">
+                        {userToEdit.authProvider}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Este campo no se puede editar
+                    </p>
+                  </div>
+                )}
+
+                {/* Información de último acceso */}
+                {userToEdit.lastLogin && (
+                  <div className="p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex items-center gap-2 text-sm mb-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-foreground">Último acceso:</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(userToEdit.lastLogin)}
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={saving}>
+                Cancelar
+              </Button>
               <Button onClick={handleSaveEdit} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Guardar Cambios'}
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Guardar Cambios
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
