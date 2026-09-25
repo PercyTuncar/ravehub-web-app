@@ -5,6 +5,7 @@ import { Download, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { parseLocalDate } from '@/lib/utils/date-timezone';
 
 interface TicketDownloadProps {
   transactionId: string;
@@ -86,7 +87,8 @@ export function TicketDownload({
 
     // Priority 3: Check scheduled availability date
     if (downloadAvailableDate) {
-      const availableDate = new Date(downloadAvailableDate);
+      // ✅ CORRECCIÓN CRÍTICA: Usar parseLocalDate para mantener zona horaria correcta
+      const availableDate = parseLocalDate(downloadAvailableDate);
       const now = new Date();
       if (availableDate > now) {
         return {
@@ -115,7 +117,8 @@ export function TicketDownload({
   // Filter uploaded files by availability date
   const availableUploadedFiles = ticketsUploadedFiles?.filter(file => {
     if (!file.availableDate) return true; // No date restriction
-    return new Date() >= new Date(file.availableDate);
+    // ✅ CORRECCIÓN CRÍTICA: Usar parseLocalDate para validación correcta
+    return new Date() >= parseLocalDate(file.availableDate);
   }) || [];
 
   const hasAvailableFiles = availableUploadedFiles.length > 0 || (ticketsFiles && ticketsFiles.length > 0);
@@ -147,7 +150,8 @@ export function TicketDownload({
   // Si el pago está aprobado, verificar si realmente hay algo que mostrar
   if (paymentStatus === 'approved') {
     const hasManualUploadPending = deliveryMode === 'manualUpload' && !hasAvailableFiles;
-    const hasFutureDateRestriction = downloadAvailableDate && new Date() < new Date(downloadAvailableDate);
+    // ✅ CORRECCIÓN CRÍTICA: Usar parseLocalDate para comparación de fechas
+    const hasFutureDateRestriction = downloadAvailableDate && new Date() < parseLocalDate(downloadAvailableDate);
 
     // Si no hay archivos Y tampoco hay fecha futura, no mostrar nada
     // El caso de manual upload sin archivos SÍ debería mostrar "en preparación"
@@ -185,6 +189,8 @@ export function TicketDownload({
 
   // Payment approved but date not reached
   if (!statusInfo.canDownload && downloadAvailableDate) {
+    // ✅ CORRECCIÓN CRÍTICA: Usar parseLocalDate para formato correcto
+    const availableDate = parseLocalDate(downloadAvailableDate);
     return (
       <Card>
         <CardContent className="p-4">
@@ -194,7 +200,7 @@ export function TicketDownload({
               <p className="text-sm font-medium mb-1">Pago Completado</p>
               <p className="text-sm text-muted-foreground">
                 Los tickets estarán disponibles para descarga a partir del{' '}
-                {new Date(downloadAvailableDate).toLocaleDateString('es-ES', {
+                {availableDate.toLocaleDateString('es-ES', {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric',

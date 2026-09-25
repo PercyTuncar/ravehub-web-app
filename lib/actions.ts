@@ -415,6 +415,7 @@ export async function createManualTicketTransaction(data: {
   ticketsDownloadAvailableDate?: string; // ISO String
   paidInstallmentsIndices?: number[]; // -1 for reservation, 0+ for installments
   installmentProofs?: Record<number, string>; // { -1: "url1", 0: "url2", ... }
+  installmentPaymentDates?: Record<number, string>; // ✅ NUEVO: { -1: "2024-08-05", 0: "2024-09-05", ... }
 }): Promise<{ success: boolean; error?: string; ticketId?: string }> {
   const startTime = Date.now();
   const callId = Math.random().toString(36).substring(7);
@@ -513,7 +514,14 @@ export async function createManualTicketTransaction(data: {
       if (data.reservationAmount && data.reservationAmount > 0) {
         const isReservationPaid = data.paidInstallmentsIndices?.includes(-1) ?? false;
         const reservationProof = data.installmentProofs?.[-1];
-        console.log(`   💰 Adelanto Inicial (#0): ${data.reservationAmount} ${eventCurrency} - ${isReservationPaid ? 'PAGADO' : 'PENDIENTE'}`);
+        const reservationPaymentDateStr = data.installmentPaymentDates?.[-1]; // ✅ String en formato YYYY-MM-DD
+
+        // ✅ CORRECCIÓN: Usar parseLocalDate para mantener la fecha correcta sin shift de zona horaria
+        const reservationPaymentDate = reservationPaymentDateStr
+          ? parseLocalDate(reservationPaymentDateStr).toISOString() // Parsear como fecha local y convertir a ISO
+          : now;
+
+        console.log(`   💰 Adelanto Inicial (#0): ${data.reservationAmount} ${eventCurrency} - ${isReservationPaid ? 'PAGADO' : 'PENDIENTE'}${reservationPaymentDateStr ? ` - Fecha: ${reservationPaymentDateStr}` : ''}`);
         operations.push({
           collection: 'paymentInstallments',
           data: {
@@ -525,7 +533,11 @@ export async function createManualTicketTransaction(data: {
             status: isReservationPaid ? 'paid' : 'pending',
             adminApproved: isReservationPaid,
             originalPhaseId: data.phaseId, // Track original phase
-            ...(isReservationPaid ? { paidAt: now, approvedAt: now, actualPaymentDate: now } : {}),
+            ...(isReservationPaid ? {
+              paidAt: reservationPaymentDate, // ✅ ISO String con fecha local preservada
+              approvedAt: now,
+              actualPaymentDate: reservationPaymentDate // ✅ ISO String con fecha local preservada
+            } : {}),
             ...(reservationProof ? { proofUrl: reservationProof } : {}),
           },
         });
@@ -534,7 +546,14 @@ export async function createManualTicketTransaction(data: {
       for (const [index, installment] of plan.installments.entries()) {
         const isPaid = data.paidInstallmentsIndices?.includes(index) ?? false;
         const proof = data.installmentProofs?.[index];
-        console.log(`   💳 Cuota #${installment.installmentNumber}: ${installment.amount} ${eventCurrency} - ${isPaid ? 'PAGADO' : 'PENDIENTE'}`);
+        const paymentDateStr = data.installmentPaymentDates?.[index]; // ✅ String en formato YYYY-MM-DD
+
+        // ✅ CORRECCIÓN: Usar parseLocalDate para mantener la fecha correcta sin shift de zona horaria
+        const paymentDate = paymentDateStr
+          ? parseLocalDate(paymentDateStr).toISOString() // Parsear como fecha local y convertir a ISO
+          : now;
+
+        console.log(`   💳 Cuota #${installment.installmentNumber}: ${installment.amount} ${eventCurrency} - ${isPaid ? 'PAGADO' : 'PENDIENTE'}${paymentDateStr ? ` - Fecha: ${paymentDateStr}` : ''}`);
         operations.push({
           collection: 'paymentInstallments',
           data: {
@@ -547,7 +566,11 @@ export async function createManualTicketTransaction(data: {
             adminApproved: isPaid,
             originalPhaseId: data.phaseId, // Track original phase
             originalAmount: installment.amount, // Track original amount
-            ...(isPaid ? { paidAt: now, approvedAt: now, actualPaymentDate: now } : {}),
+            ...(isPaid ? {
+              paidAt: paymentDate, // ✅ ISO String con fecha local preservada
+              approvedAt: now,
+              actualPaymentDate: paymentDate // ✅ ISO String con fecha local preservada
+            } : {}),
             ...(proof ? { proofUrl: proof } : {}),
           },
         });

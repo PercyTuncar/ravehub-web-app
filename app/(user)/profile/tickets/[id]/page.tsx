@@ -14,6 +14,7 @@ import { getTicketInstallments, updateTicketPaymentStatus, recalculateTicketInst
 import { InstallmentTimeline } from '@/components/tickets/InstallmentTimeline';
 import { TicketDownload } from '@/components/common/TicketDownload';
 import { CardPaymentModal } from '@/components/checkout/CardPaymentModal';
+import { parseLocalDate } from '@/lib/utils/date-timezone';
 
 import { toast } from 'sonner';
 import { getValidDate } from '@/lib/utils/date';
@@ -305,7 +306,8 @@ export default function TicketDetailPage() {
                         {(() => {
                             const totalTickets = displayItems.reduce((sum: number, item: any) => sum + (item?.quantity || 0), 0);
                             const downloadDate = ticket.ticketsDownloadAvailableDate || ticket.ticketDownloadAvailableDate;
-                            const validDownloadDate = getValidDate(downloadDate);
+                            // ✅ CORRECCIÓN CRÍTICA: Usar parseLocalDate para zona horaria correcta
+                            const validDownloadDate = downloadDate ? parseLocalDate(downloadDate) : null;
                             const canDownload = isFullyPaid && validDownloadDate && new Date() >= validDownloadDate;
 
                             // Get individual uploaded files
@@ -617,6 +619,8 @@ export default function TicketDetailPage() {
                                                                 <Download className="w-4 h-4 mr-2" />
                                                                 {!isFullyPaid
                                                                     ? 'Completa el pago para descargar'
+                                                                    : !canDownload && validDownloadDate
+                                                                    ? `Disponible: ${validDownloadDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`
                                                                     : !canDownload
                                                                     ? 'Disponible próximamente'
                                                                     : `Descargar Ticket #${ticketData.number}`}
@@ -629,7 +633,9 @@ export default function TicketDetailPage() {
                                                         className="w-full rounded-xl border border-gray-200 bg-gray-100 py-3 text-sm font-bold text-gray-400 cursor-not-allowed disabled:!bg-gray-100 disabled:!text-gray-400 disabled:!opacity-100"
                                                     >
                                                         <Clock className="w-4 h-4 mr-2" />
-                                                        Descarga próximamente
+                                                        {validDownloadDate
+                                                            ? `Disponible: ${validDownloadDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                                                            : 'Descarga próximamente'}
                                                     </Button>
                                                 )}
                                             </div>

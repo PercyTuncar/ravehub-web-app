@@ -71,6 +71,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
     const [isPaid, setIsPaid] = useState(false); // For Full Payment
     const [paidInstallments, setPaidInstallments] = useState<number[]>([]); // Indices of paid installments
     const [installmentProofs, setInstallmentProofs] = useState<Record<number, string>>({}); // { -1: "url", 0: "url", ... }
+    const [installmentPaymentDates, setInstallmentPaymentDates] = useState<Record<number, string>>({}); // { -1: "2024-08-05", 0: "2024-09-05", ... }
 
     // Installments Config
     const [reservationAmount, setReservationAmount] = useState(50);
@@ -181,18 +182,59 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
         }
     };
 
+    // ✅ NUEVA FUNCIÓN: Resetear completamente el formulario
+    const resetForm = () => {
+        setStep(1);
+        setSelectedUserId('');
+        setSelectedEventId('');
+        setSelectedPhaseId('');
+        setSelectedZoneId('');
+        setQuantity(1);
+        setAssignmentType('sale');
+        setPaymentType('full');
+        setIsPaid(false);
+        setPaidInstallments([]);
+        setInstallmentProofs({});
+        setInstallmentPaymentDates({}); // ✅ Limpiar fechas de pago
+        setReservationAmount(50);
+        setInstallmentsCount(3);
+        setReservationDate(new Date().toISOString().split('T')[0]);
+        setInstallmentPlan(null);
+        setTicketsDownloadAvailableDate('');
+    };
+
+    // ✅ NUEVA FUNCIÓN: Manejador de cierre que resetea el formulario
+    const handleClose = () => {
+        if (!isSubmitting) {
+            resetForm();
+            onClose();
+        }
+    };
+
     const handleToggleInstallmentPaid = (index: number) => {
         if (paidInstallments.includes(index)) {
-            // Unchecking - remove from paid list AND remove proof
+            // Unchecking - remove from paid list AND remove proof AND remove payment date
             setPaidInstallments(paidInstallments.filter(i => i !== index));
             setInstallmentProofs(prev => {
                 const newProofs = { ...prev };
                 delete newProofs[index];
                 return newProofs;
             });
+            setInstallmentPaymentDates(prev => {
+                const newDates = { ...prev };
+                delete newDates[index];
+                return newDates;
+            });
         } else {
-            // Checking - add to paid list
+            // Checking - add to paid list and set default payment date to today
             setPaidInstallments([...paidInstallments, index]);
+            // Set default payment date to today if not already set
+            if (!installmentPaymentDates[index]) {
+                setInstallmentPaymentDates(prev => ({
+                    ...prev,
+                    [index]: new Date().toISOString().split('T')[0]
+                }));
+            }
         }
     };
 
@@ -260,7 +302,8 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
 
                 // Pass new flags
                 paidInstallmentsIndices: (assignmentType === 'sale' && paymentType === 'installment') ? paidInstallments : undefined,
-                installmentProofs: (assignmentType === 'sale' && paymentType === 'installment') ? installmentProofs : undefined
+                installmentProofs: (assignmentType === 'sale' && paymentType === 'installment') ? installmentProofs : undefined,
+                installmentPaymentDates: (assignmentType === 'sale' && paymentType === 'installment') ? installmentPaymentDates : undefined // ✅ NUEVO: Fechas reales de pago
             });
 
             console.log('📥 [MANUAL_TICKET_MODAL] Respuesta del servidor:', result);
@@ -269,13 +312,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                 toast.success('Ticket asignado correctamente');
                 console.log('✅ [MANUAL_TICKET_MODAL] Ticket creado exitosamente:', result.ticketId);
                 onSuccess();
-                onClose();
-                // Reset form
-                setStep(1);
-                setSelectedUserId('');
-                setSelectedEventId('');
-                setAssignmentType('sale');
-                setIsPaid(false);
+                handleClose(); // ✅ CORRECCIÓN CRÍTICA: Usar handleClose para resetear y cerrar
             } else {
                 console.error('❌ [MANUAL_TICKET_MODAL] Error del servidor:', result.error);
                 toast.error(result.error || 'Error al asignar ticket');
@@ -290,7 +327,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !isSubmitting && onClose()}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Asignación Manual de Ticket</DialogTitle>
@@ -610,6 +647,7 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                                     <TableHead className="py-2 h-8 text-xs">Vencimiento</TableHead>
                                                                     <TableHead className="py-2 h-8 text-xs text-right">Monto</TableHead>
                                                                     <TableHead className="py-2 h-8 text-xs text-center">¿Pagado?</TableHead>
+                                                                    <TableHead className="py-2 h-8 text-xs">Fecha de Pago</TableHead>
                                                                     <TableHead className="py-2 h-8 text-xs">Comprobante</TableHead>
                                                                 </TableRow>
                                                             </TableHeader>
@@ -631,6 +669,17 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                                             checked={paidInstallments.includes(-1)}
                                                                             onCheckedChange={() => handleToggleInstallmentPaid(-1)}
                                                                         />
+                                                                    </TableCell>
+                                                                    <TableCell className="py-2">
+                                                                        {paidInstallments.includes(-1) && (
+                                                                            <Input
+                                                                                type="date"
+                                                                                value={installmentPaymentDates[-1] || new Date().toISOString().split('T')[0]}
+                                                                                onChange={(e) => setInstallmentPaymentDates(prev => ({ ...prev, [-1]: e.target.value }))}
+                                                                                className="h-7 text-xs w-32"
+                                                                                max={new Date().toISOString().split('T')[0]}
+                                                                            />
+                                                                        )}
                                                                     </TableCell>
                                                                     <TableCell className="py-2 text-center">
                                                                         {paidInstallments.includes(-1) && (
@@ -690,6 +739,17 @@ export function ManualTicketAssignmentModal({ isOpen, onClose, onSuccess }: Manu
                                                                                 checked={paidInstallments.includes(idx)}
                                                                                 onCheckedChange={() => handleToggleInstallmentPaid(idx)}
                                                                             />
+                                                                        </TableCell>
+                                                                        <TableCell className="py-2">
+                                                                            {paidInstallments.includes(idx) && (
+                                                                                <Input
+                                                                                    type="date"
+                                                                                    value={installmentPaymentDates[idx] || new Date().toISOString().split('T')[0]}
+                                                                                    onChange={(e) => setInstallmentPaymentDates(prev => ({ ...prev, [idx]: e.target.value }))}
+                                                                                    className="h-7 text-xs w-32"
+                                                                                    max={new Date().toISOString().split('T')[0]}
+                                                                                />
+                                                                            )}
                                                                         </TableCell>
                                                                         <TableCell className="py-2 text-center">
                                                                             {paidInstallments.includes(idx) && (
