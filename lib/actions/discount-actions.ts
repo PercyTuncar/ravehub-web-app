@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { eventsCollection, clearCache } from '@/lib/firebase/collections';
+import { eventsCollection } from '@/lib/firebase/admin-collections';
+import { clearCache } from '@/lib/firebase/collections';
 
 export async function updateEventDiscount(
   eventId: string,
