@@ -1349,7 +1349,7 @@ export class SchemaGenerator {
     // Mejorar fechas con zona horaria explícita (recomendado por Google)
     // https://developers.google.com/search/docs/appearance/structured-data/article
     const datePublished = toISOWithTimezone(post.publishDate || post.createdAt);
-    const dateModified = toISOWithTimezone(post.updatedDate || post.updatedAt || post.publishDate || post.createdAt);
+    const dateModified = toISOWithTimezone(post.updatedDate || post.publishDate || post.createdAt);
 
     const schema: BlogPostingSchema = {
       '@context': 'https://schema.org',

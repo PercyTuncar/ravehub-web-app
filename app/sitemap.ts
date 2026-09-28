@@ -158,7 +158,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     posts.forEach((post: any) => {
       const publishDate = toValidDate(post.publishDate || post.createdAt);
-      const lastModified = toValidDate(post.updatedDate || post.updatedAt);
+      const lastModified = toValidDate(post.updatedDate);
 
       // Calculate age of the post
       const daysOld = publishDate

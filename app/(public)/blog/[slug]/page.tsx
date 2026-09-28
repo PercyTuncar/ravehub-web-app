@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
         description: post.seoDescription || post.excerpt,
         type: 'article',
         publishedTime: toISOWithTimezone(post.publishDate || post.createdAt),
-        modifiedTime: toISOWithTimezone(post.updatedDate || post.updatedAt || post.publishDate || post.createdAt),
+        modifiedTime: toISOWithTimezone(post.updatedDate || post.publishDate || post.createdAt),
         authors: [post.author],
         images: post.featuredImageUrl ? [{
           url: post.featuredImageUrl,

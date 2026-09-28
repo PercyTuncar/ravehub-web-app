@@ -70,7 +70,7 @@ export function BlogPostDetail({ post }: BlogPostDetailProps) {
           {/* Metadata del post: fechas de publicación/actualización y tiempo de lectura */}
           <BlogPostMeta
             publishDate={post.publishDate || post.createdAt}
-            updatedDate={post.updatedDate || post.updatedAt}
+            updatedDate={post.updatedDate}
             readTime={estimatedReadTime}
             author={post.author}
             showUpdateBadge={true}
