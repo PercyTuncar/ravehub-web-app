@@ -18,6 +18,7 @@ import {
 import { BlogPost } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { BlogPostMeta } from '@/components/blog/BlogPostMeta';
 // Card, CardContent removed as Sidebar was removed/simplified
 
 
@@ -65,6 +66,15 @@ export function BlogPostDetail({ post }: BlogPostDetailProps) {
               {post.excerpt}
             </div>
           )}
+
+          {/* Metadata del post: fechas de publicación/actualización y tiempo de lectura */}
+          <BlogPostMeta
+            publishDate={post.publishDate || post.createdAt}
+            updatedDate={post.updatedDate || post.updatedAt}
+            readTime={estimatedReadTime}
+            author={post.author}
+            showUpdateBadge={true}
+          />
 
           {/* Main content */}
           <div className="space-y-8">

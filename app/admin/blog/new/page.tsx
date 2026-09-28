@@ -18,6 +18,8 @@ import { EventSelector } from '@/components/admin/EventSelector';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useEffect } from 'react';
+import { notifyBlogPostUpdate } from '@/lib/actions/indexnow-actions';
+import { toast } from 'sonner';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -128,9 +130,23 @@ export default function NewBlogPostPage() {
       // Revalidate sitemap when post is published
       await revalidateSitemap();
 
+      // 🚀 NUEVO: Notificar a motores de búsqueda cuando se publica
+      if (postData.slug) {
+        const result = await notifyBlogPostUpdate(postData.slug);
+        if (result.success) {
+          toast.success('¡Post publicado y notificado a motores de búsqueda! 🎉');
+        } else {
+          toast.success('Post publicado correctamente');
+          console.warn('IndexNow notification failed:', result.error);
+        }
+      } else {
+        toast.success('Post publicado correctamente');
+      }
+
       router.push(`/admin/blog/${postId}`);
     } catch (error) {
       console.error('Error publishing post:', error);
+      toast.error('Error al publicar el post');
     } finally {
       setSaving(false);
     }

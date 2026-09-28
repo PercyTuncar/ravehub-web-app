@@ -20,6 +20,8 @@ import { revalidateBlogPost, revalidateBlogListing } from '@/lib/revalidate';
 import { SchemaGenerator } from '@/lib/seo/schema-generator';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { User as UserIcon } from 'lucide-react';
+import { notifyBlogPostUpdate } from '@/lib/actions/indexnow-actions';
+import { toast } from 'sonner';
 
 // Helper function to revalidate sitemap
 async function revalidateSitemap() {
@@ -118,9 +120,23 @@ export default function EditBlogPostPage() {
       // Revalidate sitemap when post is updated
       await revalidateSitemap();
 
+      // 🚀 NUEVO: Notificar a motores de búsqueda si el post está publicado
+      if (postData.status === 'published') {
+        const result = await notifyBlogPostUpdate(params.slug as string);
+        if (result.success) {
+          toast.success('Cambios guardados y notificados a motores de búsqueda');
+        } else {
+          toast.success('Cambios guardados');
+          console.warn('IndexNow notification failed:', result.error);
+        }
+      } else {
+        toast.success('Borrador guardado');
+      }
+
       router.push(`/admin/blog/${params.slug}`);
     } catch (error) {
       console.error('Error saving post:', error);
+      toast.error('Error al guardar los cambios');
     } finally {
       setSaving(false);
     }
@@ -143,9 +159,19 @@ export default function EditBlogPostPage() {
       // Revalidate sitemap when post is published
       await revalidateSitemap();
 
+      // 🚀 NUEVO: Notificar a motores de búsqueda cuando se publica
+      const result = await notifyBlogPostUpdate(params.slug as string);
+      if (result.success) {
+        toast.success('¡Post publicado y notificado a motores de búsqueda! 🎉');
+      } else {
+        toast.success('Post publicado correctamente');
+        console.warn('IndexNow notification failed:', result.error);
+      }
+
       router.push(`/admin/blog/${params.slug}`);
     } catch (error) {
       console.error('Error publishing post:', error);
+      toast.error('Error al publicar el post');
     } finally {
       setSaving(false);
     }

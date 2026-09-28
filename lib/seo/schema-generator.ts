@@ -2,6 +2,7 @@ import { BlogPost } from '@/lib/types';
 import { getLanguageCodeFromCountry, getTimezoneOffset } from '@/lib/utils/country-language';
 import { getReadableFirebaseUrl } from '@/lib/utils/url-helpers';
 import { markdownToPlainText } from '@/lib/markdown/event-description';
+import { toISOWithTimezone } from '@/lib/utils/date-helpers';
 interface SchemaInput {
   type: 'blog' | 'news' | 'festival' | 'concert' | 'product' | 'dj';
   data: any;
@@ -1344,6 +1345,12 @@ export class SchemaGenerator {
     const articleId = `${this.BASE_URL}/blog/${post.slug}/#article`;
     const websiteId = `${this.BASE_URL}/#website`;
     const organizationId = `${this.BASE_URL}/#organization`;
+
+    // Mejorar fechas con zona horaria explícita (recomendado por Google)
+    // https://developers.google.com/search/docs/appearance/structured-data/article
+    const datePublished = toISOWithTimezone(post.publishDate || post.createdAt);
+    const dateModified = toISOWithTimezone(post.updatedDate || post.updatedAt || post.publishDate || post.createdAt);
+
     const schema: BlogPostingSchema = {
       '@context': 'https://schema.org',
       '@graph': [
@@ -1379,8 +1386,8 @@ export class SchemaGenerator {
           name: post.seoTitle || post.title,
           isPartOf: { '@id': websiteId },
           primaryImageOfPage: { '@id': `${this.BASE_URL}/blog/${post.slug}/#primaryimage` },
-          datePublished: post.publishDate || post.createdAt,
-          dateModified: post.updatedDate || post.createdAt,
+          datePublished: datePublished,
+          dateModified: dateModified,
         },
         {
           '@type': 'ImageObject',
@@ -1391,18 +1398,18 @@ export class SchemaGenerator {
           caption: post.imageAltTexts?.[post.featuredImageUrl] || post.title,
         },
         {
-          '@type': 'BlogPosting',
+          '@type': post.contentType || 'BlogPosting',
           '@id': articleId,
           isPartOf: { '@id': webpageId },
           mainEntityOfPage: { '@id': `${this.BASE_URL}/blog/${post.slug}` },
           headline: post.title,
           alternativeHeadline: post.excerpt,
           description: post.seoDescription || post.excerpt,
-          inLanguage: 'es-CL',
+          inLanguage: 'es-PE',
           articleSection: post.categories[0] || 'General',
           keywords: post.seoKeywords || post.tags,
-          datePublished: post.publishDate || post.createdAt,
-          dateModified: post.updatedDate || post.createdAt,
+          datePublished: datePublished,
+          dateModified: dateModified,
           author: [
             {
               '@type': 'Person',

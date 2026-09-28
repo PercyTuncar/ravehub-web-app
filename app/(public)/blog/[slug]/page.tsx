@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 // BlogPostDetail still used? Yes.
 import { BlogPostDetail } from '@/components/blog/BlogPostDetail';
 import { StickyEventCard } from '@/components/blog/StickyEventCard';
+import { toISOWithTimezone } from '@/lib/utils/date-helpers';
 
 // ISR: Revalidate every 5 minutes (300 seconds) + on-demand revalidation
 export const revalidate = 300;
@@ -60,8 +61,8 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
         title: post.seoTitle || post.title,
         description: post.seoDescription || post.excerpt,
         type: 'article',
-        publishedTime: post.publishDate || post.createdAt,
-        modifiedTime: post.updatedDate || post.updatedAt,
+        publishedTime: toISOWithTimezone(post.publishDate || post.createdAt),
+        modifiedTime: toISOWithTimezone(post.updatedDate || post.updatedAt || post.publishDate || post.createdAt),
         authors: [post.author],
         images: post.featuredImageUrl ? [{
           url: post.featuredImageUrl,
