@@ -355,7 +355,7 @@ export function MobileNavbar() {
                     href="/profile"
                     className="flex flex-col items-center justify-center gap-1"
                   >
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${isActive('/profile')
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-150 active:scale-95 ${isActive('/profile')
                         ? 'bg-[#FBA905] scale-110 shadow-[#FBA905]/50 ring-2 ring-[#FBA905]/30'
                         : 'bg-[#FBA905] hover:bg-[#F1A000] hover:scale-105 shadow-[#FBA905]/30'
                       }`}
@@ -380,7 +380,7 @@ export function MobileNavbar() {
                     onClick={handleProfileClick}
                     className="flex flex-col items-center justify-center gap-1"
                   >
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${isActive('/profile')
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-150 active:scale-95 ${isActive('/profile')
                         ? 'bg-[#FBA905] scale-110 shadow-[#FBA905]/50 ring-2 ring-[#FBA905]/30'
                         : 'bg-[#FBA905] hover:bg-[#F1A000] hover:scale-105 shadow-[#FBA905]/30'
                       }`}
@@ -396,7 +396,7 @@ export function MobileNavbar() {
               {user ? (
                 <Link
                   href="/profile/tickets"
-                  className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isActive('/profile/tickets')
+                  className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-colors duration-75 ${isActive('/profile/tickets')
                       ? 'text-[#FBA905]'
                       : 'text-[#53575A] active:text-[#FBA905]'
                     }`}
@@ -407,7 +407,7 @@ export function MobileNavbar() {
               ) : (
                 <button
                   onClick={handleTicketsClick}
-                  className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isActive('/profile/tickets')
+                  className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-colors duration-75 ${isActive('/profile/tickets')
                       ? 'text-[#FBA905]'
                       : 'text-[#53575A] active:text-[#FBA905]'
                     }`}
@@ -420,12 +420,12 @@ export function MobileNavbar() {
               {/* More Options */}
               <button
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isMoreMenuOpen
+                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-colors duration-75 ${isMoreMenuOpen
                     ? 'text-[#FBA905]'
                     : 'text-[#53575A] active:text-[#FBA905]'
                   }`}
               >
-                <div className={`transition-transform duration-300 ${isMoreMenuOpen ? 'rotate-45' : ''}`}>
+                <div className={`transition-transform duration-150 ${isMoreMenuOpen ? 'rotate-45' : ''}`}>
                   <Plus className="h-6 w-6" />
                 </div>
                 <span className="text-[10px] font-medium">Más</span>
@@ -449,7 +449,7 @@ function NavItem({ icon: Icon, label, href, isActive }: NavItemProps) {
   return (
     <Link
       href={href}
-      className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all duration-200 ${isActive
+      className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-colors duration-75 ${isActive
           ? 'text-[#FBA905]'
           : 'text-[#53575A] active:text-[#FBA905]'
         }`}
