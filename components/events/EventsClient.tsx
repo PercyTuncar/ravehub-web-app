@@ -1,9 +1,32 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { Event } from '@/lib/types';
 import EventGrid from '@/components/events/EventGrid';
-import FilterSidebar, { FilterState } from '@/components/events/FilterSidebar';
+import dynamic from 'next/dynamic';
+
+// Lazy load FilterSidebar for better initial performance
+// It's heavy and not needed immediately on mobile
+const FilterSidebar = dynamic(() => import('@/components/events/FilterSidebar'), {
+    ssr: false,
+    loading: () => (
+        <div className="w-full lg:w-80 shrink-0">
+            <div className="lg:sticky lg:top-24 h-fit rounded-3xl bg-zinc-900/20 animate-pulse">
+                <div className="hidden lg:block h-[600px]" />
+                <div className="lg:hidden h-10" />
+            </div>
+        </div>
+    )
+});
+
+export interface FilterState {
+    search: string;
+    type: string;
+    city: string;
+    date?: string | Date;
+    minPrice: string;
+    maxPrice: string;
+}
 
 interface EventsClientProps {
     initialEvents: Event[];

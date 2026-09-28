@@ -19,9 +19,9 @@ import {
   getCountFromServer,
 } from 'firebase/firestore';
 
-// In-memory cache for collections with short TTL
+// In-memory cache for collections with optimized TTL
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 60000; // 1 minute cache for frequently accessed data
+const CACHE_TTL = 600000; // 10 minutes cache (aligned with ISR revalidate) - optimized for performance
 
 function getCached<T>(key: string): T | null {
   const cached = cache.get(key);
