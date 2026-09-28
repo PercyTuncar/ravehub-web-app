@@ -118,9 +118,9 @@ function EventsPageShell({ children }: { children: React.ReactNode }) {
 
 // Server Component that fetches and renders events
 async function EventsContent({ searchParams }: { searchParams?: { tipo?: string; region?: string } }) {
-  // OPTIMIZED: Load only initial 12 events for fast mobile performance
-  // This reduces Firestore reads from 100 to 12 (88% reduction)
-  const allEvents = await getEventsList(12);
+  // OPTIMIZED: Load 50 events to ensure we have future events
+  // Progressive rendering happens client-side with IntersectionObserver
+  const allEvents = await getEventsList(50);
   const totalEvents = allEvents.length;
 
   // Generate ItemList schema for the events listing page
@@ -130,7 +130,7 @@ async function EventsContent({ searchParams }: { searchParams?: { tipo?: string;
     name: 'Eventos de Música Electrónica en Latinoamérica',
     description: 'Lista completa de eventos de música electrónica, festivales y conciertos en Latinoamérica',
     numberOfItems: totalEvents,
-    itemListElement: allEvents.slice(0, 12).map((event, index) => ({
+    itemListElement: allEvents.slice(0, 50).map((event, index) => ({
       '@type': 'ListItem',
       position: index + 1,
       item: {

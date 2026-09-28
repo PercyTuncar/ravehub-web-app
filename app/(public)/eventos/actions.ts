@@ -5,20 +5,20 @@ import { eventsCollection } from '@/lib/firebase/collections';
 
 /**
  * Get initial events for page load - OPTIMIZED for mobile performance
- * Returns only the first batch of events (12) for fast initial render
- * Additional events loaded via getMoreEvents() on demand
+ * Now loads more events (50) to ensure we show future events
+ * Client-side will filter and progressively render them
  */
-export async function getEventsList(limit: number = 12): Promise<Event[]> {
+export async function getEventsList(limit: number = 50): Promise<Event[]> {
   try {
-    // OPTIMIZED: Load only initial batch (12 events instead of 100)
-    // This reduces Firestore reads by 88% and initial payload by 90%
+    // Load 50 events initially to ensure we have future events to show
+    // The EventGrid will handle progressive rendering with IntersectionObserver
     const conditions = [{ field: 'eventStatus', operator: '==', value: 'published' }];
     const allEvents = await eventsCollection.queryCached(
       conditions,
       'startDate',
       'asc',
-      limit, // Load only what's needed initially
-      `events-published-list-${limit}` // cache key with limit
+      limit,
+      `events-published-list-${limit}`
     );
 
     // CRITICAL FIX: Simplify discount object for serialization

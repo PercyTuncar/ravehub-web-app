@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, lazy, Suspense } from 'react';
+import { useState, useMemo } from 'react';
 import { Event } from '@/lib/types';
-import EventGrid from '@/components/events/EventGrid';
+import EventGridOptimized from '@/components/events/EventGridOptimized';
 import dynamic from 'next/dynamic';
 
 // Lazy load FilterSidebar for better initial performance
@@ -55,7 +55,7 @@ export default function EventsClient({
         maxPrice: '',
     });
 
-    // Filter events client-side
+    // Filter events client-side with memoization for performance
     const filteredEvents = useMemo(() => {
         return initialEvents.filter((event) => {
             // 1. Search (Title or Venue)
@@ -68,7 +68,6 @@ export default function EventsClient({
 
             // 2. Type
             if (filters.type !== 'all') {
-                // Assuming event.eventType matches the filter values (festival, concert, club)
                 if (event.eventType?.toLowerCase() !== filters.type.toLowerCase()) return false;
             }
 
@@ -111,112 +110,112 @@ export default function EventsClient({
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
             {/* Sidebar Filters */}
             <aside className="w-full lg:w-80 shrink-0">
-                        <div className="lg:sticky lg:top-24 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar rounded-3xl">
-                            <FilterSidebar
-                                filters={filters}
-                                setFilters={setFilters}
-                                resultsCount={filteredEvents.length}
-                            />
-                        </div>
-                    </aside>
-
-                    {/* Main Content Grid */}
-                    <div className="flex-1 min-w-0 pt-1">
-                        {/* Active Filters Display */}
-                        {(filters.type !== 'all' || filters.city !== 'all' || filters.search || filters.minPrice || filters.maxPrice) && (
-                            <div className="flex flex-wrap items-center gap-2 p-4 bg-zinc-900/40 border border-white/5 backdrop-blur-md rounded-2xl mb-8">
-                                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mr-2">Filtros:</span>
-                                {filters.type !== 'all' && (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-full text-xs font-bold uppercase tracking-wide">
-                                        {filters.type}
-                                        <button
-                                            onClick={() => setFilters({ ...filters, type: 'all' })}
-                                            className="hover:text-white transition-colors"
-                                        >
-                                            ×
-                                        </button>
-                                    </span>
-                                )}
-                                {filters.city !== 'all' && (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-zinc-300 border border-white/10 rounded-full text-xs font-medium">
-                                        {filters.city}
-                                        <button
-                                            onClick={() => setFilters({ ...filters, city: 'all' })}
-                                            className="hover:text-white transition-colors"
-                                        >
-                                            ×
-                                        </button>
-                                    </span>
-                                )}
-                                {filters.date && (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-zinc-300 border border-white/10 rounded-full text-xs font-medium">
-                                        {filters.date === 'weekend' ? 'Fin de semana' : filters.date === 'month' ? 'Este mes' : 'Próximo mes'}
-                                        <button
-                                            onClick={() => setFilters({ ...filters, date: undefined })}
-                                            className="hover:text-white transition-colors"
-                                        >
-                                            ×
-                                        </button>
-                                    </span>
-                                )}
-                                {filters.search && (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-zinc-300 border border-white/10 rounded-full text-xs font-medium">
-                                        "{filters.search}"
-                                        <button
-                                            onClick={() => setFilters({ ...filters, search: '' })}
-                                            className="hover:text-white transition-colors"
-                                        >
-                                            ×
-                                        </button>
-                                    </span>
-                                )}
-                                {(filters.minPrice || filters.maxPrice) && (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-medium">
-                                        S/ {filters.minPrice || '0'} - S/ {filters.maxPrice || '∞'}
-                                        <button
-                                            onClick={() => setFilters({ ...filters, minPrice: '', maxPrice: '' })}
-                                            className="hover:text-white transition-colors"
-                                        >
-                                            ×
-                                        </button>
-                                    </span>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Event Grid */}
-                        <div className="relative">
-                            {filteredEvents.length === 0 ? (
-                                <div className="text-center py-20">
-                                    <div className="bg-zinc-900/30 backdrop-blur-md border border-white/5 rounded-3xl p-12 max-w-md mx-auto">
-                                        <div className="text-6xl mb-6 opacity-50">🔍</div>
-                                        <h3 className="text-2xl font-bold text-white mb-2">No se encontraron eventos</h3>
-                                        <p className="text-zinc-500 mb-8">
-                                            Intenta ajustar tus filtros para ver más resultados
-                                        </p>
-                                        <button
-                                            onClick={() => setFilters({
-                                                search: '',
-                                                type: 'all',
-                                                city: 'all',
-                                                date: undefined,
-                                                minPrice: '',
-                                                maxPrice: '',
-                                            })}
-                                            className="inline-flex items-center gap-2 px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors"
-                                        >
-                                            Limpiar todos los filtros
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <EventGrid events={filteredEvents} />
-                            )}
-                        </div>
-
-                        {/* Additional Content (Statistics and Country Links) */}
-                        {children}
-                    </div>
+                <div className="lg:sticky lg:top-24 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar rounded-3xl">
+                    <FilterSidebar
+                        filters={filters}
+                        setFilters={setFilters}
+                        resultsCount={filteredEvents.length}
+                    />
                 </div>
+            </aside>
+
+            {/* Main Content Grid */}
+            <div className="flex-1 min-w-0 pt-1">
+                {/* Active Filters Display */}
+                {(filters.type !== 'all' || filters.city !== 'all' || filters.search || filters.minPrice || filters.maxPrice) && (
+                    <div className="flex flex-wrap items-center gap-2 p-4 bg-zinc-900/40 border border-white/5 backdrop-blur-md rounded-2xl mb-8">
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mr-2">Filtros:</span>
+                        {filters.type !== 'all' && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-full text-xs font-bold uppercase tracking-wide">
+                                {filters.type}
+                                <button
+                                    onClick={() => setFilters({ ...filters, type: 'all' })}
+                                    className="hover:text-white transition-colors"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
+                        {filters.city !== 'all' && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-zinc-300 border border-white/10 rounded-full text-xs font-medium">
+                                {filters.city}
+                                <button
+                                    onClick={() => setFilters({ ...filters, city: 'all' })}
+                                    className="hover:text-white transition-colors"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
+                        {filters.date && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-zinc-300 border border-white/10 rounded-full text-xs font-medium">
+                                {filters.date === 'weekend' ? 'Fin de semana' : filters.date === 'month' ? 'Este mes' : 'Próximo mes'}
+                                <button
+                                    onClick={() => setFilters({ ...filters, date: undefined })}
+                                    className="hover:text-white transition-colors"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
+                        {filters.search && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 text-zinc-300 border border-white/10 rounded-full text-xs font-medium">
+                                "{filters.search}"
+                                <button
+                                    onClick={() => setFilters({ ...filters, search: '' })}
+                                    className="hover:text-white transition-colors"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
+                        {(filters.minPrice || filters.maxPrice) && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-medium">
+                                S/ {filters.minPrice || '0'} - S/ {filters.maxPrice || '∞'}
+                                <button
+                                    onClick={() => setFilters({ ...filters, minPrice: '', maxPrice: '' })}
+                                    className="hover:text-white transition-colors"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                {/* Event Grid with Progressive Loading */}
+                <div className="relative">
+                    {filteredEvents.length === 0 ? (
+                        <div className="text-center py-20">
+                            <div className="bg-zinc-900/30 backdrop-blur-md border border-white/5 rounded-3xl p-12 max-w-md mx-auto">
+                                <div className="text-6xl mb-6 opacity-50">🔍</div>
+                                <h3 className="text-2xl font-bold text-white mb-2">No se encontraron eventos</h3>
+                                <p className="text-zinc-500 mb-8">
+                                    Intenta ajustar tus filtros para ver más resultados
+                                </p>
+                                <button
+                                    onClick={() => setFilters({
+                                        search: '',
+                                        type: 'all',
+                                        city: 'all',
+                                        date: undefined,
+                                        minPrice: '',
+                                        maxPrice: '',
+                                    })}
+                                    className="inline-flex items-center gap-2 px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors"
+                                >
+                                    Limpiar todos los filtros
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <EventGridOptimized events={filteredEvents} />
+                    )}
+                </div>
+
+                {/* Additional Content (Statistics and Country Links) */}
+                {children}
+            </div>
+        </div>
     );
 }
