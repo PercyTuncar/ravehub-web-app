@@ -68,7 +68,7 @@ export async function getEventsByCountry(countryCode: string, filters?: {
   }
 }
 
-export async function getUpcomingEvents(limit: number = 3): Promise<Event[]> {
+export async function getUpcomingEvents(limit: number = 6): Promise<Event[]> {
   try {
     const now = new Date().toISOString().split('T')[0];
     const conditions: Array<{ field: string; operator: any; value: any }> = [
@@ -76,6 +76,7 @@ export async function getUpcomingEvents(limit: number = 3): Promise<Event[]> {
       { field: 'startDate', operator: '>=', value: now },
     ];
 
+    // OPTIMIZED: Load only 6 events for homepage (reduced from default)
     const upcomingEvents = await eventsCollection.query(conditions, 'startDate', 'asc', limit);
     return upcomingEvents as Event[];
   } catch (err) {
@@ -84,7 +85,7 @@ export async function getUpcomingEvents(limit: number = 3): Promise<Event[]> {
   }
 }
 
-export async function getFeaturedEventDjs(limit: number = 12): Promise<EventDj[]> {
+export async function getFeaturedEventDjs(limit: number = 8): Promise<EventDj[]> {
   try {
     const featuredDjs = await eventDjsCollection.query(
       [{ field: 'approved', operator: '==', value: true }],
@@ -93,6 +94,7 @@ export async function getFeaturedEventDjs(limit: number = 12): Promise<EventDj[]
       limit
     );
 
+    // OPTIMIZED: Load only 8 DJs for homepage (reduced from 12)
     return featuredDjs as EventDj[];
   } catch (err) {
     console.error('Error fetching featured DJs:', err);

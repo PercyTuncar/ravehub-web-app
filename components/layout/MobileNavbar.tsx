@@ -60,6 +60,7 @@ export function MobileNavbar() {
 
   // More menu options
   const moreMenuItems = [
+    { icon: Headphones, label: 'Blog', href: '/blog', requiresAuth: false }, // NEW: Blog option
     { icon: Headphones, label: 'Programas', href: '/programas', requiresAuth: false, hasSubmenu: true },
     { icon: ShoppingBag, label: 'Tienda', href: '/tienda', requiresAuth: false },
     { icon: Heart, label: 'Favoritos', href: '/profile/favorites', requiresAuth: true },
@@ -348,35 +349,45 @@ export function MobileNavbar() {
               />
 
               {/* Profile Button - Central Floating */}
-              <div className="relative -mt-8 flex items-center justify-center">
+              <div className="relative -mt-8 flex flex-col items-center justify-center">
                 {user ? (
                   <Link
                     href="/profile"
-                    className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${isActive('/profile')
+                    className="flex flex-col items-center justify-center gap-1"
+                  >
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${isActive('/profile')
                         ? 'bg-[#FBA905] scale-110 shadow-[#FBA905]/50 ring-2 ring-[#FBA905]/30'
                         : 'bg-[#FBA905] hover:bg-[#F1A000] hover:scale-105 shadow-[#FBA905]/30'
                       }`}
-                  >
-                    {mounted && user?.photoURL ? (
-                      <Avatar className="w-14 h-14 border-2 border-[#282D31]">
-                        <AvatarImage src={user.photoURL} alt={user.firstName || 'Usuario'} />
-                        <AvatarFallback className="bg-[#141618] text-[#FAFDFF] text-lg font-semibold">
-                          {user.firstName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <User className="h-7 w-7 text-[#282D31]" />
-                    )}
+                    >
+                      {mounted && user?.photoURL ? (
+                        <Avatar className="w-14 h-14 border-2 border-[#282D31]">
+                          <AvatarImage src={user.photoURL} alt={user.firstName || 'Usuario'} />
+                          <AvatarFallback className="bg-[#141618] text-[#FAFDFF] text-lg font-semibold">
+                            {user.firstName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <User className="h-7 w-7 text-[#282D31]" />
+                      )}
+                    </div>
+                    <span className="text-[10px] font-medium text-[#53575A] mt-1 truncate max-w-[60px]">
+                      {user.firstName || 'Perfil'}
+                    </span>
                   </Link>
                 ) : (
                   <button
                     onClick={handleProfileClick}
-                    className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${isActive('/profile')
+                    className="flex flex-col items-center justify-center gap-1"
+                  >
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 active:scale-95 ${isActive('/profile')
                         ? 'bg-[#FBA905] scale-110 shadow-[#FBA905]/50 ring-2 ring-[#FBA905]/30'
                         : 'bg-[#FBA905] hover:bg-[#F1A000] hover:scale-105 shadow-[#FBA905]/30'
                       }`}
-                  >
-                    <User className="h-7 w-7 text-[#282D31]" />
+                    >
+                      <User className="h-7 w-7 text-[#282D31]" />
+                    </div>
+                    <span className="text-[10px] font-medium text-[#53575A] mt-1">Ingresar</span>
                   </button>
                 )}
               </div>
@@ -391,7 +402,7 @@ export function MobileNavbar() {
                     }`}
                 >
                   <Ticket className="h-6 w-6" />
-                  <span className="text-[10px] font-medium">Tickets</span>
+                  <span className="text-[10px] font-medium">Mis Tickets</span>
                 </Link>
               ) : (
                 <button
@@ -402,7 +413,7 @@ export function MobileNavbar() {
                     }`}
                 >
                   <Ticket className="h-6 w-6" />
-                  <span className="text-[10px] font-medium">Tickets</span>
+                  <span className="text-[10px] font-medium">Mis Tickets</span>
                 </button>
               )}
 

@@ -4,8 +4,8 @@ import JsonLd from '@/components/seo/JsonLd'
 import { getUpcomingEvents, getFeaturedEventDjs } from '@/lib/data-fetching'
 import { Event } from '@/lib/types'
 import HeroVideo from '@/components/home/HeroVideo'
-import EventDjsMarquee from '@/components/home/EventDjsMarquee'
-import EventCarousel from '@/components/home/EventCarousel'
+import EventDjsMarqueeOptimized from '@/components/home/EventDjsMarqueeOptimized'
+import EventCarouselOptimized from '@/components/home/EventCarouselOptimized'
 import CountrySelector from '@/components/home/CountrySelector'
 import HowItWorks from '@/components/home/HowItWorks'
 import Newsletter from '@/components/home/Newsletter'
@@ -575,7 +575,7 @@ export default async function HomePage() {
           featuredDjs={featuredDjs}
         />
 
-        <EventDjsMarquee djs={featuredDjs} />
+        <EventDjsMarqueeOptimized djs={featuredDjs} />
 
         <div className="relative isolate overflow-hidden bg-[#141618]">
           <div className="pointer-events-none absolute inset-0">
@@ -588,7 +588,7 @@ export default async function HomePage() {
           <div className="relative z-10 flex flex-col gap-0">
 
             {/* Events Carousel */}
-            <EventCarousel
+            <EventCarouselOptimized
               events={upcomingEvents}
               title="Próximos eventos destacados"
               subtitle="Descubre los sets imperdibles que vienen a tu ciudad. Compra con anticipación y asegura tu lugar en la pista."
