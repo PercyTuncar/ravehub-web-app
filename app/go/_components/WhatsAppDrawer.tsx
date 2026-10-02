@@ -43,7 +43,7 @@ const GROUPS: WhatsAppGroup[] = [
     country: "Perú",
     flag: "💜",
     name: "BTS 2026 🇵🇪",
-    url: "https://chat.whatsapp.com/HXqzQToJt3O0TmjaNTOq3K",
+    url: "https://chat.whatsapp.com/ERBE8qhdViR4f2NSvAE8jo",
   },
   {
     id: "girls",
