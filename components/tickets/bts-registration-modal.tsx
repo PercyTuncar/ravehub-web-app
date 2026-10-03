@@ -207,7 +207,7 @@ export function BTSRegistrationModal() {
                   <WhatsAppButton
                     groupNumber={1}
                     active={true}
-                    link={"https://chat.whatsapp.com/ERBE8qhdViR4f2NSvAE8jo"}
+                    link={"https://chat.whatsapp.com/LifK6cn02Ts1dnegKxXea3"}
                   />
                   <WhatsAppButton groupNumber={2} active={false} membersCount={1025} />
                 </div>
